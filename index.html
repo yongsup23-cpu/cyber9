@@ -3192,13 +3192,16 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   /* press and hold: glide quickly toward the pointer (steer by moving it) */
   let hold = null, holdTimer = 0, lastNow = 0;
   /* tilt-to-walk: with 기울여 보기 on, tipping the top of the device down walks forward (back for backwards) */
-  const TILT_DEAD = 0.17, TILT_LOOK = 0.17;
+  const TILT_DEAD = 0.17, TILT_LOOK = 0.17, TURN_DEAD = 0.1;
   function stepTilt(dt) {
     if (!gyro.on || busy || anim || hold || pinch) return;
     if ((SR.el && !SR.el.hidden) || ($("lb") && !$("lb").hidden) || ($("mapLB") && !$("mapLB").hidden) || document.body.classList.contains("kioskOn")) return;
     const t = gyro.tp; let v = 0;
-    if (t < -TILT_DEAD) v = Math.min(4.2, (-t - TILT_DEAD) * 14);
-    else if (t > TILT_DEAD + 0.12) v = -Math.min(2, (t - TILT_DEAD - 0.12) * 8);
+    if (t < -TILT_DEAD) v = Math.min(8.4, (-t - TILT_DEAD) * 28);
+    else if (t > TILT_DEAD + 0.12) v = -Math.min(4, (t - TILT_DEAD - 0.12) * 16);
+    // turning the device a little left/right keeps turning the view that way
+    const ty = gyro.ty, ad = Math.abs(ty);
+    if (ad > TURN_DEAD) { cam.yaw += Math.sign(ty) * Math.min(1.6, (ad - TURN_DEAD) * 5 + 0.35) * dt; looked = true; }
     if (!v) return;
     const yaw = cam.yaw + gyro.yaw, hx = -Math.sin(yaw), hz = -Math.cos(yaw);
     [cam.x, cam.z] = clampXZ(cam.x + hx * v * dt, cam.z + hz * v * dt, 0.9);
@@ -3520,7 +3523,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (now - hiTimer > 1500) { hiTimer = now; if (looked) refreshHiRes(); }
     camera.position.set(cam.x, cam.y, cam.z);
     if (gyro.on || Math.abs(gyro.yaw) + Math.abs(gyro.pitch) > 1e-4) {
-      gyro.yaw += wrapAngle(gyro.ty - gyro.yaw) * 0.22; gyro.pitch += (Math.max(-TILT_LOOK, Math.min(TILT_LOOK + 0.12, gyro.tp)) - gyro.pitch) * 0.22;
+      gyro.yaw += wrapAngle(Math.max(-TURN_DEAD, Math.min(TURN_DEAD, gyro.ty)) - gyro.yaw) * 0.22; gyro.pitch += (Math.max(-TILT_LOOK, Math.min(TILT_LOOK + 0.12, gyro.tp)) - gyro.pitch) * 0.22;
     }
     camera.rotation.set(Math.max(-1.1, Math.min(1.1, cam.pitch + gyro.pitch)), cam.yaw + gyro.yaw, 0);
     const b = $("bearing");
