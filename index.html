@@ -743,7 +743,7 @@ window.__archiveReady = function () {
     wallRec = null; ytRec = null; dust = null; beams = [];
     chronList.forEach((c) => c.tex.dispose()); chronList = [];
     pickables = []; stops = []; doors = []; photoMeshes = []; atlasUsers = {}; doorGlows = [];
-    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = [];
+    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = []; innerCue = null;
     for (const k in hiRes) { hiRes[k].tex.dispose(); delete texCache[hiRes[k].url]; delete hiRes[k]; }
   }
   function onWall(mesh, side, u, y, off) {
@@ -1156,6 +1156,16 @@ window.__archiveReady = function () {
   });
   const turnMats = { L: new THREE.MeshBasicMaterial({ map: turnTex(false), transparent: true, depthWrite: false, opacity: 0.85 }), R: new THREE.MeshBasicMaterial({ map: turnTex(true), transparent: true, depthWrite: false, opacity: 0.85 }) };
   let arrowList = [];
+  // eye-level cue at the drum opening: after most of the outer loop, a softly blinking "turn right into the inner hall" sign
+  let innerCue = null;
+  const cueTex = canvasTex(640, 256, (g, W, H) => {
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = "rgba(14,13,11,0.86)"; g.beginPath(); g.roundRect ? g.roundRect(8, 8, W - 16, H - 16, 40) : g.rect(8, 8, W - 16, H - 16); g.fill();
+    g.strokeStyle = "rgba(230,207,156,0.9)"; g.lineWidth = 4; g.stroke();
+    g.fillStyle = "#f1e6cf"; g.font = `600 64px ${FONT}`; g.textBaseline = "middle"; g.textAlign = "left"; g.fillText("안쪽 전시관", 52, 104);
+    g.fillStyle = "#c9a86a"; g.font = `500 30px ${FONT}`; g.fillText("오른쪽으로 들어가세요", 56, 176);
+    g.fillStyle = "#e6cf9c"; g.beginPath(); g.moveTo(462, 88); g.lineTo(530, 88); g.lineTo(530, 52); g.lineTo(604, 128); g.lineTo(530, 204); g.lineTo(530, 168); g.lineTo(462, 168); g.closePath(); g.fill();
+  });
   function floorArrow(x, z, dir, size, turn) {
     const s = (size || 0.62) * 0.7;
     const m = plane(s, s, (turn ? turnMats[turn] : arrowMat).clone());
@@ -1493,6 +1503,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       floorArrow(...at(rm, a0), Math.PI - a0, 1.15, "L");          // entering: turn left to start
       for (let a = a0 + step * 0.8; a < a1 - step * 0.5; a += step) floorArrow(...at(rm, a), -Math.PI / 2 - a);
       floorArrow(...at(rm, a1), -Math.PI / 2 - a1, 1.15, "R");      // end of the loop: turn right into the inner hall
+      { const ac = DA + 2 * Math.PI - 0.6 / rm, [cx, cz] = at(rm, ac);
+        innerCue = plane(1.5, 0.6, new THREE.MeshBasicMaterial({ map: cueTex, transparent: true, depthWrite: false, opacity: 0 }));
+        innerCue.position.set(cx, 1.72, cz); innerCue.rotation.y = Math.atan2(-Math.cos(ac), -Math.sin(ac)); innerCue.renderOrder = 6; innerCue.visible = false;
+        innerCue.userData.idx = "inner"; pickables.push(innerCue); world.add(innerCue); }
       const rp = RI - IWT - BARRIER - 1.5;
       for (let r = rm - 2.8; r > RI + IWT + 0.4; r -= 1.9) floorArrow(...at(r, DA), Math.PI - DA, 0.72);
       for (let r = RI - IWT - 0.6; r > rp + 1.2; r -= 1.9) floorArrow(...at(r, DA), Math.PI - DA, 0.72);
@@ -3208,6 +3222,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     return hs.length ? hs[0].object : null;
   }
   /* click on empty floor / wall: walk forward toward that point */
+  function goInner() {
+    const si = stops.findIndex((t) => t.side === 5); if (si < 0) return;
+    if (auto.on) setAuto(false); setStop(si);
+  }
   function walkToward(cx, cy) {
     if (busy) return;
     const r = canvas.getBoundingClientRect();
@@ -3219,6 +3237,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     let dist = d.y < -0.02 ? ((0 - EYE) / d.y) * hl : 4;
     dist = Math.max(0.8, Math.min(dist, 7));
     const m = 0.9;
+    if (RT && DR && Math.hypot(cam.x, cam.z) > RI + IWT) { // clicking toward the drum opening from the outer corridor: enter and face the first inner panel
+      const tx = cam.x + hx * dist, tz = cam.z + hz * dist, tr = Math.hypot(tx, tz), ta = Math.atan2(tx, -tz);
+      if (tr < RI + IWT + 1.2 && Math.abs(wrapAngle(ta - DA)) < IGAP + 1.0 / RI) { goInner(); return; }
+    }
     const [x, z] = clampXZ(cam.x + hx * dist, cam.z + hz * dist, m);
     const yaw = Math.atan2(-hx, -hz);
     const moved = Math.hypot(x - cam.x, z - cam.z);
@@ -3243,6 +3265,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     if (o.userData.idx === "kiosk") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "kiosk"); clearTimeout(SR.timer); SR.timer = 0; kFocused = false; setStop(si); return; }
     if (o.userData.idx === "yt") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "yt"); if (si !== cur) setStop(si); else { ytOn = true; $("zoomBtn").textContent = "채널 열기"; } return; }
+    if (o.userData.idx === "inner") { goInner(); return; }
     if (o.userData.idx === "map") { if (auto.on) setAuto(false); openMap(); return; }
     if (o.userData.idx === "book") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "book" && t.bi === o.userData.book); if (si === cur && !anim && !looked) openBook(stops[si].data); else setStop(si); return; }
     if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
@@ -3574,6 +3597,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (doorGlows.length && mode === "lobby") {
       const t = reduce ? 0 : now / 1000;
       for (const m of doorGlows) m.material.opacity = 0.22 + 0.38 * Math.pow(0.5 + 0.5 * Math.sin(t * 1.5 - m.userData.phase), 2);
+    }
+    if (innerCue) {
+      const P = camera.position, r = Math.hypot(P.x, P.z), ang = Math.atan2(P.x, -P.z);
+      const lap = ((ang - DA) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      const want = mode === "hall" && r > RI + IWT + 0.3 && lap > 2 * Math.PI * 0.55;
+      const mt = innerCue.material, tgt = want ? 0.62 + 0.38 * Math.pow(0.5 + 0.5 * Math.sin(now / (reduce ? 1e9 : 330)), 2) : 0;
+      mt.opacity += (tgt - mt.opacity) * (want ? 0.25 : 0.12); innerCue.visible = mt.opacity > 0.01;
     }
     if (arrowList.length) {
       const t = reduce ? 0 : now / 1000;
