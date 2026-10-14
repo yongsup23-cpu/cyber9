@@ -2771,10 +2771,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       $("pickCopy").addEventListener("click", () => { const t = $("pickOut"); t.select(); try { navigator.clipboard.writeText(t.value); } catch (e) { document.execCommand("copy"); } $("pickCopy").textContent = "복사됨 ✓"; setTimeout(() => { $("pickCopy").textContent = "전체 복사"; }, 1500); });
     }
     const pts = mpoints(MH);
-    $("pickHint").textContent = pickIdx >= 0 ? `선택: ${pickIdx + 1}. ${pts[pickIdx].title} → 지도에서 정확한 위치를 클릭하세요.` : "오른쪽 목록에서 장소를 먼저 선택하세요.";
+    $("pickHint").textContent = pickIdx >= 0 ? `선택: ${pickIdx + 1}. ${pts[pickIdx].title} → ${isDom(pts[pickIdx]) ? "" : "해외 탭 "}지도에서 정확한 위치를 클릭하세요.` : "오른쪽 목록에서 장소를 먼저 선택하세요.";
     $("pickOut").value = pts.map((it, i) => `${i + 1}. ${it.title}: ${(+it.lat).toFixed(6)}, ${(+it.lng).toFixed(6)}${it.picked ? "  ✓" : ""}`).join("\n");
   }
-  /* 국내 / 해외 tabs: overseas sites open in an embedded Google map (no API key needed) */
+  /* 국내 / 해외 tabs: overseas sites open on an OpenStreetMap (Leaflet) world map, no API key needed */
     function abroadList() { return MH ? mpoints(MH).map((it, i) => [it, i]).filter(([it]) => !isDom(it)) : []; }
   function setupMapTabs() {
     const tabs = $("mapTabs"), ab = abroadList(); if (!tabs) return;
@@ -2813,10 +2813,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     lFor = MH; $("lmap").innerHTML = "";
     lMap = L.map("lmap", { worldCopyJump: true, zoomControl: false, attributionControl: true }).setView([25, 100], 3);
     L.control.zoom({ position: "topright" }).addTo(lMap);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { subdomains: "abcd", maxZoom: 19, attribution: "&copy; OpenStreetMap &copy; CARTO" }).addTo(lMap);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(lMap);
     const lm = abroadList().map(([it, j]) => {
       const mk = L.marker([it.lat, it.lng], { title: it.title });
-      mk.on("click", () => setMapTab("abr", j)); mk.addTo(lMap); return [mk, j];
+      mk.on("click", () => focusWork(j)); mk.addTo(lMap); return [mk, j];
     });
     // pins that would cover each other at the current zoom are fanned out sideways so every number stays readable
     const spread = () => {
@@ -2829,6 +2829,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       });
     };
     lMap.on("zoomend", spread); spread();
+    // ?pick mode: click the overseas map to set the selected site's exact position
+    lMap.on("click", (e) => {
+      if (!PICK || pickIdx < 0) return;
+      const it = mpoints(MH)[pickIdx], hit = lm.find(([, j]) => j === pickIdx);
+      if (!hit || isDom(it)) return;
+      it.lat = +e.latlng.lat.toFixed(6); it.lng = +e.latlng.lng.toFixed(6); it.picked = true;
+      hit[0].setLatLng(e.latlng); spread(); pickPanel();
+    });
     setTimeout(() => lMap.invalidateSize(), 30);
   }
   function focusWork(i) {
@@ -3435,7 +3443,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (nMap) { if (mapFilter && mapFilter.startsWith("cat:")) { const b = new naver.maps.LatLngBounds(); let n = 0; mpoints(MH).forEach((it) => { if ("cat:" + it.year === mapFilter && isDom(it)) { b.extend(new naver.maps.LatLng(it.lat, it.lng)); n++; } }); if (n > 1) nMap.fitBounds(b, { top: 90, right: 60, bottom: 70, left: 60 }); else if (n === 1) nMap.morph(b.getCenter ? b.getCenter() : nMarkers[0].getPosition(), 12); } else nMap.fitBounds(boundsOf(), { top: 90, right: 50, bottom: 60, left: 50 }); }
   });
   if ($("mapTabs")) $("mapTabs").addEventListener("click", (e) => { const b = e.target.closest("button[data-t]"); if (b) setMapTab(b.dataset.t); });
-  if ($("gSites")) $("gSites").addEventListener("click", (e) => { const b = e.target.closest("button[data-i]"); if (b) setMapTab("abr", +b.dataset.i < 0 ? undefined : +b.dataset.i); });
+  if ($("gSites")) $("gSites").addEventListener("click", (e) => { const b = e.target.closest("button[data-i]"); if (b) { if (+b.dataset.i < 0) setMapTab("abr"); else focusWork(+b.dataset.i); } });
   if ($("mapAll")) $("mapAll").addEventListener("click", () => {
     setMapTab("dom"); mapFilter = null; applyMapFilter();
     document.querySelectorAll("#mapList li").forEach((li) => li.classList.remove("on"));
