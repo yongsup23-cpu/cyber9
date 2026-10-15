@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 14:27</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 14:29</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1192,10 +1192,44 @@ window.__archiveReady = function () {
     const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.62), new THREE.MeshBasicMaterial({ map: kioskTex })); scr.position.z = 0.021; head.add(scr);
     [scr, bez].forEach((m) => { m.userData.idx = "kiosk"; pickables.push(m); });
     kioskRec = { scr, grp };
+    // entrance reveal: a floor hatch slides open and the monitor rises through it
+    if (!reduce) {
+      const hatch = new THREE.Group(); hatch.position.set(pos.x, 0, pos.z); hatch.rotation.y = rot; world.add(hatch);
+      const HW = 0.66, HD = 0.74, oz = 0.06;
+      const pit = new THREE.Mesh(new THREE.PlaneGeometry(HW, HD), new THREE.MeshBasicMaterial({ color: 0x050504, transparent: true, opacity: 1 }));
+      pit.rotation.x = -Math.PI / 2; pit.position.set(0, 0.004, oz); pit.renderOrder = 3; hatch.add(pit);
+      const glowM = new THREE.MeshBasicMaterial({ color: 0xe6cf9c, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+      const rim = new THREE.Mesh(new THREE.PlaneGeometry(HW + 0.08, HD + 0.08), glowM); rim.rotation.x = -Math.PI / 2; rim.position.set(0, 0.003, oz); hatch.add(rim);
+      const lidMat = new THREE.MeshBasicMaterial({ color: 0x2c2924, transparent: true, opacity: 1 });
+      const edgeMat = new THREE.MeshBasicMaterial({ color: 0x8c7445, transparent: true, opacity: 1 });
+      const lids = [-1, 1].map((s) => {
+        const L = new THREE.Group(); L.position.set(s * HW / 4, 0.008, oz); hatch.add(L);
+        const m = new THREE.Mesh(new THREE.BoxGeometry(HW / 2, 0.01, HD), lidMat); L.add(m);
+        const e = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, HD), edgeMat); e.position.x = -s * HW / 4; L.add(e);
+        L.userData.s = s; return L;
+      });
+      grp.position.y = -1.45;
+      kioskRec.rise = { t: -0.9, hatch, pit, rim, lids, lidMat, edgeMat, glowM, HW };
+    }
+  }
+  function stepKioskRise(dt) {
+    const R = kioskRec && kioskRec.rise; if (!R) return;
+    if ($("intro") && !$("intro").hidden) return;
+    R.t += dt; const t = R.t; if (t < 0) return;
+    const cl = (x) => Math.max(0, Math.min(1, x)), eo = (x) => 1 - Math.pow(1 - x, 3), eio = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    const open = eio(cl(t / 0.7)), close = eio(cl((t - 2.5) / 0.6)), lift = cl((t - 0.55) / 1.9);
+    const gap = R.HW * (open - close * 0.66); // lids part fully, then close back around the base
+    R.lids.forEach((L) => { L.position.x = L.userData.s * (R.HW / 4 + gap / 2); });
+    const y = lift < 1 ? -1.45 * (1 - eo(lift)) + 0.04 * Math.sin(Math.PI * lift) * lift : 0;
+    kioskRec.grp.position.y = y;
+    R.glowM.opacity = 0.55 * open * (1 - cl((t - 2.6) / 0.8));
+    if (t > 3.1) { const f = 1 - cl((t - 3.1) / 0.6); R.pit.material.opacity = f; R.lidMat.opacity = f; R.edgeMat.opacity = f; }
+    if (t > 3.8) { world.remove(R.hatch); kioskRec.rise = null; kioskRec.grp.position.y = 0; }
   }
   function kioskPose() {
-    const { scr } = kioskRec; scr.updateMatrixWorld(true);
+    const { scr, grp } = kioskRec, y0 = grp.position.y; grp.position.y = 0; grp.updateMatrixWorld(true);
     const c = scr.localToWorld(new THREE.Vector3(0, 0, 0)), n = new THREE.Vector3(0, 0, 1).transformDirection(scr.matrixWorld);
+    grp.position.y = y0; grp.updateMatrixWorld(true);
     const vf = THREE.MathUtils.degToRad(baseFov), d = Math.max(0.3, (0.62 / 2) / Math.tan(vf / 2) / 0.9, (0.9 / 2) / (Math.tan(vf / 2) * camera.aspect) / 0.97);
     const p = c.clone().addScaledVector(n, d);
     const dir = c.clone().sub(p);
@@ -3682,7 +3716,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stepDoors(now);
     if (GLOW_COL && DR) { const k = 0.85 + 0.15 * Math.sin(now / 1400); GLOW_COL.forEach((m, i) => { m.material.opacity = [0.16, 0.07, 0.03][i] * k; }); }
     tickAuto(now);
-    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now);
+    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now); stepKioskRise(dt);
     if (doorGlows.length && mode === "lobby") {
       const t = reduce ? 0 : now / 1000;
       for (const m of doorGlows) m.material.opacity = 0.22 + 0.38 * Math.pow(0.5 + 0.5 * Math.sin(t * 1.5 - m.userData.phase), 2);
