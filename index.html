@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 14:29</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 14:33</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -898,8 +898,8 @@ window.__archiveReady = function () {
   }
   // same medallion in HTML
   const NB = (n) => `<span class="nb">${n}</span>`;
-  { const st = document.createElement("style"); // tablets & phones: no film strip at the bottom
-    st.textContent = `@media (pointer:coarse), (max-width:1024px){#film,.film{display:none!important}}`; document.head.appendChild(st); }
+  { const st = document.createElement("style"); // no film strip at the bottom (all screens)
+    st.textContent = `#film,.film{display:none!important}`; document.head.appendChild(st); }
   { const st = document.createElement("style");
     st.textContent = `.nb{display:inline-flex;align-items:center;justify-content:center;min-width:1.7em;height:1.7em;padding:0 .32em;box-sizing:border-box;margin-right:.5em;border-radius:999px;vertical-align:.12em;font:700 .6em/1 ${FONT};letter-spacing:-.01em;color:#e6cf9c;background:#1c1a16;border:1.5px solid #c9a86a;font-variant-numeric:tabular-nums}`;
     document.head.appendChild(st); }
