@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 15:32</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 15:46</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -444,14 +444,20 @@ window.__archiveReady = function () {
     t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO;
     return t;
   }
+  // wrap on word boundaries (Korean eojeol kept whole, particles stay with their word);
+  // only a single word wider than the line falls back to character breaks
   function wrapLines(g, text, maxW) {
     const out = [];
     for (const para of String(text).split("\n")) {
       let line = "";
-      for (const ch of para) {
-        const t = line + ch;
-        if (g.measureText(t).width > maxW && line) { out.push(line); line = ch === " " ? "" : ch; }
-        else line = t;
+      for (const word of para.split(/ +/)) {
+        if (!word) continue;
+        const t = line ? line + " " + word : word;
+        if (g.measureText(t).width <= maxW) { line = t; continue; }
+        if (line) out.push(line);
+        if (g.measureText(word).width <= maxW) { line = word; continue; }
+        line = "";
+        for (const ch of word) { const tt = line + ch; if (g.measureText(tt).width > maxW && line) { out.push(line); line = ch; } else line = tt; }
       }
       out.push(line);
     }
@@ -899,7 +905,7 @@ window.__archiveReady = function () {
   // same medallion in HTML
   const NB = (n) => `<span class="nb">${n}</span>`;
   { const st = document.createElement("style"); // no film strip at the bottom (all screens)
-    st.textContent = `#film,.film{display:none!important}`; document.head.appendChild(st); }
+    st.textContent = `#film,.film{display:none!important}body,body *{word-break:keep-all;overflow-wrap:break-word;line-break:strict}`; document.head.appendChild(st); }
   { const st = document.createElement("style");
     st.textContent = `.nb{display:inline-flex;align-items:center;justify-content:center;min-width:1.7em;height:1.7em;padding:0 .32em;box-sizing:border-box;margin-right:.5em;border-radius:999px;vertical-align:.12em;font:700 .6em/1 ${FONT};letter-spacing:-.01em;color:#e6cf9c;background:#1c1a16;border:1.5px solid #c9a86a;font-variant-numeric:tabular-nums}`;
     document.head.appendChild(st); }
@@ -1598,7 +1604,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     clearWorld(); mode = "lobby"; hallIndex = -1; RT = false; WALL_H = 4.6; ticker = null; HX = Math.max(4.6, (ND - 1) * SP / 2 + 1.7); HZ = ND > 3 ? 9 : 8;
     roomShell();
     curvedFront();
-    { const half = ARC_R * Math.asin(Math.min(1, HX / ARC_R)) - 0.02; buildTicker(-half, half, WALL_H - 0.66 - 0.24, 0.66); } // full width of the curved front wall
+    buildTicker(WALL_H - 0.66 - 0.24, 0.66); // film ticker running round every lobby wall
     DATA.forEach((h, i) => {
       const u = (i - (ND - 1) / 2) * SP, target = { hall: i };
       const A = arcAt(u);
@@ -1761,18 +1767,32 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   /* lobby: an LED film-strip ticker running above the hall doors, photos sliding right → left */
   let ticker = null;
-  function buildTicker(u0, u1, y0, hgt) {
-    const TW = 8192, TH = 200, FW = 186, FH = 136, PITCH = 204;
+  function buildTicker(y0, hgt) {
+    // loop path along every lobby wall: curved front (left→right), right wall, back wall, left wall
+    const half = ARC_R * Math.asin(Math.min(1, HX / ARC_R)), pts = [];
+    const push = (P, n) => pts.push({ P, n });
+    for (let i = 0; i <= 120; i++) { const A = arcAt(-half + 2 * half * i / 120); push(A.P, A.n); }
+    const E = arcAt(half).P, zE = E.z;
+    const wall = (a, b, n) => { const d = b.clone().sub(a), L = d.length(), k = Math.max(1, Math.ceil(L / 0.5)); for (let i = 0; i <= k; i++) push(a.clone().addScaledVector(d, i / k), n); };
+    wall(new THREE.Vector3(HX, 0, zE), new THREE.Vector3(HX, 0, HZ), new THREE.Vector3(-1, 0, 0));
+    wall(new THREE.Vector3(HX, 0, HZ), new THREE.Vector3(-HX, 0, HZ), new THREE.Vector3(0, 0, -1));
+    wall(new THREE.Vector3(-HX, 0, HZ), new THREE.Vector3(-HX, 0, zE), new THREE.Vector3(1, 0, 0));
+    const sAt = [0]; for (let i = 1; i < pts.length; i++) sAt.push(sAt[i - 1] + pts[i].P.distanceTo(pts[i - 1].P));
+    const LEN = sAt[sAt.length - 1];
+    // texture sized so the strip wraps exactly twice round the room (seamless, undistorted frames)
+    const TH = 200, REP = 2, TW = Math.min(8192, Math.round((LEN / hgt) * TH / REP)), FW = 186, FH = 136;
+    const nF = Math.max(8, Math.round(TW / 204)), PITCH = TW / nF;
     const cv = document.createElement("canvas"); cv.width = TW; cv.height = TH; const g = cv.getContext("2d");
     const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding; tex.wrapS = THREE.RepeatWrapping; tex.anisotropy = ANISO;
-    const nF = Math.floor(TW / PITCH), pool = [];
+    const pool = [];
     DATA.forEach((h) => { const its = h.items.filter((it) => it.wa); const k = Math.max(1, Math.floor(its.length / Math.ceil(nF / DATA.length))); for (let i = 0; i < its.length; i += k) pool.push(its[i]); });
     const picks = []; for (let i = 0; i < nF; i++) picks.push(pool[Math.floor(i * pool.length / nF)]);
     const imgs = {};
     const draw = () => {
       g.fillStyle = "#080807"; g.fillRect(0, 0, TW, TH);
       g.fillStyle = "#2e2a23";
-      for (let x = 6; x < TW; x += 28) { g.fillRect(x, 10, 14, 11); g.fillRect(x, TH - 21, 14, 11); }
+      const holes = Math.round(TW / 28), hp = TW / holes;
+      for (let i = 0; i < holes; i++) { const x = i * hp + 6; g.fillRect(x, 10, 14, 11); g.fillRect(x, TH - 21, 14, 11); }
       picks.forEach((it, i) => {
         const x = i * PITCH + (PITCH - FW) / 2, y = (TH - FH) / 2, img = it && imgs[it.wa[0]];
         g.fillStyle = "#1b1a17"; g.fillRect(x, y, FW, FH);
@@ -1784,7 +1804,6 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       { const id = g.getImageData(0, 0, TW, TH), d = id.data; // black-and-white film
         for (let i = 0; i < d.length; i += 4) { const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; d[i] = d[i + 1] = d[i + 2] = l; }
         g.putImageData(id, 0, 0); }
-      // LED matrix feel: fine dark grid + a soft top sheen
       g.fillStyle = "rgba(0,0,0,0.22)";
       for (let x = 0; x < TW; x += 4) g.fillRect(x, 0, 1, TH);
       for (let y = 0; y < TH; y += 4) g.fillRect(0, y, TW, 1);
@@ -1794,27 +1813,23 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     };
     draw();
     [...new Set(picks.filter(Boolean).map((it) => it.wa[0]))].forEach((k) => photoSrc(ATL(k)).then((src) => new THREE.ImageLoader().load(src, (im) => { imgs[k] = im; draw(); })));
-    // curved strip following the front wall
-    const N = 96, pos = [], uv = [], idx = [], housing = [];
-    for (let i = 0; i <= N; i++) {
-      const u = u0 + (u1 - u0) * i / N, A = arcAt(u), P = A.P.clone().addScaledVector(A.n, 0.07);
-      pos.push(P.x, y0, P.z, P.x, y0 + hgt, P.z); uv.push(i / N, 0, i / N, 1);
-      const Q = A.P.clone().addScaledVector(A.n, 0.05); housing.push(Q.x, y0 - 0.06, Q.z, Q.x, y0 + hgt + 0.06, Q.z);
-      if (i < N) { const a = 2 * i; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
-    }
-    const mkGeo = (p, withUV) => { const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(p, 3)); if (withUV) geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx); return geo; };
-    const back = new THREE.Mesh(mkGeo(housing, false), new THREE.MeshBasicMaterial({ color: 0x0c0c0b, side: THREE.DoubleSide })); world.add(back);
-    const len = Math.abs(u1 - u0), rep = (len / hgt) / (TW / TH);
-    tex.repeat.set(rep, 1);
-    const scr = new THREE.Mesh(mkGeo(pos, true), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, color: new THREE.Color(1.08, 1.06, 1.02) })); scr.renderOrder = 2; world.add(scr);
-    // brass trims top and bottom
-    [y0 - 0.06, y0 + hgt + 0.06].forEach((yy) => {
-      const tp = []; for (let i = 0; i <= N; i++) { const u = u0 + (u1 - u0) * i / N, A = arcAt(u), Q = A.P.clone().addScaledVector(A.n, 0.075); tp.push(Q.x, yy - 0.012, Q.z, Q.x, yy + 0.012, Q.z); }
-      world.add(new THREE.Mesh(mkGeo(tp, false), new THREE.MeshBasicMaterial({ color: 0x9d875e, side: THREE.DoubleSide })));
-    });
-    ticker = { tex };
+    const strip = (off, ya, yb, withUV) => {
+      const pos = [], uv = [], idx = [];
+      pts.forEach((q, i) => {
+        const P = q.P.clone().addScaledVector(q.n, off);
+        pos.push(P.x, ya, P.z, P.x, yb, P.z); uv.push(sAt[i] / LEN * REP, 0, sAt[i] / LEN * REP, 1);
+        if (i < pts.length - 1) { const a = 2 * i; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
+      });
+      const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      if (withUV) geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx); return geo;
+    };
+    world.add(new THREE.Mesh(strip(0.05, y0 - 0.06, y0 + hgt + 0.06, false), new THREE.MeshBasicMaterial({ color: 0x0c0c0b, side: THREE.DoubleSide })));
+    const scr = new THREE.Mesh(strip(0.07, y0, y0 + hgt, true), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, color: new THREE.Color(1.08, 1.06, 1.02) })); scr.renderOrder = 2; world.add(scr);
+    const brass = new THREE.MeshBasicMaterial({ color: 0x9d875e, side: THREE.DoubleSide });
+    [y0 - 0.06, y0 + hgt + 0.06].forEach((yy) => world.add(new THREE.Mesh(strip(0.075, yy - 0.012, yy + 0.012, false), brass)));
+    ticker = { tex, rate: 0.389 / (LEN / REP) }; // ~0.39 m/s along the wall
   }
-  function stepTicker(dt) { if (ticker && mode === "lobby" && !reduce) ticker.tex.offset.x = (ticker.tex.offset.x + dt * 0.0144) % 1; }
+  function stepTicker(dt) { if (ticker && mode === "lobby" && !reduce) ticker.tex.offset.x = (ticker.tex.offset.x + dt * ticker.rate) % 1; }
   function hangPanel(side, u, p, width, topY) {
     const m = panelMesh(p, width);
     const hM = m.userData.h;
