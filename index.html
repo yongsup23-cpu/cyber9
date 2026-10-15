@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 15:22</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 15:32</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1040,7 +1040,7 @@ window.__archiveReady = function () {
     let d = Math.min(2 * HZ - 2.4, Math.max(3.6, (HX + 0.2) / Math.tan(hf / 2)));
     if (portrait()) d = 9.6;
     const p = wp(0, 0, 0, 0).add(normalOf(0).clone().multiplyScalar(d));
-    return { x: p.x, z: p.z, yaw: 0, pitch: -0.04 };
+    return { x: p.x, z: p.z, yaw: 0, pitch: 0.04 };
   }
   function hallOverview() {
     if (RT && DR) { const r = RR - 3.6; return { x: r * Math.sin(DA), z: -r * Math.cos(DA), yaw: Math.PI - DA, pitch: WALL_H > 4 ? -0.02 : -0.05 }; }
@@ -1598,7 +1598,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     clearWorld(); mode = "lobby"; hallIndex = -1; RT = false; WALL_H = 4.6; ticker = null; HX = Math.max(4.6, (ND - 1) * SP / 2 + 1.7); HZ = ND > 3 ? 9 : 8;
     roomShell();
     curvedFront();
-    { const half = ((ND - 1) / 2) * SP + (ND > 3 ? 2.15 : 2.3) / 2 + 0.15; buildTicker(-half, half, 3.28, 0.66); }
+    { const half = ARC_R * Math.asin(Math.min(1, HX / ARC_R)) - 0.02; buildTicker(-half, half, WALL_H - 0.66 - 0.24, 0.66); } // full width of the curved front wall
     DATA.forEach((h, i) => {
       const u = (i - (ND - 1) / 2) * SP, target = { hall: i };
       const A = arcAt(u);
@@ -1781,6 +1781,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const sc = Math.max(FW / sw, FH / sh), cw = FW / sc, ch = FH / sc;
         g.drawImage(img, sx + (sw - cw) / 2, sy + (sh - ch) / 2, cw, ch, x, y, FW, FH);
       });
+      { const id = g.getImageData(0, 0, TW, TH), d = id.data; // black-and-white film
+        for (let i = 0; i < d.length; i += 4) { const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; d[i] = d[i + 1] = d[i + 2] = l; }
+        g.putImageData(id, 0, 0); }
       // LED matrix feel: fine dark grid + a soft top sheen
       g.fillStyle = "rgba(0,0,0,0.22)";
       for (let x = 0; x < TW; x += 4) g.fillRect(x, 0, 1, TH);
@@ -1811,7 +1814,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     });
     ticker = { tex };
   }
-  function stepTicker(dt) { if (ticker && mode === "lobby" && !reduce) ticker.tex.offset.x = (ticker.tex.offset.x + dt * 0.012) % 1; }
+  function stepTicker(dt) { if (ticker && mode === "lobby" && !reduce) ticker.tex.offset.x = (ticker.tex.offset.x + dt * 0.0144) % 1; }
   function hangPanel(side, u, p, width, topY) {
     const m = panelMesh(p, width);
     const hM = m.userData.h;
