@@ -31,7 +31,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .roomname{position:absolute;top:20px;left:24px;pointer-events:none;text-shadow:0 2px 8px #000;display:flex;flex-direction:column-reverse}
 #roomNo{font-size:13px;letter-spacing:.5px;color:#d3c3a5}
 #roomName{margin:0 0 6px;font-family:"Noto Serif KR",serif;font-size:24px;font-weight:400;letter-spacing:.5px}
-#chips{position:absolute;top:18px;right:24px;display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;max-width:min(560px,48%);scrollbar-width:none;mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 18px),transparent);padding:0 14px}#chips::-webkit-scrollbar{display:none}#chips button{flex:none}
+#chips{position:absolute;top:62px;right:24px;display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;max-width:min(560px,48%);scrollbar-width:none;mask-image:linear-gradient(90deg,transparent,#000 18px,#000 calc(100% - 18px),transparent);padding:0 14px}#chips::-webkit-scrollbar{display:none}#chips button{flex:none}
 #chips button{min-height:32px;padding:5px 11px;font-size:12px;background:rgba(23,24,21,.82)}
 #chips button[aria-pressed=true]{background:var(--gold2);color:#171712}
 .vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,transparent 55%,rgba(0,0,0,.45))}
@@ -51,7 +51,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .btns button{min-width:44px}
 #enterBtn2,#zoomBtn{background:var(--gold2);color:#171712;border-color:var(--gold2)}
 #enterBtn2:hover,#zoomBtn:hover{background:#cdb688}
-.look{position:absolute;right:24px;top:62px;display:flex;align-items:center;gap:8px;font-size:12px;color:#d6c9b3;text-shadow:0 1px 5px #000}.look button{min-height:36px;min-width:40px;padding:4px 10px;background:rgba(23,24,21,.85)}#bearing{min-width:60px;text-align:center}#zoomVal{min-width:58px;font-variant-numeric:tabular-nums}.look .sep{width:10px}
+.look{position:absolute;right:24px;top:14px;display:flex;align-items:center;gap:8px;font-size:12px;color:#d6c9b3;text-shadow:0 1px 5px #000}.look button{min-height:36px;min-width:40px;padding:4px 10px;background:rgba(23,24,21,.85)}#bearing{min-width:60px;text-align:center}#zoomVal{min-width:58px;font-variant-numeric:tabular-nums}.look .sep{width:10px}
 #autoBar{position:absolute;top:-1px;left:0;height:2px;width:0;background:var(--gold);transition:width .2s linear}#autoBtn{white-space:nowrap}#autoBtn[aria-pressed=true]{background:#3a3326;border-color:var(--gold);color:var(--gold)}
 .hint{display:none;position:absolute;left:24px;bottom:22px;font-size:12px;color:#a79a82;pointer-events:none;text-shadow:0 1px 5px #000;max-width:180px;line-height:1.6}
 #fade{position:absolute;inset:0;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .42s}
@@ -284,7 +284,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <div class="vignette"></div>
   <div class="roomname"><div id="roomNo"></div><h2 id="roomName"></h2></div>
   <div id="chips" hidden></div>
-  <div class="look"><button type="button" data-zoom="-1" aria-label="줌 아웃">－</button><button type="button" data-zoom="0" id="zoomVal" aria-label="줌 초기화">100%</button><button type="button" data-zoom="1" aria-label="줌 인">＋</button><span class="sep"></span><button type="button" data-look="45" aria-label="왼쪽으로 둘러보기">⟲</button><span id="bearing">정면 벽</span><button type="button" data-look="-45" aria-label="오른쪽으로 둘러보기">⟳</button><span class="sep"></span><button type="button" id="soundBtn" aria-pressed="false" aria-label="그룹사가 켜기"><span class="i">♪</span><span class="t">그룹사가 끔</span></button><button type="button" id="gyroBtn" aria-pressed="false" hidden>📱 기울여 보기</button></div>
+  <div class="look"><button type="button" data-zoom="-1" aria-label="줌 아웃">－</button><button type="button" data-zoom="0" id="zoomVal" aria-label="줌 초기화">100%</button><button type="button" data-zoom="1" aria-label="줌 인">＋</button><span class="sep"></span><button type="button" id="soundBtn" aria-pressed="false" aria-label="그룹사가 켜기"><span class="i">♪</span><span class="t">그룹사가 끔</span></button><button type="button" id="gyroBtn" aria-pressed="false" hidden>📱 기울여 보기</button></div>
   <div class="hint">바닥의 화살표를 따라 관람 · ▶ 자동 관람 · 빈 곳 클릭: 걷기 · 휠: 줌</div>
   <div id="vkeys" hidden aria-label="이동 키"><button type="button" data-vk="f" aria-label="앞으로">▲</button><button type="button" data-vk="l" aria-label="왼쪽으로 돌기">◀</button><button type="button" data-vk="b" aria-label="뒤로">▼</button><button type="button" data-vk="r" aria-label="오른쪽으로 돌기">▶</button></div>
   <section id="card" aria-live="polite"><div id="autoBar"></div>
@@ -298,10 +298,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
     <div style="display:flex;gap:8px;align-items:center"><div id="cCount"></div><button type="button" id="cardToggle" aria-label="설명 접기/펼치기" aria-expanded="true">▾</button></div>
     <div class="btns">
      <button type="button" id="autoBtn" aria-pressed="false">▶ 자동 관람</button>
-     <button type="button" id="prevBtn" aria-label="이전">←</button>
+     <button type="button" id="prevBtn" aria-label="이전 사진">← 이전 사진</button>
      <button type="button" id="zoomBtn">크게 보기</button>
      <button type="button" id="enterBtn2" hidden>입장하기</button>
-     <button type="button" id="nextBtn" aria-label="다음">→</button>
+     <button type="button" id="nextBtn" aria-label="다음 사진">다음 사진 →</button>
     </div>
    </div>
   </section>
@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 15:46</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.15 16:04</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
