@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 15:35</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 15:53</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -732,7 +732,7 @@ window.__archiveReady = function () {
     wallRec = null; ytRec = null; dust = null; beams = [];
     chronList.forEach((c) => c.tex.dispose()); chronList = [];
     pickables = []; stops = []; doors = []; photoMeshes = []; atlasUsers = {}; doorGlows = [];
-    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = []; innerCue = null; colDust = null; autoDoor = null;
+    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = []; innerCue = null; colDust = null; autoDoor = null; skyDome = null; DOME = null; skyChip(false);
     for (const k in hiRes) { hiRes[k].tex.dispose(); delete texCache[hiRes[k].url]; delete hiRes[k]; }
   }
   function onWall(mesh, side, u, y, off) {
@@ -822,7 +822,13 @@ window.__archiveReady = function () {
     }
     const fl = HQ ? reflectFloor(2 * HX, 2 * HZ) : plane(2 * HX, 2 * HZ, floorMat);
     fl.rotation.x = -Math.PI / 2; world.add(fl);
-    const ce = plane(2 * HX, 2 * HZ, ceilMat); ce.rotation.x = Math.PI / 2; ce.position.y = WALL_H; world.add(ce);
+    let ce;
+    if (mode === "lobby" && DOME) { // ceiling with a round opening for the glass cupola
+      const sh = new THREE.Shape(); sh.moveTo(-HX, -HZ); sh.lineTo(HX, -HZ); sh.lineTo(HX, HZ); sh.lineTo(-HX, HZ); sh.lineTo(-HX, -HZ);
+      const hole = new THREE.Path(); hole.absarc(DOME.x, DOME.z, DOME.R, 0, Math.PI * 2, true); sh.holes.push(hole);
+      ce = new THREE.Mesh(new THREE.ShapeGeometry(sh, 64), ceilMat);
+    } else ce = plane(2 * HX, 2 * HZ, ceilMat);
+    ce.rotation.x = Math.PI / 2; ce.position.y = WALL_H; world.add(ce);
     for (let x = Math.ceil(-HX); x <= HX; x++) {
       const a = plane(0.018, 2 * HZ, gridMat); a.rotation.x = -Math.PI / 2; a.position.set(x, 0.004, 0); world.add(a);
     }
@@ -1070,9 +1076,10 @@ window.__archiveReady = function () {
   function lobbyOverview() {
     const vf = THREE.MathUtils.degToRad(baseFov), hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
     let d = Math.min(2 * HZ - 2.4, Math.max(3.6, (HX + 0.2) / Math.tan(hf / 2)));
+    d = Math.min(2 * HZ - 2.2, d * 1.4); // stand further back so the glass cupola shows above the doors
     if (portrait()) d = 9.6;
     const p = wp(0, 0, 0, 0).add(normalOf(0).clone().multiplyScalar(d));
-    return { x: p.x, z: p.z, yaw: 0, pitch: 0.04 };
+    return { x: p.x, z: p.z, yaw: 0, pitch: portrait() ? 0.04 : 0.12 };
   }
   function hallOverview() {
     if (RT && DR) { const r = RR - 3.6; return { x: r * Math.sin(DA), z: -r * Math.cos(DA), yaw: Math.PI - DA, pitch: WALL_H > 4 ? -0.02 : -0.05 }; }
@@ -1678,10 +1685,165 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
 
   /* ---------- lobby ---------- */
+  /* ---------- lobby sky dome: live Jonggak weather (Open-Meteo) + time of day, seen through a tinted glass cupola ---------- */
+  let DOME = null, skyDome = null;
+  const SKYW = { code: 0, cloud: 0.15, temp: null, sr: 6.5, ss: 18.2, ok: false, at: 0, busy: false, prevW: 0, prevT: 0 };
+  const SKY_PREVIEW = [null, "clear", "partly", "cloudy", "rain", "snow", "storm"];
+  const SKY_NAME = { clear: "맑음", partly: "구름 조금", cloudy: "흐림", fog: "안개", rain: "비", snow: "눈", storm: "뇌우" };
+  const TIME_PREVIEW = [null, 12.5, 18.3, 22];
+  const TIME_NAME = ["실시간", "낮", "저녁", "밤"];
+  function skyKind(code, cloud) {
+    if (code >= 95) return "storm";
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "snow";
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "rain";
+    if (code === 45 || code === 48) return "fog";
+    if (code === 3 || cloud > 0.8) return "cloudy";
+    if (code === 2 || cloud > 0.35) return "partly";
+    return "clear";
+  }
+  function fetchWeather() {
+    if (SKYW.busy || (SKYW.at && Date.now() - SKYW.at < 30 * 60 * 1000)) return;
+    SKYW.busy = true;
+    const url = "https://api.open-meteo.com/v1/forecast?latitude=37.5702&longitude=126.9831&current=weather_code,cloud_cover,temperature_2m,precipitation&daily=sunrise,sunset&timezone=Asia%2FSeoul&forecast_days=1";
+    const hr = (s) => { const m = /T(\d+):(\d+)/.exec(s || ""); return m ? +m[1] + m[2] / 60 : null; };
+    fetch(url).then((r) => r.json()).then((j) => {
+      const c = j.current || {};
+      SKYW.code = c.weather_code | 0; SKYW.cloud = (c.cloud_cover != null ? c.cloud_cover : 20) / 100; SKYW.temp = c.temperature_2m;
+      const d = j.daily || {}; const a = hr(d.sunrise && d.sunrise[0]), b = hr(d.sunset && d.sunset[0]);
+      if (a != null && b != null) { SKYW.sr = a; SKYW.ss = b; }
+      SKYW.ok = true; SKYW.at = Date.now(); skyLabel();
+    }).catch(() => { SKYW.at = Date.now() - 25 * 60 * 1000; }).finally(() => { SKYW.busy = false; });
+  }
+  function skyNow() { const k = new Date(Date.now() + 9 * 3600e3); return k.getUTCHours() + k.getUTCMinutes() / 60; }
+  function skyTarget() {
+    const kind = SKY_PREVIEW[SKYW.prevW] || skyKind(SKYW.code, SKYW.cloud);
+    const H = TIME_PREVIEW[SKYW.prevT] != null ? TIME_PREVIEW[SKYW.prevT] : skyNow();
+    const sr = SKYW.sr, ss = SKYW.ss, sm = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+    const day = sm(sr - 0.45, sr + 0.55, H) * (1 - sm(ss - 0.55, ss + 0.45, H));
+    const twi = Math.max(Math.exp(-Math.pow((H - sr) / 0.6, 2)), Math.exp(-Math.pow((H - ss) / 0.6, 2)));
+    const f = Math.min(1, Math.max(0, (H - sr) / (ss - sr)));
+    const nl = 24 - (ss - sr), g = (((H - ss) % 24) + 24) % 24 / nl;
+    const arc = (t) => new THREE.Vector3(-Math.cos(Math.PI * t) * 0.8, Math.sin(Math.PI * t) * 0.62 + 0.2, -0.62).normalize();
+    const cl = { clear: 0.12, partly: 0.45, cloudy: 0.85, fog: 0.9, rain: 0.92, snow: 0.88, storm: 0.97 }[kind];
+    const ov = { clear: 0, partly: 0.08, cloudy: 0.7, fog: 0.85, rain: 0.92, snow: 0.75, storm: 0.98 }[kind];
+    const real = !SKY_PREVIEW[SKYW.prevW] && SKYW.ok;
+    return { kind, day, twi, sun: arc(f), moon: arc(Math.min(1, Math.max(0, g))),
+      cloud: real ? Math.max(cl * 0.6, Math.min(1, SKYW.cloud)) : cl, over: ov,
+      rain: kind === "rain" ? 0.75 : kind === "storm" ? 1 : 0, snow: kind === "snow" ? 1 : 0, fog: kind === "fog" ? 0.6 : 0, storm: kind === "storm" };
+  }
+  function skyLabel() {
+    const el = $("skyChip"); if (!el) return;
+    const t = skyTarget(), w = el.querySelector(".w"), tm = el.querySelector(".tm");
+    const pw = SKY_PREVIEW[SKYW.prevW], pt = SKYW.prevT;
+    if (w) w.textContent = pw ? `미리보기 · ${SKY_NAME[pw]}` : `종각 · ${SKY_NAME[t.kind]}${SKYW.ok && SKYW.temp != null ? ` ${Math.round(SKYW.temp)}°C` : ""}`;
+    if (tm) tm.textContent = pt ? TIME_NAME[pt] : (t.day > 0.5 ? "낮" : t.twi > 0.4 ? "노을" : "밤");
+  }
+  function skyChip(show) {
+    let el = $("skyChip");
+    if (!el) {
+      const host = document.querySelector(".roomname"); if (!host) return;
+      el = document.createElement("div"); el.id = "skyChip";
+      el.innerHTML = '<button type="button" class="w" title="날씨 미리보기 바꾸기"></button><button type="button" class="tm" title="시간대 미리보기 바꾸기"></button>';
+      const st = document.createElement("style");
+      st.textContent = "#skyChip{display:flex;gap:4px;margin-top:10px;pointer-events:auto}#skyChip button{font:12px/1 inherit;font-family:inherit;color:#d6c9b3;background:rgba(23,24,21,.7);border:1px solid rgba(201,168,106,.35);border-radius:999px;padding:5px 10px;cursor:pointer}#skyChip button:hover{border-color:#c9a86a;color:#f0e2c4}@media (max-width:700px){#skyChip{margin-top:4px}#skyChip button{font-size:11px;padding:4px 8px}}";
+      document.head.appendChild(st); host.insertBefore(el, host.firstChild); // column-reverse: first child sits at the bottom
+      el.querySelector(".w").addEventListener("click", (e) => { e.stopPropagation(); SKYW.prevW = (SKYW.prevW + 1) % SKY_PREVIEW.length; skyLabel(); });
+      el.querySelector(".tm").addEventListener("click", (e) => { e.stopPropagation(); SKYW.prevT = (SKYW.prevT + 1) % TIME_PREVIEW.length; skyLabel(); });
+    }
+    el.hidden = !show; if (show) skyLabel();
+  }
+  const SKY_VS = "varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }";
+  const SKY_FS = `
+    uniform float uT, uDay, uTwi, uCloud, uOver, uRain, uSnow, uFlash, uFog; uniform vec3 uSun, uMoon;
+    varying vec3 vDir;
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+      return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y); }
+    float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++){ v += a*noise(p); p = p*2.03 + 17.1; a *= 0.5; } return v; }
+    void main(){
+      vec3 d = normalize(vDir); float el = clamp(d.y, 0.0, 1.0); float phi = atan(d.x, d.z);
+      vec3 sky = mix(mix(vec3(.035,.055,.12), vec3(.008,.016,.05), el), mix(vec3(.50,.66,.82), vec3(.13,.32,.62), pow(el,.6)), uDay);
+      sky += uTwi * vec3(.55,.22,.06) * pow(1.0-el, 2.5);
+      sky = mix(sky, mix(vec3(.035,.04,.048), vec3(.38,.40,.43), uDay), uOver*.95);
+      float night = 1.0 - uDay; float moonA = smoothstep(.55, .92, night);
+      // stars
+      vec2 g = vec2(phi, asin(el)) * 46.0; vec2 id = floor(g); float h = hash(id);
+      vec2 o = vec2(hash(id+1.3), hash(id+2.7)) - .5; float st = step(.982, h) * smoothstep(.11, .0, length(fract(g)-.5-o*.6));
+      st *= (.55 + .45*sin(uT*2.2 + h*80.0)) * (1.0 - uOver) * night * smoothstep(.02, .2, el);
+      sky += vec3(.9,.92,1.0) * st;
+      // sun
+      float sd = max(dot(d, uSun), 0.0);
+      sky += uDay*(1.0-uOver*.9) * (vec3(1.0,.93,.75)*smoothstep(.9993,.9997,sd)*1.6 + vec3(1.0,.78,.45)*pow(sd,60.0)*.3);
+      // moon (with faint maria)
+      float md = max(dot(d, uMoon), 0.0); float disc = smoothstep(.99935,.99965,md);
+      float mar = .82 + .18*noise(d.xy*900.0);
+      sky += moonA*(1.0-uOver*.85) * (vec3(1.0,.98,.9)*disc*mar*1.3 + vec3(.55,.6,.75)*(pow(md,300.0)*.25 + pow(md,18.0)*.05));
+      // clouds
+      vec2 cp = d.xz / (d.y + .28) * 1.25 + vec2(uT*.010, uT*.0035);
+      float n = fbm(cp*1.7); float cov = mix(.78, .30, uCloud); float c = smoothstep(cov, cov+.22, n);
+      vec3 lit = mix(vec3(.19,.17,.18) + vec3(.05,.06,.09)*(1.0-uOver), vec3(.90,.90,.92), uDay); // night clouds catch the city glow
+      lit += uTwi*vec3(.35,.16,.06);
+      vec3 cc = mix(lit*.62, lit, smoothstep(cov, cov+.45, n)) * mix(1.0, .62, uOver);
+      sky = mix(sky, cc, c*.92);
+      // fog
+      sky = mix(sky, mix(vec3(.06,.065,.07), vec3(.52,.54,.56), uDay), uFog);
+      // rain streaks + drops on the glass
+      if (uRain > 0.0) {
+        vec2 q = vec2(phi*70.0, el*10.0 + uT*7.5); float col = floor(q.x); float r = hash(vec2(col, 3.1));
+        float y = fract(q.y*.35 + r); float sx = abs(fract(q.x) - .5);
+        float streak = step(.55, hash(vec2(col, 7.7))) * smoothstep(.10, .0, sx) * smoothstep(.0, .03, y) * smoothstep(.22, .05, y);
+        sky += vec3(.62,.67,.75) * streak * uRain * (.55 - .2*uDay);
+        vec2 dg = vec2(phi, el) * vec2(55.0, 32.0); vec2 di = floor(dg); vec2 dof = vec2(hash(di+.7), hash(di+3.1)) - .5;
+        float drop = step(.72, hash(di+9.0)) * smoothstep(.16, .05, length(fract(dg) - .5 - dof*.5));
+        sky = mix(sky, sky*1.35 + vec3(.05), drop*uRain*.6);
+      }
+      // snow
+      if (uSnow > 0.0) {
+        vec2 q = vec2(phi*38.0 + sin(uT*.6 + el*9.0)*.3, el*18.0 + uT*1.3); vec2 si = floor(q);
+        vec2 so = vec2(hash(si+.4), hash(si+5.2)) - .5; float flake = step(.6, hash(si+2.2)) * smoothstep(.16, .04, length(fract(q)-.5-so*.6));
+        sky += vec3(.85,.88,.92) * flake * uSnow * .6;
+      }
+      sky += uFlash * vec3(.55,.6,.75) * (.6 + .4*n);
+      // bronze ribs of the cupola
+      float lon = abs(fract(phi * 12.0 / 6.2831853) - .5); float wlon = .012 / max(sqrt(1.0 - el*el), .08);
+      float rib = smoothstep(.5 - wlon, .5 - wlon*.4, lon);
+      rib = max(rib, max(smoothstep(.007, .002, abs(el - .34)), smoothstep(.007, .002, abs(el - .66))));
+      rib = max(rib, smoothstep(.955, .962, el));
+      // tinted glass, kept a little dim
+      vec3 colr = sky * vec3(.74, .82, .86) * .7;
+      colr = mix(colr, vec3(.13,.105,.07) + colr*.12, rib);
+      gl_FragColor = vec4(colr, 1.0);
+    }`;
+  function buildSkyDome() {
+    if (!DOME) return;
+    const u = { uT: { value: 0 }, uDay: { value: 0 }, uTwi: { value: 0 }, uCloud: { value: 0.2 }, uOver: { value: 0 }, uRain: { value: 0 }, uSnow: { value: 0 }, uFlash: { value: 0 }, uFog: { value: 0 },
+      uSun: { value: new THREE.Vector3(0, 1, 0) }, uMoon: { value: new THREE.Vector3(0, 1, 0) } };
+    const mat = new THREE.ShaderMaterial({ uniforms: u, vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.BackSide, depthWrite: true });
+    const m = new THREE.Mesh(new THREE.SphereGeometry(DOME.R, 72, 36, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+    m.position.set(DOME.x, WALL_H, DOME.z); world.add(m);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(DOME.R, 0.07, 8, 96), basic(0x5a4a30)); rim.rotation.x = Math.PI / 2; rim.position.set(DOME.x, WALL_H - 0.02, DOME.z); world.add(rim);
+    const rim2 = new THREE.Mesh(new THREE.TorusGeometry(DOME.R + 0.18, 0.025, 6, 96), basic(0xc9a86a)); rim2.rotation.x = Math.PI / 2; rim2.position.set(DOME.x, WALL_H - 0.03, DOME.z); world.add(rim2);
+    skyDome = { u, t: skyTarget(), first: true };
+    fetchWeather(); skyChip(true);
+  }
+  function stepSky(dt, now) {
+    if (!skyDome) return;
+    if (mode !== "lobby") return;
+    const u = skyDome.u, t = skyTarget(), k = skyDome.first ? 1 : Math.min(1, dt * 0.8);
+    skyDome.first = false;
+    u.uT.value = reduce ? 0 : now / 1000;
+    for (const [key, name] of [["day", "uDay"], ["twi", "uTwi"], ["cloud", "uCloud"], ["over", "uOver"], ["rain", "uRain"], ["snow", "uSnow"], ["fog", "uFog"]]) u[name].value += (t[key] - u[name].value) * k;
+    u.uSun.value.lerp(t.sun, k).normalize(); u.uMoon.value.lerp(t.moon, k).normalize();
+    if (t.storm && !reduce && Math.random() < dt * 0.18) u.uFlash.value = 0.9 + Math.random() * 0.3;
+    u.uFlash.value *= Math.exp(-dt * 7);
+    if (Math.floor(now / 60000) !== skyDome.min) { skyDome.min = Math.floor(now / 60000); fetchWeather(); skyLabel(); }
+  }
   function buildLobby() {
     const ND = DATA.length, SP = ND > 3 ? 2.75 : 3;
     clearWorld(); mode = "lobby"; hallIndex = -1; RT = false; WALL_H = 4.6; ticker = null; HX = Math.max(4.6, (ND - 1) * SP / 2 + 1.7); HZ = ND > 3 ? 9 : 8;
+    DOME = { x: 0, z: -HZ * 0.24, R: Math.min(HX - 1.6, 4.4) };
     roomShell();
+    buildSkyDome();
     curvedFront();
     buildTicker(WALL_H - 0.66 - 0.24, 0.66); // film ticker running round every lobby wall
     DATA.forEach((h, i) => {
@@ -3874,7 +4036,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stepDoors(now);
     if (GLOW_COL && DR) { const k = 0.85 + 0.15 * Math.sin(now / 1400); GLOW_COL.forEach((m, i) => { m.material.opacity = [0.16, 0.07, 0.03][i] * k; }); }
     tickAuto(now);
-    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now); stepKioskRise(dt); stepTicker(dt); stepColDust(dt, now); stepAutoDoor(dt);
+    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now); stepKioskRise(dt); stepTicker(dt); stepColDust(dt, now); stepAutoDoor(dt); stepSky(dt, now);
     if (doorGlows.length && mode === "lobby") {
       const t = reduce ? 0 : now / 1000;
       for (const m of doorGlows) m.material.opacity = 0.22 + 0.38 * Math.pow(0.5 + 0.5 * Math.sin(t * 1.5 - m.userData.phase), 2);
