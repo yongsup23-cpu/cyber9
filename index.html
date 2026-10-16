@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 09:02</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 09:14</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -2247,7 +2247,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stops.push({ kind: "kiosk", pose: kioskPose });
     stops.push({ kind: "door", side: 3, u: -2.6, cy: 1.45, w: 2.2, h: 3.0, target, label: label2 });
     buildChips(); updateHud(); setNav();
-    cur = 0; moveTo(hallOverview(), true); setZoom(0.86); zoom = zoomTarget; camera.fov = baseFov / zoom; camera.updateProjectionMatrix(); showCard();
+    cur = 0; moveTo(hallOverview(), true); setZoom(0.74); zoom = zoomTarget; camera.fov = baseFov / zoom; camera.updateProjectionMatrix(); showCard();
     // low-res atlases
     const loading = $("loading"), bar = $("loadBar");
     const need = [...new Set(h.items.map((it) => it.wa[0]))];
