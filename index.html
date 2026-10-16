@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 15:28</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 15:35</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -3431,12 +3431,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
 
   /* ---------- input ---------- */
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  let hitUV = null;
+  let hitUV = null, hitDist = Infinity;
   function hit(cx, cy) {
     const r = canvas.getBoundingClientRect();
     ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
     const hs = ray.intersectObjects(pickables, false);
+    hitDist = hs.length ? hs[0].distance : Infinity;
     hitUV = hs.length ? hs[0].uv || null : null;
     if (hs.length && hs[0].object.userData.chron !== undefined) { const f = hs.find((h2) => h2.object === (chronList[0] && chronList[0].face)); hitUV = f ? f.uv : null; }
     return hs.length ? hs[0].object : null;
@@ -3471,8 +3472,23 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     looked = true;
     setTimeout(refreshHiRes, 900);
   }
+  // from the outer corridor, does the last pick ray pass through the drum's door opening before hitting anything?
+  function rayThroughDoor() {
+    if (mode !== "hall" || !RT || !DR) return false;
+    const O = ray.ray.origin, D = ray.ray.direction;
+    if (Math.hypot(O.x, O.z) <= RI + IWT) return false;
+    const R = RI + IWT, a = D.x * D.x + D.z * D.z, b = 2 * (O.x * D.x + O.z * D.z), c = O.x * O.x + O.z * O.z - R * R, disc = b * b - 4 * a * c;
+    if (a < 1e-6 || disc < 0) return false;
+    const t = (-b - Math.sqrt(disc)) / (2 * a);
+    if (t <= 0 || t > hitDist + 1e-3) return false;
+    const x = O.x + D.x * t, y = O.y + D.y * t, z = O.z + D.z * t;
+    if (y < 0 || y > WALL_H) return false;
+    return Math.abs(wrapAngle(Math.atan2(x, -z) - DA)) < IGAP;
+  }
   function pick(cx, cy) {
-    const o = hit(cx, cy); if (!o) { walkToward(cx, cy); return; }
+    const o = hit(cx, cy);
+    if (rayThroughDoor()) { goInner(); return; }
+    if (!o) { walkToward(cx, cy); return; }
     if (o.userData.panel) {
       const P = o.userData.panel;
       const si = stops.findIndex((t) => (t.kind === "panel" || t.kind === "chapter") && t.side === P.side && Math.abs(t.u - P.u) < 0.01);
