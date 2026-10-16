@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 15:53</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 16:25</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -822,13 +822,8 @@ window.__archiveReady = function () {
     }
     const fl = HQ ? reflectFloor(2 * HX, 2 * HZ) : plane(2 * HX, 2 * HZ, floorMat);
     fl.rotation.x = -Math.PI / 2; world.add(fl);
-    let ce;
-    if (mode === "lobby" && DOME) { // ceiling with a round opening for the glass cupola
-      const sh = new THREE.Shape(); sh.moveTo(-HX, -HZ); sh.lineTo(HX, -HZ); sh.lineTo(HX, HZ); sh.lineTo(-HX, HZ); sh.lineTo(-HX, -HZ);
-      const hole = new THREE.Path(); hole.absarc(DOME.x, DOME.z, DOME.R, 0, Math.PI * 2, true); sh.holes.push(hole);
-      ce = new THREE.Mesh(new THREE.ShapeGeometry(sh, 64), ceilMat);
-    } else ce = plane(2 * HX, 2 * HZ, ceilMat);
-    ce.rotation.x = Math.PI / 2; ce.position.y = WALL_H; world.add(ce);
+    if (!(mode === "lobby" && DOME)) { const ce = plane(2 * HX, 2 * HZ, ceilMat);
+    ce.rotation.x = Math.PI / 2; ce.position.y = WALL_H; world.add(ce); } // lobby: glass roof instead of a ceiling
     for (let x = Math.ceil(-HX); x <= HX; x++) {
       const a = plane(0.018, 2 * HZ, gridMat); a.rotation.x = -Math.PI / 2; a.position.set(x, 0.004, 0); world.add(a);
     }
@@ -1723,11 +1718,22 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const twi = Math.max(Math.exp(-Math.pow((H - sr) / 0.6, 2)), Math.exp(-Math.pow((H - ss) / 0.6, 2)));
     const f = Math.min(1, Math.max(0, (H - sr) / (ss - sr)));
     const nl = 24 - (ss - sr), g = (((H - ss) % 24) + 24) % 24 / nl;
-    const arc = (t) => new THREE.Vector3(-Math.cos(Math.PI * t) * 0.8, Math.sin(Math.PI * t) * 0.62 + 0.2, -0.62).normalize();
+    // real solar position for Seoul (lat 37.57N, lon 126.98E, KST): right of the lobby (+x) is east, the doors (-z) face south
+    const k0 = new Date(Date.now() + 9 * 3600e3), doy = Math.floor((Date.UTC(k0.getUTCFullYear(), k0.getUTCMonth(), k0.getUTCDate()) - Date.UTC(k0.getUTCFullYear(), 0, 0)) / 864e5);
+    const solar = (hr, decSign) => {
+      const B = 2 * Math.PI * (doy - 81) / 364, eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+      const dec = decSign * 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + doy) / 365), lat = 37.57 * Math.PI / 180;
+      const lst = hr + (4 * (126.98 - 135) + eot) / 60, ha = (lst - 12) * 15 * Math.PI / 180;
+      const el = Math.asin(Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(ha));
+      let az = Math.acos(Math.min(1, Math.max(-1, (Math.sin(dec) - Math.sin(el) * Math.sin(lat)) / (Math.cos(el) * Math.cos(lat)))));
+      if (ha > 0) az = 2 * Math.PI - az; // afternoon: west of south
+      const e = Math.max(0.1, el); // keep the disc just above the glass edge near sunrise/sunset
+      return new THREE.Vector3(Math.sin(az) * Math.cos(e), Math.sin(e), Math.cos(az) * Math.cos(e));
+    };
     const cl = { clear: 0.12, partly: 0.45, cloudy: 0.85, fog: 0.9, rain: 0.92, snow: 0.88, storm: 0.97 }[kind];
     const ov = { clear: 0, partly: 0.08, cloudy: 0.7, fog: 0.85, rain: 0.92, snow: 0.75, storm: 0.98 }[kind];
     const real = !SKY_PREVIEW[SKYW.prevW] && SKYW.ok;
-    return { kind, day, twi, sun: arc(f), moon: arc(Math.min(1, Math.max(0, g))),
+    return { kind, day, twi, sun: solar(H, 1), moon: solar((H + 12) % 24, -1),
       cloud: real ? Math.max(cl * 0.6, Math.min(1, SKYW.cloud)) : cl, over: ov,
       rain: kind === "rain" ? 0.75 : kind === "storm" ? 1 : 0, snow: kind === "snow" ? 1 : 0, fog: kind === "fog" ? 0.6 : 0, storm: kind === "storm" };
   }
@@ -1752,10 +1758,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     el.hidden = !show; if (show) skyLabel();
   }
-  const SKY_VS = "varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }";
+  const SKY_VS = "uniform float uHt; varying vec3 vDir; varying vec3 vP; varying vec3 vW; void main(){ vP = position; vDir = position + vec3(0.0, uHt * 0.9, 0.0); vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }";
   const SKY_FS = `
-    uniform float uT, uDay, uTwi, uCloud, uOver, uRain, uSnow, uFlash, uFog; uniform vec3 uSun, uMoon;
-    varying vec3 vDir;
+    uniform float uT, uDay, uTwi, uCloud, uOver, uRain, uSnow, uFlash, uFog, uHt, uHX, uZf, uZb; uniform vec3 uSun, uMoon;
+    varying vec3 vDir; varying vec3 vP; varying vec3 vW;
+    float gline(float c, float sp, float lw){ float f = abs(fract(c / sp + .5) - .5) * sp; float aa = fwidth(c) * 1.2 + 1e-4; return 1.0 - smoothstep(lw * .5, lw * .5 + aa, f); }
     float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
       return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y); }
@@ -1804,25 +1811,41 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         sky += vec3(.85,.88,.92) * flake * uSnow * .6;
       }
       sky += uFlash * vec3(.55,.6,.75) * (.6 + .4*n);
-      // bronze ribs of the cupola
-      float lon = abs(fract(phi * 12.0 / 6.2831853) - .5); float wlon = .012 / max(sqrt(1.0 - el*el), .08);
-      float rib = smoothstep(.5 - wlon, .5 - wlon*.4, lon);
-      rib = max(rib, max(smoothstep(.007, .002, abs(el - .34)), smoothstep(.007, .002, abs(el - .66))));
-      rib = max(rib, smoothstep(.955, .962, el));
-      // tinted glass, kept a little dim
-      vec3 colr = sky * vec3(.74, .82, .86) * .7;
-      colr = mix(colr, vec3(.13,.105,.07) + colr*.12, rib);
+      // glass: light tint, faint smudges, fresnel reflection of the warm lobby
+      vec3 colr = sky * vec3(.76, .83, .87) * .72;
+      colr *= .97 + .06 * noise(vP.xz * 1.3 + 4.0);
+      vec3 N = normalize(cross(dFdx(vW), dFdy(vW))); vec3 V = normalize(cameraPosition - vW);
+      // faint lines only: the gable edges rising from the lobby's corners, and the ridge
+      float slopeY = uHt * (1.0 - abs(vP.x) / uHX), ge = slopeY - vP.y, lw = .025;
+      float atEnd = min(abs(vP.z - uZf), abs(vP.z - uZb));
+      float edge = (1.0 - smoothstep(lw, lw + fwidth(atEnd) * 1.5 + 1e-4, atEnd)) * (1.0 - smoothstep(lw * 2.0, lw * 2.0 + fwidth(ge) * 1.5 + 1e-4, ge));
+      edge = max(edge, (1.0 - smoothstep(lw, lw + fwidth(vP.x) * 1.5 + 1e-4, abs(vP.x))) * step(uHt - .05, vP.y));
+      colr = mix(colr, mix(vec3(.16, .17, .18), vec3(.55, .57, .6), uDay), edge * .28);
+      float fr = pow(1.0 - abs(dot(N, V)), 4.0);
+      colr += fr * vec3(.16, .13, .09) * (.45 + .55 * (1.0 - uDay));
       gl_FragColor = vec4(colr, 1.0);
     }`;
   function buildSkyDome() {
     if (!DOME) return;
     const u = { uT: { value: 0 }, uDay: { value: 0 }, uTwi: { value: 0 }, uCloud: { value: 0.2 }, uOver: { value: 0 }, uRain: { value: 0 }, uSnow: { value: 0 }, uFlash: { value: 0 }, uFog: { value: 0 },
       uSun: { value: new THREE.Vector3(0, 1, 0) }, uMoon: { value: new THREE.Vector3(0, 1, 0) } };
-    const mat = new THREE.ShaderMaterial({ uniforms: u, vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.BackSide, depthWrite: true });
-    const m = new THREE.Mesh(new THREE.SphereGeometry(DOME.R, 72, 36, 0, Math.PI * 2, 0, Math.PI / 2), mat);
-    m.position.set(DOME.x, WALL_H, DOME.z); world.add(m);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(DOME.R, 0.07, 8, 96), basic(0x5a4a30)); rim.rotation.x = Math.PI / 2; rim.position.set(DOME.x, WALL_H - 0.02, DOME.z); world.add(rim);
-    const rim2 = new THREE.Mesh(new THREE.TorusGeometry(DOME.R + 0.18, 0.025, 6, 96), basic(0xc9a86a)); rim2.rotation.x = Math.PI / 2; rim2.position.set(DOME.x, WALL_H - 0.03, DOME.z); world.add(rim2);
+    // glass gable roof: two sloping panes (left / right) meeting at a ridge; the gable ends start at the lobby's visible corners
+    const BX = HX, Ht = 3.2, R = ARC_R, cz = -HZ + R, zf = cz - Math.sqrt(R * R - HX * HX), zb = HZ;
+    u.uHt = { value: Ht }; u.uHX = { value: BX }; u.uZf = { value: zf }; u.uZb = { value: zb };
+    const mat = new THREE.ShaderMaterial({ uniforms: u, vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.DoubleSide, depthWrite: true, extensions: { derivatives: true } });
+    const pos = [], sub = 10, L = (p, q, k) => p.map((v, i) => v + (q[i] - v) * k);
+    const quad = (A, B2, C, D) => { for (let i = 0; i < sub; i++) for (let j = 0; j < sub; j++) {
+      const q = (ii, jj) => L(L(A, B2, ii / sub), L(D, C, ii / sub), jj / sub);
+      const p00 = q(i, j), p10 = q(i + 1, j), p11 = q(i + 1, j + 1), p01 = q(i, j + 1);
+      pos.push(...p00, ...p10, ...p11, ...p00, ...p11, ...p01); } };
+    quad([-BX, 0, zf], [-BX, 0, zb], [0, Ht, zb], [0, Ht, zf]);   // left slope
+    quad([BX, 0, zf], [BX, 0, zb], [0, Ht, zb], [0, Ht, zf]);     // right slope
+    [zf, zb].forEach((z) => { quad([-BX, 0, z], [0, 0, z], [0, Ht, z], [0, Ht, z]); quad([BX, 0, z], [0, 0, z], [0, Ht, z], [0, Ht, z]); }); // gable ends (glass)
+    const arcZ = (x) => cz - Math.sqrt(R * R - x * x), NS = 40;  // flat glass over the sliver between the curved front wall and the gable
+    for (let i = 0; i < NS; i++) { const x0 = -BX + 2 * BX * i / NS, x1 = -BX + 2 * BX * (i + 1) / NS;
+      pos.push(x0, 0, arcZ(x0), x1, 0, arcZ(x1), x1, 0, zf, x0, 0, arcZ(x0), x1, 0, zf, x0, 0, zf); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    const m = new THREE.Mesh(geo, mat); m.position.set(0, WALL_H, 0); world.add(m);
     skyDome = { u, t: skyTarget(), first: true };
     fetchWeather(); skyChip(true);
   }
@@ -1840,12 +1863,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function buildLobby() {
     const ND = DATA.length, SP = ND > 3 ? 2.75 : 3;
-    clearWorld(); mode = "lobby"; hallIndex = -1; RT = false; WALL_H = 4.6; ticker = null; HX = Math.max(4.6, (ND - 1) * SP / 2 + 1.7); HZ = ND > 3 ? 9 : 8;
-    DOME = { x: 0, z: -HZ * 0.24, R: Math.min(HX - 1.6, 4.4) };
+    clearWorld(); mode = "lobby"; hallIndex = -1; RT = false; WALL_H = 4.6 + 0.66; ticker = null; HX = Math.max(4.6, (ND - 1) * SP / 2 + 1.7); HZ = ND > 3 ? 9 : 8;
+    DOME = { roof: true };
     roomShell();
     buildSkyDome();
     curvedFront();
-    buildTicker(WALL_H - 0.66 - 0.24, 0.66); // film ticker running round every lobby wall
+    buildTicker(4.6 - 0.66 - 0.07, 0.66); // film ticker running round every lobby wall
     DATA.forEach((h, i) => {
       const u = (i - (ND - 1) / 2) * SP, target = { hall: i };
       const A = arcAt(u);
@@ -2004,7 +2027,6 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     };
     seg(WALL_H, WALL_H / 2, new THREE.MeshBasicMaterial({ color: wallMats[0].color, side: THREE.BackSide }), ARC_R);
     seg(0.05, 0.065, new THREE.MeshBasicMaterial({ color: baseMat.color, side: THREE.BackSide }), ARC_R - 0.01);
-    seg(0.04, WALL_H - 0.13, new THREE.MeshBasicMaterial({ color: mouldMat.color, side: THREE.BackSide }), ARC_R - 0.01);
   }
   /* lobby: an LED film-strip ticker running above the hall doors, photos sliding right → left */
   let ticker = null;
