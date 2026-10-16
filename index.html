@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 16:25</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 16:35</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1890,6 +1890,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stops.unshift(art);
     buildChips(); updateHud(); setNav();
     cur = lobbyHome(); moveTo(atEasel ? easelPose() : lobbyOverview(), true); showCard();
+    if (!atEasel) { setZoom(1.25); zoom = zoomTarget; camera.fov = baseFov / zoom; camera.updateProjectionMatrix(); } // lobby opens at 125%
   }
   /* ---------- welcome easel in the middle of the lobby: the visit starts in front of it ---------- */
   let atEasel = true;
@@ -1907,7 +1908,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function enterArchive() {
     if (!leaveEasel() || mode !== "lobby") return;
-    moveTo(lobbyOverview(), false, reduce ? 0 : 3200);
+    moveTo(lobbyOverview(), false, reduce ? 0 : 3200); setZoom(1.25);
     cur = lobbyHome(); showCard();
   }
   const lobbyHome = () => Math.max(0, stops.findIndex((t) => t.kind === "overview"));
@@ -3896,7 +3897,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   $("lb").addEventListener("click", (e) => { if (e.target === $("lb")) closeLB(); });
   document.querySelectorAll("#hallNav button").forEach((b) => b.addEventListener("click", () => {
     const k = b.dataset.k;
-    if (atEasel) { leaveEasel(); if (k === "lobby") { moveTo(lobbyOverview(), false, 2600); return; } }
+    if (atEasel) { leaveEasel(); if (k === "lobby") { moveTo(lobbyOverview(), false, 2600); setZoom(1.25); return; } }
     if (k === "lobby") { if (mode !== "lobby") go(buildLobby); }
     else eraGo({ hall: +k });
   }));
