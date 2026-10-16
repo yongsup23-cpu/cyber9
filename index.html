@@ -113,7 +113,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .iwa{padding:0 12px;font-size:11.5px;color:#b6ad9e}
 .iwc{padding:6px 12px 12px;font-size:12.5px;color:#d9cfbf;line-height:1.55}
 #mapDetail .iw{width:auto}
-@media (max-width:700px){#mapLB{padding:12px}#mapLB .mbody{grid-template-columns:1fr;grid-template-rows:55vh auto}#mapSide{max-height:40vh}#mapLB .mhead h3{font-size:19px}}
+@media (max-width:700px){#mapLB .mhead{flex-wrap:wrap;align-items:center}#mapLB .mhead>div:first-child{flex:1;min-width:0}#mapLB .mtabs{order:3;flex:1 0 100%;margin:4px 0 0;display:flex}#mapLB .mtabs[hidden]{display:none}#mapLB .mtabs button{flex:1;padding:8px 0}#mapLB{padding:12px}#mapLB .mbody{grid-template-columns:1fr;grid-template-rows:55vh auto}#mapSide{max-height:40vh}#mapLB .mhead h3{font-size:19px}}
 
 .nmapwrap{position:relative;min-height:300px;display:flex}
 .nmapwrap #nmap{flex:1}
@@ -168,7 +168,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
  #roomName{display:none}
  #chips{top:auto;bottom:calc(100% - 0px);display:none}
  #card{bottom:8px;padding:9px 12px;grid-template-columns:1fr;width:calc(100% - 16px);gap:6px}
- #card .txt{max-height:26vh}
+ #card .txt{max-height:15vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
  #cTitle{font-size:17.5px}
  #cCap{font-size:14px}
  #cDetail{font-size:13px}
@@ -258,7 +258,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 #vkeys[hidden]{display:none}#vkeys{opacity:.45;transition:opacity .25s}#vkeys:hover,#vkeys:active,#vkeys:focus-within{opacity:.95}
 #vkeys button{min-height:0;padding:0;width:46px;height:46px;border-radius:10px;background:rgba(22,24,22,.72);border:1px solid #71634c;color:#e6cf9c;font-size:16px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;backdrop-filter:blur(3px)}
 #vkeys button:hover{border-color:#c9a86a}#vkeys button.on{background:#c9a86a;color:#17140e}
-#vkeys [data-vk=f]{grid-column:2;grid-row:1}#vkeys [data-vk=l]{grid-column:1;grid-row:2}#vkeys [data-vk=b]{grid-column:2;grid-row:2}#vkeys [data-vk=r]{grid-column:3;grid-row:2}.pinp.th{text-align:center}.pinp .pthumb{display:block;width:80px;height:54px;object-fit:cover;margin:0 auto 5px;border:2px solid #fff;border-radius:6px;background:#2a2c2e;box-shadow:0 3px 8px rgba(0,0,0,.45)}
+#vkeys [data-vk=f]{grid-column:2;grid-row:1}#vkeys [data-vk=fl]{grid-column:1;grid-row:1}#vkeys [data-vk=fr]{grid-column:3;grid-row:1}#vkeys [data-vk=l]{grid-column:1;grid-row:2}#vkeys [data-vk=b]{grid-column:2;grid-row:2}#vkeys [data-vk=r]{grid-column:3;grid-row:2}.pinp.th{text-align:center}.pinp .pthumb{display:block;width:80px;height:54px;object-fit:cover;margin:0 auto 5px;border:2px solid #fff;border-radius:6px;background:#2a2c2e;box-shadow:0 3px 8px rgba(0,0,0,.45)}
 
 .iwpin{position:relative;width:0;height:0;overflow:visible}
 .iwpin>.iw{position:absolute;left:30px;top:-18px;transform:translateY(-50%)}
@@ -286,7 +286,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <div id="chips" hidden></div>
   <div class="look"><button type="button" data-zoom="-1" aria-label="줌 아웃">－</button><button type="button" data-zoom="0" id="zoomVal" aria-label="줌 초기화">100%</button><button type="button" data-zoom="1" aria-label="줌 인">＋</button><span class="sep"></span><button type="button" id="soundBtn" aria-pressed="false" aria-label="그룹사가 켜기"><span class="i">♪</span><span class="t">그룹사가 끔</span></button><button type="button" id="gyroBtn" aria-pressed="false" hidden>📱 기울여 보기</button></div>
   <div class="hint">바닥의 화살표를 따라 관람 · ▶ 자동 관람 · 빈 곳 클릭: 걷기 · 휠: 줌</div>
-  <div id="vkeys" hidden aria-label="이동 키"><button type="button" data-vk="f" aria-label="앞으로">▲</button><button type="button" data-vk="l" aria-label="왼쪽으로 돌기">◀</button><button type="button" data-vk="b" aria-label="뒤로">▼</button><button type="button" data-vk="r" aria-label="오른쪽으로 돌기">▶</button></div>
+  <div id="vkeys" hidden aria-label="이동 키"><button type="button" data-vk="fl" aria-label="왼쪽 앞으로">◤</button><button type="button" data-vk="f" aria-label="앞으로">▲</button><button type="button" data-vk="fr" aria-label="오른쪽 앞으로">◥</button><button type="button" data-vk="l" aria-label="왼쪽으로 돌기">◀</button><button type="button" data-vk="b" aria-label="뒤로">▼</button><button type="button" data-vk="r" aria-label="오른쪽으로 돌기">▶</button></div>
   <section id="card" aria-live="polite"><div id="autoBar"></div>
    <div class="txt">
     <div class="head"><h3 id="cTitle"></h3><div id="cYear"></div></div>
@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 09:14</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 11:07</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -732,7 +732,7 @@ window.__archiveReady = function () {
     wallRec = null; ytRec = null; dust = null; beams = [];
     chronList.forEach((c) => c.tex.dispose()); chronList = [];
     pickables = []; stops = []; doors = []; photoMeshes = []; atlasUsers = {}; doorGlows = [];
-    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = []; innerCue = null;
+    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = []; innerCue = null; colDust = null;
     for (const k in hiRes) { hiRes[k].tex.dispose(); delete texCache[hiRes[k].url]; delete hiRes[k]; }
   }
   function onWall(mesh, side, u, y, off) {
@@ -862,6 +862,31 @@ window.__archiveReady = function () {
     const mat = new THREE.PointsMaterial({ size: HQ ? 0.026 : 0.036, map: dotTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
     const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.renderOrder = 4; world.add(pts);
     dust = { pts, P, pos, col, last: performance.now() };
+  }
+  /* sparks of light drifting down around the central light column */
+  let colDust = null;
+  function buildColDust(H) {
+    if (reduce) return;
+    const n = HQ ? 240 : 130, P = [];
+    for (let i = 0; i < n; i++) P.push({ a: Math.random() * Math.PI * 2, r: 0.06 + Math.pow(Math.random(), 1.6) * 0.55, y: Math.random() * H, sp: 0.18 + Math.random() * 0.42, tw: 1.5 + Math.random() * 3, ph: Math.random() * 6.28, sw: 0.3 + Math.random() * 0.6 });
+    const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({ size: HQ ? 0.07 : 0.085, map: dotTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
+    const pts = new THREE.Points(geo, mat); pts.frustumCulled = false; pts.renderOrder = 4; world.add(pts);
+    colDust = { pts, P, pos, col, H };
+  }
+  function stepColDust(dt, now) {
+    if (!colDust || mode !== "hall") return;
+    const { P, pos, col, H } = colDust, ts = now / 1000;
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i];
+      p.y -= p.sp * dt; if (p.y < 0.02) { p.y = H - 0.05; p.a = Math.random() * Math.PI * 2; }
+      const a = p.a + ts * 0.25 * p.sw, r = p.r + Math.sin(ts * 0.8 + p.ph) * 0.03;
+      pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = Math.sin(a) * r;
+      const fade = Math.min(1, p.y / 0.6, (H - p.y) / 0.5), v = Math.max(0, fade * (0.45 + 0.55 * Math.sin(ts * p.tw + p.ph)));
+      col[i * 3] = v; col[i * 3 + 1] = v * 0.86; col[i * 3 + 2] = v * 0.6;
+    }
+    const at = colDust.pts.geometry.attributes; at.position.needsUpdate = true; at.color.needsUpdate = true;
   }
   const _w = new THREE.Vector3();
   function stepDust(now) {
@@ -2219,6 +2244,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, H, 24, 1, true), basic(0x9a7f4c)), H / 2);
         const halo = (r, op) => add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, H, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0x8c6a32, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide })), H / 2);
         GLOW_COL = [halo(0.16, 0.16), halo(0.32, 0.07), halo(0.6, 0.03)];
+        buildColDust(H);
         const disc = (sz, y, op) => { const m = plane(sz, sz, new THREE.MeshBasicMaterial({ map: glowTex, color: 0x8c6a32, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending })); m.rotation.x = y > 0.1 ? Math.PI / 2 : -Math.PI / 2; m.renderOrder = 2; return add(m, y); };
         disc(3.2, 0.01, 0.35); disc(2.6, H - 0.01, 0.25);
         const ring = (r, y) => add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.06, 32), baseMat), y);
@@ -3436,17 +3462,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!looked) { looked = true; }
   }
   /* on-screen movement keys (↑ forward, ↓ back, ← / → turn); held down they keep moving */
-  const VK = { f: 0, b: 0, l: 0, r: 0, v: 0 };
+  const VK = { f: 0, b: 0, l: 0, r: 0, fl: 0, fr: 0, v: 0 };
   function vkBlocked() {
     return !$("intro").hidden || atEasel || ($("lb") && !$("lb").hidden) || ($("mapLB") && !$("mapLB").hidden) || ($("bookLB") && !$("bookLB").hidden) || (SR.el && !SR.el.hidden) || document.body.classList.contains("kioskOn");
   }
   function stepVK(dt) {
-    if (!(VK.f || VK.b || VK.l || VK.r) || busy || vkBlocked()) { VK.v = 0; return; }
+    if (!(VK.f || VK.b || VK.l || VK.r || VK.fl || VK.fr) || busy || vkBlocked()) { VK.v = 0; return; }
     if (anim) anim = null;
     if (auto.on) setAuto(false);
-    const turn = (VK.l ? 1 : 0) - (VK.r ? 1 : 0);
+    // diagonal keys: walk forward while turning gently toward that side
+    const turn = (VK.l ? 1 : 0) - (VK.r ? 1 : 0) + (VK.fl ? 0.7 : 0) - (VK.fr ? 0.7 : 0);
     if (turn) cam.yaw += turn * 1.5 * dt;
-    const dir = (VK.f ? 1 : 0) - (VK.b ? 1 : 0);
+    const dir = (VK.f || VK.fl || VK.fr ? 1 : 0) - (VK.b ? 1 : 0);
     VK.v += ((dir > 0 ? 6.5 : dir < 0 ? -3.5 : 0) - VK.v) * Math.min(1, dt * 5);
     if (Math.abs(VK.v) > 0.02) {
       const hx = -Math.sin(cam.yaw), hz = -Math.cos(cam.yaw);
@@ -3772,7 +3799,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stepDoors(now);
     if (GLOW_COL && DR) { const k = 0.85 + 0.15 * Math.sin(now / 1400); GLOW_COL.forEach((m, i) => { m.material.opacity = [0.16, 0.07, 0.03][i] * k; }); }
     tickAuto(now);
-    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now); stepKioskRise(dt); stepTicker(dt);
+    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now); stepKioskRise(dt); stepTicker(dt); stepColDust(dt, now);
     if (doorGlows.length && mode === "lobby") {
       const t = reduce ? 0 : now / 1000;
       for (const m of doorGlows) m.material.opacity = 0.22 + 0.38 * Math.pow(0.5 + 0.5 * Math.sin(t * 1.5 - m.userData.phase), 2);
