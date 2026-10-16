@@ -255,7 +255,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .pinw{position:relative;width:0;height:0}
 .pinp{position:absolute;left:0;bottom:8px;transform:translateX(-50%)}.lmk .lead{position:absolute;left:0;top:0;height:2px;background:rgba(255,255,255,.9);transform-origin:0 50%;box-shadow:0 0 2px rgba(0,0,0,.5)}.lmk .ldot{position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #333}
 #vkeys{position:absolute;right:14px;bottom:14px;z-index:6;display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:46px 46px;gap:5px;touch-action:none;user-select:none;-webkit-user-select:none}
-#vkeys[hidden]{display:none}
+#vkeys[hidden]{display:none}#vkeys{opacity:.45;transition:opacity .25s}#vkeys:hover,#vkeys:active,#vkeys:focus-within{opacity:.95}
 #vkeys button{min-height:0;padding:0;width:46px;height:46px;border-radius:10px;background:rgba(22,24,22,.72);border:1px solid #71634c;color:#e6cf9c;font-size:16px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;backdrop-filter:blur(3px)}
 #vkeys button:hover{border-color:#c9a86a}#vkeys button.on{background:#c9a86a;color:#17140e}
 #vkeys [data-vk=f]{grid-column:2;grid-row:1}#vkeys [data-vk=l]{grid-column:1;grid-row:2}#vkeys [data-vk=b]{grid-column:2;grid-row:2}#vkeys [data-vk=r]{grid-column:3;grid-row:2}.pinp.th{text-align:center}.pinp .pthumb{display:block;width:80px;height:54px;object-fit:cover;margin:0 auto 5px;border:2px solid #fff;border-radius:6px;background:#2a2c2e;box-shadow:0 3px 8px rgba(0,0,0,.45)}
@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 08:46</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 09:02</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1154,7 +1154,7 @@ window.__archiveReady = function () {
     g.shadowColor = NEON; g.shadowBlur = 22;
     g.strokeStyle = NEON; g.lineWidth = 7; g.stroke();
     g.fillStyle = NEON; g.font = `700 66px ${FONT}`; g.textBaseline = "middle"; g.textAlign = "left"; g.fillText("안쪽 전시관", 52, 104);
-    g.shadowBlur = 12; g.fillStyle = "#eaffb0"; g.font = `600 31px ${FONT}`; g.fillText("오른쪽으로 들어가세요", 56, 176);
+    g.shadowBlur = 12; g.fillStyle = "#eaffb0"; g.font = `600 31px ${FONT}`; g.fillText("클릭하면 안쪽 이동", 56, 176);
     g.shadowBlur = 24; g.fillStyle = NEON; g.beginPath(); g.moveTo(462, 88); g.lineTo(530, 88); g.lineTo(530, 52); g.lineTo(604, 128); g.lineTo(530, 204); g.lineTo(530, 168); g.lineTo(462, 168); g.closePath(); g.fill();
     g.shadowBlur = 0;
   });
