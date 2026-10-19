@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.19 14:36</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.19 14:46</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1001,27 +1001,16 @@ window.__archiveReady = function () {
       g.shadowBlur = 0; g.strokeStyle = "rgba(255,240,210,.9)"; g.lineWidth = 2; g.strokeRect(mx, my, W - 2 * mx, H - 2 * my);
     }));
   }
-  // soft contact shadow the protruding door surround throws on the wall behind it
-  const wallShadowTex = canvasTex(128, 128, (g, W, H) => {
-    const r = g.createRadialGradient(W / 2, H / 2, W * 0.32, W / 2, H / 2, W * 0.5); r.addColorStop(0, "rgba(0,0,0,.85)"); r.addColorStop(1, "rgba(0,0,0,0)");
-    g.fillStyle = r; g.fillRect(0, 0, W, H); g.fillStyle = "rgba(0,0,0,.85)"; g.fillRect(W * 0.18, H * 0.18, W * 0.64, H * 0.64);
-  });
   function hangDoor(side, u, preview, label, target, width, place) {
     const DW = width || 2.1, DH = DW * 1240 / 900;
     const grp = new THREE.Group();
     if (place) { grp.position.copy(place.pos); grp.rotation.y = place.rot; } else { grp.position.copy(wp(side, u, 0, 0.02)); grp.rotation.y = rotOf(side, u); }
     world.add(grp);
     const frame = plane(DW, DH, new THREE.MeshBasicMaterial({ map: doorTexture(preview, 0, label, false), transparent: true }));
-    const DZ = 0.16; // the door surround stands proud of the wall
-    frame.position.set(0, DH / 2, DZ); grp.add(frame);
-    { const side = basic(0x2b241c), topM = basic(0x3b3226), dark = basic(0x14110d), bw = DW * 0.965, bh = DH * 0.985;
-      const body = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, DZ - 0.004), [side, side, topM, dark, dark, dark]);
-      body.position.set(0, bh / 2, (DZ - 0.004) / 2); grp.add(body);
-      const sh = plane(bw + 0.5, bh + 0.25, new THREE.MeshBasicMaterial({ map: wallShadowTex, transparent: true, depthWrite: false, opacity: 0.55 }));
-      sh.position.set(0.04, bh / 2 - 0.05, 0.004); sh.renderOrder = 0; grp.add(sh); }
+    frame.position.set(0, DH / 2, 0); grp.add(frame);
     const ow = DW * 700 / 900, oh = DH * 1000 / 1240, lw = ow / 2;
     const mk = (sign) => {
-      const pivot = new THREE.Group(); pivot.position.set(-sign * ow / 2, 0, DZ + 0.012); grp.add(pivot);
+      const pivot = new THREE.Group(); pivot.position.set(-sign * ow / 2, 0, 0.012); grp.add(pivot);
       const leaf = plane(lw, oh, leafMats[sign > 0 ? 0 : 1]); leaf.position.set(sign * lw / 2, oh / 2, 0);
       pivot.add(leaf);
       leaf.userData.door = target; pickables.push(leaf);
@@ -1033,7 +1022,7 @@ window.__archiveReady = function () {
     if (place) {
       const PW = DW * 870 / 900, PH = DH * 150 / 1240, M = 0.07, gw = PW + 2 * M, gh = PH + 2 * M;
       const fg = plane(gw, gh, new THREE.MeshBasicMaterial({ map: plaqueGlowTex(gw, gh, M), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 }));
-      fg.position.set(DW * (445 - 450) / 900, DH - PH / 2, DZ + 0.03); fg.renderOrder = 5; fg.userData.phase = doorGlows.length * 1.1; grp.add(fg); doorGlows.push(fg);
+      fg.position.set(DW * (445 - 450) / 900, DH - PH / 2, 0.03); fg.renderOrder = 5; fg.userData.phase = doorGlows.length * 1.1; grp.add(fg); doorGlows.push(fg);
       const top = WALL_H - 0.6, sw = Math.max(1.5, DW * 1.45);
       const pl = plane(sw * 1.2, 1.4, poolMat); pl.rotation.x = -Math.PI / 2; pl.position.set(0, 0.006, 0.75); pl.renderOrder = -1; grp.add(pl);
     } else {
@@ -1918,9 +1907,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       [zfg, zb].forEach((z) => { for (let i = 0; i < NA; i++) { const a0 = Math.PI * i / NA, a1 = Math.PI * (i + 1) / NA; pos.push(0, 0, z, ...P2(a0, z), ...P2(a1, z)); } });
       for (let i = 0; i < 40; i++) { const x0 = -HX + 2 * HX * i / 40, x1 = -HX + 2 * HX * (i + 1) / 40; pos.push(x0, 0, arcZ(x0), x1, 0, arcZ(x1), x1, 0, zfg, x0, 0, arcZ(x0), x1, 0, zfg, x0, 0, zfg); }
       addGlass();
-      for (let z = zfg; z <= zb + 0.01; z += 2.75) { const t = new THREE.Mesh(new THREE.TorusGeometry(HX, 0.03, 6, 64, Math.PI), bronze); t.scale.y = S; t.position.set(0, Y0, Math.min(z, zb - 0.03)); world.add(t); }
+      { const zs = []; for (let z = zfg; z < zb - 1.0; z += 2.75) zs.push(z); zs.push(zb - 0.03); // ribs at door spacing, always closing with an arch at the back wall
+        zs.forEach((z) => { const t = new THREE.Mesh(new THREE.TorusGeometry(HX, 0.03, 6, 64, Math.PI), bronze); t.scale.y = S; t.position.set(0, Y0, z); world.add(t); }); }
       const rz = (z0, z1, x, y) => { const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, z1 - z0), bronze); b2.position.set(x, y, (z0 + z1) / 2); world.add(b2); };
-      rz(zfg, zb, 0, Y0 + S * HX); rz(zfg, zb, -HX + 0.03, Y0 + 0.03); rz(zfg, zb, HX - 0.03, Y0 + 0.03);
+      rz(zfg, zb - 0.03, 0, Y0 + S * HX); rz(zfg, zb, -HX + 0.03, Y0 + 0.03); rz(zfg, zb, HX - 0.03, Y0 + 0.03);
     } else if (ROOF === "coffer") {
       // ② dark coffered ceiling with gold-edged beams and a raised skylight in the middle
       const sw = HX * 0.5, sz0 = -HZ * 0.35, sz1 = HZ * 0.45, LH = 1.1;
