@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.16 16:55</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.19 10:36</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -732,7 +732,7 @@ window.__archiveReady = function () {
     wallRec = null; ytRec = null; dust = null; beams = [];
     chronList.forEach((c) => c.tex.dispose()); chronList = [];
     pickables = []; stops = []; doors = []; photoMeshes = []; atlasUsers = {}; doorGlows = [];
-    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = []; innerCue = null; colDust = null; autoDoor = null;
+    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = []; innerCue = null; colDust = null; autoDoor = null; skyDome = null; DOME = null; skyChip(false);
     for (const k in hiRes) { hiRes[k].tex.dispose(); delete texCache[hiRes[k].url]; delete hiRes[k]; }
   }
   function onWall(mesh, side, u, y, off) {
@@ -822,7 +822,8 @@ window.__archiveReady = function () {
     }
     const fl = HQ ? reflectFloor(2 * HX, 2 * HZ) : plane(2 * HX, 2 * HZ, floorMat);
     fl.rotation.x = -Math.PI / 2; world.add(fl);
-    const ce = plane(2 * HX, 2 * HZ, ceilMat); ce.rotation.x = Math.PI / 2; ce.position.y = WALL_H; world.add(ce);
+    if (!(mode === "lobby" && DOME)) { const ce = plane(2 * HX, 2 * HZ, ceilMat);
+    ce.rotation.x = Math.PI / 2; ce.position.y = WALL_H; world.add(ce); } // lobby: glass roof instead of a ceiling
     for (let x = Math.ceil(-HX); x <= HX; x++) {
       const a = plane(0.018, 2 * HZ, gridMat); a.rotation.x = -Math.PI / 2; a.position.set(x, 0.004, 0); world.add(a);
     }
@@ -1070,9 +1071,10 @@ window.__archiveReady = function () {
   function lobbyOverview() {
     const vf = THREE.MathUtils.degToRad(baseFov), hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);
     let d = Math.min(2 * HZ - 2.4, Math.max(3.6, (HX + 0.2) / Math.tan(hf / 2)));
+    d = Math.min(2 * HZ - 2.2, d * 1.4); // stand further back so the glass cupola shows above the doors
     if (portrait()) d = 9.6;
     const p = wp(0, 0, 0, 0).add(normalOf(0).clone().multiplyScalar(d));
-    return { x: p.x, z: p.z, yaw: 0, pitch: 0.04 };
+    return { x: p.x, z: p.z, yaw: 0, pitch: portrait() ? 0.04 : 0.12 };
   }
   function hallOverview() {
     if (RT && DR) { const r = RR - 3.6; return { x: r * Math.sin(DA), z: -r * Math.cos(DA), yaw: Math.PI - DA, pitch: WALL_H > 4 ? -0.02 : -0.05 }; }
@@ -1678,12 +1680,307 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
 
   /* ---------- lobby ---------- */
+  /* ---------- lobby sky dome: live Jonggak weather (Open-Meteo) + time of day, seen through a tinted glass cupola ---------- */
+  let DOME = null, skyDome = null;
+  const SKYW = { code: 0, cloud: 0.15, temp: null, sr: 6.5, ss: 18.2, ok: false, at: 0, busy: false, prevW: 0, prevT: 0, name: "종각", lat: 37.5702, lon: 126.9831, tz: 9 * 3600 };
+  const SKY_CITIES = { "서울": [37.5702, 126.9831, "종각"], "종각": [37.5702, 126.9831, "종각"], "인천": [37.4563, 126.7052], "수원": [37.2636, 127.0286], "춘천": [37.8813, 127.7298], "강릉": [37.7519, 128.8761],
+    "대전": [36.3504, 127.3845], "세종": [36.4800, 127.2890], "청주": [36.6424, 127.4890], "전주": [35.8242, 127.1480], "광주": [35.1595, 126.8526], "대구": [35.8714, 128.6014],
+    "포항": [36.0190, 129.3435], "울산": [35.5384, 129.3114], "창원": [35.2280, 128.6811], "부산": [35.1796, 129.0756], "여수": [34.7604, 127.6622], "제주": [33.4996, 126.5312] };
+  try { const sv = JSON.parse(localStorage.getItem("kumhoSkyLoc") || "null"); if (sv && isFinite(sv.lat) && isFinite(sv.lon)) Object.assign(SKYW, { name: String(sv.name).slice(0, 20), lat: +sv.lat, lon: +sv.lon, tz: isFinite(sv.tz) ? +sv.tz : 9 * 3600 }); } catch (e) {}
+  function setSkyLoc(name, lat, lon, tz) {
+    Object.assign(SKYW, { name, lat, lon, tz: tz == null ? 9 * 3600 : tz, ok: false, at: 0, temp: null });
+    try { localStorage.setItem("kumhoSkyLoc", JSON.stringify({ name, lat, lon, tz: SKYW.tz })); } catch (e) {}
+    SKYW.prevW = 0; SKYW.prevT = 0; if (skyDome) skyDome.first = true; skyLabel(); fetchWeather();
+  }
+  function findSkyLoc(q) { // 1) built-in Korean cities  2) Open-Meteo geocoding (Korean names allowed)
+    q = q.trim().replace(/\s+/g, " "); if (!q) return Promise.reject(new Error("empty"));
+    const k = q.replace(/(특별시|광역시|특별자치시|특별자치도|시|도)$/, "");
+    if (SKY_CITIES[k]) { const c = SKY_CITIES[k]; return Promise.resolve({ name: c[2] || k, lat: c[0], lon: c[1], tz: 9 * 3600 }); }
+    return fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=ko&format=json&name=" + encodeURIComponent(k))
+      .then((r) => r.json()).then((j) => { const g = j.results && j.results[0]; if (!g) throw new Error("none");
+        return { name: g.name || k, lat: g.latitude, lon: g.longitude, tz: null }; });
+  }
+  const SKY_PREVIEW = [null, "clear", "partly", "cloudy", "rain", "snow", "storm"];
+  const SKY_NAME = { clear: "맑음", partly: "구름 조금", cloudy: "흐림", fog: "안개", rain: "비", snow: "눈", storm: "뇌우" };
+  const TIME_PREVIEW = [null, "dawn", "noon", "dusk", "night"];
+  const TIME_NAME = ["실시간", "아침", "낮", "오후", "밤"];
+  function skyKind(code, cloud) {
+    if (code >= 95) return "storm";
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "snow";
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "rain";
+    if (code === 45 || code === 48) return "fog";
+    if (code === 3 || cloud > 0.8) return "cloudy";
+    if (code === 2 || cloud > 0.35) return "partly";
+    return "clear";
+  }
+  function fetchWeather() {
+    if (SKYW.busy || (SKYW.at && Date.now() - SKYW.at < 30 * 60 * 1000)) return;
+    SKYW.busy = true;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${SKYW.lat}&longitude=${SKYW.lon}&current=weather_code,cloud_cover,temperature_2m,precipitation&daily=sunrise,sunset&timezone=auto&forecast_days=1`;
+    const hr = (s) => { const m = /T(\d+):(\d+)/.exec(s || ""); return m ? +m[1] + m[2] / 60 : null; };
+    fetch(url).then((r) => r.json()).then((j) => {
+      const c = j.current || {};
+      SKYW.code = c.weather_code | 0; SKYW.cloud = (c.cloud_cover != null ? c.cloud_cover : 20) / 100; SKYW.temp = c.temperature_2m;
+      const d = j.daily || {}; const a = hr(d.sunrise && d.sunrise[0]), b = hr(d.sunset && d.sunset[0]);
+      if (a != null && b != null) { SKYW.sr = a; SKYW.ss = b; }
+      if (isFinite(j.utc_offset_seconds)) SKYW.tz = j.utc_offset_seconds; SKYW.ok = true; SKYW.at = Date.now(); skyLabel();
+    }).catch(() => { SKYW.at = Date.now() - 25 * 60 * 1000; }).finally(() => { SKYW.busy = false; });
+  }
+  function skyNow() { const k = new Date(Date.now() + SKYW.tz * 1000); return k.getUTCHours() + k.getUTCMinutes() / 60; }
+  function skyTarget() {
+    const kind = SKY_PREVIEW[SKYW.prevW] || skyKind(SKYW.code, SKYW.cloud);
+    const sr = SKYW.sr, ss = SKYW.ss, tp = TIME_PREVIEW[SKYW.prevT];
+    const H = tp === "dawn" ? sr - 0.1 : tp === "noon" ? 12.5 : tp === "dusk" ? ss + 0.05 : tp === "night" ? 22 : skyNow();
+    const sm = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+    const day = sm(sr - 0.45, sr + 0.55, H) * (1 - sm(ss - 0.55, ss + 0.45, H));
+    const tDawn = Math.exp(-Math.pow((H - sr) / 0.7, 2)), tDusk = Math.exp(-Math.pow((H - ss) / 0.7, 2)), twi = Math.max(tDawn, tDusk), dawn = tDawn / (tDawn + tDusk + 1e-6);
+    const f = Math.min(1, Math.max(0, (H - sr) / (ss - sr)));
+    const nl = 24 - (ss - sr), g = (((H - ss) % 24) + 24) % 24 / nl;
+    // real solar position for Seoul (lat 37.57N, lon 126.98E, KST): right of the lobby (+x) is east, the doors (-z) face south
+    const k0 = new Date(Date.now() + SKYW.tz * 1000), doy = Math.floor((Date.UTC(k0.getUTCFullYear(), k0.getUTCMonth(), k0.getUTCDate()) - Date.UTC(k0.getUTCFullYear(), 0, 0)) / 864e5);
+    const solar = (hr, decSign) => {
+      const B = 2 * Math.PI * (doy - 81) / 364, eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+      const dec = decSign * 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + doy) / 365), lat = SKYW.lat * Math.PI / 180;
+      const lst = hr + (4 * (SKYW.lon - SKYW.tz / 240) + eot) / 60, ha = (lst - 12) * 15 * Math.PI / 180;
+      const el = Math.asin(Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(ha));
+      let az = Math.acos(Math.min(1, Math.max(-1, (Math.sin(dec) - Math.sin(el) * Math.sin(lat)) / (Math.cos(el) * Math.cos(lat)))));
+      if (ha > 0) az = 2 * Math.PI - az; // afternoon: west of south
+      const e = Math.max(0.1, el); // keep the disc just above the glass edge near sunrise/sunset
+      return new THREE.Vector3(Math.sin(az) * Math.cos(e), Math.sin(e), Math.cos(az) * Math.cos(e));
+    };
+    const cl = { clear: 0.3, partly: 0.45, cloudy: 0.85, fog: 0.9, rain: 0.92, snow: 0.88, storm: 0.97 }[kind];
+    const ov = { clear: 0, partly: 0.08, cloudy: 0.7, fog: 0.85, rain: 0.92, snow: 0.75, storm: 0.98 }[kind];
+    const real = !SKY_PREVIEW[SKYW.prevW] && SKYW.ok;
+    return { kind, day, twi, dawn, H, sun: solar(H, 1), moon: solar((H + 12) % 24, -1),
+      cloud: real ? Math.max(cl * 0.6, Math.min(1, SKYW.cloud)) : cl, over: ov,
+      rain: kind === "rain" ? 0.75 : kind === "storm" ? 1 : 0, snow: kind === "snow" ? 1 : 0, fog: kind === "fog" ? 0.6 : 0, storm: kind === "storm" };
+  }
+  function skyLabel() {
+    const el = $("skyChip"); if (!el) return;
+    const t = skyTarget(), w = el.querySelector(".w"), tm = el.querySelector(".tm");
+    const pw = SKY_PREVIEW[SKYW.prevW], pt = SKYW.prevT;
+    if (w) w.textContent = pw ? `미리보기 · ${SKY_NAME[pw]}` : `${SKYW.name} · ${SKY_NAME[t.kind]}${SKYW.ok && SKYW.temp != null ? ` ${Math.round(SKYW.temp)}°C` : ""}`;
+    if (tm) tm.textContent = pt ? TIME_NAME[pt] : (t.twi > 0.35 ? (t.dawn > 0.5 ? "아침" : "오후") : t.day > 0.5 ? (t.H < 10 ? "아침" : t.H < 15 ? "낮" : "오후") : "밤");
+  }
+  function skyChip(show) {
+    let el = $("skyChip");
+    if (!el) {
+      const host = document.querySelector(".roomname"); if (!host) return;
+      el = document.createElement("div"); el.id = "skyChip";
+      el.innerHTML = '<button type="button" class="loc" title="날씨 지역 바꾸기">📍 지역</button><button type="button" class="w" title="날씨 미리보기 바꾸기"></button><button type="button" class="tm" title="시간대 미리보기 바꾸기"></button>';
+      const st = document.createElement("style");
+      st.textContent = "#skyChip{display:flex;gap:4px;margin-top:10px;pointer-events:auto}#skyChip button{font:12px/1 inherit;font-family:inherit;color:#d6c9b3;background:rgba(23,24,21,.7);border:1px solid rgba(201,168,106,.35);border-radius:999px;padding:5px 10px;cursor:pointer}#skyChip button:hover{border-color:#c9a86a;color:#f0e2c4}#skyLoc{position:absolute;z-index:30;width:300px;padding:12px;background:rgba(18,18,16,.96);border:1px solid rgba(201,168,106,.45);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.6);color:#d6c9b3;font-size:12px}#skyLoc form{display:flex;gap:6px}#skyLoc input{flex:1;min-width:0;background:#0d0e0d;border:1px solid #4a4436;border-radius:6px;color:#f0e2c4;padding:7px 9px;font:13px inherit;font-family:inherit}#skyLoc button{cursor:pointer;font-family:inherit;color:#d6c9b3;background:rgba(40,38,32,.9);border:1px solid rgba(201,168,106,.35);border-radius:6px;padding:6px 9px;font-size:12px}#skyLoc .cities{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}#skyLoc .cities button{border-radius:999px;padding:4px 9px}#skyLoc .msg{min-height:16px;margin-top:7px;color:#c9a86a}@media (max-width:700px){#skyChip{margin-top:4px}#skyChip button{font-size:11px;padding:4px 8px}}";
+      document.head.appendChild(st); host.insertBefore(el, host.firstChild); // column-reverse: first child sits at the bottom
+      el.querySelector(".loc").addEventListener("click", (e) => { e.stopPropagation(); skyLocPanel(el); });
+      el.querySelector(".w").addEventListener("click", (e) => { e.stopPropagation(); SKYW.prevW = (SKYW.prevW + 1) % SKY_PREVIEW.length; skyLabel(); if (skyDome) skyDome.first = true; });
+      el.querySelector(".tm").addEventListener("click", (e) => { e.stopPropagation(); SKYW.prevT = (SKYW.prevT + 1) % TIME_PREVIEW.length; skyLabel(); if (skyDome) skyDome.first = true; });
+    }
+    el.hidden = !show; if (show) skyLabel(); else if ($("skyLoc")) $("skyLoc").remove();
+  }
+  function skyLocPanel(anchor) {
+    let pn = $("skyLoc"); if (pn) { pn.remove(); return; }
+    pn = document.createElement("div"); pn.id = "skyLoc";
+    const names = ["서울", "인천", "수원", "춘천", "강릉", "대전", "청주", "전주", "광주", "대구", "울산", "부산", "제주"];
+    pn.innerHTML = '<form><input type="text" placeholder="지역 이름 입력 (예: 대전, 속초, 도쿄)" aria-label="지역 이름" maxlength="40"><button type="submit">적용</button></form>'
+      + '<div class="cities">' + names.map((n) => `<button type="button" data-n="${n}">${n}</button>`).join("") + "</div><div class=\"msg\"></div>";
+    document.body.appendChild(pn);
+    const r = anchor.getBoundingClientRect(); pn.style.left = Math.max(8, Math.min(r.left, innerWidth - 316)) + "px"; pn.style.top = (r.bottom + 6) + "px";
+    const msg = pn.querySelector(".msg"), inp = pn.querySelector("input");
+    const go = (q) => { msg.textContent = "찾는 중…"; findSkyLoc(q).then((g) => { setSkyLoc(g.name, g.lat, g.lon, g.tz); pn.remove(); })
+      .catch(() => { msg.textContent = "지역을 찾지 못했습니다. 다른 이름으로 입력해 보세요."; }); };
+    pn.querySelector("form").addEventListener("submit", (e) => { e.preventDefault(); go(inp.value); });
+    pn.querySelectorAll(".cities button").forEach((b) => b.addEventListener("click", () => go(b.dataset.n)));
+    ["pointerdown", "keydown", "wheel"].forEach((ev) => pn.addEventListener(ev, (e) => e.stopPropagation()));
+    setTimeout(() => inp.focus(), 30);
+    const close = (e) => { if (!pn.contains(e.target) && !anchor.contains(e.target)) { pn.remove(); document.removeEventListener("pointerdown", close, true); } };
+    document.addEventListener("pointerdown", close, true);
+  }
+  const SKY_VS = "varying vec3 vDir; varying vec3 vP; varying vec3 vW; void main(){ vP = position; vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; vDir = w.xyz - cameraPosition; gl_Position = projectionMatrix * viewMatrix * w; }";
+  const SKY_FS = `
+    uniform float uT, uDay, uTwi, uDawn, uCloud, uOver, uRain, uSnow, uFlash, uFog, uHt, uHX, uZf, uZb, uEdge; uniform vec3 uSun, uMoon;
+    varying vec3 vDir; varying vec3 vP; varying vec3 vW;
+    float gline(float c, float sp, float lw){ float f = abs(fract(c / sp + .5) - .5) * sp; float aa = fwidth(c) * 1.2 + 1e-4; return 1.0 - smoothstep(lw * .5, lw * .5 + aa, f); }
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+      return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y); }
+    float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++){ v += a*noise(p); p = p*2.03 + 17.1; a *= 0.5; } return v; }
+    void main(){
+      vec3 d = normalize(vDir); float el = clamp(d.y, 0.0, 1.0); float phi = atan(d.x, d.z);
+      vec3 sky = mix(mix(vec3(.035,.055,.12), vec3(.008,.016,.05), el), mix(vec3(.46,.52,.57), vec3(.21,.29,.40), pow(el,.6)), uDay);
+      vec3 tcol = mix(vec3(.88,.42,.14), vec3(.86,.24,.20), uDawn);           // sunset orange  /  red dawn
+      vec2 sh = normalize(uSun.xz + 1e-4), dh = normalize(d.xz + 1e-4);
+      float side = pow(dot(dh, sh) * .5 + .5, 2.2);                           // glow strongest toward the sun
+      sky = mix(sky, sky * vec3(.55,.5,.7), uTwi * .5);                       // deeper violet-blue overhead
+      sky += uTwi * tcol * (.35 + 1.0 * side) * pow(1.0 - el, 1.3);
+      sky += uTwi * vec3(.9,.55,.35) * pow(max(dot(d, uSun), 0.0), 8.0) * .35;
+      sky = mix(sky, mix(vec3(.035,.04,.048), vec3(.38,.40,.43), uDay), uOver*.95);
+      float night = 1.0 - uDay; float moonA = smoothstep(.55, .92, night);
+      // stars
+      vec2 g = vec2(phi, asin(el)) * 46.0; vec2 id = floor(g); float h = hash(id);
+      vec2 o = vec2(hash(id+1.3), hash(id+2.7)) - .5; float st = step(.982, h) * smoothstep(.11, .0, length(fract(g)-.5-o*.6));
+      st *= (.55 + .45*sin(uT*2.2 + h*80.0)) * (1.0 - uOver) * night * smoothstep(.02, .2, el);
+      sky += vec3(.9,.92,1.0) * st;
+      // sun
+      float sd = max(dot(d, uSun), 0.0);
+      sky += uDay*(1.0-uOver*.9) * (vec3(1.0,.93,.75)*smoothstep(.9993,.9997,sd)*1.6 + vec3(1.0,.78,.45)*pow(sd,60.0)*.3);
+      // moon (with faint maria)
+      float md = max(dot(d, uMoon), 0.0); float disc = smoothstep(.99935,.99965,md);
+      float mar = .82 + .18*noise(d.xy*900.0);
+      sky += moonA*(1.0-uOver*.85) * (vec3(1.0,.98,.9)*disc*mar*1.3 + vec3(.55,.6,.75)*(pow(md,300.0)*.25 + pow(md,18.0)*.05));
+      // clouds
+      vec2 cp = d.xz / (d.y + .28) * 1.25 + vec2(uT*.010, uT*.0035);
+      float n = fbm(cp*1.7); float cov = mix(.78, .30, uCloud); float c = smoothstep(cov, cov+.22, n);
+      vec3 lit = mix(vec3(.19,.17,.18) + vec3(.05,.06,.09)*(1.0-uOver), vec3(.90,.90,.92), uDay); // night clouds catch the city glow
+      lit += uTwi * mix(vec3(.55,.24,.08), vec3(.55,.17,.16), uDawn) * (.5 + .8 * side);
+      vec3 cc = mix(lit*.62, lit, smoothstep(cov, cov+.45, n)) * mix(1.0, .62, uOver);
+      sky = mix(sky, cc, c*.92);
+      // fog
+      sky = mix(sky, mix(vec3(.06,.065,.07), vec3(.52,.54,.56), uDay), uFog);
+      // rain streaks + drops on the glass
+      if (uRain > 0.0) {
+        vec2 q = vec2(phi*70.0, el*10.0 + uT*7.5); float col = floor(q.x); float r = hash(vec2(col, 3.1));
+        float y = fract(q.y*.35 + r); float sx = abs(fract(q.x) - .5);
+        float streak = step(.55, hash(vec2(col, 7.7))) * smoothstep(.10, .0, sx) * smoothstep(.0, .03, y) * smoothstep(.22, .05, y);
+        sky += vec3(.62,.67,.75) * streak * uRain * (.55 - .2*uDay);
+        vec2 dg = vec2(phi, el) * vec2(55.0, 32.0); vec2 di = floor(dg); vec2 dof = vec2(hash(di+.7), hash(di+3.1)) - .5;
+        float drop = step(.72, hash(di+9.0)) * smoothstep(.16, .05, length(fract(dg) - .5 - dof*.5));
+        sky = mix(sky, sky*1.35 + vec3(.05), drop*uRain*.6);
+      }
+      // snow
+      if (uSnow > 0.0) {
+        vec2 q = vec2(phi*38.0 + sin(uT*.6 + el*9.0)*.3, el*18.0 + uT*1.3); vec2 si = floor(q);
+        vec2 so = vec2(hash(si+.4), hash(si+5.2)) - .5; float flake = step(.6, hash(si+2.2)) * smoothstep(.16, .04, length(fract(q)-.5-so*.6));
+        sky += vec3(.85,.88,.92) * flake * uSnow * .6;
+      }
+      sky += uFlash * vec3(.55,.6,.75) * (.6 + .4*n);
+      // curtain-wall glass: light tint, faint vertical sheen and a fresnel reflection of the warm lobby
+      vec3 colr = sky * vec3(.80, .86, .89) * .74;
+      vec3 N = normalize(cross(dFdx(vW), dFdy(vW))); vec3 V = normalize(cameraPosition - vW);
+      float along = abs(N.x) > .5 ? vW.z : vW.x;
+      colr *= .97 + .05 * noise(vec2(along * .8, vW.y * .3) + 4.0);
+      colr += vec3(.035, .04, .045) * smoothstep(.6, 1.0, noise(vec2(along * .35, 3.0))) * (.4 + .6 * uDay);
+      float fr = pow(1.0 - abs(dot(N, V)), 4.0);
+      colr += fr * vec3(.16, .13, .09) * (.45 + .55 * (1.0 - uDay));
+      // slim dark frame lines: gable edges rising from the lobby's corners, and the ridge
+      float slopeY = uHt * (1.0 - abs(vP.x) / uHX), ge = slopeY - vP.y, lw = .0125;
+      float atEnd = min(abs(vP.z - uZf), abs(vP.z - uZb));
+      float edge = (1.0 - smoothstep(lw, lw + fwidth(atEnd) * 1.5 + 1e-4, atEnd)) * (1.0 - smoothstep(lw * 2.0, lw * 2.0 + fwidth(ge) * 1.5 + 1e-4, ge));
+      edge = max(edge, (1.0 - smoothstep(lw, lw + fwidth(vP.x) * 1.5 + 1e-4, abs(vP.x))) * step(uHt - .05, vP.y));
+      colr = mix(colr, vec3(.045, .045, .043), edge * .85 * uEdge);
+      gl_FragColor = vec4(colr, 1.0);
+    }`;
+  function buildSkyDome() {
+    if (!DOME) return;
+    const u = { uT: { value: 0 }, uDay: { value: 0 }, uTwi: { value: 0 }, uCloud: { value: 0.2 }, uOver: { value: 0 }, uRain: { value: 0 }, uSnow: { value: 0 }, uFlash: { value: 0 }, uFog: { value: 0 },
+      uSun: { value: new THREE.Vector3(0, 1, 0) }, uMoon: { value: new THREE.Vector3(0, 1, 0) } };
+    // lobby top: black band (film height) on every wall, then a curtain wall following the lobby plan, open to the sky
+    const CH = 2.7, Y0 = WALL_H, BH = 0.66, R = ARC_R, cz = -HZ + R;
+    u.uDawn = { value: 0 };
+    const black = basic(0x0b0b0a), blackB = basic(0x0b0b0a, { side: THREE.BackSide });
+    for (let sd = 0; sd < 4; sd++) onWall(plane(wallLen(sd), BH, black), sd, 0, Y0 - BH / 2, 0.03);
+    { const tm = Math.asin(Math.min(1, HX / R)); const g = new THREE.CylinderGeometry(R - 0.03, R - 0.03, BH, 72, 1, true, Math.PI - tm, 2 * tm);
+      const mb = new THREE.Mesh(g, blackB); mb.position.set(0, Y0 - BH / 2, cz); world.add(mb); }
+    const mat = new THREE.ShaderMaterial({ uniforms: u, vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.DoubleSide, depthWrite: true, extensions: { derivatives: true } });
+    const ROOF = (new URLSearchParams(location.search).get("roof")) || "vault";
+    u.uEdge = { value: ROOF === "gable" ? 1 : 0 }; u.uHt = { value: 1 }; u.uHX = { value: 1 }; u.uZf = { value: 0 }; u.uZb = { value: 0 };
+    const pos = [], L = (p, q, k) => p.map((v, i) => v + (q[i] - v) * k);
+    const quadN = (A, B2, C, D, sub) => { for (let i = 0; i < sub; i++) for (let j = 0; j < sub; j++) {
+      const q = (ii, jj) => L(L(A, B2, ii / sub), L(D, C, ii / sub), jj / sub);
+      const p00 = q(i, j), p10 = q(i + 1, j), p11 = q(i + 1, j + 1), p01 = q(i, j + 1);
+      pos.push(...p00, ...p10, ...p11, ...p00, ...p11, ...p01); } };
+    const zfg = cz - Math.sqrt(R * R - HX * HX), zb = HZ, arcZ = (x) => cz - Math.sqrt(R * R - x * x);
+    const bronze = basic(0x6b5636), gold = basic(0xc9a86a), wood = basic(0x1d1813), woodL = basic(0x2a2219);
+    const addGlass = () => { const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); const mm = new THREE.Mesh(g, mat); mm.position.set(0, Y0, 0); world.add(mm); };
+    const planShape = (holeFn) => { const sh = new THREE.Shape(), NA = 40, tmA = Math.asin(Math.min(1, HX / R));
+      for (let i = 0; i <= NA; i++) { const th = -tmA + 2 * tmA * i / NA, x = R * Math.sin(th), z = cz - R * Math.cos(th); i ? sh.lineTo(x, z) : sh.moveTo(x, z); }
+      sh.lineTo(HX, HZ); sh.lineTo(-HX, HZ); if (holeFn) sh.holes.push(holeFn()); return sh; };
+    const flatCeil = (holeFn, mt, y) => { const c = new THREE.Mesh(new THREE.ShapeGeometry(planShape(holeFn), 2), mt || wood); c.rotation.x = Math.PI / 2; c.position.y = y; world.add(c); return c; };
+    // gold mouldings framing the black band
+    const goldLine = (y) => { for (let sd = 1; sd < 4; sd++) onWall(plane(wallLen(sd), 0.022, gold), sd, 0, y, 0.035);
+      const tmA = Math.asin(Math.min(1, HX / R)); const g = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.035, R - 0.035, 0.022, 72, 1, true, Math.PI - tmA, 2 * tmA), basic(0xc9a86a, { side: THREE.BackSide })); g.position.set(0, y, cz); world.add(g); };
+    if (ROOF !== "gable") { goldLine(Y0 - BH - 0.005); goldLine(Y0 - 0.02); }
+    if (ROOF === "vault") {
+      // ① barrel vault of glass on slim bronze arches, spaced like the doors below
+      const S = 0.62, NA = 40, sub = 6;
+      const P2 = (a, z) => [HX * Math.cos(a), S * HX * Math.sin(a), z];
+      for (let i = 0; i < NA; i++) { const a0 = Math.PI * i / NA, a1 = Math.PI * (i + 1) / NA; quadN(P2(a0, zfg), P2(a0, zb), P2(a1, zb), P2(a1, zfg), 1); }
+      [zfg, zb].forEach((z) => { for (let i = 0; i < NA; i++) { const a0 = Math.PI * i / NA, a1 = Math.PI * (i + 1) / NA; pos.push(0, 0, z, ...P2(a0, z), ...P2(a1, z)); } });
+      for (let i = 0; i < 40; i++) { const x0 = -HX + 2 * HX * i / 40, x1 = -HX + 2 * HX * (i + 1) / 40; pos.push(x0, 0, arcZ(x0), x1, 0, arcZ(x1), x1, 0, zfg, x0, 0, arcZ(x0), x1, 0, zfg, x0, 0, zfg); }
+      addGlass();
+      for (let z = zfg; z <= zb + 0.01; z += 2.75) { const t = new THREE.Mesh(new THREE.TorusGeometry(HX, 0.03, 6, 64, Math.PI), bronze); t.scale.y = S; t.position.set(0, Y0, Math.min(z, zb - 0.03)); world.add(t); }
+      const rz = (z0, z1, x, y) => { const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, z1 - z0), bronze); b2.position.set(x, y, (z0 + z1) / 2); world.add(b2); };
+      rz(zfg, zb, 0, Y0 + S * HX); rz(zfg, zb, -HX + 0.03, Y0 + 0.03); rz(zfg, zb, HX - 0.03, Y0 + 0.03);
+    } else if (ROOF === "coffer") {
+      // ② dark coffered ceiling with gold-edged beams and a raised skylight in the middle
+      const sw = HX * 0.5, sz0 = -HZ * 0.35, sz1 = HZ * 0.45, LH = 1.1;
+      const hole = () => { const h = new THREE.Path(); h.moveTo(-sw, sz0); h.lineTo(-sw, sz1); h.lineTo(sw, sz1); h.lineTo(sw, sz0); h.lineTo(-sw, sz0); return h; };
+      flatCeil(hole, wood, Y0);
+      quadN([-sw, 0, sz0], [sw, 0, sz0], [sw, LH, sz0], [-sw, LH, sz0], 4); quadN([-sw, 0, sz1], [sw, 0, sz1], [sw, LH, sz1], [-sw, LH, sz1], 4);
+      quadN([-sw, 0, sz0], [-sw, 0, sz1], [-sw, LH, sz1], [-sw, LH, sz0], 4); quadN([sw, 0, sz0], [sw, 0, sz1], [sw, LH, sz1], [sw, LH, sz0], 4);
+      quadN([-sw, LH, sz0], [sw, LH, sz0], [sw, LH, sz1], [-sw, LH, sz1], 6); addGlass();
+      const beam = (w, d, x, z) => { const b2 = new THREE.Mesh(new THREE.BoxGeometry(w, 0.26, d), woodL); b2.position.set(x, Y0 - 0.13, z); world.add(b2);
+        const g2 = new THREE.Mesh(new THREE.BoxGeometry(w + 0.004, 0.012, d + 0.004), bronze); g2.position.set(x, Y0 - 0.265, z); world.add(g2); };
+      const inSky = (x, z) => Math.abs(x) < sw && z > sz0 && z < sz1;
+      for (let x = -HX + 1.8; x < HX - 0.5; x += 1.8) for (let z = zfg + 0.2; z < HZ; z += 1.8) {
+        if (!inSky(x, z + 0.9) || !inSky(x, z)) beam(0.12, 1.8, x, z + 0.9); }
+      for (let z = zfg + 0.2; z < HZ; z += 1.8) for (let x = -HX; x < HX - 0.1; x += 1.8) { if (!inSky(x + 0.9, z)) beam(1.8, 0.12, x + 0.9, z); }
+      [[2 * sw, 0.08, 0, sz0], [2 * sw, 0.08, 0, sz1], [0.08, sz1 - sz0, -sw, (sz0 + sz1) / 2], [0.08, sz1 - sz0, sw, (sz0 + sz1) / 2]].forEach(([w, d, x, z]) => { const b2 = new THREE.Mesh(new THREE.BoxGeometry(w, 0.06, d), gold); b2.position.set(x, Y0 - 0.02, z); world.add(b2); });
+      for (let x = -sw + sw / 2; x < sw - 0.1; x += sw / 2) { const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, sz1 - sz0), bronze); b2.position.set(x, Y0 + LH, (sz0 + sz1) / 2); world.add(b2); }
+    } else if (ROOF === "oculus") {
+      // ③ Pantheon-style oculus: a dark ceiling with a round opening ringed in gold
+      const oz = -HZ * 0.05, OR = Math.min(HX * 0.48, 3.4), DH = 0.9;
+      flatCeil(() => { const h = new THREE.Path(); h.absarc(0, oz, OR, 0, Math.PI * 2, true); return h; }, wood, Y0);
+      const NS = 72;
+      for (let i = 0; i < NS; i++) { const a0 = 2 * Math.PI * i / NS, a1 = 2 * Math.PI * (i + 1) / NS, c0 = [OR * Math.cos(a0), oz + OR * Math.sin(a0)], c1 = [OR * Math.cos(a1), oz + OR * Math.sin(a1)];
+        quadN([c0[0], 0, c0[1]], [c1[0], 0, c1[1]], [c1[0], DH, c1[1]], [c0[0], DH, c0[1]], 1); pos.push(0, DH, oz, c1[0], DH, c1[1], c0[0], DH, c0[1]); }
+      addGlass();
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(OR, 0.07, 10, 96), gold); ring.rotation.x = Math.PI / 2; ring.position.set(0, Y0 - 0.02, oz); world.add(ring);
+      const ring2 = new THREE.Mesh(new THREE.TorusGeometry(OR + 0.32, 0.02, 6, 96), gold); ring2.rotation.x = Math.PI / 2; ring2.position.set(0, Y0 - 0.01, oz); world.add(ring2);
+    } else {
+    // glass gable roof on top of the black band: two sloping panes meeting at a ridge; the gable ends start at the lobby's corners
+    const Ht = 3.2;
+    u.uHt = { value: Ht }; u.uHX = { value: HX }; u.uZf = { value: zfg }; u.uZb = { value: zb };
+    const sub = 10;
+    const quad = (A, B2, C, D) => { for (let i = 0; i < sub; i++) for (let j = 0; j < sub; j++) {
+      const q = (ii, jj) => L(L(A, B2, ii / sub), L(D, C, ii / sub), jj / sub);
+      const p00 = q(i, j), p10 = q(i + 1, j), p11 = q(i + 1, j + 1), p01 = q(i, j + 1);
+      pos.push(...p00, ...p10, ...p11, ...p00, ...p11, ...p01); } };
+    quad([-HX, 0, zfg], [-HX, 0, zb], [0, Ht, zb], [0, Ht, zfg]);
+    quad([HX, 0, zfg], [HX, 0, zb], [0, Ht, zb], [0, Ht, zfg]);
+    [zfg, zb].forEach((z) => { quad([-HX, 0, z], [0, 0, z], [0, Ht, z], [0, Ht, z]); quad([HX, 0, z], [0, 0, z], [0, Ht, z], [0, Ht, z]); });
+    const NS = 40;
+    for (let i = 0; i < NS; i++) { const x0 = -HX + 2 * HX * i / NS, x1 = -HX + 2 * HX * (i + 1) / NS;
+      pos.push(x0, 0, arcZ(x0), x1, 0, arcZ(x1), x1, 0, zfg, x0, 0, arcZ(x0), x1, 0, zfg, x0, 0, zfg); }
+    addGlass();
+    }
+    skyDome = { u, t: skyTarget(), first: true };
+    fetchWeather(); skyChip(true);
+  }
+  function stepSky(dt, now) {
+    if (!skyDome) return;
+    if (mode !== "lobby") return;
+    const u = skyDome.u, t = skyTarget(), k = skyDome.first ? 1 : Math.min(1, dt * 0.8);
+    skyDome.first = false;
+    u.uT.value = reduce ? 0 : now / 1000;
+    for (const [key, name] of [["day", "uDay"], ["twi", "uTwi"], ["cloud", "uCloud"], ["over", "uOver"], ["rain", "uRain"], ["snow", "uSnow"], ["fog", "uFog"]]) u[name].value += (t[key] - u[name].value) * k;
+    u.uSun.value.lerp(t.sun, k).normalize(); u.uMoon.value.lerp(t.moon, k).normalize();
+    u.uDawn.value += ((t.dawn || 0) - u.uDawn.value) * k;
+    if (DOME && DOME.alu) { const lv = 0.28 + 0.72 * u.uDay.value * (1 - 0.45 * u.uOver.value);
+      DOME.alu[0].color.setRGB(0.55 * lv + 0.06, 0.565 * lv + 0.06, 0.585 * lv + 0.065);
+      DOME.alu[1].color.setRGB(0.36 * lv + 0.04, 0.375 * lv + 0.04, 0.395 * lv + 0.045);
+      DOME.alu[2].color.setRGB(0.12 * lv + 0.03, 0.12 * lv + 0.03, 0.115 * lv + 0.03); }
+    if (t.storm && !reduce && Math.random() < dt * 0.18) u.uFlash.value = 0.9 + Math.random() * 0.3;
+    u.uFlash.value *= Math.exp(-dt * 7);
+    if (Math.floor(now / 60000) !== skyDome.min) { skyDome.min = Math.floor(now / 60000); fetchWeather(); skyLabel(); }
+  }
   function buildLobby() {
     const ND = DATA.length, SP = ND > 3 ? 2.75 : 3;
-    clearWorld(); mode = "lobby"; hallIndex = -1; RT = false; WALL_H = 4.6; ticker = null; HX = Math.max(4.6, (ND - 1) * SP / 2 + 1.7); HZ = ND > 3 ? 9 : 8;
+    clearWorld(); mode = "lobby"; hallIndex = -1; RT = false; WALL_H = 4.53 + 0.66; ticker = null; HX = Math.max(4.6, (ND - 1) * SP / 2 + 1.7); HZ = ND > 3 ? 9 : 8;
+    DOME = { roof: true };
     roomShell();
+    buildSkyDome();
     curvedFront();
-    buildTicker(WALL_H - 0.66 - 0.24, 0.66); // film ticker running round every lobby wall
+    buildTicker(4.6 - 0.66 - 0.07, 0.66); // film ticker running round every lobby wall
     DATA.forEach((h, i) => {
       const u = (i - (ND - 1) / 2) * SP, target = { hall: i };
       const A = arcAt(u);
@@ -1705,6 +2002,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stops.unshift(art);
     buildChips(); updateHud(); setNav();
     cur = lobbyHome(); moveTo(atEasel ? easelPose() : lobbyOverview(), true); showCard();
+    if (!atEasel) { setZoom(1.25); zoom = zoomTarget; camera.fov = baseFov / zoom; camera.updateProjectionMatrix(); } // lobby opens at 125%
   }
   /* ---------- welcome easel in the middle of the lobby: the visit starts in front of it ---------- */
   let atEasel = true;
@@ -1722,7 +2020,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function enterArchive() {
     if (!leaveEasel() || mode !== "lobby") return;
-    moveTo(lobbyOverview(), false, reduce ? 0 : 3200);
+    moveTo(lobbyOverview(), false, reduce ? 0 : 3200); setZoom(1.25);
     cur = lobbyHome(); showCard();
   }
   const lobbyHome = () => Math.max(0, stops.findIndex((t) => t.kind === "overview"));
@@ -1842,7 +2140,6 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     };
     seg(WALL_H, WALL_H / 2, new THREE.MeshBasicMaterial({ color: wallMats[0].color, side: THREE.BackSide }), ARC_R);
     seg(0.05, 0.065, new THREE.MeshBasicMaterial({ color: baseMat.color, side: THREE.BackSide }), ARC_R - 0.01);
-    seg(0.04, WALL_H - 0.13, new THREE.MeshBasicMaterial({ color: mouldMat.color, side: THREE.BackSide }), ARC_R - 0.01);
   }
   /* lobby: an LED film-strip ticker running above the hall doors, photos sliding right → left */
   let ticker = null;
@@ -3712,7 +4009,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   $("lb").addEventListener("click", (e) => { if (e.target === $("lb")) closeLB(); });
   document.querySelectorAll("#hallNav button").forEach((b) => b.addEventListener("click", () => {
     const k = b.dataset.k;
-    if (atEasel) { leaveEasel(); if (k === "lobby") { moveTo(lobbyOverview(), false, 2600); return; } }
+    if (atEasel) { leaveEasel(); if (k === "lobby") { moveTo(lobbyOverview(), false, 2600); setZoom(1.25); return; } }
     if (k === "lobby") { if (mode !== "lobby") go(buildLobby); }
     else eraGo({ hall: +k });
   }));
@@ -3874,7 +4171,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stepDoors(now);
     if (GLOW_COL && DR) { const k = 0.85 + 0.15 * Math.sin(now / 1400); GLOW_COL.forEach((m, i) => { m.material.opacity = [0.16, 0.07, 0.03][i] * k; }); }
     tickAuto(now);
-    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now); stepKioskRise(dt); stepTicker(dt); stepColDust(dt, now); stepAutoDoor(dt);
+    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now); stepKioskRise(dt); stepTicker(dt); stepColDust(dt, now); stepAutoDoor(dt); stepSky(dt, now);
     if (doorGlows.length && mode === "lobby") {
       const t = reduce ? 0 : now / 1000;
       for (const m of doorGlows) m.material.opacity = 0.22 + 0.38 * Math.pow(0.5 + 0.5 * Math.sin(t * 1.5 - m.userData.phase), 2);
