@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.19 10:36</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.19 10:52</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1074,7 +1074,7 @@ window.__archiveReady = function () {
     d = Math.min(2 * HZ - 2.2, d * 1.4); // stand further back so the glass cupola shows above the doors
     if (portrait()) d = 9.6;
     const p = wp(0, 0, 0, 0).add(normalOf(0).clone().multiplyScalar(d));
-    return { x: p.x, z: p.z, yaw: 0, pitch: portrait() ? 0.04 : 0.12 };
+    return { x: p.x, z: p.z, yaw: 0, pitch: portrait() ? 0.04 : 0.03 };
   }
   function hallOverview() {
     if (RT && DR) { const r = RR - 3.6; return { x: r * Math.sin(DA), z: -r * Math.cos(DA), yaw: Math.PI - DA, pitch: WALL_H > 4 ? -0.02 : -0.05 }; }
@@ -2839,7 +2839,21 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     $("lb").hidden = false; $("lbClose").focus();
   }
-  function closeLB() { $("lb").hidden = true; }
+  function closeLB() { $("lb").hidden = true; $("lb").style.zIndex = ""; }
+  // map pop-ups: clicking the photo opens the same large view as the wall photo (detail text included)
+  (() => {
+    const st = document.createElement("style");
+    st.textContent = ".iwimg{position:relative;cursor:zoom-in}.iwimg .iwz{position:absolute;right:6px;bottom:6px;font-size:11px;line-height:1;padding:4px 7px;border-radius:999px;background:rgba(15,15,13,.72);color:#e9d3a4;border:1px solid rgba(201,168,106,.45);pointer-events:none}";
+    document.head.appendChild(st);
+    const open = (el) => {
+      let h = DATA[hallIndex]; if (!h || !h.items.some((x) => x.file === el.dataset.file)) h = DATA[MH]; if (!h) return;
+      const i = h.items.findIndex((x) => x.file === el.dataset.file); if (i < 0) return;
+      const s = stops.find((t) => t.kind === "photo" && t.data === h.items[i]) || { kind: "photo", idx: i, data: h.items[i] };
+      openLB(s); $("lb").style.zIndex = "40";
+    };
+    document.addEventListener("click", (e) => { const el = e.target.closest && e.target.closest(".iwimg"); if (el) { e.preventDefault(); e.stopPropagation(); open(el); } }, true);
+    document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.classList && e.target.classList.contains("iwimg")) open(e.target); });
+  })();
 
 
   /* ---------- map exhibit (hall of works) ---------- */
@@ -3227,7 +3241,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     wrap.style.transform = quadMatrix(wrap.offsetWidth || 1000, wrap.offsetHeight || 720, pts);
   }
   function infoHtml(it, i) {
-    return `<div class="iw">${it.file ? `<div class="iwimg" data-file="${it.file}"></div>` : ""}<div class="iwt"><b>${i + 1}</b> ${it.title}</div><div class="iwa">${it.addr}</div><div class="iwc">${it.cap}</div></div>`;
+    return `<div class="iw">${it.file ? `<div class="iwimg" data-file="${it.file}" role="button" tabindex="0" title="사진 크게 보기"><span class="iwz">⤢ 크게 보기</span></div>` : ""}<div class="iwt"><b>${i + 1}</b> ${it.title}</div><div class="iwa">${it.addr}</div><div class="iwc">${it.cap}</div></div>`;
   }
   function fillInfoImage(it) {
     if (!it.file) return;
