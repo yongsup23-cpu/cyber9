@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.19 14:46</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.19 15:16</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1751,7 +1751,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const cl = { clear: 0.3, partly: 0.45, cloudy: 0.85, fog: 0.9, rain: 0.92, snow: 0.88, storm: 0.97 }[kind];
     const ov = { clear: 0, partly: 0.08, cloudy: 0.7, fog: 0.85, rain: 0.92, snow: 0.75, storm: 0.98 }[kind];
     const real = !SKY_PREVIEW[SKYW.prevW] && SKYW.ok;
-    return { kind, day, twi, dawn, H, sun: solar(H, 1), moon: solar((H + 12) % 24, -1),
+    const gold = sm(ss - 3.6, ss - 1.0, H) * (1 - sm(ss - 0.2, ss + 0.4, H)); // golden afternoon light ahead of the sunset
+    return { kind, day, twi, dawn, gold, H, sun: solar(H, 1), moon: solar((H + 12) % 24, -1),
       cloud: real ? Math.max(cl * 0.6, Math.min(1, SKYW.cloud)) : cl, over: ov,
       rain: kind === "rain" ? 0.75 : kind === "storm" ? 1 : 0, snow: kind === "snow" ? 1 : 0, fog: kind === "fog" ? 0.6 : 0, storm: kind === "storm" };
   }
@@ -1797,7 +1798,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   const SKY_VS = "varying vec3 vDir; varying vec3 vP; varying vec3 vW; void main(){ vP = position; vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; vDir = w.xyz - cameraPosition; gl_Position = projectionMatrix * viewMatrix * w; }";
   const SKY_FS = `
-    uniform float uT, uDay, uTwi, uDawn, uCloud, uOver, uRain, uSnow, uFlash, uFog, uHt, uHX, uZf, uZb, uEdge; uniform vec3 uSun, uMoon;
+    uniform float uT, uDay, uTwi, uDawn, uGold, uCloud, uOver, uRain, uSnow, uFlash, uFog, uHt, uHX, uZf, uZb, uEdge; uniform vec3 uSun, uMoon;
     varying vec3 vDir; varying vec3 vP; varying vec3 vW;
     float gline(float c, float sp, float lw){ float f = abs(fract(c / sp + .5) - .5) * sp; float aa = fwidth(c) * 1.2 + 1e-4; return 1.0 - smoothstep(lw * .5, lw * .5 + aa, f); }
     float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -1813,6 +1814,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       sky = mix(sky, sky * vec3(.55,.5,.7), uTwi * .5);                       // deeper violet-blue overhead
       sky += uTwi * tcol * (.35 + 1.0 * side) * pow(1.0 - el, 1.3);
       sky += uTwi * vec3(.9,.55,.35) * pow(max(dot(d, uSun), 0.0), 8.0) * .35;
+      { vec2 shg = normalize(uSun.xz + 1e-4), dhg = normalize(d.xz + 1e-4); float sg = pow(dot(dhg, shg) * .5 + .5, 2.0);
+        sky = mix(sky, sky * vec3(1.06,.94,.78), uGold * .7);
+        sky += uGold * vec3(.42,.27,.10) * (.15 + .85 * sg) * pow(1.0 - el, 1.4) * .75;
+        sky += uGold * vec3(.5,.35,.15) * pow(max(dot(d, uSun), 0.0), 10.0) * .3; }
       sky = mix(sky, mix(vec3(.035,.04,.048), vec3(.38,.40,.43), uDay), uOver*.95);
       float night = 1.0 - uDay; float moonA = smoothstep(.55, .92, night);
       // stars
@@ -1832,6 +1837,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       float n = fbm(cp*1.7); float cov = mix(.78, .30, uCloud); float c = smoothstep(cov, cov+.22, n);
       vec3 lit = mix(vec3(.19,.17,.18) + vec3(.05,.06,.09)*(1.0-uOver), vec3(.90,.90,.92), uDay); // night clouds catch the city glow
       lit += uTwi * mix(vec3(.55,.24,.08), vec3(.55,.17,.16), uDawn) * (.5 + .8 * side);
+      lit = mix(lit, lit * vec3(1.08,.9,.7) + vec3(.12,.07,.02) * side, uGold * .8);
       vec3 cc = mix(lit*.62, lit, smoothstep(cov, cov+.45, n)) * mix(1.0, .62, uOver);
       sky = mix(sky, cc, c*.92);
       // fog
@@ -1875,7 +1881,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       uSun: { value: new THREE.Vector3(0, 1, 0) }, uMoon: { value: new THREE.Vector3(0, 1, 0) } };
     // lobby top: black band (film height) on every wall, then a curtain wall following the lobby plan, open to the sky
     const CH = 2.7, Y0 = WALL_H, BH = 0.66, R = ARC_R, cz = -HZ + R;
-    u.uDawn = { value: 0 };
+    u.uDawn = { value: 0 }; u.uGold = { value: 0 };
     const black = basic(0x0b0b0a), blackB = basic(0x0b0b0a, { side: THREE.BackSide });
     for (let sd = 0; sd < 4; sd++) onWall(plane(wallLen(sd), BH, black), sd, 0, Y0 - BH / 2, 0.03);
     { const tm = Math.asin(Math.min(1, HX / R)); const g = new THREE.CylinderGeometry(R - 0.03, R - 0.03, BH, 72, 1, true, Math.PI - tm, 2 * tm);
@@ -1999,7 +2005,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     u.uT.value = reduce ? 0 : now / 1000;
     for (const [key, name] of [["day", "uDay"], ["twi", "uTwi"], ["cloud", "uCloud"], ["over", "uOver"], ["rain", "uRain"], ["snow", "uSnow"], ["fog", "uFog"]]) u[name].value += (t[key] - u[name].value) * k;
     u.uSun.value.lerp(t.sun, k).normalize(); u.uMoon.value.lerp(t.moon, k).normalize();
-    u.uDawn.value += ((t.dawn || 0) - u.uDawn.value) * k;
+    u.uDawn.value += ((t.dawn || 0) - u.uDawn.value) * k; u.uGold.value += ((t.gold || 0) * (1 - 0.8 * t.over) - u.uGold.value) * k;
     if (DOME && DOME.alu) { const lv = 0.28 + 0.72 * u.uDay.value * (1 - 0.45 * u.uOver.value);
       DOME.alu[0].color.setRGB(0.55 * lv + 0.06, 0.565 * lv + 0.06, 0.585 * lv + 0.065);
       DOME.alu[1].color.setRGB(0.36 * lv + 0.04, 0.375 * lv + 0.04, 0.395 * lv + 0.045);
@@ -3347,6 +3353,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     lFor = MH; lMarks = {}; $("lmap").innerHTML = "";
     const W = [[-85, -180], [85, 180]];
     lMap = L.map("lmap", { worldCopyJump: false, maxBounds: W, maxBoundsViscosity: 1, zoomControl: false, attributionControl: true }).setView([25, 100], 3);
+    L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(lMap); // working +/− for the overseas map
+    if (!$("lzStyle")) { const st = document.createElement("style"); st.id = "lzStyle";
+      st.textContent = "#gmapWrap{z-index:1000!important}#lmap .leaflet-control-zoom{border:1px solid rgba(201,168,106,.45);border-radius:8px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.4)}#lmap .leaflet-control-zoom a{background:rgba(23,24,21,.9);color:#e9d3a4;width:34px;height:34px;line-height:32px;font-size:20px;border-bottom:1px solid rgba(201,168,106,.25)}#lmap .leaflet-control-zoom a:hover{background:#2d2a22;color:#fff}";
+      document.head.appendChild(st); }
     L.control.zoom({ position: "topright" }).addTo(lMap);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, noWrap: true, bounds: W, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(lMap);
     const lm = abroadList().map(([it, j]) => {
