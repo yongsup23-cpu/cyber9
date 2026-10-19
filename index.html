@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.19 15:16</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.19 15:24</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -3316,6 +3316,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const tabs = $("mapTabs"), gw = $("gmapWrap"); if (!tabs || !gw) return;
     tabs.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.t === t));
     gw.hidden = t !== "abr";
+    try { if (nMap) nMap.setOptions({ zoomControl: t !== "abr" }); } catch (e) {} // only one +/− bar: the Naver one on the domestic tab
     if (t !== "abr") return;
     const ab = abroadList(); if (!ab.length) return;
     const sel = i !== undefined && ab.some(([, j]) => j === i); if (!sel) i = ab[0][1];
@@ -3353,7 +3354,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     lFor = MH; lMarks = {}; $("lmap").innerHTML = "";
     const W = [[-85, -180], [85, 180]];
     lMap = L.map("lmap", { worldCopyJump: false, maxBounds: W, maxBoundsViscosity: 1, zoomControl: false, attributionControl: true }).setView([25, 100], 3);
-    L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(lMap); // working +/− for the overseas map
+    if (!document.querySelector("#lmap .leaflet-control-zoom")) L.control.zoom({ position: "topright", zoomInTitle: "확대", zoomOutTitle: "축소" }).addTo(lMap); // working +/− for the overseas map
     if (!$("lzStyle")) { const st = document.createElement("style"); st.id = "lzStyle";
       st.textContent = "#gmapWrap{z-index:1000!important}#lmap .leaflet-control-zoom{border:1px solid rgba(201,168,106,.45);border-radius:8px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.4)}#lmap .leaflet-control-zoom a{background:rgba(23,24,21,.9);color:#e9d3a4;width:34px;height:34px;line-height:32px;font-size:20px;border-bottom:1px solid rgba(201,168,106,.25)}#lmap .leaflet-control-zoom a:hover{background:#2d2a22;color:#fff}";
       document.head.appendChild(st); }
