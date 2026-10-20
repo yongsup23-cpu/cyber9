@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.20 10:47</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.20 11:02</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -3500,7 +3500,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     // background music file (falls back to the synthesised pad if it cannot be loaded)
     SND.bgmGain = ctx.createGain(); SND.bgmGain.gain.value = 0.5; SND.bgmGain.connect(SND.master);
     SND.bgmPending = true;
-    (bgmPre || Promise.reject()).catch(() => fetch(R("audio/bgm.mp3")).then((r) => { if (!r.ok) throw new Error("bgm"); return r.arrayBuffer(); })
+    (bgmPre || Promise.reject()).catch(() => fetch(R("audio/bgm2.mp3")).then((r) => { if (!r.ok) throw new Error("bgm"); return r.arrayBuffer(); })
       .then((ab) => new Promise((res, rej) => ctx.decodeAudioData(ab, res, rej))))
       .then((buf) => { SND.bgm = buf; SND.bgmPending = false; startBgm(); })
       .catch(() => { SND.bgmPending = false; });
@@ -4281,7 +4281,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   let bgmPre = null;
   function predecodeBgm() {
     const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext; if (!OAC) return Promise.resolve();
-    bgmPre = fetch(R("audio/bgm.mp3")).then((r) => { if (!r.ok) throw new Error("bgm"); return r.arrayBuffer(); })
+    bgmPre = fetch(R("audio/bgm2.mp3")).then((r) => { if (!r.ok) throw new Error("bgm"); return r.arrayBuffer(); })
       .then((ab) => new Promise((res, rej) => { const oc = new OAC(2, 44100, 44100); oc.decodeAudioData(ab, res, rej); }));
     return bgmPre.catch(() => {});
   }
