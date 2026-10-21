@@ -318,7 +318,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 15:45</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 16:31</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1756,7 +1756,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const e = Math.max(0.1, el); // keep the disc just above the glass edge near sunrise/sunset
       return new THREE.Vector3(Math.sin(az) * Math.cos(e), Math.sin(e), Math.cos(az) * Math.cos(e));
     };
-    const cl = { clear: 0.3, partly: 0.45, cloudy: 0.85, fog: 0.9, rain: 0.92, snow: 0.88, storm: 0.97 }[kind];
+    const cl = { clear: 0.16, partly: 0.45, cloudy: 0.85, fog: 0.9, rain: 0.92, snow: 0.88, storm: 0.97 }[kind];
     const ov = { clear: 0, partly: 0.08, cloudy: 0.7, fog: 0.85, rain: 0.92, snow: 0.75, storm: 0.98 }[kind];
     const real = !SKY_PREVIEW[SKYW.prevW] && SKYW.ok;
     const gold = sm(ss - 3.6, ss - 1.0, H) * (1 - sm(ss - 0.2, ss + 0.4, H)); // golden afternoon light ahead of the sunset
@@ -1817,7 +1817,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++){ v += a*noise(p); p = p*2.03 + 17.1; a *= 0.5; } return v; }
     void main(){
       vec3 d = normalize(vDir); float el = clamp(d.y, 0.0, 1.0); float phi = atan(d.x, d.z);
-      vec3 sky = mix(mix(vec3(.035,.055,.12), vec3(.008,.016,.05), el), mix(vec3(.46,.52,.57), vec3(.21,.29,.40), pow(el,.6)), uDay);
+      vec3 sky = mix(mix(vec3(.035,.055,.12), vec3(.008,.016,.05), el), mix(vec3(.72,.84,.96), vec3(.22,.50,.90), pow(el,.55)), uDay);
       vec3 tcol = mix(vec3(.88,.42,.14), vec3(.86,.24,.20), uDawn);           // sunset orange  /  red dawn
       vec2 sh = normalize(uSun.xz + 1e-4), dh = normalize(d.xz + 1e-4);
       float side = pow(dot(dh, sh) * .5 + .5, 2.2);                           // glow strongest toward the sun
@@ -1845,7 +1845,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       // clouds
       vec2 cp = d.xz / (d.y + .28) * 1.25 + vec2(uT*.010, uT*.0035);
       float n = fbm(cp*1.7); float cov = mix(.78, .30, uCloud); float c = smoothstep(cov, cov+.22, n);
-      vec3 lit = mix(vec3(.19,.17,.18) + vec3(.05,.06,.09)*(1.0-uOver), vec3(.90,.90,.92), uDay); // night clouds catch the city glow
+      vec3 lit = mix(vec3(.19,.17,.18) + vec3(.05,.06,.09)*(1.0-uOver), vec3(.99,.99,1.0), uDay); // night clouds catch the city glow
       lit += uTwi * mix(vec3(.55,.24,.08), vec3(.55,.17,.16), uDawn) * (.5 + .8 * side);
       lit = mix(lit, lit * vec3(1.08,.9,.7) + vec3(.12,.07,.02) * side, uGold * .8);
       vec3 cc = mix(lit*.62, lit, smoothstep(cov, cov+.45, n)) * mix(1.0, .62, uOver);
@@ -1870,7 +1870,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       }
       sky += uFlash * vec3(.55,.6,.75) * (.6 + .4*n);
       // curtain-wall glass: light tint, faint vertical sheen and a fresnel reflection of the warm lobby
-      vec3 colr = sky * vec3(.96, .98, 1.0) * 1.04;
+      vec3 colr = sky * vec3(.98, .99, 1.0) * 1.12;
       vec3 N = normalize(cross(dFdx(vW), dFdy(vW))); vec3 V = normalize(cameraPosition - vW);
       float along = abs(N.x) > .5 ? vW.z : vW.x;
       colr *= .97 + .05 * noise(vec2(along * .8, vW.y * .3) + 4.0);
