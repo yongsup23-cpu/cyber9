@@ -162,7 +162,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 @media (max-width:700px){
  header{padding:10px 14px;flex-wrap:wrap}
  .brand small{display:none}
- #hallNav button{min-height:36px;padding:6px 10px;font-size:12px}
+ #hallNav{flex-wrap:nowrap;width:100%;gap:3px;justify-content:space-between}
+ #hallNav button{flex:1 1 auto;min-width:0;min-height:34px;padding:5px clamp(2px,1vw,8px);font-size:clamp(9.5px,2.85vw,12px);letter-spacing:-.2px;white-space:nowrap}
  .roomname{display:none}
  #roomNo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
  #roomName{display:none}
@@ -317,7 +318,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 15:21</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 15:45</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -2012,7 +2013,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       winter: [[0.16, 0.26, 0.15], [0.2, 0.31, 0.17], [0.13, 0.22, 0.13]],
       autumn: [[0.86, 0.36, 0.10], [0.93, 0.62, 0.14], [0.74, 0.20, 0.09], [0.96, 0.78, 0.25], [0.55, 0.30, 0.12]],
     };
-    const dens = { spring: 0.22, summer: 1, autumn: 0.6, winter: 0 }[season];
+    const dens = { spring: 0.22, summer: 1, autumn: 1.15, winter: 0 }[season];
     function cards(kind, count, size, place, colorOf) {
       if (count <= 0) return;
       const m = new THREE.MeshBasicMaterial(kind === "snow" ? { map: tex(kind), transparent: true, depthWrite: false, side: THREE.DoubleSide } : { map: tex(kind), alphaTest: 0.45, side: THREE.DoubleSide, transparent: false });
