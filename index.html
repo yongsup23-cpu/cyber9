@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 11:39</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 14:11</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1768,6 +1768,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const t = skyTarget(), w = el.querySelector(".w"), tm = el.querySelector(".tm");
     const pw = SKY_PREVIEW[SKYW.prevW], pt = SKYW.prevT;
     if (w) w.textContent = pw ? `미리보기 · ${SKY_NAME[pw]}` : `${SKYW.name} · ${SKY_NAME[t.kind]}${SKYW.ok && SKYW.temp != null ? ` ${Math.round(SKYW.temp)}°C` : ""}`;
+    const ss = el.querySelector(".ss"); if (ss) ss.textContent = SKYW.prevS ? `미리보기 · ${SEASON_NAME[seasonNow()]}` : `계절 · ${SEASON_NAME[SEASON_AUTO] || ""}`;
     if (tm) tm.textContent = pt ? TIME_NAME[pt] : (t.twi > 0.35 ? (t.dawn > 0.5 ? "아침" : "오후") : t.day > 0.5 ? (t.H < 10 ? "아침" : t.H < 15 ? "낮" : "오후") : "밤");
   }
   function skyChip(show) {
@@ -1775,13 +1776,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!el) {
       const host = document.querySelector(".roomname"); if (!host) return;
       el = document.createElement("div"); el.id = "skyChip";
-      el.innerHTML = '<button type="button" class="loc" title="날씨 지역 바꾸기">📍 지역</button><button type="button" class="w" title="날씨 미리보기 바꾸기"></button><button type="button" class="tm" title="시간대 미리보기 바꾸기"></button>';
+      el.innerHTML = '<button type="button" class="loc" title="날씨 지역 바꾸기">📍 지역</button><button type="button" class="w" title="날씨 미리보기 바꾸기"></button><button type="button" class="tm" title="시간대 미리보기 바꾸기"></button><button type="button" class="ss" title="계절 미리보기 바꾸기"></button>';
       const st = document.createElement("style");
-      st.textContent = "#skyChip{display:flex;gap:4px;margin-top:10px;pointer-events:auto}#skyChip button{font:12px/1 inherit;font-family:inherit;color:#d6c9b3;background:rgba(23,24,21,.7);border:1px solid rgba(201,168,106,.35);border-radius:999px;padding:5px 10px;cursor:pointer}#skyChip button:hover{border-color:#c9a86a;color:#f0e2c4}#skyLoc{position:absolute;z-index:30;width:300px;padding:12px;background:rgba(18,18,16,.96);border:1px solid rgba(201,168,106,.45);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.6);color:#d6c9b3;font-size:12px}#skyLoc form{display:flex;gap:6px}#skyLoc input{flex:1;min-width:0;background:#0d0e0d;border:1px solid #4a4436;border-radius:6px;color:#f0e2c4;padding:7px 9px;font:13px inherit;font-family:inherit}#skyLoc button{cursor:pointer;font-family:inherit;color:#d6c9b3;background:rgba(40,38,32,.9);border:1px solid rgba(201,168,106,.35);border-radius:6px;padding:6px 9px;font-size:12px}#skyLoc .cities{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}#skyLoc .cities button{border-radius:999px;padding:4px 9px}#skyLoc .msg{min-height:16px;margin-top:7px;color:#c9a86a}@media (max-width:700px){#skyChip{margin-top:4px}#skyChip button{font-size:11px;padding:4px 8px}}";
+      st.textContent = "#skyChip{display:grid;grid-template-columns:auto auto;justify-content:start;gap:4px;margin-top:10px;pointer-events:auto}#skyChip button{font:12px/1 inherit;font-family:inherit;color:#d6c9b3;background:rgba(23,24,21,.7);border:1px solid rgba(201,168,106,.35);border-radius:999px;padding:5px 10px;cursor:pointer}#skyChip button:hover{border-color:#c9a86a;color:#f0e2c4}#skyLoc{position:absolute;z-index:30;width:300px;padding:12px;background:rgba(18,18,16,.96);border:1px solid rgba(201,168,106,.45);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.6);color:#d6c9b3;font-size:12px}#skyLoc form{display:flex;gap:6px}#skyLoc input{flex:1;min-width:0;background:#0d0e0d;border:1px solid #4a4436;border-radius:6px;color:#f0e2c4;padding:7px 9px;font:13px inherit;font-family:inherit}#skyLoc button{cursor:pointer;font-family:inherit;color:#d6c9b3;background:rgba(40,38,32,.9);border:1px solid rgba(201,168,106,.35);border-radius:6px;padding:6px 9px;font-size:12px}#skyLoc .cities{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}#skyLoc .cities button{border-radius:999px;padding:4px 9px}#skyLoc .msg{min-height:16px;margin-top:7px;color:#c9a86a}@media (max-width:700px){#skyChip{margin-top:4px}#skyChip button{font-size:11px;padding:4px 8px}}";
       document.head.appendChild(st); host.insertBefore(el, host.firstChild); // column-reverse: first child sits at the bottom
       el.querySelector(".loc").addEventListener("click", (e) => { e.stopPropagation(); skyLocPanel(el); });
       el.querySelector(".w").addEventListener("click", (e) => { e.stopPropagation(); SKYW.prevW = (SKYW.prevW + 1) % SKY_PREVIEW.length; skyLabel(); if (skyDome) skyDome.first = true; });
       el.querySelector(".tm").addEventListener("click", (e) => { e.stopPropagation(); SKYW.prevT = (SKYW.prevT + 1) % TIME_PREVIEW.length; skyLabel(); if (skyDome) skyDome.first = true; });
+      el.querySelector(".ss").addEventListener("click", (e) => { e.stopPropagation(); setSeasonPreview(); });
     }
     el.hidden = !show; if (show) skyLabel(); else if ($("skyLoc")) $("skyLoc").remove();
   }
@@ -1867,7 +1869,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       }
       sky += uFlash * vec3(.55,.6,.75) * (.6 + .4*n);
       // curtain-wall glass: light tint, faint vertical sheen and a fresnel reflection of the warm lobby
-      vec3 colr = sky * vec3(.80, .86, .89) * .74;
+      vec3 colr = sky * vec3(.96, .98, 1.0) * 1.04;
       vec3 N = normalize(cross(dFdx(vW), dFdy(vW))); vec3 V = normalize(cameraPosition - vW);
       float along = abs(N.x) > .5 ? vW.z : vW.x;
       colr *= .97 + .05 * noise(vec2(along * .8, vW.y * .3) + 4.0);
@@ -1897,6 +1899,23 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         g.fillStyle = `hsl(0,0%,${l}%)`;
         for (let p = 0; p < 6; p++) { const b = p * 1.047 + Math.random(); g.beginPath(); g.ellipse(x + Math.cos(b) * s * 0.55, y + Math.sin(b) * s * 0.55, s * 0.55, s * 0.4, b, 0, 6.28); g.fill(); }
         g.fillStyle = "rgba(255,240,170,0.9)"; g.beginPath(); g.arc(x, y, 1.6, 0, 6.28); g.fill();
+      }
+    } else if (kind === "sakura") {
+      for (let i = 0; i < 9; i++) { // a cluster of five-petal cherry blossoms
+        const a = Math.random() * 6.28, r = Math.random() ** 0.6 * 40, x = Math.cos(a) * r, y = Math.sin(a) * r, s = 9 + Math.random() * 6, rot = Math.random() * 6.28;
+        for (let p = 0; p < 5; p++) { const b = rot + p * 1.2566; g.save(); g.translate(x, y); g.rotate(b);
+          const gr = g.createRadialGradient(0, -s * 0.2, 1, 0, -s * 0.6, s); gr.addColorStop(0, "#d8d8d8"); gr.addColorStop(1, "#fff");
+          g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(s * 0.7, -s * 0.4, s * 0.45, -s * 1.15, s * 0.1, -s * 1.05); g.lineTo(0, -s * 0.85); g.lineTo(-s * 0.1, -s * 1.05);
+          g.bezierCurveTo(-s * 0.45, -s * 1.15, -s * 0.7, -s * 0.4, 0, 0); g.fill(); g.restore(); }
+        g.fillStyle = "rgba(170,120,120,.9)"; g.beginPath(); g.arc(x, y, 2, 0, 6.28); g.fill();
+      }
+    } else if (kind === "clump") {
+      // a snow pad lying on a spray of evergreen: dark needles fringing below, a lumpy white cushion on top
+      g.fillStyle = "rgb(150,158,172)"; g.beginPath(); g.ellipse(0, 10, 54, 12, 0, 0, 6.28); g.fill(); // shadow under the cushion
+      for (let i = 0; i < 11; i++) {
+        const x = (Math.random() - 0.5) * 92, y = (Math.random() - 0.5) * 18 - 4 - Math.abs(x) * 0.12, r = 14 + Math.random() * 14;
+        const gr = g.createRadialGradient(x - r * 0.2, y - r * 0.5, r * 0.1, x, y, r); gr.addColorStop(0, "#fff"); gr.addColorStop(0.65, "#f1f3f7"); gr.addColorStop(1, "#b9c1cf");
+        g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, r * 1.25, r * 0.9, 0, 0, 6.28); g.fill();
       }
     } else if (kind === "snow") {
       const gr = g.createRadialGradient(0, 0, 4, 0, 0, 60); gr.addColorStop(0, "#fff"); gr.addColorStop(0.6, "rgba(255,255,255,.85)"); gr.addColorStop(1, "rgba(255,255,255,0)");
@@ -1987,11 +2006,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const crown = new V(); let cn = 0; tips.forEach((b) => { crown.add(b.pts[b.pts.length - 1]); cn++; }); crown.divideScalar(cn);
     let crownR = 0; tips.forEach((b) => (crownR = Math.max(crownR, b.pts[b.pts.length - 1].distanceTo(crown))));
     const PAL = {
-      spring: [[0.55, 0.78, 0.30], [0.66, 0.84, 0.36], [0.47, 0.70, 0.27], [0.74, 0.86, 0.45]],
-      summer: [[0.22, 0.42, 0.16], [0.28, 0.50, 0.19], [0.18, 0.36, 0.14], [0.33, 0.55, 0.22]],
+      spring: [[0.62, 0.80, 0.38], [0.70, 0.85, 0.42]],
+      summer: [[0.55, 0.78, 0.30], [0.66, 0.84, 0.36], [0.47, 0.70, 0.27], [0.74, 0.86, 0.45]],
+      winter: [[0.16, 0.26, 0.15], [0.2, 0.31, 0.17], [0.13, 0.22, 0.13]],
       autumn: [[0.86, 0.36, 0.10], [0.93, 0.62, 0.14], [0.74, 0.20, 0.09], [0.96, 0.78, 0.25], [0.55, 0.30, 0.12]],
     };
-    const dens = { spring: 0.75, summer: 1, autumn: 0.6, winter: 0 }[season];
+    const dens = { spring: 0.22, summer: 1, autumn: 0.6, winter: 0 }[season];
     function cards(kind, count, size, place, colorOf) {
       if (count <= 0) return;
       const m = new THREE.MeshBasicMaterial(kind === "snow" ? { map: tex(kind), transparent: true, depthWrite: false, side: THREE.DoubleSide } : { map: tex(kind), alphaTest: 0.45, side: THREE.DoubleSide, transparent: false });
@@ -2013,17 +2033,17 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const pick = (a) => a[Math.floor(R() * a.length)];
     if (dens > 0) {
       const N = Math.round((opt.leaves || 32000) * dens);
-      cards("leaf", N, season === "spring" ? 0.15 : 0.18, () => {
+      cards("leaf", N, 0.17, () => {
         const b = pick(tips), t = 0.35 + R() * 0.65, i = Math.round(t * (b.pts.length - 1));
         const p = b.pts[i].clone().add(new V(R() - 0.5, R() - 0.35, R() - 0.5).multiplyScalar(0.7));
         return { p };
       }, () => pick(PAL[season]));
     }
-    if (season === "summer") { // crape-myrtle style pink panicles at the shoot tips
-      const F = [[0.93, 0.42, 0.66], [0.98, 0.55, 0.75], [0.85, 0.32, 0.58], [0.99, 0.68, 0.82]];
-      cards("flower", 2600, 0.5, () => {
-        const b = pick(tips.filter((t) => t.pts[t.pts.length - 1].y > crown.y - crownR * 0.35)), p = b.pts[b.pts.length - 1].clone().add(new V(R() - 0.5, R() * 0.5, R() - 0.5).multiplyScalar(0.7));
-        return { p, s: 0.6 + R() * 0.7 };
+    if (season === "spring") { // cherry blossom: the whole crown covered in pale pink
+      const F = [[1.0, 0.86, 0.9], [0.99, 0.8, 0.86], [1.0, 0.92, 0.95], [0.96, 0.74, 0.82]];
+      cards("sakura", 12000, 0.42, () => {
+        const b = pick(tips), t = 0.3 + R() * 0.7, i = Math.round(t * (b.pts.length - 1));
+        return { p: b.pts[i].clone().add(new V(R() - 0.5, R() - 0.3, R() - 0.5).multiplyScalar(0.75)), s: 0.7 + R() * 0.7 };
       }, () => pick(F));
     }
     if (season === "autumn" && opt.ground !== false) { // fallen leaves under the crown
@@ -2038,6 +2058,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const b = pick(big), i = 1 + Math.floor(R() * (b.pts.length - 2)), r = b.rads[i];
         return { p: b.pts[i].clone().add(new V(0, r * 0.9, 0)), rot: new THREE.Euler(-Math.PI / 2 + (R() - 0.5) * 0.5, 0, R() * 6.28), flat: true, s: 0.35 + r * 5 + R() * 0.25 };
       }, () => [0.95, 0.96, 0.98]);
+      // heavy snow cushions sitting on every spray of twigs, so the crown reads full and white
+      const fy = opt.faceYaw || 0;
+      const twigs = branches.filter((b) => b.lvl >= 3);
+      cards("clump", 9000, 0.3, () => {
+        const b = pick(twigs), i = 1 + Math.floor(R() * (b.pts.length - 1)), r = b.rads[Math.min(i, b.rads.length - 1)];
+        const p = b.pts[Math.min(i, b.pts.length - 1)].clone().add(new V((R() - 0.5) * 0.15, r + 0.04, (R() - 0.5) * 0.15));
+        return { p, rot: new THREE.Euler(0.3 + (R() - 0.5) * 0.35, fy + (R() - 0.5) * 0.8, (R() - 0.5) * 0.25), s: 0.7 + R() * 0.7 };
+      }, () => [0.97, 0.98, 1.0]);
       if (opt.ground !== false) { const gm = new THREE.Mesh(new THREE.CircleGeometry(crownR * 1.4, 48), new THREE.MeshBasicMaterial({ map: tex("snow"), transparent: true, opacity: 0.9, depthWrite: false }));
       gm.rotation.x = -Math.PI / 2; gm.position.set(crown.x, 0.01, crown.z); gm.scale.set(1, 1.3, 1); grp.add(gm); }
     }
@@ -2047,22 +2075,48 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
 
     return { buildTreeMesh, tex, lin };
   })();
-  const SEASON = (() => { const q = new URLSearchParams(location.search).get("season"); if (q) return q;
+  const SEASON_AUTO = (() => { const q = new URLSearchParams(location.search).get("season"); if (q) return q;
     const m = new Date().getMonth() + 1; return m === 12 || m <= 2 ? "winter" : m <= 5 ? "spring" : m <= 8 ? "summer" : "autumn"; })();
+  const SEASON_PREVIEW = [null, "spring", "summer", "autumn", "winter"], SEASON_NAME = { spring: "봄", summer: "여름", autumn: "가을", winter: "겨울" };
+  const seasonNow = () => SEASON_PREVIEW[SKYW.prevS || 0] || SEASON_AUTO;
   /* a large seasonal tree beside the lobby, seen through the glass vault */
   function buildSeasonTree(Y0, S, zfg, zb) {
-    const tree = SEASON_TREE.buildTreeMesh(SEASON, { seed: 5, leaves: 46000, ground: false });
-    tree.scale.setScalar(2.35); tree.position.set(-HX - 3.5, 0, -24); tree.rotation.y = 0.5;
+    const SEASON = seasonNow();
+    const pose = lobbyOverview(), corner = new THREE.Vector3(-HX, 0, zfg);
+    const dir = corner.clone().sub(new THREE.Vector3(pose.x, 0, pose.z)).normalize();
+    const tree = SEASON_TREE.buildTreeMesh(SEASON, { seed: 5, leaves: 46000, ground: false, faceYaw: Math.atan2(-dir.x, -dir.z) - 0.5 });
+    const SC = 2.35; tree.scale.setScalar(SC); tree.rotation.y = 0.5; tree.updateMatrixWorld(true);
+    // put the middle of the crown right behind the lobby's front-left corner, as seen from the entrance view
+    const want = new THREE.Vector3(pose.x, 0, pose.z).addScaledVector(dir, 26);
+    const cw = tree.userData.crown.clone().applyMatrix4(tree.matrixWorld);
+    tree.position.set(want.x - cw.x, 0, want.z - cw.z);
     const mats = []; tree.traverse((o) => { if (o.material) { o.renderOrder = 2; mats.push(o.material); } });
-    world.add(tree);
-    DOME.tree = { mats };
+    world.add(tree); tree.updateMatrixWorld(true);
+    DOME.tree = { tree, mats, t0: null, args: [Y0, S, zfg, zb] };
+  }
+  /* weather chip: preview another season (the tree is rebuilt and sways once) */
+  function setSeasonPreview() {
+    SKYW.prevS = ((SKYW.prevS || 0) + 1) % SEASON_PREVIEW.length; skyLabel();
+    const T = DOME && DOME.tree; if (!T) return;
+    [T.tree].forEach((o) => { world.remove(o); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); });
+    buildSeasonTree(...T.args); if (skyDome) stepSeasonTree(0, skyDome.u); DOME.tree.t0 = performance.now() - 1500;
   }
   function stepSeasonTree(dt, u) {
     const T = DOME && DOME.tree; if (!T) return;
     // light: follows the sky (dim at night, warm at golden hour) and the slight tint of the glass
     const lv = 0.22 + 0.78 * u.uDay.value * (1 - 0.35 * u.uOver.value), g = u.uGold.value, tw = u.uTwi.value;
-    const r = lv * (0.84 + 0.14 * g + 0.1 * tw), gg = lv * (0.88 + 0.03 * g), b = lv * (0.9 - 0.16 * g - 0.05 * tw);
+    const r = lv * (0.93 + 0.12 * g + 0.1 * tw), gg = lv * (0.96 + 0.03 * g), b = lv * (0.98 - 0.16 * g - 0.05 * tw);
     for (const m of T.mats) m.color.setRGB(r, gg, b);
+    if (atEasel || mode !== "lobby") return;
+    const now = performance.now();
+    if (T.t0 === null) T.t0 = now;
+    const t = (now - T.t0) / 1000 - 2; // starts 2 s after entering the lobby
+    if (t < 0 || T.done) return;
+    // a gust: the tree sways a little and settles
+    const sw = t < 5 ? Math.sin(t * 3.4) * 0.014 * Math.exp(-t * 0.6) : 0;
+    T.tree.rotation.set(sw * 0.4, 0.5, sw);
+    const busy = t < 5;
+    if (!busy) { T.done = true; T.tree.rotation.set(0, 0.5, 0); }
   }
   function buildSkyDome() {
     if (!DOME) return;
@@ -2253,6 +2307,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function enterArchive() {
     if (!leaveEasel() || mode !== "lobby") return;
     moveTo(lobbyOverview(), false, reduce ? 0 : 3200); setZoom(1.25);
+    if (DOME && DOME.tree) { DOME.tree.t0 = performance.now(); DOME.tree.done = false; }
     cur = lobbyHome(); showCard();
   }
   const lobbyHome = () => Math.max(0, stops.findIndex((t) => t.kind === "overview"));
