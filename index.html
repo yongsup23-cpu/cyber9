@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 10:51</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 11:39</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1882,6 +1882,188 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       colr = mix(colr, vec3(.045, .045, .043), edge * .85 * uEdge);
       gl_FragColor = vec4(colr, 1.0);
     }`;
+  /* ---------- seasonal tree outside the lobby glass (procedural, unlit with baked shading) ---------- */
+  const SEASON_TREE = (() => {
+
+  function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+  const V = THREE.Vector3; const lin = (a) => a.map((k) => Math.pow(Math.max(0, Math.min(1, k)), 2.2));
+  function leafTex(kind) {
+    const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d");
+    g.translate(64, 64);
+    if (kind === "flower") {
+      for (let i = 0; i < 26; i++) { // panicle of tiny crinkled blossoms
+        const a = Math.random() * 6.28, r = Math.random() ** 0.7 * 46, x = Math.cos(a) * r, y = Math.sin(a) * r * 1.15;
+        const s = 7 + Math.random() * 8, l = 70 + Math.random() * 25;
+        g.fillStyle = `hsl(0,0%,${l}%)`;
+        for (let p = 0; p < 6; p++) { const b = p * 1.047 + Math.random(); g.beginPath(); g.ellipse(x + Math.cos(b) * s * 0.55, y + Math.sin(b) * s * 0.55, s * 0.55, s * 0.4, b, 0, 6.28); g.fill(); }
+        g.fillStyle = "rgba(255,240,170,0.9)"; g.beginPath(); g.arc(x, y, 1.6, 0, 6.28); g.fill();
+      }
+    } else if (kind === "snow") {
+      const gr = g.createRadialGradient(0, 0, 4, 0, 0, 60); gr.addColorStop(0, "#fff"); gr.addColorStop(0.6, "rgba(255,255,255,.85)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+      g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, 60, 34, 0, 0, 6.28); g.fill();
+    } else {
+      // leaf: pointed ellipse, midrib + veins, slight light gradient
+      g.rotate(-0.15);
+      const path = () => { g.beginPath(); g.moveTo(0, -60); g.bezierCurveTo(30, -38, 34, 22, 0, 58); g.bezierCurveTo(-34, 22, -30, -38, 0, -60); };
+      const gr = g.createLinearGradient(-30, -50, 30, 50); gr.addColorStop(0, "#fff"); gr.addColorStop(1, "#b9b9b9");
+      path(); g.fillStyle = gr; g.fill();
+      g.strokeStyle = "rgba(90,90,90,.45)"; g.lineWidth = 2.2; g.beginPath(); g.moveTo(0, -56); g.lineTo(0, 56); g.stroke();
+      g.lineWidth = 1.1; for (let i = -40; i < 44; i += 12) { g.beginPath(); g.moveTo(0, i); g.quadraticCurveTo(12, i - 4, 22, i - 12); g.moveTo(0, i); g.quadraticCurveTo(-12, i - 4, -22, i - 12); g.stroke(); }
+    }
+    const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+  }
+  const TEX = {};
+  const tex = (k) => TEX[k] || (TEX[k] = leafTex(k));
+
+  function buildTreeMesh(season, opt) {
+    opt = opt || {};
+    const R = rng(opt.seed || 7), grp = new THREE.Group();
+    const SUN = new V(-0.45, 0.8, 0.4).normalize();
+    // ---------- skeleton ----------
+    const branches = []; // {pts:[V], rad:[r], lvl}
+    function grow(p0, dir, len, rad, lvl) {
+      const pts = [p0.clone()], rads = [rad], n = Math.max(4, Math.round(len * 3));
+      let d = dir.clone(), p = p0.clone();
+      for (let i = 1; i <= n; i++) {
+        const t = i / n;
+        d.add(new V(R() - 0.5, (R() - 0.5) * 0.6, R() - 0.5).multiplyScalar(lvl === 0 ? 0.06 : lvl < 2 ? 0.16 : 0.32)).add(new V(0, lvl < 2 ? 0.05 : 0.02, 0)).normalize();
+        if (lvl >= 2) d.y -= 0.03 * t; // outer limbs droop a little
+        p = p.clone().addScaledVector(d, len / n); pts.push(p); rads.push(rad * (1 - 0.55 * t) + 0.004);
+      }
+      branches.push({ pts, rads, lvl });
+      if (lvl >= 5) return;
+      const kids = [5, 4, 4, 4, 3][lvl];
+      let az = R() * 6.28;
+      for (let k = 0; k < kids; k++) {
+        const t = lvl === 0 ? 0.55 + 0.45 * (k / kids) : 0.3 + 0.7 * ((k + R() * 0.6) / kids);
+        const idx = Math.min(pts.length - 1, Math.round(t * (pts.length - 1)));
+        az += 2.4;
+        const side = new V(Math.cos(az), 0, Math.sin(az));
+        const tilt = lvl === 0 ? 0.6 + R() * 0.3 : lvl === 1 ? 0.55 + R() * 0.35 : 0.6 + R() * 0.5;
+        const nd = dir.clone().multiplyScalar(Math.cos(tilt)).addScaledVector(side, Math.sin(tilt)).normalize();
+        nd.y = Math.max(nd.y, lvl < 2 ? 0.45 : 0.05); nd.normalize();
+        const r0 = rads[idx] * (lvl === 0 ? 0.7 : 0.72);
+        const start = pts[idx].clone().addScaledVector(nd, -rads[idx] * 0.6); // sink the joint into the parent
+        grow(start, nd, len * [0.72, 0.66, 0.6, 0.55, 0.5][lvl] * (0.85 + R() * 0.3), r0, lvl + 1);
+      }
+    }
+    // two-three stems from a short trunk
+    const H = opt.height || 1;
+    grow(new V(0, 0, 0), new V(0.02, 1, 0).normalize(), 4.6 * H, 0.55 * H, 0);
+    // ---------- bark mesh ----------
+    const pos = [], col = [], idxs = [];
+    const bark = [0.78, 0.72, 0.64];
+    for (const b of branches) {
+      const seg = b.lvl === 0 ? 14 : b.lvl < 3 ? 9 : b.lvl < 5 ? 5 : 4, base = pos.length / 3;
+      for (let i = 0; i < b.pts.length; i++) {
+        const p = b.pts[i], q = b.pts[Math.min(i + 1, b.pts.length - 1)], o = b.pts[Math.max(i - 1, 0)];
+        const tg = q.clone().sub(o).normalize();
+        const n1 = new V(0, 1, 0).cross(tg); if (n1.lengthSq() < 1e-4) n1.set(1, 0, 0); n1.normalize();
+        const n2 = tg.clone().cross(n1).normalize();
+        let r = b.rads[i]; if (b.lvl === 0 && i === 0) r *= 1.6; // root flare
+        for (let s = 0; s <= seg; s++) {
+          const a = (s / seg) * 6.283, nrm = n1.clone().multiplyScalar(Math.cos(a)).addScaledVector(n2, Math.sin(a));
+          const bump = 1 + 0.07 * Math.sin(a * 5 + i * 0.7) * (b.lvl < 2 ? 1 : 0.3);
+          const v = p.clone().addScaledVector(nrm, r * bump); pos.push(v.x, v.y, v.z);
+          // baked light: wrap lambert + crown shadow toward the top + bark streaks
+          let L = 0.38 + 0.62 * Math.max(0, nrm.dot(SUN) * 0.6 + 0.4);
+          const streak = 0.86 + 0.14 * Math.sin(a * 11 + Math.sin(i * 1.3) * 2);
+          const mottle = 0.9 + 0.2 * Math.sin(v.y * 3.1 + a * 2) * Math.sin(v.x * 4 + v.z * 3);
+          let c = bark.map((k) => k * L * streak * mottle);
+          if (season !== "winter") c = c.map((k) => k * (0.75 + 0.25 * Math.max(0, 1 - v.y / 9))); // foliage shade
+          if (season === "winter") { const up = nrm.y + 0.18 * Math.sin(a * 3 + i * 1.7); if (up > 0.12) { const s2 = Math.min(1, (up - 0.12) * 2.6) * (b.lvl >= 1 ? 1 : 0.8); c = c.map((k) => k * (1 - s2) + (0.93 + 0.05 * L) * s2); } }
+          col.push(...lin(c));
+        }
+      }
+      for (let i = 0; i < b.pts.length - 1; i++) for (let s = 0; s < seg; s++) {
+        const a = base + i * (seg + 1) + s, b2 = a + seg + 1; idxs.push(a, b2, a + 1, a + 1, b2, b2 + 1);
+      }
+    }
+    const bg = new THREE.BufferGeometry();
+    bg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); bg.setAttribute("color", new THREE.Float32BufferAttribute(col, 3)); bg.setIndex(idxs);
+    grp.add(new THREE.Mesh(bg, new THREE.MeshBasicMaterial({ vertexColors: true })));
+    // ---------- foliage ----------
+    const tips = branches.filter((b) => b.lvl >= 4);
+    const crown = new V(); let cn = 0; tips.forEach((b) => { crown.add(b.pts[b.pts.length - 1]); cn++; }); crown.divideScalar(cn);
+    let crownR = 0; tips.forEach((b) => (crownR = Math.max(crownR, b.pts[b.pts.length - 1].distanceTo(crown))));
+    const PAL = {
+      spring: [[0.55, 0.78, 0.30], [0.66, 0.84, 0.36], [0.47, 0.70, 0.27], [0.74, 0.86, 0.45]],
+      summer: [[0.22, 0.42, 0.16], [0.28, 0.50, 0.19], [0.18, 0.36, 0.14], [0.33, 0.55, 0.22]],
+      autumn: [[0.86, 0.36, 0.10], [0.93, 0.62, 0.14], [0.74, 0.20, 0.09], [0.96, 0.78, 0.25], [0.55, 0.30, 0.12]],
+    };
+    const dens = { spring: 0.75, summer: 1, autumn: 0.6, winter: 0 }[season];
+    function cards(kind, count, size, place, colorOf) {
+      if (count <= 0) return;
+      const m = new THREE.MeshBasicMaterial(kind === "snow" ? { map: tex(kind), transparent: true, depthWrite: false, side: THREE.DoubleSide } : { map: tex(kind), alphaTest: 0.45, side: THREE.DoubleSide, transparent: false });
+      const im = new THREE.InstancedMesh(new THREE.PlaneGeometry(size, size), m, count);
+      const o = new THREE.Object3D(), c = new THREE.Color();
+      for (let i = 0; i < count; i++) {
+        const P = place(i); o.position.copy(P.p);
+        o.rotation.set(R() * 6.28, R() * 6.28, R() * 6.28); if (P.rot) o.rotation.copy(P.rot);
+        const s = P.s || 0.7 + R() * 0.6; o.scale.set(s, s, s); o.updateMatrix(); im.setMatrixAt(i, o.matrix);
+        // fake AO: inner/lower leaves darker, sunlit side brighter
+        const rel = P.p.clone().sub(crown), dd = Math.min(1, rel.length() / crownR);
+        const lit = 0.5 + 0.5 * Math.max(0, rel.normalize().dot(SUN));
+        const k = (P.flat ? 1 : 0.42 + 0.38 * dd + 0.3 * lit) * (0.85 + R() * 0.25);
+        const base = lin(colorOf(i).map((v) => v * k)); c.setRGB(base[0], base[1], base[2]); im.setColorAt(i, c);
+      }
+      im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
+      im.frustumCulled = false; grp.add(im); return im;
+    }
+    const pick = (a) => a[Math.floor(R() * a.length)];
+    if (dens > 0) {
+      const N = Math.round((opt.leaves || 32000) * dens);
+      cards("leaf", N, season === "spring" ? 0.15 : 0.18, () => {
+        const b = pick(tips), t = 0.35 + R() * 0.65, i = Math.round(t * (b.pts.length - 1));
+        const p = b.pts[i].clone().add(new V(R() - 0.5, R() - 0.35, R() - 0.5).multiplyScalar(0.7));
+        return { p };
+      }, () => pick(PAL[season]));
+    }
+    if (season === "summer") { // crape-myrtle style pink panicles at the shoot tips
+      const F = [[0.93, 0.42, 0.66], [0.98, 0.55, 0.75], [0.85, 0.32, 0.58], [0.99, 0.68, 0.82]];
+      cards("flower", 2600, 0.5, () => {
+        const b = pick(tips.filter((t) => t.pts[t.pts.length - 1].y > crown.y - crownR * 0.35)), p = b.pts[b.pts.length - 1].clone().add(new V(R() - 0.5, R() * 0.5, R() - 0.5).multiplyScalar(0.7));
+        return { p, s: 0.6 + R() * 0.7 };
+      }, () => pick(F));
+    }
+    if (season === "autumn" && opt.ground !== false) { // fallen leaves under the crown
+      cards("leaf", 2600, 0.22, () => {
+        const a = R() * 6.28, r = Math.sqrt(R()) * crownR * 1.15;
+        return { p: new V(crown.x + Math.cos(a) * r, 0.012 + R() * 0.01, crown.z + Math.sin(a) * r), rot: new THREE.Euler(-Math.PI / 2, 0, R() * 6.28), flat: true, s: 0.7 + R() * 0.5 };
+      }, () => pick(PAL.autumn).map((k) => k * 0.82));
+    }
+    if (season === "winter") { // snow sitting on the forks and limb tops + a dusting on the ground
+      const big = branches.filter((b) => b.lvl >= 1 && b.lvl <= 5);
+      cards("snow", 5200, 0.34, () => {
+        const b = pick(big), i = 1 + Math.floor(R() * (b.pts.length - 2)), r = b.rads[i];
+        return { p: b.pts[i].clone().add(new V(0, r * 0.9, 0)), rot: new THREE.Euler(-Math.PI / 2 + (R() - 0.5) * 0.5, 0, R() * 6.28), flat: true, s: 0.35 + r * 5 + R() * 0.25 };
+      }, () => [0.95, 0.96, 0.98]);
+      if (opt.ground !== false) { const gm = new THREE.Mesh(new THREE.CircleGeometry(crownR * 1.4, 48), new THREE.MeshBasicMaterial({ map: tex("snow"), transparent: true, opacity: 0.9, depthWrite: false }));
+      gm.rotation.x = -Math.PI / 2; gm.position.set(crown.x, 0.01, crown.z); gm.scale.set(1, 1.3, 1); grp.add(gm); }
+    }
+    grp.userData.crown = crown; grp.userData.crownR = crownR;
+    return grp;
+  }
+
+    return { buildTreeMesh, tex, lin };
+  })();
+  const SEASON = (() => { const q = new URLSearchParams(location.search).get("season"); if (q) return q;
+    const m = new Date().getMonth() + 1; return m === 12 || m <= 2 ? "winter" : m <= 5 ? "spring" : m <= 8 ? "summer" : "autumn"; })();
+  /* a large seasonal tree beside the lobby, seen through the glass vault */
+  function buildSeasonTree(Y0, S, zfg, zb) {
+    const tree = SEASON_TREE.buildTreeMesh(SEASON, { seed: 5, leaves: 46000, ground: false });
+    tree.scale.setScalar(2.35); tree.position.set(-HX - 3.5, 0, -24); tree.rotation.y = 0.5;
+    const mats = []; tree.traverse((o) => { if (o.material) { o.renderOrder = 2; mats.push(o.material); } });
+    world.add(tree);
+    DOME.tree = { mats };
+  }
+  function stepSeasonTree(dt, u) {
+    const T = DOME && DOME.tree; if (!T) return;
+    // light: follows the sky (dim at night, warm at golden hour) and the slight tint of the glass
+    const lv = 0.22 + 0.78 * u.uDay.value * (1 - 0.35 * u.uOver.value), g = u.uGold.value, tw = u.uTwi.value;
+    const r = lv * (0.84 + 0.14 * g + 0.1 * tw), gg = lv * (0.88 + 0.03 * g), b = lv * (0.9 - 0.16 * g - 0.05 * tw);
+    for (const m of T.mats) m.color.setRGB(r, gg, b);
+  }
   function buildSkyDome() {
     if (!DOME) return;
     const u = { uT: { value: 0 }, uDay: { value: 0 }, uTwi: { value: 0 }, uCloud: { value: 0.2 }, uOver: { value: 0 }, uRain: { value: 0 }, uSnow: { value: 0 }, uFlash: { value: 0 }, uFog: { value: 0 },
@@ -1893,7 +2075,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     for (let sd = 0; sd < 4; sd++) onWall(plane(wallLen(sd), BH, black), sd, 0, Y0 - BH / 2, 0.03);
     { const tm = Math.asin(Math.min(1, HX / R)); const g = new THREE.CylinderGeometry(R - 0.03, R - 0.03, BH, 72, 1, true, Math.PI - tm, 2 * tm);
       const mb = new THREE.Mesh(g, blackB); mb.position.set(0, Y0 - BH / 2, cz); world.add(mb); }
-    const mat = new THREE.ShaderMaterial({ uniforms: u, vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.DoubleSide, depthWrite: true, extensions: { derivatives: true } });
+    const mat = new THREE.ShaderMaterial({ uniforms: u, vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.DoubleSide, depthWrite: false, extensions: { derivatives: true } });
     const ROOF = (new URLSearchParams(location.search).get("roof")) || "vault";
     u.uEdge = { value: ROOF === "gable" ? 1 : 0 }; u.uHt = { value: 1 }; u.uHX = { value: 1 }; u.uZf = { value: 0 }; u.uZb = { value: 0 };
     const pos = [], L = (p, q, k) => p.map((v, i) => v + (q[i] - v) * k);
@@ -1924,6 +2106,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         zs.forEach((z) => { const t = new THREE.Mesh(new THREE.TorusGeometry(HX, 0.03, 6, 64, Math.PI), bronze); t.scale.y = S; t.position.set(0, Y0, z); world.add(t); }); }
       const rz = (z0, z1, x, y) => { const b2 = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, z1 - z0), bronze); b2.position.set(x, y, (z0 + z1) / 2); world.add(b2); };
       rz(zfg, zb - 0.03, 0, Y0 + S * HX); rz(zfg, zb, -HX + 0.03, Y0 + 0.03); rz(zfg, zb, HX - 0.03, Y0 + 0.03);
+      buildSeasonTree(Y0, S, zfg, zb);
     } else if (ROOF === "coffer") {
       // ② dark coffered ceiling with gold-edged beams and a raised skylight in the middle
       const sw = HX * 0.5, sz0 = -HZ * 0.35, sz1 = HZ * 0.45, LH = 1.1;
@@ -2017,6 +2200,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       DOME.alu[0].color.setRGB(0.55 * lv + 0.06, 0.565 * lv + 0.06, 0.585 * lv + 0.065);
       DOME.alu[1].color.setRGB(0.36 * lv + 0.04, 0.375 * lv + 0.04, 0.395 * lv + 0.045);
       DOME.alu[2].color.setRGB(0.12 * lv + 0.03, 0.12 * lv + 0.03, 0.115 * lv + 0.03); }
+    stepSeasonTree(dt, u);
     if (t.storm && !reduce && Math.random() < dt * 0.18) u.uFlash.value = 0.9 + Math.random() * 0.3;
     u.uFlash.value *= Math.exp(-dt * 7);
     if (Math.floor(now / 60000) !== skyDome.min) { skyDome.min = Math.floor(now / 60000); fetchWeather(); skyLabel(); }
