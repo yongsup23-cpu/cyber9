@@ -318,7 +318,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 16:31</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.22 07:44</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -735,7 +735,7 @@ window.__archiveReady = function () {
     wallRec = null; ytRec = null; dust = null; beams = [];
     chronList.forEach((c) => c.tex.dispose()); chronList = [];
     pickables = []; stops = []; doors = []; photoMeshes = []; atlasUsers = {}; doorGlows = [];
-    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = []; innerCue = null; colDust = null; autoDoor = null; kZoomPrev = null; skyDome = null; DOME = null; skyChip(false);
+    arrowList.forEach((m) => { m.material.dispose(); m.userData.glow.material.dispose(); }); arrowList = []; innerCue = null; colDust = null; ceilStars = null; autoDoor = null; kZoomPrev = null; skyDome = null; DOME = null; skyChip(false);
     for (const k in hiRes) { hiRes[k].tex.dispose(); delete texCache[hiRes[k].url]; delete hiRes[k]; }
   }
   function onWall(mesh, side, u, y, off) {
@@ -797,6 +797,7 @@ window.__archiveReady = function () {
       const fl = HQ ? reflectFloor(2 * RR, 2 * RR) : plane(2 * RR, 2 * RR, floorMat);
       fl.rotation.x = -Math.PI / 2; world.add(fl);
       const ce = new THREE.Mesh(new THREE.CircleGeometry(RR, 96), ceilMat); ce.rotation.x = Math.PI / 2; ce.position.y = WALL_H; world.add(ce);
+      buildCeilStars(DR ? RI + IWT + 0.25 : 1.2, RR - 0.2);
       for (let r = 2; r < RR; r += 2) { const ring = new THREE.Mesh(new THREE.RingGeometry(r - 0.012, r + 0.012, 160), gridMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.004; world.add(ring); }
       for (let k = 0; k < 24; k++) { const a = k * Math.PI / 12, ln = plane(0.018, RR - 2, gridMat); ln.rotation.x = -Math.PI / 2; ln.rotation.z = a; ln.position.set(Math.sin(a) * (RR / 2 + 1), 0.005, -Math.cos(a) * (RR / 2 + 1)); world.add(ln); }
       if (DR) { // inner drum with an opening facing the entrance
@@ -869,6 +870,32 @@ window.__archiveReady = function () {
     dust = { pts, P, pos, col, last: performance.now() };
   }
   /* sparks of light drifting down around the central light column */
+  /* fibre-optic star ceiling over the outer ring corridor: small points of light that twinkle */
+  let ceilStars = null;
+  function buildCeilStars(r0, r1) {
+    if (r1 - r0 < 0.4) return;
+    const area = Math.PI * (r1 * r1 - r0 * r0), n = Math.min(700, Math.round(area * 2.6)), P = [];
+    for (let i = 0; i < n; i++) {
+      const r = Math.sqrt(r0 * r0 + Math.random() * (r1 * r1 - r0 * r0)), a = Math.random() * Math.PI * 2;
+      P.push({ x: Math.sin(a) * r, z: -Math.cos(a) * r, b: 0.6 + Math.pow(Math.random(), 2) * 0.6, tw: 0.6 + Math.random() * 2.2, ph: Math.random() * 6.28, sp: 0.3 + Math.random() * 0.7, sph: Math.random() * 6.28 });
+    }
+    const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), geo = new THREE.BufferGeometry();
+    P.forEach((p, i) => { pos[i * 3] = p.x; pos[i * 3 + 1] = WALL_H - 0.012; pos[i * 3 + 2] = p.z; });
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    const mat = new THREE.PointsMaterial({ size: HQ ? 0.12 : 0.14, map: dotTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
+    const pts = new THREE.Points(geo, mat); pts.renderOrder = 4; world.add(pts);
+    ceilStars = { pts, P, col }; stepCeilStars(performance.now(), true);
+  }
+  function stepCeilStars(now, force) {
+    if (!ceilStars || (!force && mode !== "hall")) return;
+    const { P, col } = ceilStars, ts = reduce ? 0 : now / 1000;
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i], s = Math.sin(ts * p.tw + p.ph), sp = Math.pow(Math.max(0, Math.sin(ts * p.sp + p.sph)), 40);
+      const v = p.b * (0.55 + 0.45 * s) + sp * 1.2;
+      col[i * 3] = v * 0.92; col[i * 3 + 1] = v * 0.96; col[i * 3 + 2] = v;
+    }
+    ceilStars.pts.geometry.attributes.color.needsUpdate = true;
+  }
   let colDust = null;
   function buildColDust(H) {
     if (reduce) return;
@@ -1759,8 +1786,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const cl = { clear: 0.16, partly: 0.45, cloudy: 0.85, fog: 0.9, rain: 0.92, snow: 0.88, storm: 0.97 }[kind];
     const ov = { clear: 0, partly: 0.08, cloudy: 0.7, fog: 0.85, rain: 0.92, snow: 0.75, storm: 0.98 }[kind];
     const real = !SKY_PREVIEW[SKYW.prevW] && SKYW.ok;
-    const gold = sm(ss - 3.6, ss - 1.0, H) * (1 - sm(ss - 0.2, ss + 0.4, H)); // golden afternoon light ahead of the sunset
-    return { kind, day, twi, dawn, gold, H, sun: solar(H, 1), moon: solar((H + 12) % 24, -1),
+    const t0 = seasonNow() === "summer" ? 17 : 16; // the glow begins at 16:00 (summer 17:00) and deepens until sunset
+    const gold = sm(Math.min(t0, ss - 1.2), ss - 0.35, H) * (1 - sm(ss - 0.1, ss + 0.5, H));
+    // brightness through the day: rises slowly from sunrise to a peak at noon, then eases down toward evening
+    const up = sm(sr, 12, H), down = sm(12, ss, H);
+    const lum = H < 12 ? 0.55 + 0.45 * up : 1 - 0.38 * down;
+    return { kind, day, twi, dawn, gold, lum, H, sun: solar(H, 1), moon: solar((H + 12) % 24, -1),
       cloud: real ? Math.max(cl * 0.6, Math.min(1, SKYW.cloud)) : cl, over: ov,
       rain: kind === "rain" ? 0.75 : kind === "storm" ? 1 : 0, snow: kind === "snow" ? 1 : 0, fog: kind === "fog" ? 0.6 : 0, storm: kind === "storm" };
   }
@@ -1808,7 +1839,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   const SKY_VS = "varying vec3 vDir; varying vec3 vP; varying vec3 vW; void main(){ vP = position; vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; vDir = w.xyz - cameraPosition; gl_Position = projectionMatrix * viewMatrix * w; }";
   const SKY_FS = `
-    uniform float uT, uDay, uTwi, uDawn, uGold, uCloud, uOver, uRain, uSnow, uFlash, uFog, uHt, uHX, uZf, uZb, uEdge; uniform vec3 uSun, uMoon;
+    uniform float uT, uDay, uTwi, uDawn, uGold, uLum, uCloud, uOver, uRain, uSnow, uFlash, uFog, uHt, uHX, uZf, uZb, uEdge; uniform vec3 uSun, uMoon;
     varying vec3 vDir; varying vec3 vP; varying vec3 vW;
     float gline(float c, float sp, float lw){ float f = abs(fract(c / sp + .5) - .5) * sp; float aa = fwidth(c) * 1.2 + 1e-4; return 1.0 - smoothstep(lw * .5, lw * .5 + aa, f); }
     float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -1825,8 +1856,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       sky += uTwi * tcol * (.35 + 1.0 * side) * pow(1.0 - el, 1.3);
       sky += uTwi * vec3(.9,.55,.35) * pow(max(dot(d, uSun), 0.0), 8.0) * .35;
       { vec2 shg = normalize(uSun.xz + 1e-4), dhg = normalize(d.xz + 1e-4); float sg = pow(dot(dhg, shg) * .5 + .5, 2.0);
-        sky = mix(sky, sky * vec3(1.06,.94,.78), uGold * .7);
-        sky += uGold * vec3(.42,.27,.10) * (.15 + .85 * sg) * pow(1.0 - el, 1.4) * .75;
+        sky = mix(sky, sky * vec3(1.10,.90,.74), uGold * .9);
+        sky += uGold * vec3(.55,.30,.10) * (.3 + .7 * sg) * pow(1.0 - el, 0.9) * .95;
         sky += uGold * vec3(.5,.35,.15) * pow(max(dot(d, uSun), 0.0), 10.0) * .3; }
       sky = mix(sky, mix(vec3(.035,.04,.048), vec3(.38,.40,.43), uDay), uOver*.95);
       float night = 1.0 - uDay; float moonA = smoothstep(.55, .92, night);
@@ -1870,7 +1901,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       }
       sky += uFlash * vec3(.55,.6,.75) * (.6 + .4*n);
       // curtain-wall glass: light tint, faint vertical sheen and a fresnel reflection of the warm lobby
-      vec3 colr = sky * vec3(.98, .99, 1.0) * 1.12;
+      vec3 colr = sky * vec3(.98, .99, 1.0) * 1.12 * mix(1.0, uLum, uDay);
       vec3 N = normalize(cross(dFdx(vW), dFdy(vW))); vec3 V = normalize(cameraPosition - vW);
       float along = abs(N.x) > .5 ? vW.z : vW.x;
       colr *= .97 + .05 * noise(vec2(along * .8, vW.y * .3) + 4.0);
@@ -2087,7 +2118,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const pose = lobbyOverview(), corner = new THREE.Vector3(-HX, 0, zfg);
     const dir = corner.clone().sub(new THREE.Vector3(pose.x, 0, pose.z)).normalize();
     const tree = SEASON_TREE.buildTreeMesh(SEASON, { wv: +(new URLSearchParams(location.search).get("wv") || 2), seed: 5, leaves: 46000, ground: false, faceYaw: Math.atan2(-dir.x, -dir.z) - 0.5 });
-    const SC = 2.35; tree.scale.setScalar(SC); tree.rotation.y = 0.5; tree.updateMatrixWorld(true);
+    const SC = 2.35; tree.scale.set(SC * 1.5, SC, SC * 1.5); /* crown spread 1.5x wider */ tree.rotation.y = 0.5; tree.updateMatrixWorld(true);
     // put the middle of the crown right behind the lobby's front-left corner, as seen from the entrance view
     const want = new THREE.Vector3(pose.x, 0, pose.z).addScaledVector(dir, 26);
     const cw = tree.userData.crown.clone().applyMatrix4(tree.matrixWorld);
@@ -2106,7 +2137,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function stepSeasonTree(dt, u) {
     const T = DOME && DOME.tree; if (!T) return;
     // light: follows the sky (dim at night, warm at golden hour) and the slight tint of the glass
-    const lv = 0.22 + 0.78 * u.uDay.value * (1 - 0.35 * u.uOver.value), g = u.uGold.value, tw = u.uTwi.value;
+    const lv = (0.22 + 0.78 * u.uDay.value * (1 - 0.35 * u.uOver.value)) * (1 - u.uDay.value * (1 - u.uLum.value) * 0.8), g = u.uGold.value, tw = u.uTwi.value;
     const r = lv * (0.93 + 0.12 * g + 0.1 * tw), gg = lv * (0.96 + 0.03 * g), b = lv * (0.98 - 0.16 * g - 0.05 * tw);
     for (const m of T.mats) m.color.setRGB(r, gg, b);
     if (atEasel || mode !== "lobby") return;
@@ -2115,7 +2146,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const t = (now - T.t0) / 1000 - 2; // starts 2 s after entering the lobby
     if (t < 0 || T.done) return;
     // a gust: the tree sways a little and settles
-    const sw = t < 5 ? Math.sin(t * 3.4) * 0.014 * Math.exp(-t * 0.6) : 0;
+    const sw = t < 5 ? Math.sin(t * 3.4) * 0.02 * Math.exp(-t * 0.6) : 0;
     T.tree.rotation.set(sw * 0.4, 0.5, sw);
     const busy = t < 5;
     if (!busy) { T.done = true; T.tree.rotation.set(0, 0.5, 0); }
@@ -2126,7 +2157,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       uSun: { value: new THREE.Vector3(0, 1, 0) }, uMoon: { value: new THREE.Vector3(0, 1, 0) } };
     // lobby top: black band (film height) on every wall, then a curtain wall following the lobby plan, open to the sky
     const CH = 2.7, Y0 = WALL_H, BH = 0.66, R = ARC_R, cz = -HZ + R;
-    u.uDawn = { value: 0 }; u.uGold = { value: 0 };
+    u.uDawn = { value: 0 }; u.uGold = { value: 0 }; u.uLum = { value: 1 };
     const black = basic(0x0b0b0a), blackB = basic(0x0b0b0a, { side: THREE.BackSide });
     for (let sd = 0; sd < 4; sd++) onWall(plane(wallLen(sd), BH, black), sd, 0, Y0 - BH / 2, 0.03);
     { const tm = Math.asin(Math.min(1, HX / R)); const g = new THREE.CylinderGeometry(R - 0.03, R - 0.03, BH, 72, 1, true, Math.PI - tm, 2 * tm);
@@ -2251,7 +2282,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     u.uT.value = reduce ? 0 : now / 1000;
     for (const [key, name] of [["day", "uDay"], ["twi", "uTwi"], ["cloud", "uCloud"], ["over", "uOver"], ["rain", "uRain"], ["snow", "uSnow"], ["fog", "uFog"]]) u[name].value += (t[key] - u[name].value) * k;
     u.uSun.value.lerp(t.sun, k).normalize(); u.uMoon.value.lerp(t.moon, k).normalize();
-    u.uDawn.value += ((t.dawn || 0) - u.uDawn.value) * k; u.uGold.value += ((t.gold || 0) * (1 - 0.8 * t.over) - u.uGold.value) * k;
+    u.uDawn.value += ((t.dawn || 0) - u.uDawn.value) * k; u.uLum.value += ((t.lum == null ? 1 : t.lum) - u.uLum.value) * k; u.uGold.value += ((t.gold || 0) * (1 - 0.8 * t.over) - u.uGold.value) * k;
     if (DOME && DOME.alu) { const lv = 0.28 + 0.72 * u.uDay.value * (1 - 0.45 * u.uOver.value);
       DOME.alu[0].color.setRGB(0.55 * lv + 0.06, 0.565 * lv + 0.06, 0.585 * lv + 0.065);
       DOME.alu[1].color.setRGB(0.36 * lv + 0.04, 0.375 * lv + 0.04, 0.395 * lv + 0.045);
@@ -4092,9 +4123,17 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (y < 0 || y > WALL_H) return false;
     return Math.abs(wrapAngle(Math.atan2(x, -z) - DA)) < IGAP;
   }
+  function treeTap(o) { // tap the lobby tree: it sways once
+    const T = mode === "lobby" && DOME && DOME.tree; if (!T) return false;
+    if (o && Object.keys(o.userData).length) return false;
+    const th = ray.intersectObject(T.tree, true); if (!th.length) return false;
+    if (o && th[0].distance > hitDist && o.userData.wall !== false) { const y = th[0].point.y; if (y < WALL_H) return false; }
+    T.t0 = performance.now() - 2000; T.done = false; return true;
+  }
   function pick(cx, cy) {
     const o = hit(cx, cy);
     if (rayThroughDoor()) { goInner(); return; }
+    if (treeTap(o)) return;
     if (!o) { walkToward(cx, cy); return; }
     if (o.userData.panel) {
       const P = o.userData.panel;
@@ -4481,7 +4520,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stepDoors(now);
     if (GLOW_COL && DR) { const k = 0.85 + 0.15 * Math.sin(now / 1400); GLOW_COL.forEach((m, i) => { m.material.opacity = [0.16, 0.07, 0.03][i] * k; }); }
     tickAuto(now);
-    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now); stepKioskRise(dt); stepTicker(dt); stepColDust(dt, now); stepAutoDoor(dt); stepSky(dt, now);
+    stepSat(); stepChron(now); stepDust(now); trackSteps(); stepEgg(now); stepKioskRise(dt); stepTicker(dt); stepColDust(dt, now); stepCeilStars(now); stepAutoDoor(dt); stepSky(dt, now);
     if (doorGlows.length && mode === "lobby") {
       const t = reduce ? 0 : now / 1000;
       for (const m of doorGlows) m.material.opacity = 0.22 + 0.38 * Math.pow(0.5 + 0.5 * Math.sin(t * 1.5 - m.userData.phase), 2);
