@@ -317,7 +317,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 14:59</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.21 15:13</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1936,6 +1936,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
 
   function buildTreeMesh(season, opt) {
     opt = opt || {};
+    const snowSpring = season === "winter" && opt.wv === 2; if (snowSpring) season = "spring";
     const R = rng(opt.seed || 7), grp = new THREE.Group();
     const SUN = new V(-0.45, 0.8, 0.4).normalize();
     // ---------- skeleton ----------
@@ -2006,7 +2007,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const crown = new V(); let cn = 0; tips.forEach((b) => { crown.add(b.pts[b.pts.length - 1]); cn++; }); crown.divideScalar(cn);
     let crownR = 0; tips.forEach((b) => (crownR = Math.max(crownR, b.pts[b.pts.length - 1].distanceTo(crown))));
     const PAL = {
-      spring: [[0.62, 0.80, 0.38], [0.70, 0.85, 0.42]],
+      spring: snowSpring ? [[0.94, 0.95, 0.97], [0.88, 0.9, 0.94]] : [[0.62, 0.80, 0.38], [0.70, 0.85, 0.42]],
       summer: [[0.55, 0.78, 0.30], [0.66, 0.84, 0.36], [0.47, 0.70, 0.27], [0.74, 0.86, 0.45]],
       winter: [[0.16, 0.26, 0.15], [0.2, 0.31, 0.17], [0.13, 0.22, 0.13]],
       autumn: [[0.86, 0.36, 0.10], [0.93, 0.62, 0.14], [0.74, 0.20, 0.09], [0.96, 0.78, 0.25], [0.55, 0.30, 0.12]],
@@ -2040,7 +2041,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       }, () => pick(PAL[season]));
     }
     if (season === "spring") { // cherry blossom: the whole crown covered in pale pink
-      const F = [[1.0, 0.86, 0.9], [0.99, 0.8, 0.86], [1.0, 0.92, 0.95], [0.96, 0.74, 0.82]];
+      const F = snowSpring ? [[0.97, 0.98, 1.0], [0.92, 0.94, 0.97], [1.0, 1.0, 1.0], [0.88, 0.9, 0.95]] : [[1.0, 0.86, 0.9], [0.99, 0.8, 0.86], [1.0, 0.92, 0.95], [0.96, 0.74, 0.82]];
       cards("sakura", 12000, 0.42, () => {
         const b = pick(tips), t = 0.3 + R() * 0.7, i = Math.round(t * (b.pts.length - 1));
         return { p: b.pts[i].clone().add(new V(R() - 0.5, R() - 0.3, R() - 0.5).multiplyScalar(0.75)), s: 0.7 + R() * 0.7 };
@@ -2084,7 +2085,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const SEASON = seasonNow();
     const pose = lobbyOverview(), corner = new THREE.Vector3(-HX, 0, zfg);
     const dir = corner.clone().sub(new THREE.Vector3(pose.x, 0, pose.z)).normalize();
-    const tree = SEASON_TREE.buildTreeMesh(SEASON, { seed: 5, leaves: 46000, ground: false, faceYaw: Math.atan2(-dir.x, -dir.z) - 0.5 });
+    const tree = SEASON_TREE.buildTreeMesh(SEASON, { wv: +(new URLSearchParams(location.search).get("wv") || 2), seed: 5, leaves: 46000, ground: false, faceYaw: Math.atan2(-dir.x, -dir.z) - 0.5 });
     const SC = 2.35; tree.scale.setScalar(SC); tree.rotation.y = 0.5; tree.updateMatrixWorld(true);
     // put the middle of the crown right behind the lobby's front-left corner, as seen from the entrance view
     const want = new THREE.Vector3(pose.x, 0, pose.z).addScaledVector(dir, 26);
