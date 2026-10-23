@@ -326,7 +326,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.23 16:09</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.23 16:27</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1765,7 +1765,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const TTS = window.speechSynthesis || null;
   function docVoice() {
     if (!TTS) return null;
-    const vs = TTS.getVoices().filter((v) => /^ko/i.test(v.lang));
+    // 애플 기기의 캐릭터 음성(할아버지·로코·에디 등)은 제외
+    const JUNK = /eloquence|novelty|Eddy|Flo\b|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley|에디|플로|할머니|할아버지|리드|로코|샌디|셸리|Albert|Bad ?News|Bahh|Bells|Boing|Bubbles|Cellos|Good ?News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Junior|Ralph|Fred|Kathy/i;
+    const all = TTS.getVoices().filter((v) => /^ko/i.test(v.lang));
+    const clean = all.filter((v) => !JUNK.test(v.name + " " + (v.voiceURI || "")));
+    const vs = clean.length ? clean : all;
     // 여성 2 (샘플 페이지와 같은 규칙): 여성 음성 중 자연스러운 음성 우선 정렬 후 두 번째, 없으면 첫 번째
     const MALE = /InJoon|인준|Hyunsu|현수|BongJin|봉진|GookMin|국민|Minsu|민수|Jian|지안|Male|남성|남자/i;
     const NAT = /Neural|Natural|Online|Premium|Enhanced|향상/i;
