@@ -49,6 +49,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 #cCount{font-size:12px;letter-spacing:1px;color:var(--mute);font-variant-numeric:tabular-nums}
 .btns{display:flex;gap:6px}
 .btns button{min-width:44px}
+.btns2 button{font-size:12.5px;padding:5px 12px;background:transparent;border-color:rgba(201,178,130,.45);color:var(--ink2)}
+#docBtn[aria-pressed=true]{background:#3a3326;border-color:var(--gold);color:var(--gold)}
 #enterBtn2,#zoomBtn{background:var(--gold2);color:#171712;border-color:var(--gold2)}
 #enterBtn2:hover,#zoomBtn:hover{background:#cdb688}
 .look{position:absolute;right:24px;top:14px;display:flex;align-items:center;gap:8px;font-size:12px;color:#d6c9b3;text-shadow:0 1px 5px #000}.look button{min-height:36px;min-width:40px;padding:4px 10px;background:rgba(23,24,21,.85)}#bearing{min-width:60px;text-align:center}#zoomVal{min-width:58px;font-variant-numeric:tabular-nums}.look .sep{width:10px}
@@ -175,6 +177,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
  #cDetail{font-size:13px}
  .side{flex-direction:row;align-items:center;flex-wrap:nowrap;justify-content:space-between;gap:4px}
  .btns{gap:4px}
+ .side{flex-wrap:wrap}
+ .btns2{order:-1;flex-basis:100%;justify-content:flex-end}
+ .btns2 button{min-height:30px;padding:3px 10px;font-size:11.5px}
  .btns button{min-width:34px;min-height:36px;padding:4px 8px;font-size:12px}
  #cCount{font-size:11px;letter-spacing:0}
  #cardToggle{min-height:32px;min-width:28px;padding:2px 6px}
@@ -297,8 +302,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
    </div>
    <div class="side">
     <div style="display:flex;gap:8px;align-items:center"><div id="cCount"></div><button type="button" id="cardToggle" aria-label="설명 접기/펼치기" aria-expanded="true">▾</button></div>
-    <div class="btns">
+    <div class="btns btns2">
+     <button type="button" id="docBtn" aria-pressed="false" title="설명을 음성으로 들려 드립니다">🎧 음성 해설</button>
      <button type="button" id="autoBtn" aria-pressed="false">▶ 자동 관람</button>
+    </div>
+    <div class="btns">
      <button type="button" id="prevBtn" aria-label="이전 사진">← 이전 사진</button>
      <button type="button" id="zoomBtn">크게 보기</button>
      <button type="button" id="enterBtn2" hidden>입장하기</button>
@@ -318,7 +326,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.23 08:21</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.23 15:54</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -571,6 +579,50 @@ window.__archiveReady = function () {
     return mesh;
   }
 
+  /* ---------- digital plaque variants (preview: ?plaque=neon | led | glass) ---------- */
+  const PLQ = (new URLSearchParams(location.search).get("plaque") || "").toLowerCase();
+  function fitFont(g, txt, maxW, size, min, w, fam) { let f = size; g.font = `${w} ${f}px ${fam}`; while (g.measureText(txt).width > maxW && f > min) { f -= 1; g.font = `${w} ${f}px ${fam}`; } return f; }
+  function drawPlaque(g, W, label) {
+    g.save(); g.textAlign = "center"; g.textBaseline = "alphabetic";
+    if (PLQ === "neon") {             // warm neon tube lettering on a smoked-glass panel
+      g.fillStyle = "#0c0b09"; g.fillRect(10, 0, 880, 150);
+      g.strokeStyle = "rgba(255,170,80,.35)"; g.lineWidth = 2; g.strokeRect(14, 4, 872, 142);
+      fitFont(g, label.title, 800, 54, 30, 500, FONT);
+      const tube = (txt, y, col, glow) => { g.shadowColor = glow; for (const b of [26, 14, 6]) { g.shadowBlur = b; g.fillStyle = col; g.fillText(txt, W / 2, y, 840); } g.shadowBlur = 0; g.fillStyle = "#fff8ec"; g.globalAlpha = 0.55; g.fillText(txt, W / 2, y, 840); g.globalAlpha = 1; };
+      tube(label.title, 70, "#ffd38a", "rgba(255,150,40,.95)");
+      fitFont(g, label.sub || "", 820, 30, 18, 400, FONT);
+      tube(label.sub || "", 124, "#7fe7ff", "rgba(40,200,255,.9)");
+    } else if (PLQ === "led") {       // amber/white LED matrix board, like a bus destination sign
+      g.fillStyle = "#1a1a1a"; g.fillRect(10, 0, 880, 150);                      // bezel
+      g.fillStyle = "#020202"; g.fillRect(18, 7, 864, 136);                      // panel
+      const P = 3.2, GW = Math.floor(864 / P), GH = Math.floor(136 / P);
+      const off = document.createElement("canvas"); off.width = GW; off.height = GH; const o = off.getContext("2d");
+      o.fillStyle = "#000"; o.fillRect(0, 0, GW, GH); o.textAlign = "center"; o.textBaseline = "alphabetic";
+      o.fillStyle = "#f00"; fitFont(o, label.title, GW - 10, 21, 12, 800, FONT); o.fillText(label.title, GW / 2, 23);
+      o.fillStyle = "#0f0"; fitFont(o, label.sub || "", GW - 8, 12, 8, 700, FONT); o.fillText(label.sub || "", GW / 2, 38);
+      const d = o.getImageData(0, 0, GW, GH).data;
+      for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+        const i = (y * GW + x) * 4, r = d[i], gg = d[i + 1], cx = 18 + x * P + P / 2, cy = 7 + y * P + P / 2;
+        if (r > 110) { g.shadowColor = "rgba(255,140,0,.95)"; g.shadowBlur = 7; g.fillStyle = "#ffae1a"; }
+        else if (gg > 110) { g.shadowColor = "rgba(255,255,255,.85)"; g.shadowBlur = 6; g.fillStyle = "#f4f6ff"; }
+        else { g.shadowBlur = 0; g.fillStyle = "#151310"; }
+        g.fillRect(cx - P * 0.36, cy - P * 0.36, P * 0.72, P * 0.72);
+      }
+      g.shadowBlur = 0;
+      const gl = g.createLinearGradient(0, 7, 0, 60); gl.addColorStop(0, "rgba(255,255,255,.08)"); gl.addColorStop(1, "rgba(255,255,255,0)");
+      g.fillStyle = gl; g.fillRect(18, 7, 864, 53);                                // glass reflection
+      g.fillStyle = "#3a3a3a"; [[24, 12], [876, 12], [24, 138], [876, 138]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 3, 0, Math.PI * 2); g.fill(); });
+    } else {                          // edge-lit frosted glass with a cool white light line
+      const gr = g.createLinearGradient(0, 0, 0, 150); gr.addColorStop(0, "#22303a"); gr.addColorStop(1, "#141b21");
+      g.fillStyle = gr; g.fillRect(10, 0, 880, 150);
+      g.fillStyle = "rgba(255,255,255,.05)"; g.fillRect(10, 0, 880, 60);
+      g.shadowColor = "rgba(120,220,255,1)"; g.shadowBlur = 18; g.fillStyle = "#bff2ff"; g.fillRect(10, 144, 880, 4); g.fillRect(10, 0, 880, 2);
+      g.shadowBlur = 10; g.shadowColor = "rgba(150,230,255,.8)";
+      fitFont(g, label.title, 800, 50, 30, 300, FONT); g.fillStyle = "#f2fbff"; g.fillText(label.title, W / 2, 68, 840);
+      g.shadowBlur = 0; fitFont(g, label.sub || "", 820, 28, 18, 400, FONT); g.fillStyle = "#8fd8ee"; g.fillText(label.sub || "", W / 2, 120, 840);
+    }
+    g.restore();
+  }
   /* ---------- illustrated doorway ---------- */
   const DOORIMG = { img: null, wait: [] };
   (() => { const im = new Image(); im.onload = () => { DOORIMG.img = im; DOORIMG.wait.forEach((f) => f()); DOORIMG.wait = []; }; im.src = R("img/door_full.jpg"); })();
@@ -580,6 +632,7 @@ window.__archiveReady = function () {
     const draw = (g) => {
       g.clearRect(0, 0, W, H);
       // plaque
+      if (PLQ) drawPlaque(g, W, label); else {
       g.fillStyle = "#171814"; g.fillRect(10, 0, 880, 150);
       g.strokeStyle = "#71634c"; g.lineWidth = 3; g.strokeRect(11.5, 1.5, 877, 147);
       g.textAlign = "center";
@@ -588,7 +641,7 @@ window.__archiveReady = function () {
       g.fillText(label.title, W / 2, 66, 840);
       g.fillStyle = "#d3bb8c"; let sf = 34; g.font = `400 ${sf}px ${FONT}`;
       while (g.measureText(label.sub || "").width > 830 && sf > 18) { sf -= 1; g.font = `400 ${sf}px ${FONT}`; }
-      g.fillText(label.sub || "", W / 2, 124, 840);
+      g.fillText(label.sub || "", W / 2, 124, 840); }
       // architrave: the photographed door frame (its leaf area maps onto the opening 100..800 × 240..1240)
       if (DOORIMG.img) g.drawImage(DOORIMG.img, 150, 30, 878, 1175, 100 + (150 - 210) * 700 / 760, 240 + (30 - 85) * 1000 / 1120, 878 * 700 / 760, 1175 * 1000 / 1120);
       else { g.fillStyle = "#2b2a26"; g.fillRect(44, 191, 812, 1049); }
@@ -1707,6 +1760,57 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     for (let i = 0; i < ND; i++) { const A = arcAt((i - (ND - 1) / 2) * SP), p = A.P.clone().addScaledVector(A.n, 1.6); floorArrow(p.x, p.z, -A.th, 0.42); }
   }
 
+  /* ---------- voice docent: reads the card aloud with the device's Korean voice (Web Speech API, no files) ---------- */
+  const DOC = { on: false, voice: null, speaking: false, key: "", done: 0 };
+  const TTS = window.speechSynthesis || null;
+  function docVoice() {
+    if (!TTS) return null;
+    const vs = TTS.getVoices().filter((v) => /^ko/i.test(v.lang));
+    // 낮고 편안한 톤: 남성/저음 음성을 먼저, 없으면 자연스러운(Neural) 음성
+    const pref = [/InJoon|인준|Hyunsu|현수|Minsu|민수|Jian|지안|Male|남성/i, /Neural|Natural|Online/i, /Google/i, /SunHi|선히|Yuna|유나|Heami/i];
+    for (const re of pref) { const v = vs.find((x) => re.test(x.name)); if (v) return v; }
+    return vs[0] || null;
+  }
+  if (TTS) { DOC.voice = docVoice(); TTS.onvoiceschanged = () => { DOC.voice = docVoice(); }; }
+  function docText(s) {
+    const txt = (id) => { const el = $(id); if (!el || el.hidden) return ""; if (id !== "cTitle") return el.textContent.trim(); const c = el.cloneNode(true); c.querySelectorAll(".nb").forEach((n) => n.remove()); return c.textContent.trim(); };
+    if (s.kind === "map" || s.kind === "kiosk" || s.kind === "overview") return [txt("cTitle"), txt("cCap")].filter(Boolean).join(". ");
+    const year = (s.kind === "photo" || s.kind === "art") && s.data && /^\d{4}/.test(s.data.year || "") ? String(s.data.year).replace(/^(\d{4})\.(\d{1,2})\.(\d{1,2}).*/, "$1년 $2월 $3일").replace(/^(\d{4})\.(\d{1,2})$/, "$1년 $2월").replace(/^(\d{4})$/, "$1년") : "";
+    return [year, txt("cTitle"), txt("cCap"), txt("cDetail")].filter(Boolean).join(". ").replace(/\s*·\s*/g, ", ").replace(/—/g, ", ").replace(/\.\s*\./g, ".");
+  }
+  function duck(on) {
+    if (!SND.ctx || !SND.bgmGain) return;
+    const t = SND.ctx.currentTime, g = SND.bgmGain.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(on ? 0.12 : 0.5, t + 0.6);
+  }
+  function docentStop() { if (TTS) TTS.cancel(); DOC.speaking = false; DOC.key = ""; duck(false); }
+  function docentSay(s, force) {
+    if (!DOC.on || !TTS || !s) return;
+    const key = mode + "|" + hallIndex + "|" + cur;
+    if (!force && key === DOC.key) return;
+    DOC.key = key;
+    const text = docText(s);
+    TTS.cancel(); DOC.speaking = false;
+    if (!text) { DOC.done = performance.now(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ko-KR"; if (DOC.voice) u.voice = DOC.voice; u.rate = 0.92; u.pitch = DOC.voice && /InJoon|인준|Hyunsu|현수|Minsu|민수|Jian|지안|Male|남성/i.test(DOC.voice.name) ? 0.95 : 0.82; u.volume = 1;
+    u.onstart = () => { DOC.speaking = true; duck(true); };
+    u.onend = u.onerror = () => { if (DOC.key === key) { DOC.speaking = false; DOC.done = performance.now(); duck(false); } };
+    DOC.speaking = true;   // count as speaking until it ends, so the auto tour waits
+    DOC.until = performance.now() + 2500 + text.length * 260;   // safety: never hold the tour longer than the text could take
+    setTimeout(() => { if (DOC.key === key) TTS.speak(u); }, 350);
+  }
+  function setDocent(on) {
+    DOC.on = on && !!TTS;
+    const b = $("docBtn");
+    if (b) { b.setAttribute("aria-pressed", String(DOC.on)); b.textContent = DOC.on ? "🎧 해설 끄기" : "🎧 음성 해설"; }
+    if (!TTS && on) { if (b) b.textContent = "음성 해설 미지원"; return; }
+    if (DOC.on) {
+      if (!docVoice() && b) b.title = "이 기기에 한국어 음성이 없어 기본 음성으로 읽습니다.";
+      docentSay(stops[cur], true);
+    } else docentStop();
+  }
+  document.addEventListener("visibilitychange", () => { if (document.hidden && TTS) TTS.pause(); else if (TTS) TTS.resume(); });
+
   /* ---------- automatic tour ---------- */
   const auto = { on: false, next: 0, dwell: 0, hold: 0 };
   function dwellFor(s) {
@@ -1737,6 +1841,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const bar = $("autoBar");
     if (!auto.on) return;
     if (busy || anim || !$("lb").hidden || ($("bookLB") && !$("bookLB").hidden) || ($("mapLB") && !$("mapLB").hidden) || now < auto.hold) { auto.next = 0; if (bar) bar.style.width = "0%"; return; }
+    if (DOC.on && DOC.speaking && now > (DOC.until || 0)) DOC.speaking = false;
+    if (DOC.on && (DOC.speaking || now - DOC.done < 900)) { auto.next = 0; if (bar) bar.style.width = "100%"; return; }
     if (!auto.next) { auto.dwell = dwellFor(stops[cur]); auto.next = now + auto.dwell; }
     if (bar) bar.style.width = Math.min(100, (1 - (auto.next - now) / auto.dwell) * 100) + "%";
     if (now >= auto.next) { auto.next = 0; autoAdvance(); }
@@ -3132,6 +3238,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       set("cYear", s.sub); set("cTitle", s.title); set("cCap", "");
       set("cDetail", s.text); set("cCount", "");
     }
+    docentSay(s);
   }
 
   function go(build) {
@@ -4352,6 +4459,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   $("prevBtn").addEventListener("click", () => { auto.next = 0; step(-1); });
   $("nextBtn").addEventListener("click", () => { auto.next = 0; step(1); });
   $("autoBtn").addEventListener("click", () => setAuto(!auto.on));
+  if ($("docBtn")) $("docBtn").addEventListener("click", () => setDocent(!DOC.on));
   $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
   $("enterBtn2").addEventListener("click", () => { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); });
   document.querySelectorAll("[data-look]").forEach((b) => b.addEventListener("click", () => {
@@ -4391,6 +4499,33 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     else eraGo({ hall: +k });
   }));
   $("enterBtn").addEventListener("click", enterArchive);
+  /* deep link from the printed book's QR code: ?map=1 opens 특별관 Ⅰ's map, ?map=2 특별관 Ⅱ's, ?hall=N walks into hall N */
+  (() => {
+    const q = new URLSearchParams(location.search), mapN = +(q.get("map") || 0), hallN = +(q.get("hall") || 0);
+    if (!mapN && !hallN) return;
+    const maps = DATA.map((h, i) => (h.map ? i : -1)).filter((i) => i >= 0);
+    const hi = mapN ? maps[mapN - 1] : hallN - 1;
+    if (hi === undefined || hi < 0 || hi >= DATA.length) return;
+    const t0 = performance.now();
+    const waitReady = () => {
+      const b = $("enterBtn");
+      if (b && b.disabled && performance.now() - t0 < 120000) { setTimeout(waitReady, 300); return; }
+      if (b && !b.disabled) b.click();
+      setTimeout(() => {
+        eraGo({ hall: hi });
+        if (!mapN) return;
+        const t1 = performance.now();
+        const waitHall = () => {
+          if ((mode !== "hall" || hallIndex !== hi || busy) && performance.now() - t1 < 60000) { setTimeout(waitHall, 300); return; }
+          const si = stops.findIndex((t) => t.kind === "map");
+          if (si >= 0) setStop(si);
+          setTimeout(openMap, 1400);
+        };
+        waitHall();
+      }, 900);
+    };
+    waitReady();
+  })();
   if ($("soundBtn")) $("soundBtn").addEventListener("click", () => setSound(!SND.on));
   if ($("gyroBtn")) {
     const canTilt = window.DeviceOrientationEvent && (COARSE || navigator.maxTouchPoints > 0);
