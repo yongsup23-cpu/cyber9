@@ -326,7 +326,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.26 11:08</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.26 14:04</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1796,9 +1796,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const year = (s.kind === "photo" || s.kind === "art") && s.data && /^\d{4}/.test(s.data.year || "") ? String(s.data.year).replace(/^(\d{4})\.(\d{1,2})\.(\d{1,2}).*/, "$1년 $2월 $3일").replace(/^(\d{4})\.(\d{1,2})$/, "$1년 $2월").replace(/^(\d{4})$/, "$1년") : "";
     return [year, txt("cTitle"), txt("cCap"), txt("cDetail")].filter(Boolean).join(". ").replace(/\s*·\s*/g, ", ").replace(/—/g, ", ").replace(/\.\s*\./g, ".");
   }
+  // music level: normal 0.5; while the docent is switched on it stays low (0.14), and dips further (0.05) while a description is read
+  function bgmLevel(speaking) { return speaking || DOC.speaking ? 0.05 : DOC.on ? 0.14 : 0.5; }
   function duck(on) {
     if (!SND.ctx || !SND.bgmGain) return;
-    const t = SND.ctx.currentTime, g = SND.bgmGain.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(on ? 0.12 : 0.5, t + 0.6);
+    const t = SND.ctx.currentTime, g = SND.bgmGain.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(bgmLevel(on), t + 0.6);
   }
   function docentStop() { if (TTS) TTS.cancel(); DOC.speaking = false; DOC.key = ""; duck(false); }
   function docentSay(s, force) {
@@ -1811,6 +1813,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!text) { DOC.done = performance.now(); return; }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "ko-KR"; if (DOC.voice) u.voice = DOC.voice; u.rate = 1.0; u.pitch = 1.0; u.volume = 1;
+    duck(true); // lower at once: some browsers fire onstart late or not at all
     u.onstart = () => { DOC.speaking = true; duck(true); };
     u.onend = u.onerror = () => { if (DOC.key === key) { DOC.speaking = false; DOC.done = performance.now(); duck(false); } };
     DOC.speaking = true;   // count as speaking until it ends, so the auto tour waits
@@ -1823,6 +1826,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (b) { b.setAttribute("aria-pressed", String(DOC.on)); b.textContent = DOC.on ? "🎧 해설 끄기" : "🎧 음성 해설"; }
     if (!TTS && on) { if (b) b.textContent = "음성 해설 미지원"; return; }
     if (DOC.on) {
+      duck(false);
       if (!docVoice() && b) b.title = "이 기기에 한국어 음성이 없어 기본 음성으로 읽습니다.";
       docentSay(stops[cur], true);
     } else docentStop();
@@ -3969,7 +3973,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const ctx = SND.ctx, s = ctx.createBufferSource();
     s.buffer = SND.bgm; s.loop = true; s.connect(SND.bgmGain);
     const t = ctx.currentTime;
-    SND.bgmGain.gain.setValueAtTime(0, t); SND.bgmGain.gain.linearRampToValueAtTime(0.5, t + 2.5);
+    SND.bgmGain.gain.setValueAtTime(0, t); SND.bgmGain.gain.linearRampToValueAtTime(bgmLevel(false), t + 2.5);
     s.start(t); SND.bgmSrc = s;
   }
   function schedAmbient() {
