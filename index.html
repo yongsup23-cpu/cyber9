@@ -49,7 +49,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 #cCount{font-size:12px;letter-spacing:1px;color:var(--mute);font-variant-numeric:tabular-nums}
 .btns{display:flex;gap:6px}
 .btns button{min-width:44px}
-.btns2 button{font-size:12.5px;padding:5px 12px;background:transparent;border-color:rgba(201,178,130,.45);color:var(--ink2)}
+#docBtn,#autoBtn,#prevBtn,#nextBtn,#zoomBtn,#enterBtn2{width:112px;padding-left:6px;padding-right:6px;text-align:center;white-space:nowrap}
 #docBtn[aria-pressed=true]{background:#3a3326;border-color:var(--gold);color:var(--gold)}
 #enterBtn2,#zoomBtn{background:var(--gold2);color:#171712;border-color:var(--gold2)}
 #enterBtn2:hover,#zoomBtn:hover{background:#cdb688}
@@ -179,7 +179,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
  .btns{gap:4px}
  .side{flex-wrap:wrap}
  .btns2{order:-1;flex-basis:100%;justify-content:flex-end}
- .btns2 button{min-height:30px;padding:3px 10px;font-size:11.5px}
+ #docBtn,#autoBtn,#prevBtn,#nextBtn,#zoomBtn,#enterBtn2{width:80px;padding-left:2px;padding-right:2px}
  .btns button{min-width:34px;min-height:36px;padding:4px 8px;font-size:12px}
  #cCount{font-size:11px;letter-spacing:0}
  #cardToggle{min-height:32px;min-width:28px;padding:2px 6px}
@@ -326,7 +326,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
   <h1>금호 아카이브</h1>
   <p>택시 두 대로 시작한 금호의 80년을 세 개의 전시관과 두 개의 특별관에 담았습니다.<br>시간의 순서를 따라 걸으며, 금호가 짓고 이어 온 길을 만나 보시기 바랍니다.</p>
   <button type="button" id="enterBtn" disabled>로딩 중…</button>
-  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.23 16:27</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
+  <div id="verStamp" style="position:fixed;right:12px;bottom:8px;font-size:11px;color:#6f675a;letter-spacing:.05em;z-index:30">버전 2026.10.26 08:03</div><div class="loadwrap" id="introLoad" aria-live="polite"><div class="lbar"><i id="introBar"></i></div><div id="introPct">전시를 불러오는 중입니다… 0%</div></div>
  </div>
 </div>
 <script>
@@ -1777,7 +1777,19 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (fem.length) return fem[Math.min(1, fem.length - 1)];
     return vs[0] || null;
   }
-  if (TTS) { DOC.voice = docVoice(); TTS.onvoiceschanged = () => { DOC.voice = docVoice(); }; }
+  // 음성 읽기를 지원하지 않거나 한국어 음성이 없는 기기에서는 버튼을 숨김 (음성 목록이 늦게 오는 기기를 위해 몇 초간 다시 확인)
+  function docAvail() {
+    const b = $("docBtn"); if (!b) return;
+    const ok = !!TTS && TTS.getVoices().some((v) => /^ko/i.test(v.lang));
+    b.hidden = !ok;
+    if (!ok && DOC.on) setDocent(false);
+  }
+  if ($("docBtn")) $("docBtn").hidden = true;
+  if (TTS) {
+    DOC.voice = docVoice(); docAvail();
+    TTS.onvoiceschanged = () => { DOC.voice = docVoice(); docAvail(); };
+    let tries = 0; const iv = setInterval(() => { DOC.voice = docVoice(); docAvail(); if (!$("docBtn") || !$("docBtn").hidden || ++tries > 12) clearInterval(iv); }, 500);
+  }
   function docText(s) {
     const txt = (id) => { const el = $(id); if (!el || el.hidden) return ""; if (id !== "cTitle") return el.textContent.trim(); const c = el.cloneNode(true); c.querySelectorAll(".nb").forEach((n) => n.remove()); return c.textContent.trim(); };
     if (s.kind === "map" || s.kind === "kiosk" || s.kind === "overview") return [txt("cTitle"), txt("cCap")].filter(Boolean).join(". ");
