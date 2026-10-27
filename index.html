@@ -5025,14 +5025,27 @@ window.MeshoptDecoder = MeshoptDecoder;
     works: { file: "assets/diorama-airport.glb", width: 3.1, ph: 0.45, year: "", co: "금호건설", title: "공항 도시 디오라마",
       cap: "하늘길과 도시를 짓다",
       detail: "금호건설이 국내외에 지어 온 공항과 도시의 풍경을 하나의 디오라마로 담았습니다. 제주국제공항 여객터미널과 인천국제공항 확장 공사, 필리핀 프린세사 국제공항, 두바이 알막툼 국제공항과 아부다비 국제공항 관제탑까지 금호의 손길이 하늘길을 열었습니다." },
-    mobility: { file: "assets/diorama-usquare.glb", width: 3.1, ph: 0.5, year: "", co: "금호익스프레스", title: "유·스퀘어 디오라마",
-      cap: "광주종합버스터미널 유·스퀘어",
-      detail: "1992년 광주종합버스터미널로 문을 열어 2006년 유·스퀘어로 새로 개관한 광주·전남 교통의 중심입니다. 터미널과 백화점·영화관·공연장을 아우르는 복합문화공간으로, 사람과 지역을 이어 온 금호 운송의 오늘을 보여 줍니다." },
+    mobility: { file: "assets/diorama-usquare.glb", width: 3.1, ph: 0.5, pr: 0.8, tone: "toy", year: "", co: "금호익스프레스", title: "유·스퀘어와 금호고속 버스",
+      cap: "광주종합버스터미널 유·스퀘어 · 금호고속 버스",
+      detail: "1992년 광주종합버스터미널로 문을 열어 2006년 유·스퀘어로 새로 개관한 광주·전남 교통의 중심입니다. 터미널과 백화점·영화관·공연장을 아우르는 복합문화공간으로 자리 잡았습니다. 디오라마를 감싼 도로에는 이곳을 오가며 전국을 잇는 금호고속 버스가 한 바퀴씩 돌고 있습니다. 사람과 지역을 이어 온 금호 운송의 오늘을 보여 줍니다.",
+      // the model's own buses came out broken and were flattened out of the mesh; a ring road round the plinth carries Kumho Express buses instead
+      loop: { file: "assets/kumho-bus.glb", n: 2, len: 0.62, lap: 46 } },
   };
   let gltfLoader = null;
-  const DIO = { holder: null, rotT: 0 };   // the diorama turns left / right like the taxi
+  // painted-model colours. "toy": saturated, warm, whites held back so nothing glares; default: deep and calm like the taxi
+  function dioLook(root, tone) {
+    const env = taxiEnvironment();
+    const glsl = tone === "toy"
+      ? "{ float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); vec3 c = mix(vec3(l), diffuseColor.rgb, 1.6); c = c * (1.0 - 0.3 * c); diffuseColor.rgb = clamp(c * vec3(1.08, 1.02, 0.94) * 1.05, 0.0, 1.0); }"
+      : "{ float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); diffuseColor.rgb = clamp(mix(vec3(l), diffuseColor.rgb, 1.3) * vec3(0.78, 0.76, 0.74), 0.0, 1.0); }";
+    root.traverse((o) => { if (!o.isMesh) return; const mt = o.material;
+      mt.envMap = env; mt.envMapIntensity = tone === "toy" ? 0.45 : 0.5; mt.metalness = 0; mt.roughness = tone === "toy" ? 0.7 : 0.85; mt.metalnessMap = null;
+      mt.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <map_fragment>", "#include <map_fragment>\n  " + glsl); };
+      mt.needsUpdate = true; });
+  }
+  const DIO = { holder: null, rotT: 0, buses: [], busFlip: true };   // the bus model faces -x   // the diorama turns left / right like the taxi
   function buildDiorama(spec, ax) {
-    const PH = spec.ph || 0.72, PR = spec.width * 0.62, rot = Math.atan2(ax.x, ax.z);
+    const PH = spec.ph || 0.72, PR = spec.width * (spec.pr || 0.62), rot = Math.atan2(ax.x, ax.z);
     // plinth: dark stone drum, bronze lip, a soft halo on the floor
     const drum = new THREE.Mesh(new THREE.CylinderGeometry(PR, PR + 0.05, PH, 96), basic(0x22201b)); drum.position.y = PH / 2; world.add(drum);
     const lip = new THREE.Mesh(new THREE.CylinderGeometry(PR + 0.012, PR + 0.012, 0.03, 96), basic(0x9d875e)); lip.position.y = PH - 0.015; world.add(lip);
@@ -5047,7 +5060,38 @@ window.MeshoptDecoder = MeshoptDecoder;
     const key = new THREE.DirectionalLight(0xfff1dc, 1.05); key.position.set(ax.x * 6 + 3, 9, ax.z * 6 + 2); world.add(key);
     const fill = new THREE.DirectionalLight(0xdde8ff, 0.3); fill.position.set(-ax.x * 6 - 2, 5, -ax.z * 6); world.add(fill);
     const holder = new THREE.Group(); holder.position.y = PH; holder.rotation.y = rot; world.add(holder);
-    DIO.holder = holder; DIO.rotT = rot;
+    DIO.holder = holder; DIO.rotT = rot; DIO.buses = [];
+    if (spec.loop) {
+      // ring road on the plinth top, round the diorama: asphalt, white edge lines, dashed centre line
+      const r0 = spec.width / 2 + 0.04, r1 = PR - 0.06, rm = (r0 + r1) / 2, N = 2048;
+      const tex = canvasTex(N, N, (g) => {
+        const c = N / 2, sc = c / r1;
+        g.clearRect(0, 0, N, N);
+        g.fillStyle = "#3a3936"; g.beginPath(); g.arc(c, c, r1 * sc, 0, Math.PI * 2); g.arc(c, c, r0 * sc, 0, Math.PI * 2, true); g.fill();
+        for (let i = 0; i < 9000; i++) { const a = Math.random() * Math.PI * 2, r = (r0 + Math.random() * (r1 - r0)) * sc; g.fillStyle = `rgba(${Math.random() < 0.5 ? "255,255,255" : "0,0,0"},0.05)`; g.fillRect(c + Math.cos(a) * r, c + Math.sin(a) * r, 2, 2); }
+        g.strokeStyle = "#e9e6dc"; g.lineWidth = 0.012 * sc;
+        [r0 + 0.035, r1 - 0.035].forEach((r) => { g.beginPath(); g.arc(c, c, r * sc, 0, Math.PI * 2); g.stroke(); });
+        g.strokeStyle = "#f2c230"; g.lineWidth = 0.014 * sc; g.setLineDash([0.09 * sc, 0.07 * sc]);
+        g.beginPath(); g.arc(c, c, rm * sc, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+        g.fillStyle = "#8f8a7f"; [r0, r1].forEach((r) => { g.beginPath(); g.arc(c, c, (r + 0.012) * sc, 0, Math.PI * 2); g.arc(c, c, (r - 0.012) * sc, 0, Math.PI * 2, true); g.fill(); });  // kerbs
+      });
+      const road = plane(2 * r1 + 0.03, 2 * r1 + 0.03, new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+      road.rotation.x = -Math.PI / 2; road.position.y = 0.006; holder.add(road);
+      const busWorld = world, L = spec.loop, rr = rm + (r1 - rm) * 0.45;      // outer lane
+      if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
+      if (gltfLoader) (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => gltfLoader.load(L.file, (bg) => {
+        if (world !== busWorld) return;
+        const bus = bg.scene, bb = new THREE.Box3().setFromObject(bus), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3());
+        const alongX = bs.x >= bs.z, k2 = L.len / Math.max(bs.x, bs.z);
+        dioLook(bus, spec.tone);
+        for (let i = 0; i < L.n; i++) {
+          const c = i ? bus.clone() : bus; c.position.set(-bc.x, -bb.min.y, -bc.z);
+          const inner = new THREE.Group(); inner.add(c); inner.scale.setScalar(k2); inner.rotation.y = alongX ? 0 : Math.PI / 2;
+          const car = new THREE.Group(); car.add(inner); holder.add(car);
+          DIO.buses.push({ g: car, r: rr, ph: (i / L.n) * Math.PI * 2, lap: L.lap });
+        }
+      }, undefined, (e) => console.error("버스 모형 로딩 실패", e)));
+    }
     const expectedWorld = world;
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
     if (gltfLoader) (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => gltfLoader.load(spec.file, (g) => {
@@ -5055,18 +5099,16 @@ window.MeshoptDecoder = MeshoptDecoder;
       const m = g.scene; const box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
       const k = spec.width / Math.max(sz.x, sz.z);
       m.scale.setScalar(k); m.position.set(-c.x * k, -box.min.y * k, -c.z * k);
-      const env = taxiEnvironment();
-      m.traverse((o) => { if (o.isMesh) { const mt = o.material; mt.envMap = env; mt.envMapIntensity = 0.5; mt.metalness = 0; mt.roughness = 0.85; mt.metalnessMap = null;
-        // miniature look: painted-model colours — lifted, saturated, slightly warm
-        mt.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <map_fragment>", "#include <map_fragment>\n  { float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); diffuseColor.rgb = clamp(mix(vec3(l), diffuseColor.rgb, 1.3) * vec3(0.78, 0.76, 0.74), 0.0, 1.0); }"); };
-        mt.needsUpdate = true; } });
+      dioLook(m, spec.tone);
       holder.add(m);
+
     }, undefined, (e) => console.error("디오라마 로딩 실패", e)));
+
     const ty = PH + 0.3;
     DIO.elev = 0.42;
     const pose = () => {
       const r = portrait() ? 6.0 : 4.3, e = DIO.elev, h = r * Math.cos(e);   // orbit round the model's centre; e = angle above it
-      return { x: ax.x * h, z: ax.z * h, y: ty + r * Math.sin(e), yaw: Math.atan2(ax.x, ax.z), pitch: -e + 0.07 };
+      return { x: ax.x * h, z: ax.z * h, y: ty + r * Math.sin(e), yaw: Math.atan2(ax.x, ax.z), pitch: -e - 0.03 };
     };
     DIO.pose = pose;
     return { kind: "art", dio: true, data: spec, pose };
@@ -8708,6 +8750,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         L.lm.color.setScalar(0.7 + 0.3 * Math.max(w, sp, fl));
         if (L.st) { const k = Math.max(fl, sp * 0.7); L.st.material.opacity = k; L.st.scale.setScalar(0.25 + 0.55 * k); L.st.material.rotation = t * 0.6 + L.ph; }
       } }   // the turn hint panel is retired: drag the taxi itself
+    if (mode === "hall" && DIO.buses && DIO.buses.length && DIO.buses[0].g.parent) {
+      const t = now / 1000;
+      for (const B of DIO.buses) { const a = B.ph + (t / B.lap) * Math.PI * 2;   // anticlockwise seen from above
+        B.g.position.set(Math.sin(a) * B.r, 0.008, Math.cos(a) * B.r); B.g.rotation.y = a + (DIO.busFlip ? Math.PI : 0); } }   // local +x = direction of travel
     if (mode === "hall" && DIO.holder && DIO.holder.parent && !(drag && drag.dio)) DIO.holder.rotation.y += (DIO.rotT - DIO.holder.rotation.y) * Math.min(1, dt * 2.2);
     if (mode === "lobby" && CAR.holder && CAR.holder.parent && !(drag && drag.taxi)) CAR.holder.rotation.y += (CAR.rotT - CAR.holder.rotation.y) * Math.min(1, dt * 2.2);
     if (resize() && stops.length && !looked) moveTo(atEasel && mode === "lobby" ? easelPose() : focusFor(stops[cur]), true);
