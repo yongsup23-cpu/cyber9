@@ -5043,9 +5043,9 @@ window.MeshoptDecoder = MeshoptDecoder;
     const proxy = new THREE.Mesh(new THREE.CylinderGeometry(PR, PR, PH + 1.6, 24), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
     proxy.position.y = (PH + 1.6) / 2; proxy.userData.idx = "dio"; world.add(proxy); pickables.push(proxy); drum.userData.idx = "dio"; pickables.push(drum);
     // its own light: the halls are unlit, the diorama is a lit model
-    world.add(new THREE.HemisphereLight(0xfff6e8, 0x5a5246, 1.15));
-    const key = new THREE.DirectionalLight(0xfff1dc, 1.35); key.position.set(ax.x * 6 + 3, 9, ax.z * 6 + 2); world.add(key);
-    const fill = new THREE.DirectionalLight(0xdde8ff, 0.45); fill.position.set(-ax.x * 6 - 2, 5, -ax.z * 6); world.add(fill);
+    world.add(new THREE.HemisphereLight(0xf2ece2, 0x3e382f, 0.7));
+    const key = new THREE.DirectionalLight(0xfff1dc, 1.05); key.position.set(ax.x * 6 + 3, 9, ax.z * 6 + 2); world.add(key);
+    const fill = new THREE.DirectionalLight(0xdde8ff, 0.3); fill.position.set(-ax.x * 6 - 2, 5, -ax.z * 6); world.add(fill);
     const holder = new THREE.Group(); holder.position.y = PH; holder.rotation.y = rot; world.add(holder);
     DIO.holder = holder; DIO.rotT = rot;
     const expectedWorld = world;
@@ -5056,16 +5056,19 @@ window.MeshoptDecoder = MeshoptDecoder;
       const k = spec.width / Math.max(sz.x, sz.z);
       m.scale.setScalar(k); m.position.set(-c.x * k, -box.min.y * k, -c.z * k);
       const env = taxiEnvironment();
-      m.traverse((o) => { if (o.isMesh) { const mt = o.material; mt.envMap = env; mt.envMapIntensity = 0.7; mt.metalness = 0; mt.roughness = 0.9; mt.metalnessMap = null;
+      m.traverse((o) => { if (o.isMesh) { const mt = o.material; mt.envMap = env; mt.envMapIntensity = 0.5; mt.metalness = 0; mt.roughness = 0.85; mt.metalnessMap = null;
         // miniature look: painted-model colours — lifted, saturated, slightly warm
-        mt.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <map_fragment>", "#include <map_fragment>\n  { float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); diffuseColor.rgb = clamp(mix(vec3(l), diffuseColor.rgb, 1.45) * vec3(1.07, 1.04, 0.97) + 0.01, 0.0, 1.0); }"); };
+        mt.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <map_fragment>", "#include <map_fragment>\n  { float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); diffuseColor.rgb = clamp(mix(vec3(l), diffuseColor.rgb, 1.3) * vec3(0.78, 0.76, 0.74), 0.0, 1.0); }"); };
         mt.needsUpdate = true; } });
       holder.add(m);
     }, undefined, (e) => console.error("디오라마 로딩 실패", e)));
+    const ty = PH + 0.3;
+    DIO.elev = 0.42;
     const pose = () => {
-      const d = portrait() ? 5.6 : 3.9;   // bird's-eye: close and looking down onto the model
-      return { x: ax.x * d, z: ax.z * d, yaw: Math.atan2(ax.x, ax.z), pitch: Math.atan2(PH + 0.15 - EYE, d) - 0.05 };
+      const r = portrait() ? 6.0 : 4.3, e = DIO.elev, h = r * Math.cos(e);   // orbit round the model's centre; e = angle above it
+      return { x: ax.x * h, z: ax.z * h, y: ty + r * Math.sin(e), yaw: Math.atan2(ax.x, ax.z), pitch: -e + 0.07 };
     };
+    DIO.pose = pose;
     return { kind: "art", dio: true, data: spec, pose };
   }
   function hallOverview() {
@@ -6470,13 +6473,22 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     flat(plane(4.5,2.2,new THREE.MeshBasicMaterial({map:softTex,transparent:true,depthWrite:false,opacity:0.85})),0.008);
     // uplights set into the floor round the dais, each throwing a soft beam inward and up
     CAR.lights=[];
+    CAR.starTex=CAR.starTex||canvasTex(256,256,(g,w)=>{ const c=w/2; g.clearRect(0,0,w,w);
+      const r=g.createRadialGradient(c,c,0,c,c,c); r.addColorStop(0,"rgba(255,255,255,1)"); r.addColorStop(0.12,"rgba(255,240,205,.85)"); r.addColorStop(0.4,"rgba(255,215,150,.18)"); r.addColorStop(1,"rgba(255,200,120,0)");
+      g.fillStyle=r; g.fillRect(0,0,w,w);
+      g.globalCompositeOperation="lighter";
+      [[w,6],[6,w]].forEach(([sw,sh])=>{ const l=g.createRadialGradient(c,c,0,c,c,c); l.addColorStop(0,"rgba(255,248,225,1)"); l.addColorStop(1,"rgba(255,220,160,0)"); g.fillStyle=l; g.fillRect(c-sw/2,c-sh/2,sw,sh); });
+    });
     { const n=10, rr=radius+0.42, housing=basic(0x1a1916), lens=basic(0xfff1cf), glowM=new THREE.MeshBasicMaterial({map:softTex,color:0xffd99a,transparent:true,opacity:0.55,blending:THREE.AdditiveBlending,depthWrite:false});
       for(let k=0;k<n;k++){ const a=(k+0.5)*2*Math.PI/n, x=C.x+Math.sin(a)*rr, z=C.z+Math.cos(a)*rr;
         if(x<-HX+0.25||z>HZ-0.25) continue;               // none buried in the walls
         const hb=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.15,0.05,28),housing); hb.position.set(x,0.025,z); world.add(hb);
         const lm=lens.clone(), gm=glowM.clone(); CAR.lights.push({lm,gm,ph:k*1.93,sp:1.6+(k%3)*0.55});
         const ln=new THREE.Mesh(new THREE.CircleGeometry(0.09,28),lm); ln.rotation.x=-Math.PI/2; ln.position.set(x,0.052,z); world.add(ln);
-        const gl=plane(0.9,0.9,gm); gl.rotation.x=-Math.PI/2; gl.position.set(x,0.056,z); world.add(gl);
+        const gl=plane(1.1,1.1,gm); gl.rotation.x=-Math.PI/2; gl.position.set(x,0.056,z); world.add(gl);
+        // a star-shaped glint just above the lens: flashes now and then, always facing the visitor
+        const sm=new THREE.SpriteMaterial({map:CAR.starTex,color:0xfff3d6,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+        const st=new THREE.Sprite(sm); st.position.set(x,0.1,z); st.scale.setScalar(0.5); world.add(st); CAR.lights[CAR.lights.length-1].st=st;
       } }
     const proxy=new THREE.Mesh(new THREE.BoxGeometry(4.3,1.75,1.85),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})); proxy.position.y=0.87; proxy.userData.idx="car"; holder.add(proxy); pickables.push(proxy);
     const ambient=new THREE.HemisphereLight(0xe7ecf4,0x45403b,0.85); world.add(ambient);
@@ -8407,7 +8419,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
     drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
     if (drag.dio && drag.moved > 6) {
-      DIO.holder.rotation.y += dx * 0.005; DIO.rotT = DIO.holder.rotation.y;
+      if (Math.abs(dx) >= Math.abs(dy) * 0.6) { DIO.holder.rotation.y += dx * 0.005; DIO.rotT = DIO.holder.rotation.y; }
+      if (Math.abs(dy) > Math.abs(dx) * 0.6 && stops[cur] && stops[cur].dio && !anim) {   // up / down: look from higher or lower
+        DIO.elev = Math.max(0.1, Math.min(1.2, DIO.elev + dy * 0.004));
+        Object.assign(cam, DIO.pose());
+      }
       drag.lx = e.clientX; drag.ly = e.clientY; return;
     }
     if (drag.taxi && drag.moved > 6 && CAR.holder) {
@@ -8687,8 +8703,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const t = now / 1000;
       for (const L of CAR.lights) {
         const w = 0.5 + 0.5 * Math.sin(t * L.sp + L.ph), sp = Math.pow(Math.max(0, Math.sin(t * 0.9 + L.ph * 2.3)), 24);
-        L.gm.opacity = 0.25 + 0.45 * w + 0.4 * sp;
-        L.lm.color.setScalar(0.72 + 0.28 * Math.max(w, sp));
+        const fl = Math.pow(Math.max(0, Math.sin(t * 1.7 + L.ph * 3.1)), 40);   // a quick, bright sparkle
+        L.gm.opacity = 0.2 + 0.55 * w + 0.6 * Math.max(sp, fl);
+        L.lm.color.setScalar(0.7 + 0.3 * Math.max(w, sp, fl));
+        if (L.st) { const k = Math.max(fl, sp * 0.7); L.st.material.opacity = k; L.st.scale.setScalar(0.25 + 0.55 * k); L.st.material.rotation = t * 0.6 + L.ph; }
       } }   // the turn hint panel is retired: drag the taxi itself
     if (mode === "hall" && DIO.holder && DIO.holder.parent && !(drag && drag.dio)) DIO.holder.rotation.y += (DIO.rotT - DIO.holder.rotation.y) * Math.min(1, dt * 2.2);
     if (mode === "lobby" && CAR.holder && CAR.holder.parent && !(drag && drag.taxi)) CAR.holder.rotation.y += (CAR.rotT - CAR.holder.rotation.y) * Math.min(1, dt * 2.2);
