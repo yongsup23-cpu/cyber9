@@ -5691,6 +5691,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const MALE = /InJoon|인준|Hyunsu|현수|BongJin|봉진|GookMin|국민|Minsu|민수|Jian|지안|Male|남성|남자/i;
     const NAT = /Neural|Natural|Online|Premium|Enhanced|향상/i;
     const fem = vs.filter((v) => !MALE.test(v.name)).sort((a, b) => NAT.test(b.name) - NAT.test(a.name));
+    const apple = fem.find((v) => /Yuna|유나|Sora|소라|Suhyun|수현/i.test(v.name) && /Premium|Enhanced|향상|고품질/i.test(v.name + " " + (v.voiceURI || "")));
+    if (apple) return apple;
     if (fem.length) return fem[Math.min(1, fem.length - 1)];
     return vs[0] || null;
   }
@@ -5711,7 +5713,30 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const txt = (id) => { const el = $(id); if (!el || el.hidden) return ""; if (id !== "cTitle") return el.textContent.trim(); const c = el.cloneNode(true); c.querySelectorAll(".nb").forEach((n) => n.remove()); return c.textContent.trim(); };
     if (s.kind === "map" || s.kind === "kiosk" || s.kind === "overview") return [txt("cTitle"), txt("cCap")].filter(Boolean).join(". ");
     const year = (s.kind === "photo" || s.kind === "art") && s.data && /^\d{4}/.test(s.data.year || "") ? String(s.data.year).replace(/^(\d{4})\.(\d{1,2})\.(\d{1,2}).*/, "$1년 $2월 $3일").replace(/^(\d{4})\.(\d{1,2})$/, "$1년 $2월").replace(/^(\d{4})$/, "$1년") : "";
-    return [year, txt("cTitle"), txt("cCap"), txt("cDetail")].filter(Boolean).join(". ").replace(/\s*·\s*/g, ", ").replace(/—/g, ", ").replace(/\.\s*\./g, ".");
+    return [year, txt("cTitle"), txt("cCap"), txt("cDetail")].filter(Boolean).join(". ");
+  }
+  // written text → what a voice should say: symbols and units spelled out, brackets and quotes turned into natural pauses
+  function speechText(t) {
+    return String(t)
+      .replace(/\s+/g, " ")
+      .replace(/6\s*·\s*25/g, "육이오").replace(/3\s*·\s*1(?!\d)/g, "삼일").replace(/5\s*·\s*18/g, "오일팔")
+      .replace(/(\d{4})\.(\d{1,2})\.(\d{1,2})(?!\d)/g, "$1년 $2월 $3일").replace(/(\d{4})\.(\d{1,2})(?![\d.])/g, "$1년 $2월")
+      .replace(/(\d{4})\s*[~–—-]\s*(\d{4})(?![\d년])/g, "$1년부터 $2년까지")
+      .replace(/([가-힣A-Za-z0-9]+)\s*\(([^()]*)\)([가-힣]{1,3})(?=[\s.,]|$)/g, "$1$3, $2, ")
+      .replace(/(\d)\.(\d)/g, "$1점$2").replace(/(\d)\s*km\b/gi, "$1킬로미터").replace(/(\d)\s*m\b/g, "$1미터")
+      .replace(/㈜\s*/g, " 주식회사 ").replace(/㎡/g, "제곱미터").replace(/㎥/g, "세제곱미터").replace(/㎞/g, "킬로미터").replace(/%/g, "퍼센트")
+      .replace(/(\d)\s*[~–—-]\s*(?=\d|[가-힣])/g, "$1에서 ").replace(/([가-힣])\s*[~–—]\s*/g, "$1에서 ")
+      .replace(/\s*[—–]\s*/g, ", ")
+      .replace(/\s*·\s*/g, ", ")
+      .replace(/\s*\(\s*/g, ", ").replace(/\s*\)\s*/g, ", ")
+      .replace(/['"“”‘’#]/g, "").replace(/\s*&\s*/g, " 앤 ").replace(/\s*\+\s*/g, " 플러스 ").replace(/\s*\/\s*/g, " ")
+      .replace(/([A-Za-z])-([A-Za-z])/g, "$1 $2")
+      .replace(/\s*,\s*(,\s*)+/g, ", ").replace(/,\s*\./g, ".").replace(/\.\s*\./g, ".").replace(/\s+([,.])/g, "$1")
+      .replace(/\s{2,}/g, " ").trim();
+  }
+  // one utterance per sentence: long single utterances get flat, run-on phrasing (and are cut short on some iPads)
+  function speechChunks(t) {
+    return (speechText(t).match(/[^.!?]+[.!?]*/g) || []).map((x) => x.trim()).filter((x) => x.length > 0);   // no look-behind: older iPad Safari lacks it
   }
   // music level: normal 0.5; while the docent is switched on it stays low (0.14), and dips further (0.05) while a description is read
   function bgmLevel(speaking) { return speaking || DOC.speaking ? 0.05 : DOC.on ? 0.14 : 0.5; }
@@ -5728,14 +5753,20 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const text = docText(s);
     TTS.cancel(); DOC.speaking = false;
     if (!text) { DOC.done = performance.now(); return; }
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ko-KR"; if (DOC.voice) u.voice = DOC.voice; u.rate = 1.0; u.pitch = 1.0; u.volume = 1;
+    const parts = speechChunks(text);
+    const finish = () => { if (DOC.key === key) { DOC.speaking = false; DOC.done = performance.now(); duck(false); } };
+    const us = parts.map((t, i) => {
+      const u = new SpeechSynthesisUtterance(t);
+      u.lang = "ko-KR"; if (DOC.voice) u.voice = DOC.voice; u.rate = 0.97; u.pitch = 1.0; u.volume = 1;
+      if (i === 0) u.onstart = () => { DOC.speaking = true; duck(true); };
+      u.onerror = (e) => { if (e && e.error === "interrupted") return; finish(); };
+      if (i === parts.length - 1) u.onend = finish;
+      return u;
+    });
     duck(true); // lower at once: some browsers fire onstart late or not at all
-    u.onstart = () => { DOC.speaking = true; duck(true); };
-    u.onend = u.onerror = () => { if (DOC.key === key) { DOC.speaking = false; DOC.done = performance.now(); duck(false); } };
     DOC.speaking = true;   // count as speaking until it ends, so the auto tour waits
-    DOC.until = performance.now() + 2500 + text.length * 260;   // safety: never hold the tour longer than the text could take
-    setTimeout(() => { if (DOC.key === key) TTS.speak(u); }, 350);
+    DOC.until = performance.now() + 2500 + text.length * 270;   // safety: never hold the tour longer than the text could take
+    setTimeout(() => { if (DOC.key === key) us.forEach((u) => TTS.speak(u)); }, 350);
   }
   function setDocent(on) {
     DOC.on = on && !!TTS;
@@ -8335,7 +8366,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "home") { goHome(); return; }
     if (o.userData.idx === "map") { if (auto.on) setAuto(false); openMap(); return; }
     if (o.userData.idx === "book") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "book" && t.bi === o.userData.book); if (si === cur && !anim && !looked) openBook(stops[si].data); else setStop(si); return; }
-    if (o.userData.idx === "carsign") { const si = stops.findIndex((t) => t.carsign); if (si >= 0 && (si !== cur || looked)) setStop(si); return; }
+    if (o.userData.idx === "carsign") { const si = stops.findIndex((t) => t.carsign); if (si < 0) return; if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }   // 1st click: walk up to it, 2nd: the detail view (as with the taxi)
     if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
     if (o.userData.idx === "wing") { const si = stops.findIndex((t) => t.kind === "art" && !t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
     if (o.userData.idx !== undefined) {
