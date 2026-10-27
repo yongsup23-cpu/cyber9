@@ -2465,18 +2465,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       stops.push({ kind: "door", side: 0, u, cy: 1.6, w: 2.5, h: 3.3, target, data: h, hall: i, P: A.P, n: A.n,
         pose: () => focusAt(A.P, A.n, 1.6, 2.5, 3.3, 2 * HZ - 2) });
     });
-    hangPanel(3, 0, { kicker: "KUMHO ARCHIVES  ·  1946 —", title: "금호 아카이브", big: true, sub: "집념으로 닦아온 금호의 궤적",
+    hangPanel(3, 0.9, { kicker: "KUMHO ARCHIVES  ·  1946 —", title: "금호 아카이브", big: true, sub: "집념으로 닦아온 금호의 궤적",
       text: `택시 두 대로 시작한 금호의 역사를 ${KNUM} 개의 전시관에 담았습니다.\n금호의 발자취를 시간의 순서대로 만나 보고, 특별관에서는 금호가 짓고 이어 온 길을 지도와 함께 둘러보시기 바랍니다.` }, 3.6, 3.2);
     hangPanel(1, 0, { kicker: "HOW TO VISIT", title: "관람 안내",
       text: "화면을 끌어 전시실을 둘러볼 수 있습니다.\n문을 누르면 문이 열리고 전시관으로 들어갑니다.\n사진을 누르면 그 앞으로 다가가고, 한 번 더 누르면 크게 봅니다.\n전시관 안에서는 마우스나 손가락을 누르고 있으면 그 방향으로 빠르게 걸어갑니다.\n아래 필름을 끌거나 눌러 원하는 사진으로 바로 갈 수 있습니다." }, 3.2, 3.1);
-    hangPanel(2, 0, { kicker: "EXHIBITION", title: `${KNUM} 개의 전시관`,
+    hangPanel(2, -2.5, { kicker: "EXHIBITION", title: `${KNUM} 개의 전시관`,
       text: DATA.map((h, i) => `${HL(i)}${h.span ? ` (${h.span.replace(/ — /, "~")})` : ""}  ${h.title}`).join("\n") }, 3.4, 3.1);
     addLobbyArrows();
     const art = hangWing();
     const taxiArt = buildCar();
     stops.unshift(taxiArt);
     stops.unshift({ kind: "overview" });
-    stops.unshift({ kind: "panel", side: 3, u: 0, cy: 2.3, w: 3.8, h: 2.4, title: "금호 아카이브", sub: "KUMHO ARCHIVES",
+    stops.unshift({ kind: "panel", side: 3, u: 0.9, cy: 2.3, w: 3.8, h: 2.4, title: "금호 아카이브", sub: "KUMHO ARCHIVES",
       text: `택시 두 대로 시작한 금호의 역사를 ${KNUM} 개의 전시관에 담았습니다. 금호의 발자취를 시간의 순서대로 만나 보고, 특별관에서는 금호가 짓고 이어 온 길을 지도와 함께 둘러보시기 바랍니다.` });
     stops.unshift(art);
     buildChips(); updateHud(); setNav();
@@ -2511,10 +2511,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   /* the founding taxi: a 1935 Ford Deluxe on a turntable dais, shown from real photographs.
      A camera-facing cut-out switches between the front / 3-4 / side / rear photos as the visitor walks around it. */
   const CAR = {
-    data: { file: "img/car_photo.jpg", year: "1946", co: "금호고속", title: "창업 택시 · 1935년형 포드 디럭스",
-      cap: "제공된 차량 사진을 바탕으로 제작한 3D 택시 모델.",
-      detail: "해방 이듬해 박인천 창업주는 중고 택시 두 대로 광주택시를 열었습니다. 제공된 차량 사진을 바탕으로 3D 모델을 제작했습니다. 주위를 걸으며 앞·옆·뒤 모습을 둘러보세요." },
-    H: 1.7, C: null, F: null, R: null, views: null, A: null, B: null,
+    data: { file: "img/car_photo.jpg", year: "", co: "", title: "1935년형 포드 디럭스",
+      cap: "창업 당시의 택시 모형",
+      detail: "해방 이듬해 박인천 창업주는 중고 택시 두 대로 광주택시를 열었습니다." },
+    H: 1.7, C: null, F: null, R: null, views: null, A: null, B: null, rot0: Math.PI, rotT: Math.PI,
   };
   const CAR_VIEWS = [
     { a: -180, f: "rear", ar: 1.1186 }, { a: -90, f: "side", ar: 2.5408 }, { a: 0, f: "front", ar: 1.1416 },
@@ -2572,30 +2572,53 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function buildCar() {
     const top=0.16, radius=2.55;
-    const C=new THREE.Vector3(HX-radius-0.14, 0, HZ-radius-0.22);
-    const F=new THREE.Vector3(-1,0,0), R=new THREE.Vector3(0,0,-1);
+    const C=new THREE.Vector3(-(HX-radius-0.14), 0, HZ-radius-0.22);
+    const F=new THREE.Vector3(1,0,0), R=new THREE.Vector3(0,0,-1);
     Object.assign(CAR,{C,F,R,top});
     const plinth=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,top,96),basic(0x24221d)); plinth.position.set(C.x,top/2,C.z); world.add(plinth);
     const rim=new THREE.Mesh(new THREE.CylinderGeometry(radius+0.025,radius+0.025,0.035,96),basic(0x9d875e)); rim.position.set(C.x,0.055,C.z); world.add(rim);
-    const topDisc=new THREE.Mesh(new THREE.CircleGeometry(radius-0.025,96),basic(0x302d27)); topDisc.rotation.x=-Math.PI/2; topDisc.position.set(C.x,top+0.002,C.z); world.add(topDisc);
+    const holder=new THREE.Group(); holder.position.set(C.x,top,C.z); holder.rotation.y=CAR.rot0; CAR.rotT=CAR.rot0; world.add(holder); CAR.A=null; CAR.B=null; CAR.holder=holder;
+    // the turning disc: inlaid rings and spokes make the rotation visible
+    const flat=(m,y)=>{ m.rotation.x=-Math.PI/2; m.position.y=y; holder.add(m); return m; };
+    flat(new THREE.Mesh(new THREE.CircleGeometry(radius-0.025,96),basic(0x302d27)),0.002);
+    const inlay=basic(0x8c7750);
+    [radius-0.2, radius*0.62].forEach(r=>flat(new THREE.Mesh(new THREE.RingGeometry(r-0.018,r+0.018,128),inlay),0.004));
+    for(let k=0;k<16;k++){ const a=k*Math.PI/8, l=radius-0.2-radius*0.62, sp=plane(0.026,l,inlay);
+      sp.rotation.set(-Math.PI/2,0,a); const rm=(radius-0.2+radius*0.62)/2; sp.position.set(Math.sin(a)*rm,0.004,Math.cos(a)*rm); holder.add(sp); }
+    for(let k=0;k<4;k++){ const a=k*Math.PI/2+Math.PI/4, d=new THREE.Mesh(new THREE.CircleGeometry(0.06,24),basic(0xc9b07a)); d.rotation.x=-Math.PI/2; d.position.set(Math.sin(a)*(radius-0.2),0.005,Math.cos(a)*(radius-0.2)); holder.add(d); }
     const pool=plane(5.0,5.0,poolMat); pool.rotation.x=-Math.PI/2; pool.position.set(C.x,top+0.006,C.z); world.add(pool);
-    const sh=plane(4.5,2.2,new THREE.MeshBasicMaterial({map:softTex,transparent:true,depthWrite:false,opacity:0.85})); sh.rotation.x=-Math.PI/2; sh.position.set(C.x,top+0.008,C.z); world.add(sh);
-    const holder=new THREE.Group(); holder.position.set(C.x,top,C.z); world.add(holder); CAR.A=null; CAR.B=null; CAR.holder=holder;
+    flat(plane(4.5,2.2,new THREE.MeshBasicMaterial({map:softTex,transparent:true,depthWrite:false,opacity:0.85})),0.008);
+    // uplights set into the floor round the dais, each throwing a soft beam inward and up
+    { const n=10, rr=radius+0.42, housing=basic(0x1a1916), lens=basic(0xfff1cf), glowM=new THREE.MeshBasicMaterial({map:softTex,color:0xffd99a,transparent:true,opacity:0.55,blending:THREE.AdditiveBlending,depthWrite:false});
+      for(let k=0;k<n;k++){ const a=(k+0.5)*2*Math.PI/n, x=C.x+Math.sin(a)*rr, z=C.z+Math.cos(a)*rr;
+        if(x<-HX+0.25||z>HZ-0.25) continue;               // none buried in the walls
+        const hb=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.15,0.05,28),housing); hb.position.set(x,0.025,z); world.add(hb);
+        const ln=new THREE.Mesh(new THREE.CircleGeometry(0.09,28),lens); ln.rotation.x=-Math.PI/2; ln.position.set(x,0.052,z); world.add(ln);
+        const gl=plane(0.9,0.9,glowM); gl.rotation.x=-Math.PI/2; gl.position.set(x,0.056,z); world.add(gl);
+      } }
     const proxy=new THREE.Mesh(new THREE.BoxGeometry(4.3,1.75,1.85),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})); proxy.position.y=0.87; proxy.userData.idx="car"; holder.add(proxy); pickables.push(proxy);
     const ambient=new THREE.HemisphereLight(0xe7ecf4,0x45403b,0.85); world.add(ambient);
-    const key=new THREE.DirectionalLight(0xfff2db,1.15); key.position.set(C.x-3,5,C.z-4); world.add(key);
-    const fill=new THREE.DirectionalLight(0xe6efff,0.55); fill.position.set(C.x+3,3,C.z+2); world.add(fill);
+    const key=new THREE.DirectionalLight(0xfff2db,1.15); key.position.set(C.x+3,5,C.z-4); world.add(key);
+    const fill=new THREE.DirectionalLight(0xe6efff,0.55); fill.position.set(C.x-3,3,C.z+2); world.add(fill);
     const expectedWorld=world;
     decodeTaxi().then(({geometry,texture,surface,normal})=>{
       if(world!==expectedWorld || mode!=="lobby") return;
       // Original GLB PBR textures: blue = metalness, green = roughness.
       const mat=new THREE.MeshStandardMaterial({map:texture, metalness:1, roughness:1, metalnessMap:surface, roughnessMap:surface, normalMap:normal, normalScale:new THREE.Vector2(0.65,0.65), envMap:taxiEnvironment(), envMapIntensity:0.8, side:THREE.DoubleSide});
       const mesh=new THREE.Mesh(geometry.clone(),mat); const scale=4.15/1.90101;
-      mesh.scale.setScalar(scale); mesh.position.y=0.379509*scale+0.012;
+      mesh.scale.setScalar(scale); mesh.position.y=0.379509*scale-0.075;
       holder.add(mesh);
     }).catch(err=>{console.error("택시 모델 로딩 실패",err); document.getElementById("taxiNotice").textContent="택시 모델을 불러오지 못했습니다. assets 폴더의 taxi-model-1.bin과 taxi-model-2.bin 파일을 확인해 주세요."; document.getElementById("taxiNotice").hidden=false;});
-    const label=panelMesh({kicker:"1946 · 창업 택시",title:"광주택시",text:"창업의 시작을 담은 택시를 3D로 재현했습니다."},1.7);
-    onWall(label,2,-C.x,3.35-label.userData.h/2,0.02);
+    { const g=new THREE.Group();
+      const pl=panelMesh({kicker:"",title:"1935년형 포드 디럭스",sub:"창업 당시의 택시 모형",
+        text:"해방 이듬해 박인천 창업주는 중고 택시 두 대로 광주택시를 열었습니다."},1.3);
+      const ph=pl.userData.h, y0=0.95;
+      pl.position.set(0,y0+ph/2,0.014); pl.rotation.x=-0.12; g.add(pl);
+      const frame=new THREE.Mesh(new THREE.BoxGeometry(1.4,ph+0.1,0.03),basic(0x2a2823)); frame.position.set(0,y0+ph/2,-0.004); frame.rotation.x=-0.12; g.add(frame);
+      const post=new THREE.Mesh(new THREE.BoxGeometry(0.06,y0,0.06),basic(0x8a7444)); post.position.y=y0/2; g.add(post);
+      const foot=new THREE.Mesh(new THREE.BoxGeometry(0.56,0.03,0.4),basic(0x4a3f2a)); foot.position.y=0.015; g.add(foot);
+      g.position.set(-1.25,0,HZ-1.7); g.rotation.y=Math.PI-0.4;   // in front of the back wall, turned toward the lobby
+      pl.userData.idx="car"; pickables.push(pl); world.add(g); }
     return {kind:"art",car:true,data:CAR.data,pose:carPose};
   }
   function carPose() {
@@ -2640,13 +2663,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     else { placeCarView(CAR.A, vb, 1, _tc); placeCarView(CAR.B, va, (1 - w) * 2, _tc); }
   }
   function hangWing() {
-    const side = 3, u = 3.75, size = 2.7, cy = 1.95;
+    const side = 3, u = 5.65, size = 2.3, cy = 1.95;
     const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     loadTex(WING.file).then((t) => { mat.map = t; mat.needsUpdate = true; }).catch(() => {});
     const m = onWall(plane(size, size, mat), side, u, cy, 0.02);
     m.userData.idx = "wing"; pickables.push(m);
     const lbl = panelMesh({ kicker: "", title: WING.title, text: "창업 80주년, 사진 266점으로 새긴 숫자" }, 1.5);
-    onWall(lbl, side, u + 2.3, 1.45, 0.02);
+    onWall(lbl, side, u - 2.05, 1.45, 0.02);   // caption on the panel side, so the photo sits close to the doors
     return { kind: "art", side, u, cy, w: size + 0.3, h: size + 0.3, data: WING };
   }
   /* lobby front wall bent into a gentle arc around the visitor */
@@ -3279,7 +3302,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       set("cDetail", P2.map((it, i) => `${i + 1}. ${it.title}`).join("  ·  ")); set("cCount", "");
     } else if (s.kind === "art") {
       const it = s.data;
-      set("cYear", `${it.year}  ·  ${it.co}`); set("cTitle", it.title); set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
+      set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
     } else if (s.kind === "photo") {
       const it = s.data;
       set("cYear", `${it.year}${it.co === "" ? "" : `  ·  ${it.co || "그룹"}`}`); set("cTitle", it.title); $("cTitle").insertAdjacentHTML("afterbegin", NB(s.idx + 1)); set("cCap", it.cap);
@@ -4473,7 +4496,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
     drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
     if (drag.taxi && drag.moved > 6 && CAR.holder) {
-      CAR.holder.rotation.y += dx * 0.012;
+      CAR.holder.rotation.y += dx * 0.005; CAR.rotT = CAR.holder.rotation.y;
       drag.lx=e.clientX; drag.ly=e.clientY; return;
     }
     if (drag.moved > 6 && !atEasel) {
@@ -4497,9 +4520,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   };
   canvas.addEventListener("pointerup", (e) => endPointer(e, false));
   canvas.addEventListener("pointercancel", (e) => endPointer(e, true));
-  document.getElementById("taxiLeft").addEventListener("click", () => { if (CAR.holder) CAR.holder.rotation.y -= Math.PI/12; });
-  document.getElementById("taxiRight").addEventListener("click", () => { if (CAR.holder) CAR.holder.rotation.y += Math.PI/12; });
-  document.getElementById("taxiReset").addEventListener("click", () => { if (CAR.holder) CAR.holder.rotation.y = 0; });
+  document.getElementById("taxiLeft").addEventListener("click", () => { if (CAR.holder) CAR.rotT -= Math.PI/16; });
+  document.getElementById("taxiRight").addEventListener("click", () => { if (CAR.holder) CAR.rotT += Math.PI/16; });
+  document.getElementById("taxiReset").addEventListener("click", () => { if (CAR.holder) CAR.rotT = CAR.rot0; });
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
     const v = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY;
@@ -4745,6 +4768,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stepHold(dt); stepTilt(dt); stepVK(dt); placeVK();
     const taxiControls = document.getElementById("taxiControls");
     taxiControls.hidden = !(mode === "lobby" && !atEasel && stops[cur] && stops[cur].car && CAR.holder);
+    if (mode === "lobby" && CAR.holder && CAR.holder.parent && !(drag && drag.taxi)) CAR.holder.rotation.y += (CAR.rotT - CAR.holder.rotation.y) * Math.min(1, dt * 2.2);
     if (resize() && stops.length && !looked) moveTo(atEasel && mode === "lobby" ? easelPose() : focusFor(stops[cur]), true);
     if (Math.abs(zoomTarget - zoom) > 0.001) {
       zoom += (zoomTarget - zoom) * 0.2;
