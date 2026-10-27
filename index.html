@@ -5021,16 +5021,7 @@ window.MeshoptDecoder = MeshoptDecoder;
     return { x: p.x, z: p.z, yaw: 0, pitch: portrait() ? 0.04 : 0.03 };
   }
   /* special halls: a 3D diorama (Meshy model, decimated + meshopt-compressed) at the centre of the inner hall */
-  const DIORAMAS = {
-    works: { file: "assets/diorama-airport.glb", width: 3.1, ph: 0.45, year: "", co: "금호건설", title: "공항 도시 디오라마",
-      cap: "하늘길과 도시를 짓다",
-      detail: "금호건설이 국내외에 지어 온 공항과 도시의 풍경을 하나의 디오라마로 담았습니다. 제주국제공항 여객터미널과 인천국제공항 확장 공사, 필리핀 프린세사 국제공항, 두바이 알막툼 국제공항과 아부다비 국제공항 관제탑까지 금호의 손길이 하늘길을 열었습니다." },
-    mobility: { file: "assets/diorama-usquare.glb", width: 3.1, ph: 0.5, pr: 0.8, tone: "toy", year: "", co: "금호익스프레스", title: "유·스퀘어와 금호고속 버스",
-      cap: "광주종합버스터미널 유·스퀘어 · 금호고속 버스",
-      detail: "1992년 광주종합버스터미널로 문을 열어 2006년 유·스퀘어로 새로 개관한 광주·전남 교통의 중심입니다. 터미널과 백화점·영화관·공연장을 아우르는 복합문화공간으로 자리 잡았습니다. 디오라마를 감싼 도로에는 이곳을 오가며 전국을 잇는 금호고속 버스가 한 바퀴씩 돌고 있습니다. 사람과 지역을 이어 온 금호 운송의 오늘을 보여 줍니다.",
-      // the model's own buses came out broken and were flattened out of the mesh; a ring road round the plinth carries Kumho Express buses instead
-      loop: { file: "assets/kumho-bus.glb", n: 2, len: 0.62, lap: 46 } },
-  };
+  const DIORAMAS = {};   // dioramas retired for now: every hall keeps its column of light (diorama code kept for later)
   let gltfLoader = null;
   // painted-model colours. "toy": saturated, warm, whites held back so nothing glares; default: deep and calm like the taxi
   function dioLook(root, tone) {
