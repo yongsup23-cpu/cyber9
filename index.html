@@ -5022,14 +5022,15 @@ window.MeshoptDecoder = MeshoptDecoder;
   }
   /* special halls: a 3D diorama (Meshy model, decimated + meshopt-compressed) at the centre of the inner hall */
   const DIORAMAS = {
-    works: { file: "assets/diorama-airport.glb", width: 4.4, year: "", co: "금호건설", title: "공항 도시 디오라마",
+    works: { file: "assets/diorama-airport.glb", width: 3.1, ph: 0.45, year: "", co: "금호건설", title: "공항 도시 디오라마",
       cap: "하늘길과 도시를 짓다",
       detail: "금호건설이 국내외에 지어 온 공항과 도시의 풍경을 하나의 디오라마로 담았습니다. 제주국제공항 여객터미널과 인천국제공항 확장 공사, 필리핀 프린세사 국제공항, 두바이 알막툼 국제공항과 아부다비 국제공항 관제탑까지 금호의 손길이 하늘길을 열었습니다." },
-    mobility: { file: "assets/diorama-usquare.glb", width: 4.4, ph: 0.98, year: "", co: "금호익스프레스", title: "유·스퀘어 디오라마",
+    mobility: { file: "assets/diorama-usquare.glb", width: 3.1, ph: 0.5, year: "", co: "금호익스프레스", title: "유·스퀘어 디오라마",
       cap: "광주종합버스터미널 유·스퀘어",
       detail: "1992년 광주종합버스터미널로 문을 열어 2006년 유·스퀘어로 새로 개관한 광주·전남 교통의 중심입니다. 터미널과 백화점·영화관·공연장을 아우르는 복합문화공간으로, 사람과 지역을 이어 온 금호 운송의 오늘을 보여 줍니다." },
   };
   let gltfLoader = null;
+  const DIO = { holder: null, rotT: 0 };   // the diorama turns left / right like the taxi
   function buildDiorama(spec, ax) {
     const PH = spec.ph || 0.72, PR = spec.width * 0.62, rot = Math.atan2(ax.x, ax.z);
     // plinth: dark stone drum, bronze lip, a soft halo on the floor
@@ -5042,10 +5043,11 @@ window.MeshoptDecoder = MeshoptDecoder;
     const proxy = new THREE.Mesh(new THREE.CylinderGeometry(PR, PR, PH + 1.6, 24), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
     proxy.position.y = (PH + 1.6) / 2; proxy.userData.idx = "dio"; world.add(proxy); pickables.push(proxy); drum.userData.idx = "dio"; pickables.push(drum);
     // its own light: the halls are unlit, the diorama is a lit model
-    world.add(new THREE.HemisphereLight(0xf2efe8, 0x3b362e, 0.9));
-    const key = new THREE.DirectionalLight(0xfff1dc, 1.1); key.position.set(ax.x * 6 + 3, 9, ax.z * 6 + 2); world.add(key);
+    world.add(new THREE.HemisphereLight(0xfff6e8, 0x5a5246, 1.15));
+    const key = new THREE.DirectionalLight(0xfff1dc, 1.35); key.position.set(ax.x * 6 + 3, 9, ax.z * 6 + 2); world.add(key);
     const fill = new THREE.DirectionalLight(0xdde8ff, 0.45); fill.position.set(-ax.x * 6 - 2, 5, -ax.z * 6); world.add(fill);
     const holder = new THREE.Group(); holder.position.y = PH; holder.rotation.y = rot; world.add(holder);
+    DIO.holder = holder; DIO.rotT = rot;
     const expectedWorld = world;
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
     if (gltfLoader) (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => gltfLoader.load(spec.file, (g) => {
@@ -5054,12 +5056,15 @@ window.MeshoptDecoder = MeshoptDecoder;
       const k = spec.width / Math.max(sz.x, sz.z);
       m.scale.setScalar(k); m.position.set(-c.x * k, -box.min.y * k, -c.z * k);
       const env = taxiEnvironment();
-      m.traverse((o) => { if (o.isMesh) { const mt = o.material; mt.envMap = env; mt.envMapIntensity = 0.55; mt.metalness = 0.25; mt.roughness = 1; mt.needsUpdate = true; } });
+      m.traverse((o) => { if (o.isMesh) { const mt = o.material; mt.envMap = env; mt.envMapIntensity = 0.7; mt.metalness = 0; mt.roughness = 0.9; mt.metalnessMap = null;
+        // miniature look: painted-model colours — lifted, saturated, slightly warm
+        mt.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace("#include <map_fragment>", "#include <map_fragment>\n  { float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); diffuseColor.rgb = clamp(mix(vec3(l), diffuseColor.rgb, 1.45) * vec3(1.07, 1.04, 0.97) + 0.01, 0.0, 1.0); }"); };
+        mt.needsUpdate = true; } });
       holder.add(m);
     }, undefined, (e) => console.error("디오라마 로딩 실패", e)));
     const pose = () => {
-      const d = portrait() ? 7.6 : 5.4;
-      return { x: ax.x * d, z: ax.z * d, yaw: Math.atan2(ax.x, ax.z), pitch: Math.atan2(PH + 0.45 - EYE, d) - 0.06 };
+      const d = portrait() ? 5.6 : 3.9;   // bird's-eye: close and looking down onto the model
+      return { x: ax.x * d, z: ax.z * d, yaw: Math.atan2(ax.x, ax.z), pitch: Math.atan2(PH + 0.15 - EYE, d) - 0.05 };
     };
     return { kind: "art", dio: true, data: spec, pose };
   }
@@ -8379,11 +8384,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, z0: zoomTarget };
       drag = null; return;
     }
-    const target = (!atEasel && mode === "lobby") ? hit(e.clientX,e.clientY) : null;
-    drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0, taxi: !!(target && target.userData.idx === "car" && CAR.holder) };
+    const target = (!atEasel && (mode === "lobby" || mode === "hall")) ? hit(e.clientX,e.clientY) : null;
+    drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0, taxi: !!(mode === "lobby" && target && target.userData.idx === "car" && CAR.holder),
+      dio: !!(mode === "hall" && target && target.userData.idx === "dio" && DIO.holder && DIO.holder.parent) };
     clearTimeout(holdTimer);
     holdTimer = setTimeout(() => {
-      if (!drag || drag.moved > 8 || touches.size !== 1 || atEasel || busy || mode !== "hall") return;
+      if (!drag || drag.dio || drag.moved > 8 || touches.size !== 1 || atEasel || busy || mode !== "hall") return;
       hold = { x: drag.lx, y: drag.ly, v: 0 }; anim = null; looked = true;
       if (auto.on) setAuto(false);
       canvas.style.cursor = "move";
@@ -8400,6 +8406,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!drag) { if (e.pointerType === "mouse") canvas.style.cursor = hit(e.clientX, e.clientY) ? "pointer" : "crosshair"; return; }
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
     drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
+    if (drag.dio && drag.moved > 6) {
+      DIO.holder.rotation.y += dx * 0.005; DIO.rotT = DIO.holder.rotation.y;
+      drag.lx = e.clientX; drag.ly = e.clientY; return;
+    }
     if (drag.taxi && drag.moved > 6 && CAR.holder) {
       CAR.holder.rotation.y += dx * 0.005; CAR.rotT = CAR.holder.rotation.y;
       drag.lx=e.clientX; drag.ly=e.clientY; return;
@@ -8680,6 +8690,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         L.gm.opacity = 0.25 + 0.45 * w + 0.4 * sp;
         L.lm.color.setScalar(0.72 + 0.28 * Math.max(w, sp));
       } }   // the turn hint panel is retired: drag the taxi itself
+    if (mode === "hall" && DIO.holder && DIO.holder.parent && !(drag && drag.dio)) DIO.holder.rotation.y += (DIO.rotT - DIO.holder.rotation.y) * Math.min(1, dt * 2.2);
     if (mode === "lobby" && CAR.holder && CAR.holder.parent && !(drag && drag.taxi)) CAR.holder.rotation.y += (CAR.rotT - CAR.holder.rotation.y) * Math.min(1, dt * 2.2);
     if (resize() && stops.length && !looked) moveTo(atEasel && mode === "lobby" ? easelPose() : focusFor(stops[cur]), true);
     if (Math.abs(zoomTarget - zoom) > 0.001) {
