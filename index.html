@@ -2475,6 +2475,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     addLobbyArrows();
     const art = hangWing();
     const taxiArt = buildCar();
+    stops.unshift({ kind: "art", carsign: true, data: CAR.data, pose: () => CAR.signPose() });
     stops.unshift(taxiArt);
     stops.unshift({ kind: "overview" });
     stops.unshift({ kind: "panel", side: 3, u: 0.9, cy: 2.3, w: 3.8, h: 2.4, title: "금호 아카이브", sub: "KUMHO ARCHIVES",
@@ -2634,17 +2635,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         tex.needsUpdate=true; };
       draw(null);
       const img=new Image(); img.onload=()=>draw(img); photoSrc(d.file).then((u)=>{ img.src=u; });   // (R is the car axis here, not the path resolver)
-      const grp=new THREE.Group(); grp.position.set(-1.2,0,HZ-1.75); grp.rotation.y=Math.PI-0.4; grp.scale.setScalar(1.7); world.add(grp);
-      const add=(geo,mat,x,y,z,rx)=>{ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); if(rx) m.rotation.x=rx; grp.add(m); return m; };
-      add(new THREE.BoxGeometry(0.44,0.028,0.5),ivoryShade,0,0.014,0.08);            // foot plate
-      add(new THREE.BoxGeometry(0.3,0.5,0.05),ivory,0,0.27,-0.1);                    // rear upright
-      add(new THREE.BoxGeometry(0.3,0.46,0.05),ivoryDark,0,0.66,-0.01,0.42);         // forward bend (K-shape)
-      add(new THREE.BoxGeometry(0.3,0.16,0.05),ivory,0,0.93,0.07);                   // neck
-      const head=new THREE.Group(); head.position.set(0,1.03,0.1); head.rotation.x=-0.6; grp.add(head);
+      // kiosk-size monitor on a slim round pole, set back by the wall so the opening view stays clear
+      const P=new THREE.Vector3(-1.3,0,HZ-1.15), ry=Math.PI-0.4, cy=1.22, tilt=-0.1;
+      const grp=new THREE.Group(); grp.position.copy(P); grp.rotation.y=ry; world.add(grp);
+      const base=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.19,0.025,40),ivoryShade); base.position.y=0.0125; grp.add(base);
+      const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,cy-0.1,20),ivory); pole.position.set(0,(cy-0.1)/2,-0.04); grp.add(pole);
+      const head=new THREE.Group(); head.position.set(0,cy,0); head.rotation.x=tilt; grp.add(head);
       const bez=new THREE.Mesh(new THREE.BoxGeometry(0.94,0.66,0.04),ivory); head.add(bez);
       const back=new THREE.Mesh(new THREE.BoxGeometry(0.92,0.64,0.01),ivoryShade); back.position.z=-0.026; head.add(back);
       const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.9,0.62),new THREE.MeshBasicMaterial({map:tex})); scr.position.z=0.021; head.add(scr);
-      [scr,bez].forEach((m)=>{ m.userData.idx="carsign"; pickables.push(m); }); }
+      [scr,bez].forEach((m)=>{ m.userData.idx="carsign"; pickables.push(m); });
+      CAR.signPose=()=>{ const d=portrait()?2.3:1.8, n=new THREE.Vector3(Math.sin(ry),0,Math.cos(ry)), h=d*Math.cos(tilt);   // square on to the screen
+        return { x:P.x+n.x*h, z:P.z+n.z*h, y:cy-d*Math.sin(tilt), yaw:ry, pitch:tilt-0.13 }; }; }   // look a little low so the screen sits above the caption card
     return {kind:"art",car:true,data:CAR.data,pose:carPose};
   }
   function carPose() {
@@ -4407,7 +4409,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "home") { goHome(); return; }
     if (o.userData.idx === "map") { if (auto.on) setAuto(false); openMap(); return; }
     if (o.userData.idx === "book") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "book" && t.bi === o.userData.book); if (si === cur && !anim && !looked) openBook(stops[si].data); else setStop(si); return; }
-    if (o.userData.idx === "carsign") { const si = stops.findIndex((t) => t.car); if (si >= 0) openLB(stops[si]); return; }
+    if (o.userData.idx === "carsign") { const si = stops.findIndex((t) => t.carsign); if (si >= 0 && (si !== cur || looked)) setStop(si); return; }
     if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
     if (o.userData.idx === "wing") { const si = stops.findIndex((t) => t.kind === "art" && !t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
     if (o.userData.idx !== undefined) {
