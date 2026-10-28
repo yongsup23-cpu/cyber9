@@ -5065,9 +5065,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const DIORAMAS = {
     works: { width: 4.0, pr: 0.61, ph: 0.62, orbit: 5.3, aim: 0.5, tone: "pbr", year: "", co: "금호건설", title: "금호건설의 건축물 디오라마", plate: "금호건설의 건축물 디오라마", floor: "map",
       cap: "아부다비 국제공항 관제탑 · 인천국제공항 · 용사의집 · 울산 신정 공동주택",
-      detail: "국내외에서 금호건설이 지은 대표 건축물 네 곳을 3D 모형으로 재현했습니다. 받침대를 좌우로 끌어 돌리고, 위아래로 끌어 높이를 바꿔 보세요. 건물을 누르면 설명이, 한 번 더 누르면 3D로 크게 볼 수 있습니다.",
+      detail: "국내외에서 금호건설이 지은 대표 건축물 네 곳을 3D 모형으로 재현했습니다. 받침대를 좌우로 끌어 돌리고, 위아래로 끌어 높이를 바꿔 보세요. 건물을 누르면 해당 건물의 설명을 볼 수 있습니다.",
       multi: [
-        { file: "assets/model-auh-tower.glb", label: "아부다비 국제공항 관제탑", h: 1.5, x: -1.0, z: -0.85, map: [24.433, 54.651],
+        { file: "assets/model-auh-tower.glb", label: "아부다비 국제공항 관제탑", h: 1.35, x: -1.0, z: -0.85, map: [24.433, 54.651],
           data: { year: "2007.12 — 2010.10", co: "금호건설", title: "아부다비 국제공항 관제탑", cap: "지하 1층~지상 22층 · 연면적 7,300㎡ · 아랍에미리트 아부다비",
             detail: "아부다비 국제공항의 항공교통을 관제하는 신관제탑입니다. 2007년 12월 착공해 2010년 10월 준공했습니다. 철근콘크리트 기단 위로 곡선형 철골 타워가 솟은 외관(프랑스 ADPi 설계)으로 세계적 랜드마크가 되었으며, 두바이 신공항에 이은 중동 공항 수주로 금호건설의 해외 공항건설 역량을 알렸습니다." } },
         { file: "assets/model-icn.glb", label: "인천국제공항", w: 1.55, x: 0.95, z: -0.75, map: [37.4602, 126.4407],
@@ -5084,37 +5084,32 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   let gltfLoader = null;
   // plinth top: a dark map — the Korean peninsula with the three domestic sites, and the flight line out to Abu Dhabi
   function dioMapTex(spec) {
-    const N = 2048;
-    return canvasTex(N, N, (g) => {
-      const c = N / 2;
-      const bg = g.createRadialGradient(c, c, 0, c, c, c); bg.addColorStop(0, "#1c2430"); bg.addColorStop(1, "#10151c");
-      g.fillStyle = bg; g.beginPath(); g.arc(c, c, c, 0, Math.PI * 2); g.fill();
-      g.save(); g.beginPath(); g.arc(c, c, c - 4, 0, Math.PI * 2); g.clip();
-      g.strokeStyle = "rgba(150,175,200,0.08)"; g.lineWidth = 2;
-      for (let x = 0; x < N; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, N); g.stroke(); g.beginPath(); g.moveTo(0, x); g.lineTo(N, x); g.stroke(); }
-      // Korea, large, on the east (right) half of the disc
-      const lat0 = 33.0, lat1 = 38.7, lng0 = 125.9, k = Math.cos(36 * Math.PI / 180), sc = 1180 / (lat1 - lat0), ox = 1080, oy = 300;
-      const P = (la, ln) => [ox + (ln - lng0) * k * sc, oy + (lat1 - la) * sc];
-      g.fillStyle = "#2a3644"; g.strokeStyle = "#8c7a52"; g.lineWidth = 5;
-      g.beginPath(); KOREA.forEach(([la, ln], i) => { const [x, y] = P(la, ln); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.fill(); g.stroke();
-      const [jx, jy] = P(33.37, 126.55); g.beginPath(); g.ellipse(jx, jy, 0.36 * k * sc, 0.16 * sc, 0, 0, Math.PI * 2); g.fill(); g.stroke();
-      const pin = (x, y, t, right) => { g.fillStyle = "#e6c27a"; g.beginPath(); g.arc(x, y, 14, 0, Math.PI * 2); g.fill(); g.strokeStyle = "rgba(230,194,122,.45)"; g.lineWidth = 4; g.beginPath(); g.arc(x, y, 30, 0, Math.PI * 2); g.stroke();
-        g.font = `600 44px ${FONT}`; g.fillStyle = "#efe4cc"; g.textBaseline = "middle"; g.textAlign = right ? "left" : "right"; g.fillText(t, x + (right ? 42 : -42), y); };
-      const [ix, iy] = P(37.4602, 126.4407), [sx, sy] = P(37.5299, 126.9648), [ux, uy] = P(35.5384, 129.3114);
-      // Abu Dhabi: off to the west, reached by a dashed great-circle style arc from Incheon
-      const ax = 330, ay = 820;
-      g.strokeStyle = "rgba(230,194,122,.75)"; g.lineWidth = 6; g.setLineDash([26, 18]);
-      g.beginPath(); g.moveTo(ix, iy); g.quadraticCurveTo((ix + ax) / 2, 220, ax, ay); g.stroke(); g.setLineDash([]);
-      pin(ax, ay, "", true); g.font = `600 46px ${FONT}`; g.fillStyle = "#efe4cc"; g.textAlign = "center"; g.fillText("아부다비", ax, ay + 70);
-      g.font = `400 34px ${FONT}`; g.fillStyle = "#b9ab8c"; g.fillText("UAE · 약 6,800km", ax, ay + 118);
-      pin(ix, iy, "인천", false); pin(sx, sy + 26, "서울 용산", true); pin(ux, uy, "울산", true);
-      g.font = `500 40px ${FONT}`; g.fillStyle = "rgba(201,168,106,.85)"; g.textAlign = "center"; g.fillText("KUMHO E&C  ·  ARCHITECTURE", c, N - 190);
-      g.restore();
-      g.strokeStyle = "#9d875e"; g.lineWidth = 10; g.beginPath(); g.arc(c, c, c - 8, 0, Math.PI * 2); g.stroke();
+    const N=2048, radius=spec.width*(spec.pr||0.62), sc=N/(2*radius), c=N/2;
+    return canvasTex(N,N,(g)=>{
+      const p=(x,z)=>[c+x*sc,c+z*sc];
+      g.fillStyle="#66736a";g.fillRect(0,0,N,N);
+      // Fine aggregate, paving and continuous roads are drawn on a single shared texture.
+      let seed=1946;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+      for(let i=0;i<45000;i++){const v=random()<.5?"255,255,255":"0,0,0";g.fillStyle=`rgba(${v},.035)`;g.fillRect(random()*N,random()*N,1+random()*2,1+random()*2)}
+      g.fillStyle="#a5a39a";
+      for(const [x,z] of [[-1,-.85],[.95,-.75],[-.95,.9],[1,.95]]){const [px,pz]=p(x,z);g.fillRect(px-.77*sc,pz-.77*sc,1.54*sc,1.54*sc)}
+      function path(width,color,draw){g.beginPath();draw();g.lineWidth=width*sc;g.strokeStyle=color;g.lineJoin="round";g.lineCap="round";g.stroke()}
+      const cross=()=>{let a=p(-2.31,0),b=p(2.31,0);g.moveTo(...a);g.lineTo(...b);a=p(0,-2.31);b=p(0,2.31);g.moveTo(...a);g.lineTo(...b)};
+      const ring=()=>g.arc(c,c,2.10*sc,0,Math.PI*2);
+      for(const route of [ring,cross]){path(.36,"#b3b1a7",route);path(.28,"#363b3f",route);path(.245,"#474d50",route)}
+      g.setLineDash([.07*sc,.055*sc]);for(const route of [ring,cross])path(.009,"#e9e4cf",route);g.setLineDash([]);
+      // A clear junction in the centre, with four pedestrian crossings.
+      g.fillStyle="#474d50";g.fillRect(c-.15*sc,c-.15*sc,.3*sc,.3*sc);
+      g.fillStyle="#e6e5dc";for(let k=-2;k<=2;k++){const q=k*.041*sc;for(const sign of [-1,1]){g.fillRect(c+q-.012*sc,c+sign*.24*sc-.055*sc,.024*sc,.11*sc);g.fillRect(c+sign*.24*sc-.055*sc,c+q-.012*sc,.11*sc,.024*sc)}}
+      // Access roads run from the central street into each building's plot.
+      for(const [x,z] of [[-1,-.85],[.95,-.75],[-.95,.9],[1,.95]]){
+        const route=()=>{g.moveTo(...p(x,0));g.lineTo(...p(x,z*.52))};path(.15,"#b3b1a7",route);path(.11,"#474d50",route);
+      }
+      g.beginPath();g.arc(c,c,N/2-6,0,Math.PI*2);g.strokeStyle="#9d875e";g.lineWidth=9;g.stroke();
     });
   }
   // painted-model colours. "toy": saturated, warm, whites held back so nothing glares; default: deep and calm like the taxi
-  function dioLook(root, tone) {
+  function dioLook(root, tone, file) {
     const env=taxiEnvironment();
     root.traverse(o=>{
       if(!o.isMesh)return;
@@ -5122,6 +5117,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const materials=Array.isArray(o.material)?o.material:[o.material];
       materials.forEach(mt=>{
         mt.envMap=env; mt.envMapIntensity=0.8;
+        if ((file||"").includes("model-icn")) {
+          mt.color.setRGB(0.82,0.86,0.88); mt.envMapIntensity=0.55;
+          mt.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace("#include <map_fragment>","#include <map_fragment>\nfloat icnL=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722)); diffuseColor.rgb=clamp(mix(vec3(icnL),diffuseColor.rgb,1.16),0.,1.);");};
+          mt.customProgramCacheKey=()=>"icn-rich-v1";
+        }
         if(mt.normalMap)mt.normalScale.set(0.65,0.65);
         [mt.map,mt.metalnessMap,mt.roughnessMap,mt.normalMap].forEach(t=>{if(t)t.anisotropy=ANISO;});
         mt.needsUpdate=true;
@@ -5193,7 +5193,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const m = g.scene; const box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
       const k = it.h ? it.h / sz.y : it.w / Math.max(sz.x, sz.z);
       m.scale.setScalar(k); m.position.set(-c.x * k, -box.min.y * k, -c.z * k);
-      dioLook(m, spec.tone);
+      dioLook(m, spec.tone, it.file);
       const g2 = new THREE.Group(); g2.add(m); g2.position.set(it.x, 0.004, it.z); g2.rotation.y = it.ry || 0; holder.add(g2);
       const lt = canvasTex(1024, 128, (cx, W) => { cx.clearRect(0, 0, W, 128); cx.font = `500 54px ${FONT}`; const tw = cx.measureText(it.label).width + 70;
         cx.fillStyle = "rgba(18,17,15,.78)"; cx.strokeStyle = "rgba(201,168,106,.85)"; cx.lineWidth = 3;
@@ -7406,7 +7406,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       set("cDetail", P2.map((it, i) => `${i + 1}. ${it.title}`).join("  ·  ")); set("cCount", "");
     } else if (s.kind === "art") {
       const it = s.data;
-      set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); if (s.dio && !s.model3d) $("zoomBtn").hidden = true; if (s.model3d) $("zoomBtn").textContent = "3D로 보기"; set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
+      set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); if (s.dio || s.car || s.model3d) $("zoomBtn").hidden = true; set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
     } else if (s.kind === "photo") {
       const it = s.data;
       set("cYear", `${it.year}${it.co === "" ? "" : `  ·  ${it.co || "그룹"}`}`); set("cTitle", it.title); $("cTitle").insertAdjacentHTML("afterbegin", NB(s.idx + 1)); set("cCap", it.cap);
@@ -7491,7 +7491,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   /* the founding taxi in its own 3D view: drag to orbit freely (up / down / round), wheel or pinch to zoom */
   const T3 = { r: null, scene: null, cam: null, mesh: null, on: false, az: 0.75, el: 0.22, dist: 7.2, idle: 0, raf: 0, ptr: new Map(), last: 0, pd: null };
-  function open3D(s) {
+  function open3D(s) { return; // 별도 3D 확대 팝업 사용 안 함
+
     const it = s.data; $("t3dTitle").textContent = it.title; $("t3dCap").textContent = it.cap || ""; $("t3dDetail").textContent = it.detail || "";
     $("t3d").hidden = false; T3.on = true; $("t3dClose").focus();
     if (!T3.r) {
@@ -7539,7 +7540,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => gltfLoader.load(s.model3d.file, (g) => {
           const m = g.scene, box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
           const k = 3.6 / Math.max(sz.x, sz.y, sz.z); m.scale.setScalar(k); m.position.set(-c.x * k, -box.min.y * k, -c.z * k);
-          dioLook(m, "pbr");
+          dioLook(m, "pbr", s.model3d.file);
           const H = sz.y * k, R = Math.max(sz.x, sz.z) * k / 2;
           done(m, H * 0.45, Math.max(5.2, H * 2.6, R * 3.6), Math.max(1.6, R * 1.35));
         }, undefined, fail));
@@ -8546,7 +8547,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       looked = true; moveTo(focusPose(P.side, P.u, P.cy, P.w, P.h)); return;
     }
     if (o.userData.idx === "dio") { const si = stops.findIndex((t) => t.dio); if (si >= 0 && (si !== cur || looked)) setStop(si); return; }
-    if (o.userData.idx === "dioItem") { const si = stops.findIndex((t) => t.dioItem === o.userData.item); if (si < 0) return; if (si === cur && !anim) open3D(stops[si]); else setStop(si); return; }
+    if (o.userData.idx === "dioItem") { const si = stops.findIndex((t) => t.dioItem === o.userData.item); if (si < 0) return; if (si !== cur || looked) setStop(si); else showCard(); return; }
     if (o.userData.door) { walkThrough(o.userData.door); return; }
     if (o.userData.chron !== undefined) {
       if (auto.on) setAuto(false);
@@ -8561,7 +8562,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "map") { if (auto.on) setAuto(false); openMap(); return; }
     if (o.userData.idx === "book") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "book" && t.bi === o.userData.book); if (si === cur && !anim && !looked) openBook(stops[si].data); else setStop(si); return; }
     if (o.userData.idx === "carsign") { const si = stops.findIndex((t) => t.carsign); if (si < 0) return; if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }   // 1st click: walk up to it, 2nd: the detail view (as with the taxi)
-    if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si === cur && !anim && !looked) open3D(stops[si]); else setStop(si); return; }
+    if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si !== cur || looked) setStop(si); else showCard(); return; }
     if (o.userData.idx === "wing") { const si = stops.findIndex((t) => t.kind === "art" && !t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
     if (o.userData.idx !== undefined) {
       const si = stops.findIndex((s) => s.kind === "photo" && s.idx === o.userData.idx);
@@ -8743,14 +8744,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     else if (e.key === " ") { e.preventDefault(); setAuto(!auto.on); }
     else if (e.key === "ArrowRight") { auto.next = 0; step(1); }
     else if (e.key === "ArrowLeft") step(-1);
-    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.car || s.model3d) open3D(s); else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
+    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.car || s.model3d || s.dio) { showCard(); } else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
     else if (e.key === "Escape" && mode === "hall") go(buildLobby);
   });
   $("prevBtn").addEventListener("click", () => { auto.next = 0; step(-1); });
   $("nextBtn").addEventListener("click", () => { auto.next = 0; step(1); });
   $("autoBtn").addEventListener("click", () => setAuto(!auto.on));
   if ($("docBtn")) $("docBtn").addEventListener("click", () => setDocent(!DOC.on));
-  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.car || s.model3d) open3D(s); else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
+  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.car || s.model3d || s.dio) return; else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
   $("enterBtn2").addEventListener("click", () => { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); });
   document.querySelectorAll("[data-look]").forEach((b) => b.addEventListener("click", () => {
     const dy = THREE.MathUtils.degToRad(+b.dataset.look);
