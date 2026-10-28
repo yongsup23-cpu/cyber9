@@ -5040,11 +5040,71 @@ window.MeshoptDecoder = MeshoptDecoder;
     return { x: p.x, z: p.z, yaw: 0, pitch: portrait() ? 0.04 : 0.03 };
   }
   /* special halls: a 3D diorama (Meshy model, decimated + meshopt-compressed) at the centre of the inner hall */
-  const DIORAMAS = {};   // dioramas retired for now: every hall keeps its column of light (diorama code kept for later)
+  // 특별관 Ⅰ: four landmark models of Kumho E&C works on one round plinth (special hall Ⅱ keeps its column of light)
+  const DIORAMAS = {
+    works: { width: 4.0, pr: 0.61, ph: 0.62, orbit: 5.3, aim: 0.5, tone: "pbr", year: "", co: "금호건설", title: "금호건설의 건축물 디오라마", plate: "금호건설의 건축물 디오라마", floor: "map",
+      cap: "아부다비 국제공항 관제탑 · 인천국제공항 · 용사의집 · 울산 신정 공동주택",
+      detail: "국내외에서 금호건설이 지은 대표 건축물 네 곳을 3D 모형으로 재현했습니다. 받침대를 좌우로 끌어 돌리고, 위아래로 끌어 높이를 바꿔 보세요. 건물을 누르면 설명이, 한 번 더 누르면 3D로 크게 볼 수 있습니다.",
+      multi: [
+        { file: "assets/model-auh-tower.glb", label: "아부다비 국제공항 관제탑", h: 1.5, x: -1.0, z: -0.85, map: [24.433, 54.651],
+          data: { year: "2007.12 — 2010.10", co: "금호건설", title: "아부다비 국제공항 관제탑", cap: "지하 1층~지상 22층 · 연면적 7,300㎡ · 아랍에미리트 아부다비",
+            detail: "아부다비 국제공항의 항공교통을 관제하는 신관제탑입니다. 2007년 12월 착공해 2010년 10월 준공했습니다. 철근콘크리트 기단 위로 곡선형 철골 타워가 솟은 외관(프랑스 ADPi 설계)으로 세계적 랜드마크가 되었으며, 두바이 신공항에 이은 중동 공항 수주로 금호건설의 해외 공항건설 역량을 알렸습니다." } },
+        { file: "assets/model-icn.glb", label: "인천국제공항", w: 1.55, x: 0.95, z: -0.75, map: [37.4602, 126.4407],
+          data: { year: "1996 — 2001", co: "금호건설", title: "인천국제공항", cap: "부지조성 · 활주로 · 여객터미널 · 관제탑 · 계류장",
+            detail: "2001년 3월 29일 문을 연 인천국제공항입니다. 금호건설은 1996년 공항 착공 때부터 부지조성과 활주로, 여객터미널, 관제탑, 계류장 등 공항 건설 전반에 참여했고, 개항식에서 은탑산업훈장과 대통령상·건설교통부장관상을 받았습니다. 이후 3단계 확장 공사와 제2활주로 시설공사까지 이어 맡았습니다." } },
+        { file: "assets/model-rokaus.glb", label: "용사의집 (로카우스 호텔)", h: 1.25, x: -0.95, z: 0.9, map: [37.5299, 126.9648],
+          data: { year: "2023", co: "금호건설", title: "용사의집 재건립", cap: "국방부 발주 · 지하 7층~지상 30층 · 숙박시설 274객실",
+            detail: "장병과 가족을 위한 군 복지시설 '용사의 집'을 다시 지은 숙박시설로, 2023년 준공해 로카우스 호텔로 문을 열었습니다. BIM 설계부터 시공관리까지 일괄 수행했고, 7.5~7.7m의 높은 층고와 방축열 시스템을 갖췄습니다." } },
+        { file: "assets/model-ulsan.glb", label: "울산 신정 공동주택", h: 1.2, x: 1.0, z: 0.95, map: [35.5384, 129.3114],
+          data: { year: "2022.10 — 2025.12", co: "금호건설", title: "울산 신정 공동주택", cap: "코리아신탁㈜ 발주 · 지하 3층~지상 37층 · 4개동 402세대 · 연면적 72,956㎡",
+            detail: "관리형 토지신탁 방식으로 지은 공동주택으로, 지하 3층~지상 37층 4개동 402세대 규모입니다. 2022년 10월 착공해 2025년 12월 준공했으며, 부대복리시설을 함께 갖췄습니다." } },
+      ] },
+  };
   let gltfLoader = null;
+  // plinth top: a dark map — the Korean peninsula with the three domestic sites, and the flight line out to Abu Dhabi
+  function dioMapTex(spec) {
+    const N = 2048;
+    return canvasTex(N, N, (g) => {
+      const c = N / 2;
+      const bg = g.createRadialGradient(c, c, 0, c, c, c); bg.addColorStop(0, "#1c2430"); bg.addColorStop(1, "#10151c");
+      g.fillStyle = bg; g.beginPath(); g.arc(c, c, c, 0, Math.PI * 2); g.fill();
+      g.save(); g.beginPath(); g.arc(c, c, c - 4, 0, Math.PI * 2); g.clip();
+      g.strokeStyle = "rgba(150,175,200,0.08)"; g.lineWidth = 2;
+      for (let x = 0; x < N; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, N); g.stroke(); g.beginPath(); g.moveTo(0, x); g.lineTo(N, x); g.stroke(); }
+      // Korea, large, on the east (right) half of the disc
+      const lat0 = 33.0, lat1 = 38.7, lng0 = 125.9, k = Math.cos(36 * Math.PI / 180), sc = 1180 / (lat1 - lat0), ox = 1080, oy = 300;
+      const P = (la, ln) => [ox + (ln - lng0) * k * sc, oy + (lat1 - la) * sc];
+      g.fillStyle = "#2a3644"; g.strokeStyle = "#8c7a52"; g.lineWidth = 5;
+      g.beginPath(); KOREA.forEach(([la, ln], i) => { const [x, y] = P(la, ln); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.fill(); g.stroke();
+      const [jx, jy] = P(33.37, 126.55); g.beginPath(); g.ellipse(jx, jy, 0.36 * k * sc, 0.16 * sc, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+      const pin = (x, y, t, right) => { g.fillStyle = "#e6c27a"; g.beginPath(); g.arc(x, y, 14, 0, Math.PI * 2); g.fill(); g.strokeStyle = "rgba(230,194,122,.45)"; g.lineWidth = 4; g.beginPath(); g.arc(x, y, 30, 0, Math.PI * 2); g.stroke();
+        g.font = `600 44px ${FONT}`; g.fillStyle = "#efe4cc"; g.textBaseline = "middle"; g.textAlign = right ? "left" : "right"; g.fillText(t, x + (right ? 42 : -42), y); };
+      const [ix, iy] = P(37.4602, 126.4407), [sx, sy] = P(37.5299, 126.9648), [ux, uy] = P(35.5384, 129.3114);
+      // Abu Dhabi: off to the west, reached by a dashed great-circle style arc from Incheon
+      const ax = 330, ay = 820;
+      g.strokeStyle = "rgba(230,194,122,.75)"; g.lineWidth = 6; g.setLineDash([26, 18]);
+      g.beginPath(); g.moveTo(ix, iy); g.quadraticCurveTo((ix + ax) / 2, 220, ax, ay); g.stroke(); g.setLineDash([]);
+      pin(ax, ay, "", true); g.font = `600 46px ${FONT}`; g.fillStyle = "#efe4cc"; g.textAlign = "center"; g.fillText("아부다비", ax, ay + 70);
+      g.font = `400 34px ${FONT}`; g.fillStyle = "#b9ab8c"; g.fillText("UAE · 약 6,800km", ax, ay + 118);
+      pin(ix, iy, "인천", false); pin(sx, sy + 26, "서울 용산", true); pin(ux, uy, "울산", true);
+      g.font = `500 40px ${FONT}`; g.fillStyle = "rgba(201,168,106,.85)"; g.textAlign = "center"; g.fillText("KUMHO E&C  ·  ARCHITECTURE", c, N - 190);
+      g.restore();
+      g.strokeStyle = "#9d875e"; g.lineWidth = 10; g.beginPath(); g.arc(c, c, c - 8, 0, Math.PI * 2); g.stroke();
+    });
+  }
   // painted-model colours. "toy": saturated, warm, whites held back so nothing glares; default: deep and calm like the taxi
   function dioLook(root, tone) {
     const env = taxiEnvironment();
+    if (tone === "pbr") {   // keep the model's own PBR maps (as with the taxi): reflections from the studio environment, no colour shift
+      root.traverse((o) => { if (!o.isMesh) return; const mt = o.material;
+        if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals();
+        mt.envMap = env; mt.envMapIntensity = 0.95;
+        if (!mt.metalnessMap) { mt.metalness = 0.12; mt.roughness = 0.55; }        // baked models carry colour only
+        if (mt.normalMap) mt.normalScale.set(0.8, 0.8);
+        if (mt.map) mt.map.anisotropy = ANISO;
+        mt.needsUpdate = true; });
+      return;
+    }
     const glsl = tone === "toy"
       ? "{ float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); vec3 c = mix(vec3(l), diffuseColor.rgb, 1.6); c = c * (1.0 - 0.3 * c); diffuseColor.rgb = clamp(c * vec3(1.08, 1.02, 0.94) * 1.05, 0.0, 1.0); }"
       : "{ float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); diffuseColor.rgb = clamp(mix(vec3(l), diffuseColor.rgb, 1.3) * vec3(0.78, 0.76, 0.74), 0.0, 1.0); }";
@@ -5056,21 +5116,29 @@ window.MeshoptDecoder = MeshoptDecoder;
   const DIO = { holder: null, rotT: 0, buses: [], busFlip: true };   // the bus model faces -x   // the diorama turns left / right like the taxi
   function buildDiorama(spec, ax) {
     const PH = spec.ph || 0.72, PR = spec.width * (spec.pr || 0.62), rot = Math.atan2(ax.x, ax.z);
+    const proxyH = spec.multi ? 0 : 1.6;   // with separate buildings the drum and each building take the clicks
     // plinth: dark stone drum, bronze lip, a soft halo on the floor
     const drum = new THREE.Mesh(new THREE.CylinderGeometry(PR, PR + 0.05, PH, 96), basic(0x22201b)); drum.position.y = PH / 2; world.add(drum);
     const lip = new THREE.Mesh(new THREE.CylinderGeometry(PR + 0.012, PR + 0.012, 0.03, 96), basic(0x9d875e)); lip.position.y = PH - 0.015; world.add(lip);
     const top = new THREE.Mesh(new THREE.CircleGeometry(PR - 0.01, 96), basic(0x171612)); top.rotation.x = -Math.PI / 2; top.position.y = PH + 0.002; world.add(top);
     const band = new THREE.Mesh(new THREE.CylinderGeometry(PR + 0.055, PR + 0.055, 0.025, 96), basic(0x9d875e)); band.position.y = 0.08; world.add(band);
+    if (spec.plate) {   // the title, set round the front of the drum
+      const arc = 1.5, pt = canvasTex(2048, 160, (g2, W) => { g2.clearRect(0, 0, W, 160); g2.fillStyle = "#f0d9a0"; g2.font = `600 100px ${SERIF}`; g2.textAlign = "center"; g2.textBaseline = "middle";
+        const t = spec.plate.split("").join("\u2009"); g2.fillText(t, W / 2, 84); });
+      const band2 = new THREE.Mesh(new THREE.CylinderGeometry(PR + 0.052, PR + 0.052, 0.17, 96, 1, true, rot - arc / 2, arc), new THREE.MeshBasicMaterial({ map: pt, transparent: true, depthWrite: false }));
+      band2.position.y = PH * 0.52; world.add(band2);
+    }
     const halo = plane(PR * 3.2, PR * 3.2, new THREE.MeshBasicMaterial({ map: glowTex, color: 0x8c6a32, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending }));
     halo.rotation.x = -Math.PI / 2; halo.position.y = 0.01; world.add(halo);
-    const proxy = new THREE.Mesh(new THREE.CylinderGeometry(PR, PR, PH + 1.6, 24), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
-    proxy.position.y = (PH + 1.6) / 2; proxy.userData.idx = "dio"; world.add(proxy); pickables.push(proxy); drum.userData.idx = "dio"; pickables.push(drum);
+    const proxy = new THREE.Mesh(new THREE.CylinderGeometry(PR, PR, PH + proxyH, 24), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    proxy.position.y = (PH + proxyH) / 2; proxy.userData.idx = "dio"; world.add(proxy); pickables.push(proxy); drum.userData.idx = "dio"; pickables.push(drum);
     // its own light: the halls are unlit, the diorama is a lit model
-    world.add(new THREE.HemisphereLight(0xf2ece2, 0x3e382f, 0.7));
-    const key = new THREE.DirectionalLight(0xfff1dc, 1.05); key.position.set(ax.x * 6 + 3, 9, ax.z * 6 + 2); world.add(key);
+    world.add(new THREE.HemisphereLight(0xf2ece2, 0x3e382f, spec.tone === "pbr" ? 0.85 : 0.7));
+    const key = new THREE.DirectionalLight(0xfff1dc, spec.tone === "pbr" ? 1.25 : 1.05); key.position.set(ax.x * 6 + 3, 9, ax.z * 6 + 2); world.add(key);
     const fill = new THREE.DirectionalLight(0xdde8ff, 0.3); fill.position.set(-ax.x * 6 - 2, 5, -ax.z * 6); world.add(fill);
     const holder = new THREE.Group(); holder.position.y = PH; holder.rotation.y = rot; world.add(holder);
     DIO.holder = holder; DIO.rotT = rot; DIO.buses = [];
+    if (spec.floor === "map") { const fm = new THREE.Mesh(new THREE.CircleGeometry(PR - 0.02, 128), new THREE.MeshBasicMaterial({ map: dioMapTex(spec) })); fm.rotation.x = -Math.PI / 2; fm.position.y = 0.003; holder.add(fm); }
     if (spec.loop) {
       // ring road on the plinth top, round the diorama: asphalt, white edge lines, dashed centre line
       const r0 = spec.width / 2 + 0.04, r1 = PR - 0.06, rm = (r0 + r1) / 2, N = 2048;
@@ -5104,7 +5172,24 @@ window.MeshoptDecoder = MeshoptDecoder;
     }
     const expectedWorld = world;
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
-    if (gltfLoader) (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => gltfLoader.load(spec.file, (g) => {
+    // several separate models placed on the plinth, each with a small floating name label
+    if (spec.multi && gltfLoader) (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => spec.multi.forEach((it) => gltfLoader.load(it.file, (g) => {
+      if (world !== expectedWorld) return;
+      const m = g.scene; const box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+      const k = it.h ? it.h / sz.y : it.w / Math.max(sz.x, sz.z);
+      m.scale.setScalar(k); m.position.set(-c.x * k, -box.min.y * k, -c.z * k);
+      dioLook(m, spec.tone);
+      const g2 = new THREE.Group(); g2.add(m); g2.position.set(it.x, 0.004, it.z); g2.rotation.y = it.ry || 0; holder.add(g2);
+      const lt = canvasTex(1024, 128, (cx, W) => { cx.clearRect(0, 0, W, 128); cx.font = `500 54px ${FONT}`; const tw = cx.measureText(it.label).width + 70;
+        cx.fillStyle = "rgba(18,17,15,.78)"; cx.strokeStyle = "rgba(201,168,106,.85)"; cx.lineWidth = 3;
+        const x0 = (W - tw) / 2; cx.beginPath(); cx.roundRect ? cx.roundRect(x0, 22, tw, 84, 42) : cx.rect(x0, 22, tw, 84); cx.fill(); cx.stroke();
+        cx.fillStyle = "#f1e6cc"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(it.label, W / 2, 66); });
+      const pb = new THREE.Mesh(new THREE.BoxGeometry(sz.x * k, sz.y * k, sz.z * k), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+      pb.position.set(it.x, sz.y * k / 2, it.z); pb.rotation.y = it.ry || 0; pb.userData.idx = "dioItem"; pb.userData.item = spec.multi.indexOf(it); holder.add(pb); pickables.push(pb);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: lt, transparent: true, depthWrite: false }));
+      sp.scale.set(1.7, 0.213, 1); sp.position.set(it.x, sz.y * k + 0.2, it.z); sp.renderOrder = 5; holder.add(sp);
+    }, undefined, (e) => console.error("모형 로딩 실패", it.file, e))));
+    if (!spec.multi && gltfLoader) (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => gltfLoader.load(spec.file, (g) => {
       if (world !== expectedWorld) return;
       const m = g.scene; const box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
       const k = spec.width / Math.max(sz.x, sz.z);
@@ -5114,14 +5199,17 @@ window.MeshoptDecoder = MeshoptDecoder;
 
     }, undefined, (e) => console.error("디오라마 로딩 실패", e)));
 
-    const ty = PH + 0.3;
+    const ty = PH + (spec.aim || 0.3);
     DIO.elev = 0.42;
     const pose = () => {
-      const r = portrait() ? 6.0 : 4.3, e = DIO.elev, h = r * Math.cos(e);   // orbit round the model's centre; e = angle above it
+      const r = (spec.orbit || 4.3) * (portrait() ? 1.4 : 1), e = Math.min(DIO.elev, Math.asin(Math.min(1, Math.max(0, (COF_TOP - 0.45 - ty) / r)))), h = r * Math.cos(e);   // stay under the ceiling   // orbit round the model's centre; e = angle above it
       return { x: ax.x * h, z: ax.z * h, y: ty + r * Math.sin(e), yaw: Math.atan2(ax.x, ax.z), pitch: -e - 0.03 };
     };
     DIO.pose = pose;
-    return { kind: "art", dio: true, data: spec, pose };
+    const main = { kind: "art", dio: true, data: spec, pose };
+    if (!spec.multi) return main;
+    // one stop per building: first click shows its description, the next opens it in the 3D viewer
+    return [main].concat(spec.multi.map((it, i) => ({ kind: "art", dio: true, dioItem: i, data: it.data, model3d: { file: it.file }, pose })));
   }
   function hallOverview() {
     if (RT && DR) { const r = RR - 3.6; return { x: r * Math.sin(DA), z: -r * Math.cos(DA), yaw: Math.PI - DA, pitch: WALL_H > 4 ? -0.02 : -0.05 }; }
@@ -7136,7 +7224,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const ax = new THREE.Vector3(Math.sin(DA), 0, -Math.cos(DA));
       // centre of the inner hall: a diorama on a round plinth in the special halls, elsewhere a slender column of soft light
       const DIO_SPEC = DIORAMAS[h.key];
-      if (DIO_SPEC) stops.splice(1, 0, buildDiorama(DIO_SPEC, ax));
+      if (DIO_SPEC) stops.splice(1, 0, ...[].concat(buildDiorama(DIO_SPEC, ax)));
       else {
         const H = COF_TOP, add = (m, y) => { m.position.set(0, y, 0); world.add(m); return m; };
         add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, H, 24, 1, true), basic(0x9a7f4c)), H / 2);
@@ -7303,7 +7391,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       set("cDetail", P2.map((it, i) => `${i + 1}. ${it.title}`).join("  ·  ")); set("cCount", "");
     } else if (s.kind === "art") {
       const it = s.data;
-      set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); if (s.dio) $("zoomBtn").hidden = true; set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
+      set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); if (s.dio && !s.model3d) $("zoomBtn").hidden = true; if (s.model3d) $("zoomBtn").textContent = "3D로 보기"; set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
     } else if (s.kind === "photo") {
       const it = s.data;
       set("cYear", `${it.year}${it.co === "" ? "" : `  ·  ${it.co || "그룹"}`}`); set("cTitle", it.title); $("cTitle").insertAdjacentHTML("afterbegin", NB(s.idx + 1)); set("cCap", it.cap);
@@ -7403,25 +7491,44 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       sh.rotation.x = -Math.PI / 2; sh.position.y = 0.002; T3.scene.add(sh);
       const ring = new THREE.Mesh(new THREE.RingGeometry(2.95, 3.0, 128), new THREE.MeshBasicMaterial({ color: 0x9d875e, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
       ring.rotation.x = -Math.PI / 2; ring.position.y = 0.001; T3.scene.add(ring);
-      decodeTaxi().then(({ geometry, texture, surface, normal }) => {
-        const mat = new THREE.MeshStandardMaterial({ map: texture, metalness: 1, roughness: 1, metalnessMap: surface, roughnessMap: surface, normalMap: normal, normalScale: new THREE.Vector2(0.65, 0.65), envMap: taxiEnvironment(), envMapIntensity: 0.8, side: THREE.DoubleSide });
-        const m = new THREE.Mesh(geometry.clone(), mat), sc = 4.15 / 1.90101;
-        m.scale.setScalar(sc); m.position.y = 0.379509 * sc - 0.075; m.rotation.y = Math.PI; T3.scene.add(m); T3.mesh = m;
-        $("t3dLoad").hidden = true;
-      }).catch(() => { $("t3dLoad").textContent = "3D 모델을 불러오지 못했습니다."; });
+      T3.ring = ring; T3.shadow = sh;
       // orbit: one pointer turns, two pointers pinch-zoom; double-click resets
       const dist2 = () => { const [a, b] = [...T3.ptr.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
       cv.addEventListener("pointerdown", (e) => { cv.setPointerCapture(e.pointerId); T3.ptr.set(e.pointerId, { x: e.clientX, y: e.clientY }); T3.idle = performance.now(); cv.classList.add("drag"); if (T3.ptr.size === 2) T3.pd = { d: dist2(), r: T3.dist }; });
       cv.addEventListener("pointermove", (e) => {
         const p = T3.ptr.get(e.pointerId); if (!p) return;
         const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; T3.idle = performance.now();
-        if (T3.ptr.size >= 2 && T3.pd) { T3.dist = Math.max(3.2, Math.min(14, T3.pd.r * T3.pd.d / dist2())); return; }
+        if (T3.ptr.size >= 2 && T3.pd) { T3.dist = Math.max(2.4, Math.min(16, T3.pd.r * T3.pd.d / dist2())); return; }
         T3.az -= dx * 0.008; T3.el = Math.max(-0.45, Math.min(1.5, T3.el + dy * 0.006));
       });
       const up = (e) => { T3.ptr.delete(e.pointerId); if (T3.ptr.size < 2) T3.pd = null; if (!T3.ptr.size) cv.classList.remove("drag"); };
       cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
-      cv.addEventListener("wheel", (e) => { e.preventDefault(); T3.idle = performance.now(); T3.dist = Math.max(3.2, Math.min(14, T3.dist * Math.exp((e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY) * 0.0012))); }, { passive: false });
-      cv.addEventListener("dblclick", () => { T3.az = 0.75; T3.el = 0.22; T3.dist = 7.2; });
+      cv.addEventListener("wheel", (e) => { e.preventDefault(); T3.idle = performance.now(); T3.dist = Math.max(2.4, Math.min(16, T3.dist * Math.exp((e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY) * 0.0012))); }, { passive: false });
+      cv.addEventListener("dblclick", () => { T3.az = 0.75; T3.el = 0.22; T3.dist = T3.d0 || 7.2; });
+    }
+    // what to show: the taxi (decoded parts) or a glTF model from the special hall
+    const key = s.model3d ? s.model3d.file : "taxi";
+    if (T3.key !== key) {
+      T3.key = key; if (T3.mesh) { T3.scene.remove(T3.mesh); T3.mesh = null; }
+      $("t3dLoad").hidden = false; $("t3dLoad").textContent = "3D 모델을 불러오는 중입니다…";
+      T3.az = 0.75; T3.el = 0.22;
+      const done = (obj, ty, d0, rr) => { if (T3.key !== key) return; T3.scene.add(obj); T3.mesh = obj; T3.ty = ty; T3.d0 = T3.dist = d0; T3.ring.scale.setScalar(rr / 3); T3.shadow.scale.setScalar(rr / 3); $("t3dLoad").hidden = true; };
+      const fail = () => { $("t3dLoad").textContent = "3D 모델을 불러오지 못했습니다."; };
+      if (!s.model3d) decodeTaxi().then(({ geometry, texture, surface, normal }) => {
+        const mat = new THREE.MeshStandardMaterial({ map: texture, metalness: 1, roughness: 1, metalnessMap: surface, roughnessMap: surface, normalMap: normal, normalScale: new THREE.Vector2(0.65, 0.65), envMap: taxiEnvironment(), envMapIntensity: 0.8, side: THREE.DoubleSide });
+        const m = new THREE.Mesh(geometry.clone(), mat), sc = 4.15 / 1.90101;
+        m.scale.setScalar(sc); m.position.y = 0.379509 * sc - 0.075; m.rotation.y = Math.PI; done(m, 0.82, 7.2, 3);
+      }).catch(fail);
+      else {
+        if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
+        (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => gltfLoader.load(s.model3d.file, (g) => {
+          const m = g.scene, box = new THREE.Box3().setFromObject(m), sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+          const k = 3.6 / Math.max(sz.x, sz.y, sz.z); m.scale.setScalar(k); m.position.set(-c.x * k, -box.min.y * k, -c.z * k);
+          dioLook(m, "pbr");
+          const H = sz.y * k, R = Math.max(sz.x, sz.z) * k / 2;
+          done(m, H * 0.45, Math.max(5.2, H * 2.6, R * 3.6), Math.max(1.6, R * 1.35));
+        }, undefined, fail));
+      }
     }
     T3.idle = 0;
     cancelAnimationFrame(T3.raf);
@@ -7431,7 +7538,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       if (cv.width !== Math.round(w * pr) || cv.height !== Math.round(h * pr)) { T3.r.setSize(w, h, false); T3.cam.aspect = w / h; T3.cam.updateProjectionMatrix(); }
       const dt = T3.last ? Math.min(0.05, (now - T3.last) / 1000) : 0.016; T3.last = now;
       if (!T3.ptr.size && now - T3.idle > 4000) T3.az += dt * 0.12;          // slow showroom turn while untouched
-      const ty = 0.82, c = Math.cos(T3.el);
+      const ty = T3.ty || 0.82, c = Math.cos(T3.el);
       T3.cam.position.set(Math.sin(T3.az) * c * T3.dist, ty + Math.sin(T3.el) * T3.dist, Math.cos(T3.az) * c * T3.dist);
       T3.cam.lookAt(0, ty, 0);
       T3.r.render(T3.scene, T3.cam);
@@ -8424,6 +8531,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       looked = true; moveTo(focusPose(P.side, P.u, P.cy, P.w, P.h)); return;
     }
     if (o.userData.idx === "dio") { const si = stops.findIndex((t) => t.dio); if (si >= 0 && (si !== cur || looked)) setStop(si); return; }
+    if (o.userData.idx === "dioItem") { const si = stops.findIndex((t) => t.dioItem === o.userData.item); if (si < 0) return; if (si === cur && !anim) open3D(stops[si]); else setStop(si); return; }
     if (o.userData.door) { walkThrough(o.userData.door); return; }
     if (o.userData.chron !== undefined) {
       if (auto.on) setAuto(false);
@@ -8533,7 +8641,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     const target = (!atEasel && (mode === "lobby" || mode === "hall")) ? hit(e.clientX,e.clientY) : null;
     drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0, taxi: !!(mode === "lobby" && target && target.userData.idx === "car" && CAR.holder),
-      dio: !!(mode === "hall" && target && target.userData.idx === "dio" && DIO.holder && DIO.holder.parent) };
+      dio: !!(mode === "hall" && target && (target.userData.idx === "dio" || target.userData.idx === "dioItem") && DIO.holder && DIO.holder.parent) };
     clearTimeout(holdTimer);
     holdTimer = setTimeout(() => {
       if (!drag || drag.dio || drag.moved > 8 || touches.size !== 1 || atEasel || busy || mode !== "hall") return;
@@ -8620,14 +8728,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     else if (e.key === " ") { e.preventDefault(); setAuto(!auto.on); }
     else if (e.key === "ArrowRight") { auto.next = 0; step(1); }
     else if (e.key === "ArrowLeft") step(-1);
-    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.car) open3D(s); else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
+    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.car || s.model3d) open3D(s); else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
     else if (e.key === "Escape" && mode === "hall") go(buildLobby);
   });
   $("prevBtn").addEventListener("click", () => { auto.next = 0; step(-1); });
   $("nextBtn").addEventListener("click", () => { auto.next = 0; step(1); });
   $("autoBtn").addEventListener("click", () => setAuto(!auto.on));
   if ($("docBtn")) $("docBtn").addEventListener("click", () => setDocent(!DOC.on));
-  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.car) open3D(s); else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
+  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.car || s.model3d) open3D(s); else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
   $("enterBtn2").addEventListener("click", () => { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); });
   document.querySelectorAll("[data-look]").forEach((b) => b.addEventListener("click", () => {
     const dy = THREE.MathUtils.degToRad(+b.dataset.look);
