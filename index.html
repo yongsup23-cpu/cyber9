@@ -4230,18 +4230,16 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
 window.MeshoptDecoder=MeshoptDecoder;</script>
 <script>
 (function(){
- const parts={"assets/model-auh-tower.glb": ["assets/model-auh-tower-1.bin", "assets/model-auh-tower-2.bin"], "assets/model-icn.glb": ["assets/model-icn-1.bin", "assets/model-icn-2.bin", "assets/model-icn-3.bin"], "assets/model-ulsan.glb": ["assets/model-ulsan-1.bin", "assets/model-ulsan-2.bin", "assets/model-ulsan-3.bin", "assets/model-ulsan-4.bin", "assets/model-ulsan-5.bin"], "assets/model-rokaus.glb": ["assets/model-rokaus-1.bin", "assets/model-rokaus-2.bin", "assets/model-rokaus-3.bin", "assets/model-rokaus-4.bin", "assets/model-rokaus-5.bin", "assets/model-rokaus-6.bin"]}, original=THREE.GLTFLoader.prototype.load;
- let queue=Promise.resolve();
+ const original=THREE.GLTFLoader.prototype.load;let queue=Promise.resolve();window.__qualityGeneration=0;
+ window.releaseArchiveModel=function(root){const released=new Set();root.traverse(o=>{if(!o.isMesh)return;if(o.geometry)o.geometry.dispose();for(const m of (Array.isArray(o.material)?o.material:[o.material])){if(!m)continue;for(const k of ['map','normalMap','metalnessMap','roughnessMap','aoMap','emissiveMap']){const t=m[k];if(t&&!released.has(t)){released.add(t);t.dispose();}}m.dispose();}});};
  THREE.GLTFLoader.prototype.load=function(url,onLoad,onProgress,onError){
-  if(!parts[url]) return original.call(this,url,onLoad,onProgress,onError);
-  const loader=this;
-  const task=async()=>{
-   const chunks=[]; let total=0;
-   for(const path of parts[url]){const r=await fetch(path);if(!r.ok)throw new Error(path+": "+r.status);const a=new Uint8Array(await r.arrayBuffer());chunks.push(a);total+=a.byteLength;}
-   const all=new Uint8Array(total);let offset=0;for(const chunk of chunks){all.set(chunk,offset);offset+=chunk.byteLength;} chunks.length=0;
-   return new Promise((resolve,reject)=>loader.parse(all.buffer,"",g=>{try{onLoad(g);resolve();}catch(e){reject(e);}},reject));
-  };
-  queue=queue.then(task).catch(e=>{console.error("고품질 모델 로딩 오류",e);if(onError)onError(e);});
+  if(!/assets\/stable-/.test(url))return original.call(this,url,onLoad,onProgress,onError);
+  const loader=this,generation=window.__qualityGeneration;
+  const task=()=>new Promise(resolve=>{
+   if(generation!==window.__qualityGeneration){resolve();return;}
+   original.call(loader,url,g=>{if(generation!==window.__qualityGeneration)window.releaseArchiveModel(g.scene);else onLoad(g);setTimeout(resolve,100);},onProgress,e=>{if(onError)onError(e);resolve();});
+  });
+  queue=queue.then(task).catch(e=>{console.error(e);if(onError)onError(e);});
  };
 })();
 </script>
@@ -4295,7 +4293,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   /* ---------- renderer ---------- */
   const canvas = $("stage");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.outputEncoding = THREE.sRGBEncoding;
   const scene = new THREE.Scene();
   const C = (hex) => new THREE.Color(hex).convertSRGBToLinear();
@@ -4654,6 +4652,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   let anim = null, looked = false;
 
   function clearWorld() {
+    window.__qualityGeneration=(window.__qualityGeneration||0)+1;
+    if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
+    const released=new Set();
+    world.traverse(o=>{if(!o.userData.archiveQualityModel)return;for(const m of (Array.isArray(o.material)?o.material:[o.material])){if(!m)continue;for(const key of ['map','normalMap','metalnessMap','roughnessMap','aoMap','emissiveMap']){const t=m[key];if(t&&!released.has(t)){released.add(t);t.dispose();}}m.dispose();}});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
     scene.remove(world);
     world.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     for (const k in atlasUsers) atlasUsers[k].forEach((m) => m.dispose());
@@ -4720,7 +4723,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       cyl(RR, WALL_H, WALL_H / 2, new THREE.MeshBasicMaterial({ color: wallMats[0].color, side: THREE.BackSide }));
       cyl(RR - 0.01, 0.05, 0.065, new THREE.MeshBasicMaterial({ color: baseMat.color, side: THREE.BackSide }));
       cyl(RR - 0.01, 0.04, WALL_H - 0.13, new THREE.MeshBasicMaterial({ color: mouldMat.color, side: THREE.BackSide }));
-      const fl = HQ ? reflectFloor(2 * RR, 2 * RR) : plane(2 * RR, 2 * RR, floorMat);
+      const fl = HQ && !(mode === "hall" && DATA[hallIndex].key === "works") ? reflectFloor(2 * RR, 2 * RR) : plane(2 * RR, 2 * RR, floorMat);
       fl.rotation.x = -Math.PI / 2; world.add(fl);
       const ce = new THREE.Mesh(DR ? new THREE.RingGeometry(RI - IWT, RR, 160, 1) : new THREE.CircleGeometry(RR, 96), ceilMat); ce.rotation.x = Math.PI / 2; ce.position.y = WALL_H; world.add(ce);
       COF_TOP = WALL_H; if (DR) buildCoffer(RI - IWT);
@@ -5063,71 +5066,26 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   /* special halls: a 3D diorama (Meshy model, decimated + meshopt-compressed) at the centre of the inner hall */
   // 특별관 Ⅰ: four landmark models of Kumho E&C works on one round plinth (special hall Ⅱ keeps its column of light)
   const DIORAMAS = {
-    works: { width: 4.4, pr: 0.61, ph: 0.62, orbit: 5.6, aim: 0.45, tone: "pbr", year: "", co: "금호건설", title: "금호건설의 건축물 디오라마", plate: "금호건설의 건축물 디오라마", floor: "city",
-      // one small city: an avenue between the back and front rows, one between left and right, a side street, a roundabout where they meet
-      city: { roads: [[-2.7, 0.36, 2.7, 0.36, 0.27], [-0.5, -2.7, -0.5, 2.7, 0.25], [-0.08, 0.36, -0.08, 2.7, 0.16], [-2.7, -1.62, -0.5, -1.62, 0.14]], hub: [-0.5, 0.36, 0.25] },
+    works: { width: 4.0, pr: 0.61, ph: 0.62, orbit: 5.3, aim: 0.5, tone: "pbr", year: "", co: "금호건설", title: "금호건설의 건축물 디오라마", plate: "금호건설의 건축물 디오라마", floor: "map",
       cap: "아부다비 국제공항 관제탑 · 인천국제공항 · 용사의집 · 울산 신정 공동주택",
       detail: "국내외에서 금호건설이 지은 대표 건축물 네 곳을 3D 모형으로 재현했습니다. 받침대를 좌우로 끌어 돌리고, 위아래로 끌어 높이를 바꿔 보세요. 건물을 누르면 해당 건물의 설명을 볼 수 있습니다.",
       multi: [
-        { file: "assets/model-auh-tower.glb", label: "아부다비 국제공항 관제탑", h: 1.1, x: -1.3, z: -0.95, pad: [0.8, 0.72], map: [24.433, 54.651],
+        { file: "assets/stable-auh.glb", label: "아부다비 국제공항 관제탑", h: 1.35, x: -1.0, z: -0.85, map: [24.433, 54.651],
           data: { year: "2007.12 — 2010.10", co: "금호건설", title: "아부다비 국제공항 관제탑", cap: "지하 1층~지상 22층 · 연면적 7,300㎡ · 아랍에미리트 아부다비",
             detail: "아부다비 국제공항의 항공교통을 관제하는 신관제탑입니다. 2007년 12월 착공해 2010년 10월 준공했습니다. 철근콘크리트 기단 위로 곡선형 철골 타워가 솟은 외관(프랑스 ADPi 설계)으로 세계적 랜드마크가 되었으며, 두바이 신공항에 이은 중동 공항 수주로 금호건설의 해외 공항건설 역량을 알렸습니다." } },
-        { file: "assets/model-icn.glb", label: "인천국제공항", w: 2.0, x: 0.7, z: -0.8, pad: [2.08, 2.02], map: [37.4602, 126.4407],
+        { file: "assets/stable-icn.glb", label: "인천국제공항", w: 1.55, x: 0.95, z: -0.75, map: [37.4602, 126.4407],
           data: { year: "1996 — 2001", co: "금호건설", title: "인천국제공항", cap: "부지조성 · 활주로 · 여객터미널 · 관제탑 · 계류장",
             detail: "2001년 3월 29일 문을 연 인천국제공항입니다. 금호건설은 1996년 공항 착공 때부터 부지조성과 활주로, 여객터미널, 관제탑, 계류장 등 공항 건설 전반에 참여했고, 개항식에서 은탑산업훈장과 대통령상·건설교통부장관상을 받았습니다. 이후 3단계 확장 공사와 제2활주로 시설공사까지 이어 맡았습니다." } },
-        { file: "assets/model-rokaus.glb", label: "용사의집 (로카우스 호텔)", h: 1.1, x: -1.25, z: 1.0, pad: [1.2, 0.92], map: [37.5299, 126.9648],
+        { file: "assets/stable-rokaus.glb", label: "용사의집 (로카우스 호텔)", h: 1.25, x: -0.95, z: 0.9, map: [37.5299, 126.9648],
           data: { year: "2023", co: "금호건설", title: "용사의집 재건립", cap: "국방부 발주 · 지하 7층~지상 30층 · 숙박시설 274객실",
             detail: "장병과 가족을 위한 군 복지시설 '용사의 집'을 다시 지은 숙박시설로, 2023년 준공해 로카우스 호텔로 문을 열었습니다. BIM 설계부터 시공관리까지 일괄 수행했고, 7.5~7.7m의 높은 층고와 방축열 시스템을 갖췄습니다." } },
-        { file: "assets/model-ulsan.glb", label: "울산 신정 공동주택", h: 1.05, x: 1.0, z: 1.05, pad: [1.1, 1.08], map: [35.5384, 129.3114],
+        { file: "assets/stable-ulsan.glb", label: "울산 신정 공동주택", h: 1.2, x: 1.0, z: 0.95, map: [35.5384, 129.3114],
           data: { year: "2022.10 — 2025.12", co: "금호건설", title: "울산 신정 공동주택", cap: "코리아신탁㈜ 발주 · 지하 3층~지상 37층 · 4개동 402세대 · 연면적 72,956㎡",
             detail: "관리형 토지신탁 방식으로 지은 공동주택으로, 지하 3층~지상 37층 4개동 402세대 규모입니다. 2022년 10월 착공해 2025년 12월 준공했으며, 부대복리시설을 함께 갖췄습니다." } },
       ] },
   };
   let gltfLoader = null;
   // plinth top: a dark map — the Korean peninsula with the three domestic sites, and the flight line out to Abu Dhabi
-  function dioCityTex(spec, R) {
-    const N = 4096, C = spec.city, ppu = N / (2 * R);
-    const X = (x) => N / 2 + x * ppu, Z = (z) => N / 2 + z * ppu, L = (u) => u * ppu;
-    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    return canvasTex(N, N, (g) => {
-      g.save(); g.beginPath(); g.arc(N / 2, N / 2, N / 2 - 2, 0, Math.PI * 2); g.clip();
-      // parkland ground with a soft mottle
-      g.fillStyle = "#3d4a3a"; g.fillRect(0, 0, N, N);
-      for (let i = 0; i < 14000; i++) { g.fillStyle = `rgba(${rnd() < 0.5 ? "90,110,80" : "40,52,38"},${0.12 + rnd() * 0.15})`; const r = 6 + rnd() * 26; g.beginPath(); g.arc(rnd() * N, rnd() * N, r, 0, Math.PI * 2); g.fill(); }
-      // city blocks: light paving between the roads
-      g.fillStyle = "rgba(160,152,136,0.18)";
-      for (let i = 0; i < 260; i++) { const x = rnd() * N, y = rnd() * N, w = 40 + rnd() * 140, h = 40 + rnd() * 140; g.fillRect(x, y, w, h); }
-      // roads: kerb / pavement, asphalt, edge lines, dashed centre line, avenue trees
-      const road = (x1, z1, x2, z2, w) => {
-        const seg = (col, ww) => { g.strokeStyle = col; g.lineWidth = L(ww); g.lineCap = "butt"; g.beginPath(); g.moveTo(X(x1), Z(z1)); g.lineTo(X(x2), Z(z2)); g.stroke(); };
-        seg("#8a8577", w + 0.09); seg("#2d2f33", w);
-        const dx = x2 - x1, dz = z2 - z1, len = Math.hypot(dx, dz), nx = -dz / len, nz = dx / len;
-        [-1, 1].forEach((sg) => { g.strokeStyle = "rgba(235,232,222,.85)"; g.lineWidth = Math.max(3, L(0.008)); g.beginPath();
-          g.moveTo(X(x1 + nx * sg * (w / 2 - 0.02)), Z(z1 + nz * sg * (w / 2 - 0.02))); g.lineTo(X(x2 + nx * sg * (w / 2 - 0.02)), Z(z2 + nz * sg * (w / 2 - 0.02))); g.stroke(); });
-        g.strokeStyle = "#e9be4a"; g.lineWidth = Math.max(3, L(0.01)); g.setLineDash([L(0.07), L(0.05)]); g.beginPath(); g.moveTo(X(x1), Z(z1)); g.lineTo(X(x2), Z(z2)); g.stroke(); g.setLineDash([]);
-        for (let t = 0.04; t < len; t += 0.16) [-1, 1].forEach((sg) => { const px = x1 + dx / len * t + nx * sg * (w / 2 + 0.075), pz = z1 + dz / len * t + nz * sg * (w / 2 + 0.075);
-          g.fillStyle = "#26402a"; g.beginPath(); g.arc(X(px), Z(pz), L(0.035), 0, Math.PI * 2); g.fill(); g.fillStyle = "rgba(120,160,95,.55)"; g.beginPath(); g.arc(X(px) - L(0.008), Z(pz) - L(0.008), L(0.018), 0, Math.PI * 2); g.fill(); });
-      };
-      C.roads.forEach((r) => road(...r));
-      // roundabout with a small fountain where the avenues meet
-      const [hx, hz, hr] = C.hub;
-      g.fillStyle = "#8a8577"; g.beginPath(); g.arc(X(hx), Z(hz), L(hr + 0.06), 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#2d2f33"; g.beginPath(); g.arc(X(hx), Z(hz), L(hr), 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#4b6a43"; g.beginPath(); g.arc(X(hx), Z(hz), L(hr * 0.55), 0, Math.PI * 2); g.fill();
-      g.fillStyle = "#5f93b8"; g.beginPath(); g.arc(X(hx), Z(hz), L(hr * 0.3), 0, Math.PI * 2); g.fill();
-      g.strokeStyle = "rgba(235,232,222,.8)"; g.lineWidth = L(0.008); g.beginPath(); g.arc(X(hx), Z(hz), L(hr * 0.55), 0, Math.PI * 2); g.stroke();
-      // zebra crossings at the four arms of the roundabout
-      for (let a = 0; a < 4; a++) { const ca = Math.cos(a * Math.PI / 2), sa = Math.sin(a * Math.PI / 2), d = hr + 0.13;
-        for (let k = -3; k <= 3; k++) { const px = hx + ca * d - sa * k * 0.03, pz = hz + sa * d + ca * k * 0.03;
-          g.save(); g.translate(X(px), Z(pz)); g.rotate(a * Math.PI / 2); g.fillStyle = "rgba(240,238,230,.9)"; g.fillRect(-L(0.04), -L(0.009), L(0.08), L(0.018)); g.restore(); } }
-      // building plots: pale stone forecourts with a fine edge
-      spec.multi.forEach((it) => { if (!it.pad) return; const [pw, pd] = it.pad;
-        g.fillStyle = "#a39d8f"; g.fillRect(X(it.x - pw / 2), Z(it.z - pd / 2), L(pw), L(pd));
-        g.strokeStyle = "rgba(60,58,52,.8)"; g.lineWidth = L(0.012); g.strokeRect(X(it.x - pw / 2), Z(it.z - pd / 2), L(pw), L(pd)); });
-      g.restore();
-      g.strokeStyle = "#9d875e"; g.lineWidth = 14; g.beginPath(); g.arc(N / 2, N / 2, N / 2 - 8, 0, Math.PI * 2); g.stroke();
-    });
-  }
   function dioMapTex(spec) {
     const N=2048, radius=spec.width*(spec.pr||0.62), sc=N/(2*radius), c=N/2;
     return canvasTex(N,N,(g)=>{
@@ -5158,11 +5116,12 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const env=taxiEnvironment();
     root.traverse(o=>{
       if(!o.isMesh)return;
+      o.userData.archiveQualityModel=true;
       if(!o.geometry.attributes.normal)o.geometry.computeVertexNormals();
       const materials=Array.isArray(o.material)?o.material:[o.material];
       materials.forEach(mt=>{
         mt.envMap=env; mt.envMapIntensity=0.8;
-        if ((file||"").includes("model-icn")) {
+        if ((file||"").includes("stable-icn")) {
           mt.color.setRGB(0.82,0.86,0.88); mt.envMapIntensity=0.55;
           mt.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace("#include <map_fragment>","#include <map_fragment>\nfloat icnL=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722)); diffuseColor.rgb=clamp(mix(vec3(icnL),diffuseColor.rgb,1.16),0.,1.);");};
           mt.customProgramCacheKey=()=>"icn-rich-v1";
@@ -5198,7 +5157,6 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const fill = new THREE.DirectionalLight(0xdde8ff, 0.3); fill.position.set(-ax.x * 6 - 2, 5, -ax.z * 6); world.add(fill);
     const holder = new THREE.Group(); holder.position.y = PH; holder.rotation.y = rot; world.add(holder);
     DIO.holder = holder; DIO.rotT = rot; DIO.buses = [];
-    if (spec.floor === "city") { const fm = new THREE.Mesh(new THREE.CircleGeometry(PR - 0.02, 160), new THREE.MeshBasicMaterial({ map: dioCityTex(spec, PR - 0.02) })); fm.material.map.anisotropy = ANISO; fm.rotation.x = -Math.PI / 2; fm.position.y = 0.003; holder.add(fm); }
     if (spec.floor === "map") { const fm = new THREE.Mesh(new THREE.CircleGeometry(PR - 0.02, 128), new THREE.MeshBasicMaterial({ map: dioMapTex(spec) })); fm.rotation.x = -Math.PI / 2; fm.position.y = 0.003; holder.add(fm); }
     if (spec.loop) {
       // ring road on the plinth top, round the diorama: asphalt, white edge lines, dashed centre line
@@ -7095,6 +7053,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function buildHall(hi) {
     const h = DATA[hi];
     clearWorld(); mode = "hall"; hallIndex = hi; RT = true; DR = !!h.ring2;
+    if(h.key === "works") renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));
     if (SR.el || kWrap) { if ($("kQ")) $("kQ").value = ""; if ($("srQ")) $("srQ").value = ""; srIndex(); } // each hall's kiosk opens on the index
     // rotunda: big halls hang their photos in 2–3 tiers so the circle stays compact;
     // double-ring halls get a second (inner) wall instead, so they need one tier fewer
@@ -7452,7 +7411,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       set("cDetail", P2.map((it, i) => `${i + 1}. ${it.title}`).join("  ·  ")); set("cCount", "");
     } else if (s.kind === "art") {
       const it = s.data;
-      set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); if (s.dio || s.model3d) $("zoomBtn").hidden = true; set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
+      set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); if (s.dio || s.car || s.model3d) $("zoomBtn").hidden = true; set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
     } else if (s.kind === "photo") {
       const it = s.data;
       set("cYear", `${it.year}${it.co === "" ? "" : `  ·  ${it.co || "그룹"}`}`); set("cTitle", it.title); $("cTitle").insertAdjacentHTML("afterbegin", NB(s.idx + 1)); set("cCap", it.cap);
@@ -7537,7 +7496,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   /* the founding taxi in its own 3D view: drag to orbit freely (up / down / round), wheel or pinch to zoom */
   const T3 = { r: null, scene: null, cam: null, mesh: null, on: false, az: 0.75, el: 0.22, dist: 7.2, idle: 0, raf: 0, ptr: new Map(), last: 0, pd: null };
-  function open3D(s) { if (!s || !s.car) return;   // only the founding taxi opens the 3D view; the special-hall buildings do not
+  function open3D(s) { return; // 별도 3D 확대 팝업 사용 안 함
 
     const it = s.data; $("t3dTitle").textContent = it.title; $("t3dCap").textContent = it.cap || ""; $("t3dDetail").textContent = it.detail || "";
     $("t3d").hidden = false; T3.on = true; $("t3dClose").focus();
@@ -8608,7 +8567,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "map") { if (auto.on) setAuto(false); openMap(); return; }
     if (o.userData.idx === "book") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "book" && t.bi === o.userData.book); if (si === cur && !anim && !looked) openBook(stops[si].data); else setStop(si); return; }
     if (o.userData.idx === "carsign") { const si = stops.findIndex((t) => t.carsign); if (si < 0) return; if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }   // 1st click: walk up to it, 2nd: the detail view (as with the taxi)
-    if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si === cur && !anim && !looked) open3D(stops[si]); else setStop(si); return; }
+    if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si !== cur || looked) setStop(si); else showCard(); return; }
     if (o.userData.idx === "wing") { const si = stops.findIndex((t) => t.kind === "art" && !t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
     if (o.userData.idx !== undefined) {
       const si = stops.findIndex((s) => s.kind === "photo" && s.idx === o.userData.idx);
@@ -8790,14 +8749,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     else if (e.key === " ") { e.preventDefault(); setAuto(!auto.on); }
     else if (e.key === "ArrowRight") { auto.next = 0; step(1); }
     else if (e.key === "ArrowLeft") step(-1);
-    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.car) open3D(s); else if (s.model3d || s.dio) { showCard(); } else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
+    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.car || s.model3d || s.dio) { showCard(); } else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
     else if (e.key === "Escape" && mode === "hall") go(buildLobby);
   });
   $("prevBtn").addEventListener("click", () => { auto.next = 0; step(-1); });
   $("nextBtn").addEventListener("click", () => { auto.next = 0; step(1); });
   $("autoBtn").addEventListener("click", () => setAuto(!auto.on));
   if ($("docBtn")) $("docBtn").addEventListener("click", () => setDocent(!DOC.on));
-  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.car) { open3D(s); return; } if (s.model3d || s.dio) return; else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
+  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.car || s.model3d || s.dio) return; else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
   $("enterBtn2").addEventListener("click", () => { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); });
   document.querySelectorAll("[data-look]").forEach((b) => b.addEventListener("click", () => {
     const dy = THREE.MathUtils.degToRad(+b.dataset.look);

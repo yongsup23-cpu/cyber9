@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><meta charset="utf-8"><title>원본 품질 3D 미리보기</title><style>body{margin:0;background:#17191c;color:#eee;font:16px sans-serif}canvas{display:block}header{position:absolute;top:16px;left:20px;z-index:2}select{padding:10px;font-size:16px}small{margin-left:12px}#status{position:absolute;bottom:18px;left:20px}</style><header style="display:none"><select id="choice"><option value="model-auh-tower">아부다비공항 관제탑</option><option value="model-icn">인천국제공항</option><option value="model-ulsan">울산 신정 공동주택</option><option value="model-rokaus">용사의 집 재건립</option></select><small>좌우·상하 드래그 회전 · 휠 확대</small></header><div id="status">불러오는 중…</div><script>/**
+<!doctype html><html lang="ko"><meta charset="utf-8"><title>원본 품질 3D 미리보기</title><style>body{margin:0;background:#17191c;color:#eee;font:16px sans-serif}canvas{display:block}header{position:absolute;top:16px;left:20px;z-index:2}select{padding:10px;font-size:16px}small{margin-left:12px}#status{position:absolute;bottom:18px;left:20px}</style><header style="display:none"><select id="choice"><option value="stable-auh">아부다비공항 관제탑</option><option value="stable-icn">인천국제공항</option><option value="stable-ulsan">울산 신정 공동주택</option><option value="stable-rokaus">용사의 집 재건립</option></select><small>좌우·상하 드래그 회전 · 휠 확대</small></header><div id="status">불러오는 중…</div><script>/**
  * @license
  * Copyright 2010-2021 Three.js Authors
  * SPDX-License-Identifier: MIT
@@ -3835,23 +3835,19 @@ else if (typeof define === 'function' && define['amd']) define([], function () {
 else if (typeof exports === 'object') exports['MeshoptDecoder'] = MeshoptDecoder;
 else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder;
 </script><script>
-
 (function(){
- const parts={"assets/model-auh-tower.glb": ["assets/model-auh-tower-1.bin", "assets/model-auh-tower-2.bin"], "assets/model-icn.glb": ["assets/model-icn-1.bin", "assets/model-icn-2.bin", "assets/model-icn-3.bin"], "assets/model-ulsan.glb": ["assets/model-ulsan-1.bin", "assets/model-ulsan-2.bin", "assets/model-ulsan-3.bin", "assets/model-ulsan-4.bin", "assets/model-ulsan-5.bin"], "assets/model-rokaus.glb": ["assets/model-rokaus-1.bin", "assets/model-rokaus-2.bin", "assets/model-rokaus-3.bin", "assets/model-rokaus-4.bin", "assets/model-rokaus-5.bin", "assets/model-rokaus-6.bin"]}, original=THREE.GLTFLoader.prototype.load;
- let queue=Promise.resolve();
+ const original=THREE.GLTFLoader.prototype.load;let queue=Promise.resolve();window.__qualityGeneration=0;
+ window.releaseArchiveModel=function(root){const released=new Set();root.traverse(o=>{if(!o.isMesh)return;if(o.geometry)o.geometry.dispose();for(const m of (Array.isArray(o.material)?o.material:[o.material])){if(!m)continue;for(const k of ['map','normalMap','metalnessMap','roughnessMap','aoMap','emissiveMap']){const t=m[k];if(t&&!released.has(t)){released.add(t);t.dispose();}}m.dispose();}});};
  THREE.GLTFLoader.prototype.load=function(url,onLoad,onProgress,onError){
-  if(!parts[url]) return original.call(this,url,onLoad,onProgress,onError);
-  const loader=this;
-  const task=async()=>{
-   const chunks=[]; let total=0;
-   for(const path of parts[url]){const r=await fetch(path);if(!r.ok)throw new Error(path+": "+r.status);const a=new Uint8Array(await r.arrayBuffer());chunks.push(a);total+=a.byteLength;}
-   const all=new Uint8Array(total);let offset=0;for(const chunk of chunks){all.set(chunk,offset);offset+=chunk.byteLength;} chunks.length=0;
-   return new Promise((resolve,reject)=>loader.parse(all.buffer,"",g=>{try{onLoad(g);resolve();}catch(e){reject(e);}},reject));
-  };
-  queue=queue.then(task).catch(e=>{console.error("고품질 모델 로딩 오류",e);if(onError)onError(e);});
+  if(!/assets\/stable-/.test(url))return original.call(this,url,onLoad,onProgress,onError);
+  const loader=this,generation=window.__qualityGeneration;
+  const task=()=>new Promise(resolve=>{
+   if(generation!==window.__qualityGeneration){resolve();return;}
+   original.call(loader,url,g=>{if(generation!==window.__qualityGeneration)window.releaseArchiveModel(g.scene);else onLoad(g);setTimeout(resolve,100);},onProgress,e=>{if(onError)onError(e);resolve();});
+  });
+  queue=queue.then(task).catch(e=>{console.error(e);if(onError)onError(e);});
  };
 })();
-
 </script><script>
 const ANISO=8;
 function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;}
@@ -3877,7 +3873,7 @@ function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;
       const materials=Array.isArray(o.material)?o.material:[o.material];
       materials.forEach(mt=>{
         mt.envMap=env; mt.envMapIntensity=0.8;
-        if ((file||"").includes("model-icn")) {
+        if ((file||"").includes("stable-icn")) {
           mt.color.setRGB(0.82,0.86,0.88); mt.envMapIntensity=0.55;
           mt.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace("#include <map_fragment>","#include <map_fragment>\nfloat icnL=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722)); diffuseColor.rgb=clamp(mix(vec3(icnL),diffuseColor.rgb,1.16),0.,1.);");};
           mt.customProgramCacheKey=()=>"icn-rich-v1";
@@ -3921,6 +3917,6 @@ scene.add(new THREE.HemisphereLight(0xeef2f8,0x4a443c,.9));for(const [x,y,z,colo
 const group=new THREE.Group();scene.add(group);
 const drum=new THREE.Mesh(new THREE.CylinderGeometry(2.44,2.49,.32,96),new THREE.MeshBasicMaterial({color:new THREE.Color(0x22201b).convertSRGBToLinear()}));drum.position.y=-.16;group.add(drum);
 const floor=new THREE.Mesh(new THREE.CircleGeometry(2.43,128),new THREE.MeshBasicMaterial({map:dioMapTex({width:4,pr:.61})}));floor.rotation.x=-Math.PI/2;floor.position.y=.002;group.add(floor);
-const specs=[{key:'model-auh-tower',h:1.35,x:-1,z:-.85},{key:'model-icn',w:1.55,x:.95,z:-.75},{key:'model-rokaus',h:1.25,x:-.95,z:.9},{key:'model-ulsan',h:1.2,x:1,z:.95}];const loader=new THREE.GLTFLoader().setMeshoptDecoder(MeshoptDecoder);let loaded=0;
+const specs=[{key:'stable-auh',h:1.35,x:-1,z:-.85},{key:'stable-icn',w:1.55,x:.95,z:-.75},{key:'stable-rokaus',h:1.25,x:-.95,z:.9},{key:'stable-ulsan',h:1.2,x:1,z:.95}];const loader=new THREE.GLTFLoader().setMeshoptDecoder(MeshoptDecoder);let loaded=0;
 for(const it of specs)loader.load('assets/'+it.key+'.glb',g=>{const m=g.scene,box=new THREE.Box3().setFromObject(m),size=box.getSize(new THREE.Vector3()),c=box.getCenter(new THREE.Vector3());const k=it.h?it.h/size.y:it.w/Math.max(size.x,size.z);m.scale.setScalar(k);m.position.set(it.x-c.x*k,.008-box.min.y*k,it.z-c.z*k);dioLook(m,'pbr',it.key);group.add(m);loaded++;if(loaded===4){document.getElementById('status').textContent='';renderer.render(scene,camera);window.previewReady=true;}},undefined,e=>console.error(e));
 </script></html>
