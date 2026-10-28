@@ -5813,16 +5813,28 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const SKY_CITIES = { "서울": [37.5702, 126.9831, "종각"], "종각": [37.5702, 126.9831, "종각"], "인천": [37.4563, 126.7052], "수원": [37.2636, 127.0286], "춘천": [37.8813, 127.7298], "강릉": [37.7519, 128.8761],
     "대전": [36.3504, 127.3845], "세종": [36.4800, 127.2890], "청주": [36.6424, 127.4890], "전주": [35.8242, 127.1480], "광주": [35.1595, 126.8526], "대구": [35.8714, 128.6014],
     "포항": [36.0190, 129.3435], "울산": [35.5384, 129.3114], "창원": [35.2280, 128.6811], "부산": [35.1796, 129.0756], "여수": [34.7604, 127.6622], "제주": [33.4996, 126.5312] };
+  const SKY_WORLD = { "도쿄": [35.6812, 139.7671], "오사카": [34.6937, 135.5023], "베이징": [39.9042, 116.4074], "상하이": [31.2304, 121.4737], "홍콩": [22.3193, 114.1694],
+    "타이베이": [25.0330, 121.5654], "싱가포르": [1.3521, 103.8198], "하노이": [21.0278, 105.8342], "호찌민": [10.8231, 106.6297], "방콕": [13.7563, 100.5018],
+    "마닐라": [14.5995, 120.9842], "푸에르토프린세사": [9.7392, 118.7353], "자카르타": [-6.2088, 106.8456], "델리": [28.6139, 77.2090], "두바이": [25.2048, 55.2708],
+    "아부다비": [24.4539, 54.3773], "리야드": [24.7136, 46.6753], "이스탄불": [41.0082, 28.9784], "모스크바": [55.7558, 37.6173], "런던": [51.5072, -0.1276],
+    "파리": [48.8566, 2.3522], "베를린": [52.5200, 13.4050], "로마": [41.9028, 12.4964], "뉴욕": [40.7128, -74.0060], "워싱턴": [38.9072, -77.0369],
+    "로스앤젤레스": [34.0522, -118.2437], "엘에이": [34.0522, -118.2437], "샌프란시스코": [37.7749, -122.4194], "밴쿠버": [49.2827, -123.1207], "토론토": [43.6532, -79.3832],
+    "멕시코시티": [19.4326, -99.1332], "상파울루": [-23.5505, -46.6333], "시드니": [-33.8688, 151.2093], "멜버른": [-37.8136, 144.9631], "오클랜드": [-36.8485, 174.7633],
+    "카이로": [30.0444, 31.2357], "케이프타운": [-33.9249, 18.4241], "하와이": [21.3069, -157.8583], "호놀룰루": [21.3069, -157.8583] };
   try { const sv = JSON.parse(localStorage.getItem("kumhoSkyLoc") || "null"); if (sv && isFinite(sv.lat) && isFinite(sv.lon)) Object.assign(SKYW, { name: String(sv.name).slice(0, 20), lat: +sv.lat, lon: +sv.lon, tz: isFinite(sv.tz) ? +sv.tz : 9 * 3600 }); } catch (e) {}
   function setSkyLoc(name, lat, lon, tz) {
-    Object.assign(SKYW, { name, lat, lon, tz: tz == null ? 9 * 3600 : tz, ok: false, at: 0, temp: null });
+    const guessSun = (la) => { const k0 = new Date(), doy = Math.floor((k0 - new Date(k0.getFullYear(), 0, 0)) / 864e5), dec = 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + doy) / 365);
+      const c = -Math.tan(la * Math.PI / 180) * Math.tan(dec), h = Math.acos(Math.max(-1, Math.min(1, c))) * 12 / Math.PI; return [12 - h, 12 + h]; };   // rough sunrise / sunset until the service answers
+    const [sr0, ss0] = guessSun(lat);
+    Object.assign(SKYW, { name, lat, lon, tz: tz == null ? Math.round(lon / 15) * 3600 : tz, ok: false, at: 0, temp: null, sr: sr0, ss: ss0 });
     try { localStorage.setItem("kumhoSkyLoc", JSON.stringify({ name, lat, lon, tz: SKYW.tz })); } catch (e) {}
-    SKYW.prevW = 0; SKYW.prevT = 0; if (skyDome) skyDome.first = true; skyLabel(); fetchWeather();
+    SKYW.prevW = 0; SKYW.prevT = 0; if (skyDome) skyDome.first = true; refreshSeason(); skyLabel(); fetchWeather();
   }
   function findSkyLoc(q) { // 1) built-in Korean cities  2) Open-Meteo geocoding (Korean names allowed)
     q = q.trim().replace(/\s+/g, " "); if (!q) return Promise.reject(new Error("empty"));
     const k = q.replace(/(특별시|광역시|특별자치시|특별자치도|시|도)$/, "");
     if (SKY_CITIES[k]) { const c = SKY_CITIES[k]; return Promise.resolve({ name: c[2] || k, lat: c[0], lon: c[1], tz: 9 * 3600 }); }
+    const kw = q.replace(/\s+/g, ""); if (SKY_WORLD[kw]) { const c = SKY_WORLD[kw]; return Promise.resolve({ name: q, lat: c[0], lon: c[1], tz: null }); }
     return fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=ko&format=json&name=" + encodeURIComponent(k))
       .then((r) => r.json()).then((j) => { const g = j.results && j.results[0]; if (!g) throw new Error("none");
         return { name: g.name || k, lat: g.latitude, lon: g.longitude, tz: null }; });
@@ -5850,7 +5862,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       SKYW.code = c.weather_code | 0; SKYW.cloud = (c.cloud_cover != null ? c.cloud_cover : 20) / 100; SKYW.temp = c.temperature_2m;
       const d = j.daily || {}; const a = hr(d.sunrise && d.sunrise[0]), b = hr(d.sunset && d.sunset[0]);
       if (a != null && b != null) { SKYW.sr = a; SKYW.ss = b; }
-      if (isFinite(j.utc_offset_seconds)) SKYW.tz = j.utc_offset_seconds; SKYW.ok = true; SKYW.at = Date.now(); skyLabel();
+      if (isFinite(j.utc_offset_seconds)) SKYW.tz = j.utc_offset_seconds; SKYW.ok = true; SKYW.at = Date.now(); refreshSeason(); skyLabel();
     }).catch(() => { SKYW.at = Date.now() - 25 * 60 * 1000; }).finally(() => { SKYW.busy = false; });
   }
   function skyNow() { const k = new Date(Date.now() + SKYW.tz * 1000); return k.getUTCHours() + k.getUTCMinutes() / 60; }
@@ -5893,7 +5905,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const pw = SKY_PREVIEW[SKYW.prevW], pt = SKYW.prevT;
     if (w) w.textContent = pw ? `미리보기 · ${SKY_NAME[pw]}` : `${SKYW.name} · ${SKY_NAME[t.kind]}${SKYW.ok && SKYW.temp != null ? ` ${Math.round(SKYW.temp)}°C` : ""}`;
     const ss = el.querySelector(".ss"); if (ss) ss.textContent = SKYW.prevS ? `미리보기 · ${SEASON_NAME[seasonNow()]}` : `계절 · ${SEASON_NAME[SEASON_AUTO] || ""}`;
-    if (tm) tm.textContent = pt ? TIME_NAME[pt] : (t.twi > 0.35 ? (t.dawn > 0.5 ? "아침" : "오후") : t.day > 0.5 ? (t.H < 10 ? "아침" : t.H < 15 ? "낮" : "오후") : "밤");
+    if (tm) { tm.textContent = pt ? TIME_NAME[pt] : (t.twi > 0.35 ? (t.dawn > 0.5 ? "아침" : "오후") : t.day > 0.5 ? (t.H < 10 ? "아침" : t.H < 15 ? "낮" : "오후") : "밤");
+      if (!pt && SKYW.tz !== 9 * 3600) { const k = new Date(Date.now() + SKYW.tz * 1000); tm.textContent += ` · 현지 ${String(k.getUTCHours()).padStart(2, "0")}:${String(k.getUTCMinutes()).padStart(2, "0")}`; } }
   }
   function skyChip(show) {
     let el = $("skyChip");
@@ -5914,7 +5927,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function skyLocPanel(anchor) {
     let pn = $("skyLoc"); if (pn) { pn.remove(); return; }
     pn = document.createElement("div"); pn.id = "skyLoc";
-    const names = ["서울", "인천", "수원", "춘천", "강릉", "대전", "청주", "전주", "광주", "대구", "울산", "부산", "제주"];
+    const names = ["서울", "인천", "수원", "춘천", "강릉", "대전", "청주", "전주", "광주", "대구", "울산", "부산", "제주", "도쿄", "베이징", "하노이", "두바이", "런던", "뉴욕", "시드니"];
     pn.innerHTML = '<form><input type="text" placeholder="지역 이름 입력 (예: 대전, 속초, 도쿄)" aria-label="지역 이름" maxlength="40"><button type="submit">적용</button></form>'
       + '<div class="cities">' + names.map((n) => `<button type="button" data-n="${n}">${n}</button>`).join("") + "</div><div class=\"msg\"></div>";
     document.body.appendChild(pn);
@@ -6200,8 +6213,24 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
 
     return { buildTreeMesh, tex, lin };
   })();
-  const SEASON_AUTO = (() => { const q = new URLSearchParams(location.search).get("season"); if (q) return q;
-    const m = new Date().getMonth() + 1; return m === 12 || m <= 2 ? "winter" : m <= 5 ? "spring" : m <= 8 ? "summer" : "autumn"; })();
+  const SEASON_Q = new URLSearchParams(location.search).get("season");
+  function autoSeason() {
+    if (SEASON_Q) return SEASON_Q;
+    const lat = isFinite(SKYW.lat) ? SKYW.lat : 37.57;
+    if (Math.abs(lat) < 23.5) return "summer";                                  // tropics: warm all year
+    let m = new Date(Date.now() + (isFinite(SKYW.tz) ? SKYW.tz : 32400) * 1000).getUTCMonth() + 1;   // the month where that place is
+    if (lat < 0) m = ((m + 5) % 12) + 1;                                         // southern hemisphere: seasons reversed
+    return m === 12 || m <= 2 ? "winter" : m <= 5 ? "spring" : m <= 8 ? "summer" : "autumn";
+  }
+  let SEASON_AUTO = autoSeason();
+  // the place changed: if its season differs, regrow the lobby tree for it (unless a season preview is on)
+  function refreshSeason() {
+    const n = autoSeason(); if (n === SEASON_AUTO) return;
+    SEASON_AUTO = n;
+    const T = DOME && DOME.tree; if (!T || SKYW.prevS) return;
+    world.remove(T.tree); T.tree.traverse((m) => { if (m.geometry) m.geometry.dispose(); });
+    buildSeasonTree(...T.args); if (skyDome) stepSeasonTree(0, skyDome.u); DOME.tree.t0 = performance.now() - 1500;
+  }
   const SEASON_PREVIEW = [null, "spring", "summer", "autumn", "winter"], SEASON_NAME = { spring: "봄", summer: "여름", autumn: "가을", winter: "겨울" };
   const seasonNow = () => SEASON_PREVIEW[SKYW.prevS || 0] || SEASON_AUTO;
   /* a large seasonal tree beside the lobby, seen through the glass vault */
