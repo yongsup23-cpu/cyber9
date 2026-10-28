@@ -161,6 +161,18 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 #lbSrc{color:#8f877a;font-size:12px;margin:0}
 #lbSrc .lkHead{display:block;color:#c9a86a;font-size:12px;letter-spacing:.08em;margin:4px 0 10px}#lbSrc .lk{display:block;border:1px solid #4a4235;border-radius:8px;padding:10px 12px;margin:0 0 8px;text-decoration:none;color:#e9e3d8;background:rgba(201,168,106,.06)}#lbSrc .lk:hover{border-color:#c9a86a;background:rgba(201,168,106,.14)}#lbSrc .lk b{display:block;color:#e6cf9c;font-size:11.5px;font-weight:600;margin-bottom:3px}#lbSrc .lk span{font-size:13px;line-height:1.5}#lbSrc .lkNote{display:block;color:#6f675a;font-size:11px;margin-top:6px}
 #lbClose{position:absolute;top:16px;right:16px}
+#t3d{position:fixed;inset:0;z-index:13;background:radial-gradient(ellipse at 45% 42%,#3a3730 0%,#1a1916 55%,#0c0c0b 100%)}
+#t3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#t3d canvas.drag{cursor:grabbing}
+#t3dClose{position:absolute;top:16px;right:16px;z-index:2}
+#t3d .meta{position:absolute;left:28px;bottom:28px;max-width:380px;border-left:1px solid #71634c;padding-left:20px;pointer-events:none}
+#t3d .meta .k{font-size:12px;letter-spacing:2px;color:var(--gold)}
+#t3d h3{font-family:"Noto Serif KR",serif;font-weight:400;font-size:24px;margin:6px 0 8px;color:#f1ece2}
+#t3d .cap{color:var(--ink2);font-size:14px;margin:0 0 8px}
+#t3d .det{color:var(--mute);font-size:13px;line-height:1.8;font-weight:300;margin:0}
+#t3d .t3hint{position:absolute;top:22px;left:50%;transform:translateX(-50%);font-size:13px;color:#d9cfbf;background:rgba(20,19,17,.72);border:1px solid rgba(201,168,106,.35);border-radius:999px;padding:7px 16px;white-space:nowrap;pointer-events:none}
+#t3d .load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#c9a86a;font-size:14px}
+@media (max-width:760px){#t3d .meta{left:16px;right:16px;bottom:16px;max-width:none;background:rgba(15,15,13,.7);padding:10px 14px}#t3d .det{display:none}#t3d .t3hint{top:64px;font-size:11.5px;white-space:normal;text-align:center;width:calc(100% - 40px)}}
 @media (max-width:700px){
  header{padding:10px 14px;flex-wrap:wrap}
  .brand small{display:none}
@@ -356,6 +368,13 @@ window.__archiveReady = function () {
  <div class="bhead"><div><div class="k">BROCHURE · 금호건설</div><h3 id="bookTitle"></h3></div><button type="button" id="bookClose">닫기 ✕</button></div>
  <div id="bookStage"><img id="bookImg" alt="브로슈어 페이지"><div id="bookMsg" hidden>페이지를 불러오지 못했습니다. GitHub 저장소에 brochure 폴더가 올라가 있는지 확인해 주세요.</div></div>
  <div class="bnav"><button type="button" id="bookPrev" aria-label="이전 쪽">← 이전</button><span id="bookNo"></span><button type="button" id="bookNext" aria-label="다음 쪽">다음 →</button></div>
+</div>
+<div id="t3d" hidden role="dialog" aria-modal="true" aria-label="택시 3D로 보기">
+ <canvas id="t3dCanvas"></canvas>
+ <button type="button" id="t3dClose">닫기 ✕</button>
+ <div class="meta"><div class="k">3D VIEW</div><h3 id="t3dTitle"></h3><p class="cap" id="t3dCap"></p><p class="det" id="t3dDetail"></p></div>
+ <div class="t3hint">끌어서 위·아래·좌·우로 돌려 보기 · 휠이나 두 손가락으로 확대 · 두 번 눌러 처음 시점</div>
+ <div class="load" id="t3dLoad">3D 모델을 불러오는 중입니다…</div>
 </div>
 <div id="lb" hidden role="dialog" aria-modal="true" aria-label="작품 크게 보기">
  <button type="button" id="lbClose">닫기 ✕</button>
@@ -5691,8 +5710,6 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const MALE = /InJoon|인준|Hyunsu|현수|BongJin|봉진|GookMin|국민|Minsu|민수|Jian|지안|Male|남성|남자/i;
     const NAT = /Neural|Natural|Online|Premium|Enhanced|향상/i;
     const fem = vs.filter((v) => !MALE.test(v.name)).sort((a, b) => NAT.test(b.name) - NAT.test(a.name));
-    const apple = fem.find((v) => /Yuna|유나|Sora|소라|Suhyun|수현/i.test(v.name) && /Premium|Enhanced|향상|고품질/i.test(v.name + " " + (v.voiceURI || "")));
-    if (apple) return apple;
     if (fem.length) return fem[Math.min(1, fem.length - 1)];
     return vs[0] || null;
   }
@@ -5713,30 +5730,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const txt = (id) => { const el = $(id); if (!el || el.hidden) return ""; if (id !== "cTitle") return el.textContent.trim(); const c = el.cloneNode(true); c.querySelectorAll(".nb").forEach((n) => n.remove()); return c.textContent.trim(); };
     if (s.kind === "map" || s.kind === "kiosk" || s.kind === "overview") return [txt("cTitle"), txt("cCap")].filter(Boolean).join(". ");
     const year = (s.kind === "photo" || s.kind === "art") && s.data && /^\d{4}/.test(s.data.year || "") ? String(s.data.year).replace(/^(\d{4})\.(\d{1,2})\.(\d{1,2}).*/, "$1년 $2월 $3일").replace(/^(\d{4})\.(\d{1,2})$/, "$1년 $2월").replace(/^(\d{4})$/, "$1년") : "";
-    return [year, txt("cTitle"), txt("cCap"), txt("cDetail")].filter(Boolean).join(". ");
-  }
-  // written text → what a voice should say: symbols and units spelled out, brackets and quotes turned into natural pauses
-  function speechText(t) {
-    return String(t)
-      .replace(/\s+/g, " ")
-      .replace(/6\s*·\s*25/g, "육이오").replace(/3\s*·\s*1(?!\d)/g, "삼일").replace(/5\s*·\s*18/g, "오일팔")
-      .replace(/(\d{4})\.(\d{1,2})\.(\d{1,2})(?!\d)/g, "$1년 $2월 $3일").replace(/(\d{4})\.(\d{1,2})(?![\d.])/g, "$1년 $2월")
-      .replace(/(\d{4})\s*[~–—-]\s*(\d{4})(?![\d년])/g, "$1년부터 $2년까지")
-      .replace(/([가-힣A-Za-z0-9]+)\s*\(([^()]*)\)([가-힣]{1,3})(?=[\s.,]|$)/g, "$1$3, $2, ")
-      .replace(/(\d)\.(\d)/g, "$1점$2").replace(/(\d)\s*km\b/gi, "$1킬로미터").replace(/(\d)\s*m\b/g, "$1미터")
-      .replace(/㈜\s*/g, " 주식회사 ").replace(/㎡/g, "제곱미터").replace(/㎥/g, "세제곱미터").replace(/㎞/g, "킬로미터").replace(/%/g, "퍼센트")
-      .replace(/(\d)\s*[~–—-]\s*(?=\d|[가-힣])/g, "$1에서 ").replace(/([가-힣])\s*[~–—]\s*/g, "$1에서 ")
-      .replace(/\s*[—–]\s*/g, ", ")
-      .replace(/\s*·\s*/g, ", ")
-      .replace(/\s*\(\s*/g, ", ").replace(/\s*\)\s*/g, ", ")
-      .replace(/['"“”‘’#]/g, "").replace(/\s*&\s*/g, " 앤 ").replace(/\s*\+\s*/g, " 플러스 ").replace(/\s*\/\s*/g, " ")
-      .replace(/([A-Za-z])-([A-Za-z])/g, "$1 $2")
-      .replace(/\s*,\s*(,\s*)+/g, ", ").replace(/,\s*\./g, ".").replace(/\.\s*\./g, ".").replace(/\s+([,.])/g, "$1")
-      .replace(/\s{2,}/g, " ").trim();
-  }
-  // one utterance per sentence: long single utterances get flat, run-on phrasing (and are cut short on some iPads)
-  function speechChunks(t) {
-    return (speechText(t).match(/[^.!?]+[.!?]*/g) || []).map((x) => x.trim()).filter((x) => x.length > 0);   // no look-behind: older iPad Safari lacks it
+    return [year, txt("cTitle"), txt("cCap"), txt("cDetail")].filter(Boolean).join(". ").replace(/\s*·\s*/g, ", ").replace(/—/g, ", ").replace(/\.\s*\./g, ".");
   }
   // music level: normal 0.5; while the docent is switched on it stays low (0.14), and dips further (0.05) while a description is read
   function bgmLevel(speaking) { return speaking || DOC.speaking ? 0.05 : DOC.on ? 0.14 : 0.5; }
@@ -5753,20 +5747,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const text = docText(s);
     TTS.cancel(); DOC.speaking = false;
     if (!text) { DOC.done = performance.now(); return; }
-    const parts = speechChunks(text);
-    const finish = () => { if (DOC.key === key) { DOC.speaking = false; DOC.done = performance.now(); duck(false); } };
-    const us = parts.map((t, i) => {
-      const u = new SpeechSynthesisUtterance(t);
-      u.lang = "ko-KR"; if (DOC.voice) u.voice = DOC.voice; u.rate = 0.97; u.pitch = 1.0; u.volume = 1;
-      if (i === 0) u.onstart = () => { DOC.speaking = true; duck(true); };
-      u.onerror = (e) => { if (e && e.error === "interrupted") return; finish(); };
-      if (i === parts.length - 1) u.onend = finish;
-      return u;
-    });
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ko-KR"; if (DOC.voice) u.voice = DOC.voice; u.rate = 1.0; u.pitch = 1.0; u.volume = 1;
     duck(true); // lower at once: some browsers fire onstart late or not at all
+    u.onstart = () => { DOC.speaking = true; duck(true); };
+    u.onend = u.onerror = () => { if (DOC.key === key) { DOC.speaking = false; DOC.done = performance.now(); duck(false); } };
     DOC.speaking = true;   // count as speaking until it ends, so the auto tour waits
-    DOC.until = performance.now() + 2500 + text.length * 270;   // safety: never hold the tour longer than the text could take
-    setTimeout(() => { if (DOC.key === key) us.forEach((u) => TTS.speak(u)); }, 350);
+    DOC.until = performance.now() + 2500 + text.length * 260;   // safety: never hold the tour longer than the text could take
+    setTimeout(() => { if (DOC.key === key) TTS.speak(u); }, 350);
   }
   function setDocent(on) {
     DOC.on = on && !!TTS;
@@ -7369,6 +7357,60 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     $("lb").hidden = false; $("lbClose").focus();
   }
+  /* the founding taxi in its own 3D view: drag to orbit freely (up / down / round), wheel or pinch to zoom */
+  const T3 = { r: null, scene: null, cam: null, mesh: null, on: false, az: 0.75, el: 0.22, dist: 7.2, idle: 0, raf: 0, ptr: new Map(), last: 0, pd: null };
+  function open3D(s) {
+    const it = s.data; $("t3dTitle").textContent = it.title; $("t3dCap").textContent = it.cap || ""; $("t3dDetail").textContent = it.detail || "";
+    $("t3d").hidden = false; T3.on = true; $("t3dClose").focus();
+    if (!T3.r) {
+      const cv = $("t3dCanvas");
+      T3.r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+      T3.r.outputEncoding = THREE.sRGBEncoding; T3.r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      T3.scene = new THREE.Scene(); T3.cam = new THREE.PerspectiveCamera(32, 1, 0.05, 100);
+      T3.scene.add(new THREE.HemisphereLight(0xeef2f8, 0x4a443c, 0.9));
+      const k = new THREE.DirectionalLight(0xfff2db, 1.2); k.position.set(-4, 6, 5); T3.scene.add(k);
+      const f = new THREE.DirectionalLight(0xe6efff, 0.55); f.position.set(5, 3, -4); T3.scene.add(f);
+      const sh = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 3.2), new THREE.MeshBasicMaterial({ map: softTex, transparent: true, depthWrite: false, opacity: 0.8 }));
+      sh.rotation.x = -Math.PI / 2; sh.position.y = 0.002; T3.scene.add(sh);
+      const ring = new THREE.Mesh(new THREE.RingGeometry(2.95, 3.0, 128), new THREE.MeshBasicMaterial({ color: 0x9d875e, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.001; T3.scene.add(ring);
+      decodeTaxi().then(({ geometry, texture, surface, normal }) => {
+        const mat = new THREE.MeshStandardMaterial({ map: texture, metalness: 1, roughness: 1, metalnessMap: surface, roughnessMap: surface, normalMap: normal, normalScale: new THREE.Vector2(0.65, 0.65), envMap: taxiEnvironment(), envMapIntensity: 0.8, side: THREE.DoubleSide });
+        const m = new THREE.Mesh(geometry.clone(), mat), sc = 4.15 / 1.90101;
+        m.scale.setScalar(sc); m.position.y = 0.379509 * sc - 0.075; m.rotation.y = Math.PI; T3.scene.add(m); T3.mesh = m;
+        $("t3dLoad").hidden = true;
+      }).catch(() => { $("t3dLoad").textContent = "3D 모델을 불러오지 못했습니다."; });
+      // orbit: one pointer turns, two pointers pinch-zoom; double-click resets
+      const dist2 = () => { const [a, b] = [...T3.ptr.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
+      cv.addEventListener("pointerdown", (e) => { cv.setPointerCapture(e.pointerId); T3.ptr.set(e.pointerId, { x: e.clientX, y: e.clientY }); T3.idle = performance.now(); cv.classList.add("drag"); if (T3.ptr.size === 2) T3.pd = { d: dist2(), r: T3.dist }; });
+      cv.addEventListener("pointermove", (e) => {
+        const p = T3.ptr.get(e.pointerId); if (!p) return;
+        const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; T3.idle = performance.now();
+        if (T3.ptr.size >= 2 && T3.pd) { T3.dist = Math.max(3.2, Math.min(14, T3.pd.r * T3.pd.d / dist2())); return; }
+        T3.az -= dx * 0.008; T3.el = Math.max(-0.45, Math.min(1.5, T3.el + dy * 0.006));
+      });
+      const up = (e) => { T3.ptr.delete(e.pointerId); if (T3.ptr.size < 2) T3.pd = null; if (!T3.ptr.size) cv.classList.remove("drag"); };
+      cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+      cv.addEventListener("wheel", (e) => { e.preventDefault(); T3.idle = performance.now(); T3.dist = Math.max(3.2, Math.min(14, T3.dist * Math.exp((e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY) * 0.0012))); }, { passive: false });
+      cv.addEventListener("dblclick", () => { T3.az = 0.75; T3.el = 0.22; T3.dist = 7.2; });
+    }
+    T3.idle = 0;
+    cancelAnimationFrame(T3.raf);
+    const tick = (now) => {
+      if (!T3.on) return;
+      const cv = T3.r.domElement, w = cv.clientWidth, h = cv.clientHeight, pr = T3.r.getPixelRatio();
+      if (cv.width !== Math.round(w * pr) || cv.height !== Math.round(h * pr)) { T3.r.setSize(w, h, false); T3.cam.aspect = w / h; T3.cam.updateProjectionMatrix(); }
+      const dt = T3.last ? Math.min(0.05, (now - T3.last) / 1000) : 0.016; T3.last = now;
+      if (!T3.ptr.size && now - T3.idle > 4000) T3.az += dt * 0.12;          // slow showroom turn while untouched
+      const ty = 0.82, c = Math.cos(T3.el);
+      T3.cam.position.set(Math.sin(T3.az) * c * T3.dist, ty + Math.sin(T3.el) * T3.dist, Math.cos(T3.az) * c * T3.dist);
+      T3.cam.lookAt(0, ty, 0);
+      T3.r.render(T3.scene, T3.cam);
+      T3.raf = requestAnimationFrame(tick);
+    };
+    T3.last = 0; T3.raf = requestAnimationFrame(tick);
+  }
+  function close3D() { T3.on = false; cancelAnimationFrame(T3.raf); $("t3d").hidden = true; }
   function closeLB() { $("lb").hidden = true; $("lb").style.zIndex = ""; }
   // map pop-ups: clicking the photo opens the same large view as the wall photo (detail text included)
   (() => {
@@ -8367,7 +8409,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "map") { if (auto.on) setAuto(false); openMap(); return; }
     if (o.userData.idx === "book") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "book" && t.bi === o.userData.book); if (si === cur && !anim && !looked) openBook(stops[si].data); else setStop(si); return; }
     if (o.userData.idx === "carsign") { const si = stops.findIndex((t) => t.carsign); if (si < 0) return; if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }   // 1st click: walk up to it, 2nd: the detail view (as with the taxi)
-    if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
+    if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si === cur && !anim && !looked) open3D(stops[si]); else setStop(si); return; }
     if (o.userData.idx === "wing") { const si = stops.findIndex((t) => t.kind === "art" && !t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
     if (o.userData.idx !== undefined) {
       const si = stops.findIndex((s) => s.kind === "photo" && s.idx === o.userData.idx);
@@ -8381,7 +8423,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const TILT_DEAD = 0.17, TILT_LOOK = 0.17, TURN_DEAD = 0.1;
   function stepTilt(dt) {
     if (!gyro.on || busy || anim || hold || pinch) return;
-    if ((SR.el && !SR.el.hidden) || ($("lb") && !$("lb").hidden) || ($("mapLB") && !$("mapLB").hidden) || document.body.classList.contains("kioskOn")) return;
+    if ((SR.el && !SR.el.hidden) || ($("t3d") && !$("t3d").hidden) || ($("lb") && !$("lb").hidden) || ($("mapLB") && !$("mapLB").hidden) || document.body.classList.contains("kioskOn")) return;
     const t = gyro.tp; let v = 0;
     if (t < -TILT_DEAD) v = Math.min(8.4, (-t - TILT_DEAD) * 28);
     else if (t > TILT_DEAD + 0.12) v = -Math.min(4, (t - TILT_DEAD - 0.12) * 16);
@@ -8398,7 +8440,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   /* on-screen movement keys (↑ forward, ↓ back, ← / → turn); held down they keep moving */
   const VK = { f: 0, b: 0, l: 0, r: 0, fl: 0, fr: 0, v: 0 };
   function vkBlocked() {
-    return !$("intro").hidden || atEasel || ($("lb") && !$("lb").hidden) || ($("mapLB") && !$("mapLB").hidden) || ($("bookLB") && !$("bookLB").hidden) || (SR.el && !SR.el.hidden) || document.body.classList.contains("kioskOn");
+    return !$("intro").hidden || atEasel || ($("t3d") && !$("t3d").hidden) || ($("lb") && !$("lb").hidden) || ($("mapLB") && !$("mapLB").hidden) || ($("bookLB") && !$("bookLB").hidden) || (SR.el && !SR.el.hidden) || document.body.classList.contains("kioskOn");
   }
   function stepVK(dt) {
     if (!(VK.f || VK.b || VK.l || VK.r || VK.fl || VK.fr) || busy || vkBlocked()) { VK.v = 0; return; }
@@ -8538,6 +8580,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (e.target && e.target.id === "kQ") { if (e.key === "Escape") e.target.blur(); return; }
     if (SR.el && !SR.el.hidden) { if (e.key === "Escape") closeSearch(); else if (e.target.tagName !== "INPUT") { if (e.key === "ArrowRight") srGo(1); else if (e.key === "ArrowLeft") srGo(-1); } return; }
     if ($("bookLB") && !$("bookLB").hidden) { if (e.key === "Escape") closeBook(); else if (e.key === "ArrowRight") bookGo(1); else if (e.key === "ArrowLeft") bookGo(-1); return; }
+    if (!$("t3d").hidden) { if (e.key === "Escape") close3D(); return; }
     if (!$("lb").hidden) { if (e.key === "Escape") closeLB(); return; }
     if ($("mapLB") && !$("mapLB").hidden) { if (e.key === "Escape") closeMap(); return; }
     if (!$("intro").hidden || atEasel) { if (atEasel && $("intro").hidden && e.key === "Enter") enterArchive(); return; }
@@ -8548,14 +8591,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     else if (e.key === " ") { e.preventDefault(); setAuto(!auto.on); }
     else if (e.key === "ArrowRight") { auto.next = 0; step(1); }
     else if (e.key === "ArrowLeft") step(-1);
-    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
+    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.car) open3D(s); else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
     else if (e.key === "Escape" && mode === "hall") go(buildLobby);
   });
   $("prevBtn").addEventListener("click", () => { auto.next = 0; step(-1); });
   $("nextBtn").addEventListener("click", () => { auto.next = 0; step(1); });
   $("autoBtn").addEventListener("click", () => setAuto(!auto.on));
   if ($("docBtn")) $("docBtn").addEventListener("click", () => setDocent(!DOC.on));
-  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
+  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.car) open3D(s); else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
   $("enterBtn2").addEventListener("click", () => { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); });
   document.querySelectorAll("[data-look]").forEach((b) => b.addEventListener("click", () => {
     const dy = THREE.MathUtils.degToRad(+b.dataset.look);
@@ -8569,6 +8612,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     $("cardToggle").setAttribute("aria-expanded", String(!min));
   });
   $("lbClose").addEventListener("click", closeLB);
+  $("t3dClose").addEventListener("click", close3D);
   if ($("mapClose")) $("mapClose").addEventListener("click", closeMap);
   if ($("mapLegend")) $("mapLegend").addEventListener("click", (e) => {
     const el = e.target.closest("[data-f]"); if (!el) return;
