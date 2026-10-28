@@ -5029,7 +5029,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       if (!d.opening) continue;
       const t = Math.min(1, (now - d.opening.t0) / d.opening.dur);
       d.t = d.opening.from + (1 - d.opening.from) * (1 - Math.pow(1 - t, 3));
-      if (d.glow) { d.left.rotation.y = -1.65 * d.t; d.glow.material.opacity = 0.55 * d.t; } else { d.left.rotation.y = -1.8 * d.t; d.right.rotation.y = 1.8 * d.t; }
+      if (d.glow && d.double) { d.left.rotation.y = -1.45 * d.t; d.right.rotation.y = 1.45 * d.t; d.glow.material.opacity = 0.55 * d.t; }
+      else if (d.glow) { d.left.rotation.y = -1.65 * d.t; d.glow.material.opacity = 0.55 * d.t; } else { d.left.rotation.y = -1.8 * d.t; d.right.rotation.y = 1.8 * d.t; }
       if (t >= 1) d.opening = null;
     }
   }
@@ -6642,6 +6643,53 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const rec = { target, left: pivot, right: new THREE.Group(), t: 0, opening: null, glow };
     doors.push(rec);
   }
+  /* the way back in, from the street: travertine portal, warm light along the reveals, a pair of dark oak pivot leaves edged in bronze */
+  function buildInDoor(side, u, target) {
+    const grp = new THREE.Group(); grp.position.copy(wp(side, u, 0, 0.02)); grp.rotation.y = rotOf(side, u); world.add(grp);
+    const W = 2.6, H = 3.6, FW = 0.7, D = 0.6;
+    const trav = canvasTex(512, 512, (g) => {
+      g.fillStyle = "#d8cdb9"; g.fillRect(0, 0, 512, 512);
+      let sd = 31; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 160; i++) { const y = r() * 512; g.strokeStyle = `rgba(${r() < 0.5 ? "150,132,104" : "245,238,225"},${0.15 + r() * 0.25})`; g.lineWidth = 1 + r() * 2.5; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= 512; x += 32) g.lineTo(x, y + (r() - 0.5) * 4); g.stroke(); }
+      for (let i = 0; i < 260; i++) { g.fillStyle = "rgba(140,120,92,.35)"; g.fillRect(r() * 512, r() * 512, 3 + r() * 10, 1 + r() * 2); }
+      g.strokeStyle = "rgba(120,105,82,.55)"; g.lineWidth = 2; g.strokeRect(1, 1, 510, 510); g.beginPath(); g.moveTo(0, 256); g.lineTo(512, 256); g.stroke();
+    });
+    trav.wrapS = trav.wrapT = THREE.RepeatWrapping;
+    const tm = (w, h) => { const t = trav.clone(); t.needsUpdate = true; t.repeat.set(w / 1.4, h / 1.4); return new THREE.MeshBasicMaterial({ map: t }); };
+    const box = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); grp.add(b); return b; };
+    box(FW, H + FW, D, -(W + FW) / 2, (H + FW) / 2, D / 2, tm(FW, H + FW));
+    box(FW, H + FW, D, (W + FW) / 2, (H + FW) / 2, D / 2, tm(FW, H + FW));
+    box(W + 2 * FW, FW, D, 0, H + FW / 2, D / 2, tm(W + 2 * FW, FW));
+    // warm light washing the reveals
+    const strip = new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.9 });
+    [-1, 1].forEach((sg) => { const s1 = plane(0.05, H, strip); s1.position.set(sg * (W / 2 - 0.01), H / 2, D * 0.5); s1.rotation.y = -sg * Math.PI / 2; grp.add(s1);
+      const wash = plane(0.5, H, new THREE.MeshBasicMaterial({ map: softTex, color: 0xffcf8a, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
+      wash.position.set(sg * (W / 2 + FW * 0.3), H / 2, D + 0.004); grp.add(wash); });
+    const white = plane(W, H, new THREE.MeshBasicMaterial({ color: 0xf6f4ef })); white.position.set(0, H / 2, 0.03); grp.add(white);
+    const glow = plane(W * 1.6, 2.0, new THREE.MeshBasicMaterial({ map: softTex, color: 0xfff8ea, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    glow.rotation.x = -Math.PI / 2; glow.position.set(0, 0.012, D + 0.7); grp.add(glow);
+    // leaves: dark oak with vertical grain, bronze edge frame, long bronze pulls at the meeting edge
+    const oak = canvasTex(256, 512, (g) => { g.fillStyle = "#2b221b"; g.fillRect(0, 0, 256, 512);
+      let sd = 5; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 220; i++) { const x = r() * 256; g.strokeStyle = `rgba(${r() < 0.5 ? "70,56,44" : "18,14,11"},${0.3 + r() * 0.4})`; g.lineWidth = 0.6 + r() * 1.6; g.beginPath(); g.moveTo(x, 0); for (let y = 0; y <= 512; y += 32) g.lineTo(x + (r() - 0.5) * 2, y); g.stroke(); }
+      g.fillStyle = "rgba(0,0,0,.35)"; [85, 170].forEach((x) => g.fillRect(x, 0, 2, 512)); });
+    const oakM = new THREE.MeshBasicMaterial({ map: oak }), bronze = new THREE.MeshBasicMaterial({ color: 0x8f6c3a }), bronzeL = new THREE.MeshBasicMaterial({ color: 0xb48a4e });
+    const LW = W / 2 - 0.01;
+    const leaf = (sg) => {   // sg -1: left leaf (hinged at the left jamb), +1: right leaf
+      const pv = new THREE.Group(); pv.position.set(sg * (W / 2), 0, D * 0.55); grp.add(pv);
+      const cx = -sg * LW / 2;
+      const body = new THREE.Mesh(new THREE.BoxGeometry(LW, H - 0.02, 0.08), [bronze, bronze, bronze, bronze, oakM, oakM]); body.position.set(cx, H / 2, 0); pv.add(body);
+      [[LW, 0.05, cx, 0.03], [LW, 0.05, cx, H - 0.04]].forEach(([w, h, x, y]) => { const f = plane(w, h, bronze); f.position.set(x, y, 0.042); pv.add(f); });
+      [-1, 1].forEach((e) => { const f = plane(0.05, H - 0.02, bronze); f.position.set(cx + e * (LW / 2 - 0.025), H / 2, 0.042); pv.add(f); });
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.7, 12), bronzeL); bar.position.set(-sg * (LW - 0.16), H * 0.45, 0.11); pv.add(bar);
+      [-0.8, 0.8].forEach((dy) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.07, 8), bronzeL); st.rotation.x = Math.PI / 2; st.position.set(-sg * (LW - 0.16), H * 0.45 + dy, 0.075); pv.add(st); });
+      body.userData.door = target; pickables.push(body);
+      return pv; };
+    const L = leaf(-1), Rt = leaf(1);
+    white.userData.door = target; pickables.push(white);
+    doors.push({ target, left: L, right: Rt, t: 0, opening: null, glow, double: true });
+    return { w: W, h: H };
+  }
   const OUT_DECAL = { white: "#ffffff", red: "#ff0c14", metal: 0.0, rough: 0.5 };   // tuned to match the bus body under the same light
   const OUT = { bus: null, st: "idle", x: 0, v: 0, t: 0, sky: null, hemi: null, sun: null, fogCol: new THREE.Color(), x0: 0 };
   const OUT_SKY_FS = `uniform float uDay, uTwi, uOver, uDawn; uniform vec3 uSun; varying vec3 vW;
@@ -6685,7 +6733,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const fac = plane(60, 12, basic(0x24221d)); fac.position.set(0, 6, HZ); fac.rotation.y = Math.PI; world.add(fac);
     const band = plane(60, 0.08, basic(0x9d875e)); band.position.set(0, 4.2, HZ - 0.01); band.rotation.y = Math.PI; world.add(band);
     const back = { lobby: true }, lbl = { title: "로비로 돌아가기", sub: "금호 아카이브", kicker: "ENTRANCE" };
-    hangDoor(2, 0, DATA[0].door || DATA[0].items[0].file, lbl, back, 2.1);
+    buildInDoor(2, 0, back);
     // street lamps on both pavements
     const poleM = lam(0x3a3a3c), lampM = basic(0xfff2d6);
     for (const x of [-36, -12, 12, 36]) [[4.3, 1], [-5.2, -1]].forEach(([z, s]) => {
@@ -6789,7 +6837,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       detail: "1970년 서울~대전 구간에서 첫 고속버스를 운행한 금호의 버스는 광주고속과 금호고속을 거쳐 지금의 금호익스프레스로 이어집니다. 버스를 누르면 출발합니다." }, pose: () => ({ x: 1, z: 11.5, yaw: -0.04, pitch: 0.02 }) });
     stops.push({ kind: "art", outside: true, data: { year: "2022.10 — 2025.12", co: "금호건설", title: "울산 신정 아테라", cap: "지하 3층~지상 37층 · 4개동 402세대 · 연면적 72,956㎡",
       detail: "길 건너 멀리 보이는 아파트는 금호건설이 지은 울산 신정 공동주택(아테라)입니다. 2022년 10월 착공해 2025년 12월 준공했습니다." }, pose: () => ({ x: 4, z: 12.8, yaw: -0.06, pitch: 0.22 }) });
-    stops.push({ kind: "door", side: 2, u: 0, cy: 1.45, w: 2.2, h: 3.0, target: back, label: lbl });
+    stops.push({ kind: "door", side: 2, u: 0, cy: 1.8, w: 4.2, h: 4.4, target: back, label: lbl });
     buildChips(); updateHud(); setNav();
     setZoom(1); zoom = zoomTarget; camera.fov = baseFov; camera.updateProjectionMatrix();
     cur = 0; moveTo(main(), true); showCard();
