@@ -7497,7 +7497,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       set("cDetail", P2.map((it, i) => `${i + 1}. ${it.title}`).join("  ·  ")); set("cCount", "");
     } else if (s.kind === "art") {
       const it = s.data;
-      set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); if (s.dio || s.car || s.model3d) $("zoomBtn").hidden = true; set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
+      set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); if (s.dio || s.model3d) $("zoomBtn").hidden = true; set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
     } else if (s.kind === "photo") {
       const it = s.data;
       set("cYear", `${it.year}${it.co === "" ? "" : `  ·  ${it.co || "그룹"}`}`); set("cTitle", it.title); $("cTitle").insertAdjacentHTML("afterbegin", NB(s.idx + 1)); set("cCap", it.cap);
@@ -7582,7 +7582,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   /* the founding taxi in its own 3D view: drag to orbit freely (up / down / round), wheel or pinch to zoom */
   const T3 = { r: null, scene: null, cam: null, mesh: null, on: false, az: 0.75, el: 0.22, dist: 7.2, idle: 0, raf: 0, ptr: new Map(), last: 0, pd: null };
-  function open3D(s) { return; // 별도 3D 확대 팝업 사용 안 함
+  function open3D(s) { if (!s || !s.car) return;   // only the founding taxi opens the 3D view
 
     const it = s.data; $("t3dTitle").textContent = it.title; $("t3dCap").textContent = it.cap || ""; $("t3dDetail").textContent = it.detail || "";
     $("t3d").hidden = false; T3.on = true; $("t3dClose").focus();
@@ -8653,7 +8653,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "map") { if (auto.on) setAuto(false); openMap(); return; }
     if (o.userData.idx === "book") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "book" && t.bi === o.userData.book); if (si === cur && !anim && !looked) openBook(stops[si].data); else setStop(si); return; }
     if (o.userData.idx === "carsign") { const si = stops.findIndex((t) => t.carsign); if (si < 0) return; if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }   // 1st click: walk up to it, 2nd: the detail view (as with the taxi)
-    if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si !== cur || looked) setStop(si); else showCard(); return; }
+    if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si === cur && !anim && !looked) open3D(stops[si]); else setStop(si); return; }
     if (o.userData.idx === "wing") { const si = stops.findIndex((t) => t.kind === "art" && !t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
     if (o.userData.idx !== undefined) {
       const si = stops.findIndex((s) => s.kind === "photo" && s.idx === o.userData.idx);
@@ -8835,14 +8835,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     else if (e.key === " ") { e.preventDefault(); setAuto(!auto.on); }
     else if (e.key === "ArrowRight") { auto.next = 0; step(1); }
     else if (e.key === "ArrowLeft") step(-1);
-    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.car || s.model3d || s.dio) { showCard(); } else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
+    else if (e.key === "Enter") { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); else if (s.car) open3D(s); else if (s.model3d || s.dio) { showCard(); } else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "map") openMap(); }
     else if (e.key === "Escape" && mode === "hall") go(buildLobby);
   });
   $("prevBtn").addEventListener("click", () => { auto.next = 0; step(-1); });
   $("nextBtn").addEventListener("click", () => { auto.next = 0; step(1); });
   $("autoBtn").addEventListener("click", () => setAuto(!auto.on));
   if ($("docBtn")) $("docBtn").addEventListener("click", () => setDocent(!DOC.on));
-  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.car || s.model3d || s.dio) return; else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
+  $("zoomBtn").addEventListener("click", () => { const s = stops[cur];  if (s.kind === "yt") { if (ytOn && ytRec === s.rec) { if (s.data.channel) window.open(s.data.channel, "_blank", "noopener"); } else { ytOn = true; ytRec = s.rec; showCard(); } return; } if (s.car) { open3D(s); return; } if (s.model3d || s.dio) return; else if (s.kind === "photo" || s.kind === "art") openLB(s); else if (s.kind === "book") { if (auto.on) setAuto(false); openBook(s.data); } else if (s.kind === "map") { if (auto.on) setAuto(false); openMap(); } });
   $("enterBtn2").addEventListener("click", () => { const s = stops[cur]; if (s.kind === "door") walkThrough(s.target); });
   document.querySelectorAll("[data-look]").forEach((b) => b.addEventListener("click", () => {
     const dy = THREE.MathUtils.degToRad(+b.dataset.look);
