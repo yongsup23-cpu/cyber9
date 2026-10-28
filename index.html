@@ -44,6 +44,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 #cTitle{margin:0;font-family:"Noto Serif KR",serif;font-weight:400;font-size:20px;line-height:1.35}
 #cCap{margin:3px 0 2px;font-size:14.5px;color:var(--ink2);line-height:1.5}
 #cDetail{margin:0;font-size:13.5px;line-height:1.6;color:var(--mute);font-weight:300}
+#cDetail .epl{display:block;opacity:0;animation:eplIn 1.1s ease-out forwards;font-family:"Noto Serif KR",serif;color:var(--ink2)}@keyframes eplIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}@media (prefers-reduced-motion:reduce){#cDetail .epl{animation:none;opacity:1}}
 #cSrc{margin:8px 0 0;font-size:11px;color:#8f877a}
 .side{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:6px}
 #cCount{font-size:12px;letter-spacing:1px;color:var(--mute);font-variant-numeric:tabular-nums}
@@ -4619,7 +4620,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function tanOf(side, u) { if (!RT) return TANS[side]; const a = psiOf(side, u), k = side === 4 ? -1 : 1; return new THREE.Vector3(k * Math.cos(a), 0, k * Math.sin(a)); }
   function inGap(a, pad) { return Math.abs(wrapAngle(a - DA)) < IGAP - (pad || 0) / RI; }
   function clampXZ(x, z, m) {
-    if (mode === "outside") return [Math.max(-24, Math.min(24, x)), Math.max(4.4, Math.min(HZ - 0.9, z))];   // stay on the pavement
+    if (mode === "outside") return [Math.max(-58, Math.min(58, x)), Math.max(-60, Math.min(HZ - 0.9, z))];   // across the road and on past the trees
     if (RT && DR) {
       let r = Math.hypot(x, z); const lim = RR - BARRIER - 0.45, lo = RI + IWT + 0.6, hp = RI - IWT - BARRIER - 0.45;
       if (r > lim) { x *= lim / r; z *= lim / r; r = lim; }
@@ -4653,7 +4654,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   let anim = null, looked = false;
 
   function clearWorld() {
-    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
+    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
@@ -6035,7 +6036,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       .then((r) => r.json()).then((j) => { const g = j.results && j.results[0]; if (!g) throw new Error("none");
         return { name: g.name || k, lat: g.latitude, lon: g.longitude, tz: null }; });
   }
-  const SKY_PREVIEW = [null, "clear", "partly", "cloudy", "rain", "snow", "storm"];
+  const SKY_PREVIEW = [null, "clear", "partly", "cloudy", "fog", "rain", "snow", "storm"];
+  { const q = new URLSearchParams(location.search).get("weather"), i = SKY_PREVIEW.indexOf(q); if (i > 0) SKYW.prevW = i; }
   const SKY_NAME = { clear: "맑음", partly: "구름 조금", cloudy: "흐림", fog: "안개", rain: "비", snow: "눈", storm: "뇌우" };
   const TIME_PREVIEW = [null, "dawn", "noon", "dusk", "night"];
   const TIME_NAME = ["실시간", "아침", "낮", "오후", "밤"];
@@ -6447,6 +6449,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   /* weather chip: preview another season (the tree is rebuilt and sways once) */
   function setSeasonPreview() {
     SKYW.prevS = ((SKYW.prevS || 0) + 1) % SEASON_PREVIEW.length; skyLabel();
+    if (mode === "outside") { buildOutside(); return; }
     const T = DOME && DOME.tree; if (!T) return;
     [T.tree].forEach((o) => { world.remove(o); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); });
     buildSeasonTree(...T.args); if (skyDome) stepSeasonTree(0, skyDome.u); DOME.tree.t0 = performance.now() - 1500;
@@ -6688,16 +6691,29 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     doors.push({ target, left: L, right: Rt, t: 0, opening: null, glow, double: true });
     return { w: W, h: H };
   }
+  const OUT_EPILOGUE = { year: "1946 — 2026", co: "EPILOGUE", title: "길은 계속 이어집니다", cap: "택시 두 대로 시작한 금호의 80년",
+    detail: "광주의 흙길을 달리던 택시 두 대는 고속버스가 되어 도시와 도시를 이었습니다.\n길을 내고 다리를 놓고 집을 지으며, 금호는 이 국토 위에 발자취를 새겨 왔습니다.\n오늘도 버스는 정류장을 떠나 누군가의 내일로 향합니다.\n금호의 역사는 그 길 위에서, 앞으로도 계속 이어질 것입니다." };
+  const OUT_TAXI = { year: "1946", co: "숨은 이야기", title: "그날의 택시가 돌아왔습니다", cap: "1935년형 포드 디럭스 · 금호의 첫 길",
+    detail: "1946년 광주, 택시 두 대로 문을 연 광주택시.\n80년 전 금호의 모든 길은 이 차에서 시작되었습니다.\n택시를 누르면 다시 길을 떠나고, 버스가 돌아옵니다." };
+  const OUT_TAXI_YAW = 0;   // turns the lobby taxi so its nose points down the road (-x)
   const OUT_DECAL = { white: "#ffffff", red: "#ff0c14", metal: 0.0, rough: 0.5 };   // tuned to match the bus body under the same light
-  const OUT = { bus: null, st: "idle", x: 0, v: 0, t: 0, sky: null, hemi: null, sun: null, fogCol: new THREE.Color(), x0: 0 };
-  const OUT_SKY_FS = `uniform float uDay, uTwi, uOver, uDawn; uniform vec3 uSun; varying vec3 vW;
+  const OUT = { bus: null, st: "idle", x: 0, v: 0, t: 0, sky: null, hemi: null, sun: null, fogCol: new THREE.Color(), x0: 0, veh: null, taxi: null, kind: "bus", n: 0, wx: null };
+  const OUT_SKY_FS = `uniform float uDay, uTwi, uOver, uDawn, uCloud, uFlash, uTime; uniform vec3 uSun; varying vec3 vW;
+    float hs(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(hs(i), hs(i + vec2(1, 0)), f.x), mix(hs(i + vec2(0, 1)), hs(i + vec2(1, 1)), f.x), f.y); }
+    float fbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * vn(p); p = p * 2.03 + 1.7; a *= 0.5; } return s; }
     void main(){ vec3 d = normalize(vW - cameraPosition); float el = clamp(d.y, 0.0, 1.0);
       vec3 dayc = mix(vec3(.78,.86,.94), vec3(.30,.55,.88), pow(el, .5)), nightc = mix(vec3(.06,.08,.14), vec3(.01,.02,.05), el);
       vec3 c = mix(nightc, dayc, uDay);
       vec2 sh = normalize(uSun.xz + 1e-4), dh = normalize(d.xz + 1e-4); float side = pow(dot(dh, sh) * .5 + .5, 2.0);
       c += uTwi * mix(vec3(.85,.42,.16), vec3(.82,.28,.24), uDawn) * (.3 + .9 * side) * pow(1.0 - el, 1.6);
+      vec2 cp = d.xz / (d.y + 0.12) * 1.3 + vec2(uTime * 0.012, uTime * 0.004);
+      float cov = smoothstep(1.0 - uCloud, 1.0 - uCloud + 0.32, fbm(cp)) * smoothstep(0.0, 0.1, d.y);
+      vec3 cc = mix(vec3(.10,.11,.13), mix(vec3(.97,.97,.98), vec3(.58,.6,.63), uOver), uDay) + uTwi * vec3(.45,.2,.08);
+      c = mix(c, cc * (0.86 + 0.14 * fbm(cp * 2.0 + 3.0)), cov * 0.9);
       c = mix(c, mix(vec3(.05,.055,.06), vec3(.62,.64,.66), uDay), uOver * .85);
-      float sd = max(dot(d, normalize(uSun)), 0.0); c += uDay * (1.0 - uOver) * (vec3(1.,.95,.8) * smoothstep(.9996, .9999, sd) + vec3(1.,.8,.5) * pow(sd, 90.0) * .25);
+      float sd = max(dot(d, normalize(uSun)), 0.0); c += uDay * (1.0 - uOver) * (1.0 - cov) * (vec3(1.,.95,.8) * smoothstep(.9996, .9999, sd) + vec3(1.,.8,.5) * pow(sd, 90.0) * .25);
+      c += vec3(.75,.8,1.0) * uFlash * (0.5 + 0.5 * el);
       gl_FragColor = vec4(c, 1.0); }`;
   function outHorizon(t, out) {   // the sky colour at the horizon (also the fog colour)
     const day = t.day, ov = t.over;
@@ -6711,7 +6727,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const lam = (c) => new THREE.MeshLambertMaterial({ color: c });
     let seed = 2026; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     // sky, fog, light that follow the live sky (time of day, weather) of the chosen place
-    const u = { uDay: { value: 1 }, uTwi: { value: 0 }, uOver: { value: 0 }, uDawn: { value: 0 }, uSun: { value: new THREE.Vector3(0.3, 0.8, -0.5) } };
+    const u = { uDay: { value: 1 }, uTwi: { value: 0 }, uOver: { value: 0 }, uDawn: { value: 0 }, uCloud: { value: 0.2 }, uFlash: { value: 0 }, uTime: { value: 0 }, uSun: { value: new THREE.Vector3(0.3, 0.8, -0.5) } };
     const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), new THREE.ShaderMaterial({ uniforms: u, vertexShader: "varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }", fragmentShader: OUT_SKY_FS, side: THREE.BackSide, depthWrite: false }));
     sky.renderOrder = -10; world.add(sky); OUT.sky = u;
     camera.far = 1000; camera.updateProjectionMatrix();   // the street needs a far horizon (the halls use 160)
@@ -6732,9 +6748,16 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const band = plane(60, 0.08, basic(0x9d875e)); band.position.set(0, 4.2, HZ - 0.01); band.rotation.y = Math.PI; world.add(band);
     const back = { lobby: true }, lbl = { title: "로비로 돌아가기", sub: "금호 아카이브", kicker: "ENTRANCE" };
     buildInDoor(2, 0, back);
-    { const st = canvasTex(2048, 256, (g) => { g.clearRect(0, 0, 2048, 256); g.fillStyle = "#e9d3a0"; g.shadowColor = "rgba(255,210,140,.7)"; g.shadowBlur = 20;
-        g.font = `500 150px ${SERIF}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("금 호 아 카 이 브", 1024, 120); });
-      const sg = plane(6.4, 0.8, new THREE.MeshBasicMaterial({ map: st, transparent: true })); sg.position.set(0, 5.1, HZ - 0.05); sg.rotation.y = Math.PI; world.add(sg); }
+    { // the name board over the entrance: a bronze-framed dark plaque carrying KUMHO ARCHIVES in gilt letters
+      const st = canvasTex(2048, 384, (g, W, H) => {
+        const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#2a2620"); bg.addColorStop(1, "#1a1814"); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+        g.strokeStyle = "#a88c5c"; g.lineWidth = 14; g.strokeRect(7, 7, W - 14, H - 14);
+        g.strokeStyle = "rgba(201,170,110,.55)"; g.lineWidth = 3; g.strokeRect(30, 30, W - 60, H - 60);
+        g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#ead39f"; g.shadowColor = "rgba(255,210,140,.55)"; g.shadowBlur = 16;
+        g.font = `500 150px ${SERIF}`; if (g.letterSpacing !== undefined) g.letterSpacing = "26px"; g.fillText("KUMHO ARCHIVES", W / 2 + 13, H * 0.42);
+        g.shadowBlur = 0; g.fillStyle = "#b9a072"; g.font = `500 62px ${SERIF}`; if (g.letterSpacing !== undefined) g.letterSpacing = "20px"; g.fillText("SINCE 1946", W / 2 + 10, H * 0.79); });
+      const sg = plane(6.4, 1.2, new THREE.MeshBasicMaterial({ map: st })); sg.position.set(0, 6.1, HZ - 0.1); sg.rotation.y = Math.PI; world.add(sg);
+      const bk = new THREE.Mesh(new THREE.BoxGeometry(6.56, 1.36, 0.12), lam(0x6f5c3c)); bk.position.set(0, 6.1, HZ - 0.02); world.add(bk); }
     // street lamps on both pavements
     const poleM = lam(0x3a3a3c), lampM = basic(0xfff2d6);
     for (const x of [-36, -12, 12, 36]) [[4.3, 1], [-5.2, -1]].forEach(([z, s]) => {
@@ -6772,10 +6795,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         else col.setHSL(PALT.g[0] + (rnd() - 0.5) * 0.06, PALT.g[1] + (rnd() - 0.5) * 0.12, PALT.g[2] * (0.7 + rnd() * 0.5));
         crown.setColorAt(ci++, col); } });
     world.add(trunk); world.add(branch); if (crown) world.add(crown);
-    if (SEAS === "winter") {   // snow over the verges, the pavements' edges and the far ground
-      const snow = new THREE.Mesh(new THREE.PlaneGeometry(400, 9), lam(0xf4f6f8)); snow.rotation.x = -Math.PI / 2; snow.position.set(0, 0.02, -11); world.add(snow);
-      [[3.75, 0.5], [-3.75, 0.5], [-6.6, 1.6]].forEach(([z, d]) => { const sn = new THREE.Mesh(new THREE.BoxGeometry(400, 0.05, d), lam(0xf2f4f6)); sn.position.set(0, z > 0 || z < -5 ? 0.17 : 0.03, z); world.add(sn); });
-      if (OUT.aptMats) {} }
+    // snow over the verges, the pavements' edges and the far ground: always in winter, and whenever it is snowing
+    const snowCover = new THREE.Group(); world.add(snowCover);
+    { const snow = new THREE.Mesh(new THREE.PlaneGeometry(400, 9), lam(0xf4f6f8)); snow.rotation.x = -Math.PI / 2; snow.position.set(0, 0.02, -11); snowCover.add(snow);
+      const far = new THREE.Mesh(new THREE.PlaneGeometry(900, 590), lam(0xf1f3f5)); far.rotation.x = -Math.PI / 2; far.position.set(0, 0.0, -312); snowCover.add(far);
+      [[3.75, 0.5], [-3.75, 0.5], [-6.6, 1.6], [8.5, 9.6]].forEach(([z, d]) => { const sn = new THREE.Mesh(new THREE.BoxGeometry(400, 0.05, d), lam(0xf2f4f6)); sn.position.set(0, z > 0 || z < -5 ? 0.17 : 0.03, z); snowCover.add(sn); });
+      snowCover.visible = SEAS === "winter"; }
     // a distant skyline, faded by the fog
     const city = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), lam(0x5d6470), 70);
     for (let i = 0; i < 70; i++) { const w = 12 + rnd() * 22, h = 14 + rnd() * 46; M.compose(P.set(-260 + rnd() * 520, h / 2, -180 - rnd() * 140), Q.identity(), S.set(w, h, 10 + rnd() * 16)); city.setMatrixAt(i, M); }
@@ -6789,7 +6814,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const inner = new THREE.Group(); inner.add(m); inner.scale.setScalar(k); inner.rotation.y = bs.x >= bs.z ? 0 : Math.PI / 2;   // nose (model -x) to -x: it pulls away to the left
       const g = new THREE.Group(); g.add(inner); g.position.set(0, 0.02, 1.75); world.add(g);
       const pb = new THREE.Mesh(new THREE.BoxGeometry(11.5, 3.6, 2.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.y = 1.8; pb.userData.idx = "outBus"; g.add(pb); pickables.push(pb);
-      OUT.bus = g; OUT.st = "come"; OUT.t = 0; OUT.x = 90; OUT.v = 0; g.position.x = 90;   // arrives from far off to the right and pulls up at the stop
+      OUT.bus = g; OUT.veh = g; OUT.kind = "bus"; OUT.st = "come"; OUT.t = 0; OUT.x = 90; OUT.v = 0; g.position.x = 90;   // arrives from far off to the right and pulls up at the stop
       g.updateMatrixWorld(true);
       const rc = new THREE.Raycaster(), bodies = []; inner.traverse((o) => { if (o.isMesh) bodies.push(o); });
       const red = OUT_DECAL.red, decal = (w, h, draw) => { const t = canvasTex(Math.round(w * 200), Math.round(h * 200), draw); t.anisotropy = ANISO;
@@ -6810,6 +6835,27 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const lp = g.worldToLocal(hit.point.clone()), d = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mt);
         d.position.set(lp.x, lp.y, lp.z + sd * 0.012); d.rotation.y = sd > 0 ? 0 : Math.PI; g.add(d); }));
     });
+    // easter egg: the founding taxi from the lobby, waiting off-stage until the bus has been sent off twice
+    decodeTaxi().then(({ geometry, texture, surface, normal }) => {
+      if (world !== ow || mode !== "outside") return;
+      const mat = new THREE.MeshStandardMaterial({ map: texture, metalness: 1, roughness: 1, metalnessMap: surface, roughnessMap: surface, normalMap: normal, normalScale: new THREE.Vector2(0.65, 0.65), envMap: taxiEnvironment(), envMapIntensity: 0.8, side: THREE.DoubleSide });
+      const mesh = new THREE.Mesh(geometry.clone(), mat), sc = 4.15 / 1.90101; mesh.scale.setScalar(sc); mesh.position.y = 0.379509 * sc - 0.075; mesh.rotation.y = OUT_TAXI_YAW;
+      const g = new THREE.Group(); g.add(mesh); g.position.set(90, 0.02, 1.75); g.visible = false; world.add(g);
+      const pb = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1.9, 2.0), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.y = 0.95; pb.userData.idx = "outBus"; g.add(pb); pickables.push(pb);
+      OUT.taxi = g;
+    }).catch((e) => console.error("택시 모델 로딩 실패", e));
+    // weather: rain streaks, snowflakes, lightning, fog, drifting clouds, following the live sky (or the preview)
+    { const W = { t: 0, flash: 0, nextBolt: 4, wet: 0, snowAmt: 0, roadM: road.material, roadDry: road.material.color.clone(), snowCover };
+      const NR = 3200, rp = new Float32Array(NR * 6), rs = new Float32Array(NR);
+      for (let i = 0; i < NR; i++) { const x = (rnd() - 0.5) * 60, y = rnd() * 22, z = (rnd() - 0.5) * 50; rs[i] = 0.8 + rnd() * 0.4; rp.set([x, y, z, x - 0.05, y - 0.55, z], i * 6); }
+      const rg = new THREE.BufferGeometry(); rg.setAttribute("position", new THREE.BufferAttribute(rp, 3));
+      W.rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0xc4ccd6, transparent: true, opacity: 0, depthWrite: false })); W.rain.frustumCulled = false; W.rain.visible = false; W.rs = rs; world.add(W.rain);
+      const NS = 3600, sp = new Float32Array(NS * 3), sph = new Float32Array(NS);
+      for (let i = 0; i < NS; i++) { sp.set([(rnd() - 0.5) * 60, rnd() * 20, (rnd() - 0.5) * 50], i * 3); sph[i] = rnd() * 6.28; }
+      const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
+      const flakeTex = canvasTex(64, 64, (g) => { const r = g.createRadialGradient(32, 32, 0, 32, 32, 30); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.45, "rgba(255,255,255,.8)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 64, 64); });
+      W.snow = new THREE.Points(sg, new THREE.PointsMaterial({ map: flakeTex, size: 0.2, transparent: true, opacity: 0, depthWrite: false, color: 0xffffff })); W.snow.frustumCulled = false; W.snow.visible = false; W.sph = sph; world.add(W.snow);
+      OUT.wx = W; OUT.snap = true; }
     // Ulsan Sinjeong Artera, drawn as clean straight towers after the photograph (the scanned model warped up close)
     { const A = new THREE.Group(); A.position.set(10, 0, -200); world.add(A); OUT.aptMats = [];
       const FL = 37, FH = 2.9;
@@ -6853,27 +6899,37 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       // right: navy tower, number 102
       tower(22, 8, 15, 13, H1 - 4, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 7, band: "#d9d3c9", bandX: 0, bandW: 0.26, sign: { text: "102", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "102", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 8 }));
       // 101 to the left, 103 to the right
-      tower(-34, 2, 15, 13, H1 - 6, "#cfc6bb", "#3a3c42", "#e2dbd1", facade(15, H1, 5, "#cfc6bb", "#3b3d43", "#e5ded4", { seed: 9, band: "#6e625a", bandX: 0.74, bandW: 0.26, sign: { text: "101", size: 120, x: 0.38, y: 0.06 }, sign2: { text: "101", size: 70, x: 0.38, y: 0.86 } }), facade(13, H1, 4, "#bdb4a9", "#3b3d43", "#d6cfc5", { seed: 10 }));
-      tower(38, 2, 15, 13, H1 - 2, "#6e625a", "#2a2a2e", "#857a70", facade(15, H1, 5, "#6e625a", "#28282c", "#8b8076", { seed: 11, band: "#27408a", bandX: 0, bandW: 0.26, sign: { text: "103", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "103", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#62584f", "#28282c", "#7c7168", { seed: 12 }));
+      tower(-41, 2, 15, 13, H1 - 6, "#cfc6bb", "#3a3c42", "#e2dbd1", facade(15, H1, 5, "#cfc6bb", "#3b3d43", "#e5ded4", { seed: 9, band: "#6e625a", bandX: 0.74, bandW: 0.26, sign: { text: "101", size: 120, x: 0.38, y: 0.06 }, sign2: { text: "101", size: 70, x: 0.38, y: 0.86 } }), facade(13, H1, 4, "#bdb4a9", "#3b3d43", "#d6cfc5", { seed: 10 }));
+      tower(42, 2, 15, 13, H1 - 2, "#6e625a", "#2a2a2e", "#857a70", facade(15, H1, 5, "#6e625a", "#28282c", "#8b8076", { seed: 11, band: "#27408a", bandX: 0, bandW: 0.26, sign: { text: "103", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "103", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#62584f", "#28282c", "#7c7168", { seed: 12 }));
+      // 105 far left and 104 far right: the same scale as 102, standing apart with open sky between
+      tower(-64, -2, 15, 13, H1 - 4, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 13, band: "#d9d3c9", bandX: 0.74, bandW: 0.26, sign: { text: "105", size: 120, x: 0.38, y: 0.06 }, sign2: { text: "105", size: 70, x: 0.38, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 14 }));
+      tower(65, -2, 15, 13, H1 - 5, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 15, band: "#d9d3c9", bandX: 0, bandW: 0.26, sign: { text: "104", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "104", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 16 }));
       // podium and garden at the foot
-      const pod = new THREE.Mesh(new THREE.BoxGeometry(92, 6, 44), new THREE.MeshLambertMaterial({ color: 0x8c857a })); pod.position.set(2, 3, 6); A.add(pod);
+      const pod = new THREE.Mesh(new THREE.BoxGeometry(152, 6, 44), new THREE.MeshLambertMaterial({ color: 0x8c857a })); pod.position.set(1, 3, 6); A.add(pod);
     }
     const main = () => ({ x: -3, z: 12.6, yaw: -0.62, pitch: 0.17 });
     stops.push({ kind: "art", outside: true, data: { year: "", co: "금호 아카이브", title: "아카이브 밖으로", cap: "금호고속 버스가 서는 2차선 도로",
       detail: "아카이브 문을 나서면 2차선 도로에 금호고속 버스가 서 있습니다. 버스를 누르면 출발해 눈앞을 지나갑니다. 길 건너 울창한 가로수 너머로 금호건설이 지은 울산 신정 아테라가 보입니다." }, pose: main });
-    stops.push({ kind: "art", outside: true, outBus: true, data: { year: "", co: "금호고속", title: "금호고속 버스", cap: "1970년 첫 고속버스 운행 이후 전국을 잇는 금호고속",
-      detail: "1970년 서울~대전 구간에서 첫 고속버스를 운행한 금호의 버스는 광주고속과 금호고속을 거쳐 지금의 금호익스프레스로 이어집니다. 버스를 누르면 출발합니다." }, pose: () => ({ x: 1, z: 11.5, yaw: -0.04, pitch: 0.02 }) });
-    stops.push({ kind: "art", outside: true, data: { year: "2022.10 — 2025.12", co: "금호건설", title: "울산 신정 아테라", cap: "지하 3층~지상 37층 · 4개동 402세대 · 연면적 72,956㎡",
-      detail: "길 건너 멀리 보이는 아파트는 금호건설이 지은 울산 신정 공동주택(아테라)입니다. 2022년 10월 착공해 2025년 12월 준공했습니다." }, pose: () => ({ x: 4, z: 12.8, yaw: -0.06, pitch: 0.22 }) });
+    stops.push({ kind: "art", outside: true, outBus: true, epi: true, data: OUT_EPILOGUE, pose: () => ({ x: 1, z: 11.5, yaw: -0.04, pitch: 0.02 }) });
+    stops.push({ kind: "art", outside: true, outApt: true, epi: true, data: OUT_EPILOGUE, pose: () => ({ x: 4, z: 12.8, yaw: -0.06, pitch: 0.22 }) });
     stops.push({ kind: "door", side: 2, u: 0, cy: 1.8, w: 4.2, h: 4.4, target: back, label: lbl });
     buildChips(); updateHud(); setNav();
     setZoom(0.8); zoom = zoomTarget; camera.fov = baseFov / zoom; camera.updateProjectionMatrix();
     cur = 0; moveTo(main(), true); showCard();
+    fetchWeather(); skyChip(true);
   }
-  function outBusGo() { if (OUT.bus && OUT.st === "idle") { OUT.st = "go"; OUT.v = 0; if (typeof sfxWhoosh === "function") sfxWhoosh(); } }
+  function outBusGo() { if (OUT.veh && OUT.st === "idle") { if (OUT.kind === "bus") OUT.n++; OUT.st = "go"; OUT.v = 0; if (typeof sfxWhoosh === "function") sfxWhoosh(); } }
+  function outSwap(kind) {   // which vehicle pulls up next: after the bus has left twice, the founding taxi comes instead
+    const v = kind === "taxi" ? OUT.taxi : OUT.bus; if (!v) return;
+    if (OUT.veh && OUT.veh !== v) OUT.veh.visible = false;
+    OUT.veh = v; OUT.kind = kind;
+    const si = stops.findIndex((t) => t.outBus); if (si < 0) return;
+    stops[si].data = kind === "taxi" ? OUT_TAXI : OUT_EPILOGUE;
+    if (cur === si || (kind === "taxi" && cur === 0)) { cur = si; showCard(); }
+  }
   function stepOutside(dt) {
     if (mode !== "outside" || !OUT.sky) return;
-    const t = skyTarget(), u = OUT.sky, k = Math.min(1, dt * 0.8);
+    const t = skyTarget(), u = OUT.sky, k = OUT.snap ? 1 : Math.min(1, dt * 0.8);
     u.uDay.value += (t.day - u.uDay.value) * k; u.uTwi.value += (t.twi - u.uTwi.value) * k; u.uOver.value += (t.over - u.uOver.value) * k; u.uDawn.value += ((t.dawn || 0) - u.uDawn.value) * k;
     u.uSun.value.lerp(t.sun, k).normalize();
     outHorizon({ day: u.uDay.value, twi: u.uTwi.value, over: u.uOver.value }, OUT.fogCol); if (scene.fog) scene.fog.color.copy(OUT.fogCol);
@@ -6881,11 +6937,48 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     OUT.hemi.intensity = 0.25 + 0.85 * lv; OUT.sun.intensity = 1.1 * u.uDay.value * (1 - 0.7 * u.uOver.value);
     OUT.sun.position.copy(u.uSun.value).multiplyScalar(80);
     if (OUT.aptMats) { const nt = 0.08 + 0.95 * (1 - u.uDay.value); for (const m of OUT.aptMats) m.emissiveIntensity = nt; }
-    if (!OUT.bus) return;
-    if (OUT.st === "go") { OUT.v = Math.min(16, OUT.v + dt * 2.6); OUT.x -= OUT.v * dt; if (OUT.x < -90) { OUT.st = "gone"; OUT.t = 0; OUT.bus.visible = false; } }
-    else if (OUT.st === "gone") { OUT.t += dt; if (OUT.t > 3) { OUT.st = "come"; OUT.t = 0; OUT.bus.visible = true; } }
-    else if (OUT.st === "come") { OUT.t += dt; const e = Math.min(1, OUT.t / 9), q = 1 - Math.pow(1 - e, 2.4); OUT.x = 90 * (1 - q); if (e >= 1) { OUT.x = 0; OUT.st = "idle"; } }
-    OUT.bus.position.x = OUT.x;
+    stepWeather(dt, t, u); OUT.snap = false;
+    if (!OUT.veh) return;
+    const taxi = OUT.kind === "taxi";
+    if (OUT.st === "go") { OUT.v = Math.min(taxi ? 13 : 16, OUT.v + dt * (taxi ? 3.4 : 2.6)); OUT.x -= OUT.v * dt; if (OUT.x < -90) { OUT.st = "gone"; OUT.t = 0; OUT.veh.visible = false; } }
+    else if (OUT.st === "gone") { OUT.t += dt; if (OUT.t > 3) {
+        outSwap(OUT.kind === "bus" && OUT.n >= 2 && OUT.taxi ? "taxi" : "bus"); if (OUT.kind === "taxi") OUT.n = 0;
+        OUT.st = "come"; OUT.t = 0; OUT.veh.visible = true; } }
+    else if (OUT.st === "come") { OUT.t += dt; const e = Math.min(1, OUT.t / (taxi ? 7 : 9)), q = 1 - Math.pow(1 - e, 2.4); OUT.x = 90 * (1 - q); if (e >= 1) { OUT.x = 0; OUT.st = "idle"; } }
+    OUT.veh.position.x = OUT.x;
+  }
+  function stepWeather(dt, t, u) {
+    const W = OUT.wx; if (!W) return;
+    W.t += dt; u.uTime.value = W.t;
+    const k = OUT.snap ? 1 : Math.min(1, dt * 0.6);
+    u.uCloud.value += ((t.kind === "clear" ? 0.12 : t.kind === "partly" ? 0.42 : 0.8) - u.uCloud.value) * k;
+    // fog closes in for fog, rain and snow
+    const fn = { fog: [12, 140], rain: [35, 260], storm: [28, 210], snow: [25, 200] }[t.kind] || [70, 520];
+    if (scene.fog) { scene.fog.near += (fn[0] - scene.fog.near) * k; scene.fog.far += (fn[1] - scene.fog.far) * k; }
+    const cx = cam.x, cz = cam.z, wrapX = (v) => ((v - cx + 30) % 60 + 60) % 60 - 30 + cx, wrapZ = (v) => ((v - cz + 25) % 50 + 50) % 50 - 25 + cz;
+    // rain
+    const rTarget = t.rain || 0; W.rain.material.opacity += (rTarget * 0.55 - W.rain.material.opacity) * k; W.rain.visible = W.rain.material.opacity > 0.01;
+    if (W.rain.visible) { const a = W.rain.geometry.attributes.position, p = a.array;
+      for (let i = 0, n = W.rs.length; i < n; i++) { const o = i * 6; let y = p[o + 1] - 24 * W.rs[i] * dt, x = p[o] - 1.2 * dt, z = p[o + 2];
+        if (y < 0) { y += 22; } x = wrapX(x); z = wrapZ(z); p[o] = x; p[o + 1] = y; p[o + 2] = z; p[o + 3] = x - 0.05; p[o + 4] = y - 0.55; p[o + 5] = z; }
+      a.needsUpdate = true; }
+    // wet road darkens
+    W.wet += ((rTarget > 0 ? 1 : 0) - W.wet) * (OUT.snap ? 1 : Math.min(1, dt * 0.25));
+    W.roadM.color.copy(W.roadDry).multiplyScalar(1 - 0.35 * W.wet);
+    // snow
+    const sT = t.snow || 0; W.snow.material.opacity += (sT * 0.95 - W.snow.material.opacity) * k; W.snow.visible = W.snow.material.opacity > 0.01;
+    if (W.snow.visible) { const a = W.snow.geometry.attributes.position, p = a.array;
+      for (let i = 0, n = W.sph.length; i < n; i++) { const o = i * 3, ph = W.sph[i]; let y = p[o + 1] - (0.9 + 0.5 * Math.sin(ph * 3.1)) * dt;
+        let x = p[o] + Math.sin(W.t * 0.8 + ph) * 0.35 * dt + 0.25 * dt, z = p[o + 2] + Math.cos(W.t * 0.6 + ph * 1.3) * 0.25 * dt;
+        if (y < 0) y += 20; p[o] = wrapX(x); p[o + 1] = y; p[o + 2] = wrapZ(z); }
+      a.needsUpdate = true; }
+    if (sT > 0) W.snowAmt = OUT.snap ? 1 : Math.min(1, W.snowAmt + dt * 0.05);
+    W.snowCover.visible = seasonNow() === "winter" || (sT > 0 && W.snowAmt > 0.02) || W.snowAmt > 0.3;
+    // lightning in a storm
+    if (t.storm) { W.nextBolt -= dt; if (W.nextBolt <= 0) { W.flash = 1; W.nextBolt = 3 + Math.random() * 7; W.dbl = Math.random() < 0.5 ? 0.18 : -1; } }
+    if (W.dbl > 0) { W.dbl -= dt; if (W.dbl <= 0) { W.flash = 0.8; W.dbl = -1; } }
+    W.flash = Math.max(0, W.flash - dt * 4.5); u.uFlash.value = W.flash * W.flash;
+    if (W.flash > 0) OUT.hemi.intensity += 1.6 * W.flash * W.flash;
   }
   function buildLobby() {
     const ND = DATA.length, SP = ND > 3 ? 2.75 : 3;
@@ -7786,6 +7879,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     } else if (s.kind === "art") {
       const it = s.data;
       set("cYear", [it.year, it.co].filter(Boolean).join("  ·  ")); set("cTitle", it.title); if (s.dio || s.model3d || s.outside) $("zoomBtn").hidden = true; set("cCap", it.cap); set("cDetail", it.detail); set("cCount", "");
+      if (/\n/.test(it.detail || "")) { const dd = $("cDetail"); dd.textContent = ""; it.detail.split("\n").forEach((ln, k) => { const sp = document.createElement("span"); sp.className = "epl"; sp.style.animationDelay = (0.25 + k * 0.7) + "s"; sp.textContent = ln; dd.appendChild(sp); }); }
     } else if (s.kind === "photo") {
       const it = s.data;
       set("cYear", `${it.year}${it.co === "" ? "" : `  ·  ${it.co || "그룹"}`}`); set("cTitle", it.title); $("cTitle").insertAdjacentHTML("afterbegin", NB(s.idx + 1)); set("cCap", it.cap);
@@ -8930,7 +9024,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       looked = true; moveTo(focusPose(P.side, P.u, P.cy, P.w, P.h)); return;
     }
     if (o.userData.idx === "outBus") { const si = stops.findIndex((t) => t.outBus); if (si >= 0 && si !== cur) { cur = si; showCard(); } outBusGo(); return; }
-    if (o.userData.idx === "outApt") { const si = stops.findIndex((t) => t.outside && /아테라/.test(t.data.title)); if (si >= 0) setStop(si); return; }
+    if (o.userData.idx === "outApt") { const si = stops.findIndex((t) => t.outApt); if (si >= 0) setStop(si); return; }
     if (o.userData.idx === "dio") { const si = stops.findIndex((t) => t.dio); if (si >= 0 && (si !== cur || looked)) setStop(si); return; }
     if (o.userData.idx === "dioItem") { const si = stops.findIndex((t) => t.dioItem === o.userData.item); if (si < 0) return; if (si !== cur || looked) setStop(si); else showCard(); return; }
     if (o.userData.door) { walkThrough(o.userData.door); return; }
