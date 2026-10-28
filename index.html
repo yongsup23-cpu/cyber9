@@ -4619,6 +4619,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function tanOf(side, u) { if (!RT) return TANS[side]; const a = psiOf(side, u), k = side === 4 ? -1 : 1; return new THREE.Vector3(k * Math.cos(a), 0, k * Math.sin(a)); }
   function inGap(a, pad) { return Math.abs(wrapAngle(a - DA)) < IGAP - (pad || 0) / RI; }
   function clampXZ(x, z, m) {
+    if (mode === "outside") return [Math.max(-24, Math.min(24, x)), Math.max(4.4, Math.min(HZ - 0.9, z))];   // stay on the pavement
     if (RT && DR) {
       let r = Math.hypot(x, z); const lim = RR - BARRIER - 0.45, lo = RI + IWT + 0.6, hp = RI - IWT - BARRIER - 0.45;
       if (r > lim) { x *= lim / r; z *= lim / r; r = lim; }
@@ -6609,11 +6610,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (Math.floor(now / 60000) !== skyDome.min) { skyDome.min = Math.floor(now / 60000); fetchWeather(); skyLabel(); }
   }
   /* ---------- outside: out of the lobby onto a two-lane street — a Kumho Express bus at the kerb, a dense row of trees across the road, Ulsan Artera in the distance ---------- */
-  const VISITED = new Set((() => { try { return JSON.parse(localStorage.getItem("kumhoVisited") || "[]"); } catch (e) { return []; } })());
+  const VISITED = new Set();   // halls entered in this visit only: the exit appears after all of them, and is gone again on reload
   /* the way outside: a pivot door of dark steel in a deep fair-faced concrete portal; behind it, plain bright white */
   function buildOutDoor(side, u, target) {
     const grp = new THREE.Group(); grp.position.copy(wp(side, u, 0, 0.02)); grp.rotation.y = rotOf(side, u); world.add(grp);
-    const W = 2.0, H = 3.2, FW = 0.42, D = 0.45;            // opening, frame band, depth the portal stands out from the wall
+    const W = 2.0, H = 3.2, FW = 0.42, D = 0.16;            // opening, frame band, depth the portal stands out from the wall
     const conc = canvasTex(512, 512, (g) => {
       g.fillStyle = "#a19f9a"; g.fillRect(0, 0, 512, 512);
       let sd = 11; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
@@ -6624,9 +6625,6 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     conc.wrapS = conc.wrapT = THREE.RepeatWrapping;
     const cm = (w, h) => { const t = conc.clone(); t.needsUpdate = true; t.repeat.set(w / 1.2, h / 1.2); return new THREE.MeshBasicMaterial({ map: t }); };
     const box = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); grp.add(b); return b; };
-    box(FW, H + FW, D, -(W + FW) / 2, (H + FW) / 2, D / 2, cm(FW, H + FW));      // left jamb
-    box(FW, H + FW, D, (W + FW) / 2, (H + FW) / 2, D / 2, cm(FW, H + FW));       // right jamb
-    box(W + 2 * FW, FW, D, 0, H + FW / 2, D / 2, cm(W + 2 * FW, FW));             // head
     const white = plane(W, H, new THREE.MeshBasicMaterial({ color: 0xf6f4ef })); white.position.set(0, H / 2, 0.03); grp.add(white);
     const glow = plane(W * 1.6, 1.8, new THREE.MeshBasicMaterial({ map: softTex, color: 0xfff8ea, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
     glow.rotation.x = -Math.PI / 2; glow.position.set(0, 0.01, D + 0.6); grp.add(glow);
@@ -6638,8 +6636,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const pull = plane(0.05, 1.2, basic(0x17181a)); pull.position.set(W * 0.67 - 0.22, H * 0.47, 0.037); pivot.add(pull);
     [leaf, white].forEach((m) => { m.userData.door = target; pickables.push(m); });
     // a quiet engraved word on the head
-    const lt = canvasTex(1024, 160, (g) => { g.clearRect(0, 0, 1024, 160); g.fillStyle = "rgba(60,60,58,.85)"; g.font = `500 70px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("O U T S I D E", 512, 84); });
-    const lab = plane(1.6, 0.25, new THREE.MeshBasicMaterial({ map: lt, transparent: true })); lab.position.set(0, H + FW / 2, D + 0.003); grp.add(lab);
+    const lt = canvasTex(1024, 160, (g) => { g.clearRect(0, 0, 1024, 160); g.fillStyle = "#f3e2b8"; g.shadowColor = "rgba(255,214,150,.9)"; g.shadowBlur = 24; g.font = `600 96px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("E X I T", 512, 84); });
+    const lab = plane(1.5, 0.234, new THREE.MeshBasicMaterial({ map: lt, transparent: true })); lab.position.set(0, H + 0.35, 0.03); grp.add(lab);
     const rec = { target, left: pivot, right: new THREE.Group(), t: 0, opening: null, glow };
     doors.push(rec);
   }
@@ -6725,7 +6723,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const mark = (w, d, x, z, col) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), basic(col)); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.006, z); world.add(m); };
     mark(400, 0.12, 0, -0.1, 0xe2b236); mark(400, 0.12, 0, 0.1, 0xe2b236);                 // double yellow centre line
     mark(400, 0.12, 0, 3.25, 0xe8e6de); mark(400, 0.12, 0, -3.25, 0xe8e6de);              // edge lines
-    const pave = (z0, z1) => { const b = new THREE.Mesh(new THREE.BoxGeometry(400, 0.15, z1 - z0), lam(0x9a968d)); b.position.set(0, 0.075, (z0 + z1) / 2); world.add(b);
+    const pave = (z0, z1) => { const b = new THREE.Mesh(new THREE.BoxGeometry(400, 0.15, z1 - z0), lam(0x76736c)); b.position.set(0, 0.075, (z0 + z1) / 2); world.add(b);
       const k = new THREE.Mesh(new THREE.BoxGeometry(400, 0.16, 0.22), lam(0xbdb8ad)); k.position.set(0, 0.08, z0 > 0 ? z0 + 0.11 : z1 - 0.11); world.add(k); };
     pave(3.5, HZ); pave(-7.5, -3.5);
     const grass = new THREE.Mesh(new THREE.PlaneGeometry(900, 600), lam(0x4a5a3c)); grass.rotation.x = -Math.PI / 2; grass.position.set(0, -0.01, -307.5); world.add(grass);
@@ -6734,24 +6732,50 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const band = plane(60, 0.08, basic(0x9d875e)); band.position.set(0, 4.2, HZ - 0.01); band.rotation.y = Math.PI; world.add(band);
     const back = { lobby: true }, lbl = { title: "로비로 돌아가기", sub: "금호 아카이브", kicker: "ENTRANCE" };
     buildInDoor(2, 0, back);
+    { const st = canvasTex(2048, 256, (g) => { g.clearRect(0, 0, 2048, 256); g.fillStyle = "#e9d3a0"; g.shadowColor = "rgba(255,210,140,.7)"; g.shadowBlur = 20;
+        g.font = `500 150px ${SERIF}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("금 호 아 카 이 브", 1024, 120); });
+      const sg = plane(6.4, 0.8, new THREE.MeshBasicMaterial({ map: st, transparent: true })); sg.position.set(0, 5.1, HZ - 0.05); sg.rotation.y = Math.PI; world.add(sg); }
     // street lamps on both pavements
     const poleM = lam(0x3a3a3c), lampM = basic(0xfff2d6);
     for (const x of [-36, -12, 12, 36]) [[4.3, 1], [-5.2, -1]].forEach(([z, s]) => {
       const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 7, 10), poleM); p.position.set(x, 3.5, z); world.add(p);
       const a = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 1.6), poleM); a.position.set(x, 6.95, z - s * 0.8); world.add(a);
       const l = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.3), lampM); l.position.set(x, 6.86, z - s * 1.55); world.add(l); });
-    // dense trees across the road: four staggered rows of instanced trunks and leafy crowns, a low hedge in front
-    const hedge = new THREE.Mesh(new THREE.BoxGeometry(400, 0.9, 0.9), lam(0x34512c)); hedge.position.set(0, 0.6, -4.3); world.add(hedge);
+    // dense trees across the road, four staggered rows, coloured for the season; instanced so hundreds stay cheap
+    const SEAS = seasonNow();
+    const PALT = { spring: { g: [0.24, 0.42, 0.34], blossom: 0.28, ground: 0x5a6e44 }, summer: { g: [0.27, 0.45, 0.2], blossom: 0, ground: 0x46583a },
+      autumn: { g: [0.08, 0.7, 0.36], mix: [[0.02, 0.72, 0.38], [0.08, 0.78, 0.42], [0.12, 0.75, 0.45], [0.2, 0.45, 0.3]], ground: 0x6a5f40 },
+      winter: { bare: true, snow: true, ground: 0xf1f3f5 } }[SEAS] || { g: [0.27, 0.45, 0.2], ground: 0x46583a };
+    grass.material.color.setHex(PALT.ground);
+    const hedge = new THREE.Mesh(new THREE.BoxGeometry(400, 0.9, 0.9), lam(SEAS === "winter" ? 0xe6eaed : SEAS === "autumn" ? 0x5a5a30 : 0x34512c)); hedge.position.set(0, 0.6, -4.3); world.add(hedge);
+    const leafTex = canvasTex(256, 256, (g) => { g.fillStyle = "#ffffff"; g.fillRect(0, 0, 256, 256);   // dappled foliage, multiplied by each crown's colour
+      let sd = 77; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 2600; i++) { const v = 120 + r() * 135; g.fillStyle = `rgb(${v},${v},${v})`; g.beginPath(); g.ellipse(r() * 256, r() * 256, 2 + r() * 5, 1.5 + r() * 3, r() * 3, 0, Math.PI * 2); g.fill(); } });
+    leafTex.wrapS = leafTex.wrapT = THREE.RepeatWrapping; leafTex.repeat.set(2, 2);
     const trees = []; for (let r = 0; r < 4; r++) for (let x = -60; x <= 60; x += 2.1) trees.push([x + (r % 2) * 1.05 + (rnd() - 0.5) * 0.6, -5.8 - r * 1.8 + (rnd() - 0.5) * 0.5, 5.6 + rnd() * 1.6]);
-    const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.12, 0.2, 1, 7), lam(0x4a3a2c), trees.length);
-    const crownG = new THREE.IcosahedronGeometry(1, 1), crown = new THREE.InstancedMesh(crownG, lam(0xffffff), trees.length * 4);
-    const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), P = new THREE.Vector3(), col = new THREE.Color(); let ci = 0;
+    const barkM = lam(SEAS === "winter" ? 0x6b6058 : 0x4a3a2c), limbM = SEAS === "winter" ? lam(0xdfe3e6) : barkM;   // winter limbs carry snow
+    const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.1, 0.19, 1, 8), barkM, trees.length);
+    const NB = PALT.bare ? 14 : 7, branch = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.025, 0.06, 1, 5), limbM, trees.length * NB);
+    const NC = PALT.bare ? 5 : 7, crown = NC ? new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshLambertMaterial({ color: 0xffffff, map: leafTex }), trees.length * NC) : null;
+    const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), P = new THREE.Vector3(), col = new THREE.Color(), up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3(); let ci = 0, bi = 0;
     trees.forEach(([x, z, h], i) => {
-      M.compose(P.set(x, h * 0.3, z), Q.identity(), S.set(1, h * 0.6, 1)); trunk.setMatrixAt(i, M);
-      for (let k = 0; k < 4; k++) { const s = 1.3 + rnd() * 0.9;
-        M.compose(P.set(x + (rnd() - 0.5) * 1.6, h * 0.62 + k * 0.45 + rnd() * 0.6, z + (rnd() - 0.5) * 1.4), Q.setFromAxisAngle(S.set(0, 1, 0), rnd() * 6), S.set(s * 1.1, s, s * 1.1)); crown.setMatrixAt(ci, M);
-        col.setHSL(0.26 + rnd() * 0.07, 0.32 + rnd() * 0.15, 0.13 + rnd() * 0.08); crown.setColorAt(ci, col); ci++; } });
-    world.add(trunk); world.add(crown);
+      M.compose(P.set(x, h * 0.32, z), Q.identity(), S.set(1, h * 0.64, 1)); trunk.setMatrixAt(i, M);
+      for (let k = 0; k < NB; k++) {   // limbs fanning up and out from the trunk (they carry the crown, and are all a winter tree shows)
+        const a = rnd() * 6.28, el = 0.5 + rnd() * 0.5, len = (PALT.bare ? 2.2 : 1.4) + rnd() * 1.4, y0 = h * (0.45 + rnd() * 0.25);
+        dir.set(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el)); Q.setFromUnitVectors(up, dir);
+        M.compose(P.set(x + dir.x * len / 2, y0 + dir.y * len / 2, z + dir.z * len / 2), Q, S.set(1, len, 1)); branch.setMatrixAt(bi++, M); }
+      for (let k = 0; k < NC; k++) { const s = (PALT.snow ? 0.45 : 0.85) + rnd() * (PALT.snow ? 0.4 : 0.75), a = rnd() * 6.28, rr = rnd() * 1.1;
+        M.compose(P.set(x + Math.cos(a) * rr, h * 0.6 + rnd() * h * 0.38, z + Math.sin(a) * rr * 0.8), Q.setFromAxisAngle(up, rnd() * 6), S.set(s * 1.15, s * (0.85 + rnd() * 0.3), s * 1.15)); crown.setMatrixAt(ci, M);
+        if (PALT.snow) col.setRGB(0.9 + rnd() * 0.08, 0.92 + rnd() * 0.06, 0.95 + rnd() * 0.04);
+        else if (PALT.mix) { const m = PALT.mix[Math.floor(rnd() * PALT.mix.length)]; col.setHSL(m[0] + (rnd() - 0.5) * 0.03, m[1], m[2] * (0.7 + rnd() * 0.45)); }
+        else if (PALT.blossom && (i % 5 === 0)) col.setHSL(0.94 + rnd() * 0.03, 0.55, 0.78 + rnd() * 0.1);   // a cherry among the greens
+        else col.setHSL(PALT.g[0] + (rnd() - 0.5) * 0.06, PALT.g[1] + (rnd() - 0.5) * 0.12, PALT.g[2] * (0.7 + rnd() * 0.5));
+        crown.setColorAt(ci++, col); } });
+    world.add(trunk); world.add(branch); if (crown) world.add(crown);
+    if (SEAS === "winter") {   // snow over the verges, the pavements' edges and the far ground
+      const snow = new THREE.Mesh(new THREE.PlaneGeometry(400, 9), lam(0xf4f6f8)); snow.rotation.x = -Math.PI / 2; snow.position.set(0, 0.02, -11); world.add(snow);
+      [[3.75, 0.5], [-3.75, 0.5], [-6.6, 1.6]].forEach(([z, d]) => { const sn = new THREE.Mesh(new THREE.BoxGeometry(400, 0.05, d), lam(0xf2f4f6)); sn.position.set(0, z > 0 || z < -5 ? 0.17 : 0.03, z); world.add(sn); });
+      if (OUT.aptMats) {} }
     // a distant skyline, faded by the fog
     const city = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), lam(0x5d6470), 70);
     for (let i = 0; i < 70; i++) { const w = 12 + rnd() * 22, h = 14 + rnd() * 46; M.compose(P.set(-260 + rnd() * 520, h / 2, -180 - rnd() * 140), Q.identity(), S.set(w, h, 10 + rnd() * 16)); city.setMatrixAt(i, M); }
@@ -6765,7 +6789,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const inner = new THREE.Group(); inner.add(m); inner.scale.setScalar(k); inner.rotation.y = bs.x >= bs.z ? 0 : Math.PI / 2;   // nose (model -x) to -x: it pulls away to the left
       const g = new THREE.Group(); g.add(inner); g.position.set(0, 0.02, 1.75); world.add(g);
       const pb = new THREE.Mesh(new THREE.BoxGeometry(11.5, 3.6, 2.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.y = 1.8; pb.userData.idx = "outBus"; g.add(pb); pickables.push(pb);
-      OUT.bus = g; OUT.st = "idle"; OUT.x = 0; OUT.v = 0;
+      OUT.bus = g; OUT.st = "come"; OUT.t = 0; OUT.x = 90; OUT.v = 0; g.position.x = 90;   // arrives from far off to the right and pulls up at the stop
       g.updateMatrixWorld(true);
       const rc = new THREE.Raycaster(), bodies = []; inner.traverse((o) => { if (o.isMesh) bodies.push(o); });
       const red = OUT_DECAL.red, decal = (w, h, draw) => { const t = canvasTex(Math.round(w * 200), Math.round(h * 200), draw); t.anisotropy = ANISO;
@@ -6779,7 +6803,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const smallM = decal(0.8, 0.36, (c, W, H) => { c.fillStyle = OUT_DECAL.white; c.fillRect(0, 0, W, H); c.fillStyle = "#55575a"; c.textAlign = "center"; c.textBaseline = "middle"; c.font = `600 ${H * 0.5}px ${FONT}`; c.fillText("금호고속", W / 2, H * 0.42); });
       // a plain white patch hides the blurred script under GRANBIRD; white decals glow a touch so they match the sunlit white body
       const patchM = decal(0.5, 0.12, (c, W, H) => { c.fillStyle = OUT_DECAL.white; c.fillRect(0, 0, W, H); });
-      [[3.97, 1.7, 2.36, 0.72, bigM], [-4.03, 1.57, 0.8, 0.36, smallM], [-3.92, 1.84, 0.46, 0.1, patchM]].forEach(([x, y, w, h, mt]) => [1, -1].forEach((sd) => {
+      const wingM = decal(0.5, 0.5, (c, W, H) => { c.fillStyle = OUT_DECAL.white; c.fillRect(0, 0, W, H); });
+      [[3.97, 1.7, 2.36, 0.72, bigM], [-4.03, 1.57, 0.8, 0.36, smallM], [-3.92, 1.84, 0.46, 0.1, patchM], [-3.08, 1.6, 0.5, 0.5, wingM, -1]].forEach(([x, y, w, h, mt, only]) => [1, -1].forEach((sd) => { if (only && sd !== only) return;
         rc.set(new THREE.Vector3(x, y, sd * 4).applyMatrix4(g.matrixWorld), new THREE.Vector3(0, 0, -sd).transformDirection(g.matrixWorld));
         const hit = rc.intersectObjects(bodies, false)[0]; if (!hit) return;
         const lp = g.worldToLocal(hit.point.clone()), d = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mt);
@@ -6827,10 +6852,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       tower(9, -4, 16, 14, H1 + 2, "#2c3f74", "#1d2233", "#3d528a", facade(16, H1, 6, "#2c3f74", "#1b2030", "#40568e", { seed: 5, band: "#b9b1a6", bandX: 0.72, bandW: 0.28 }), facade(14, H1, 4, "#283968", "#1b2030", "#3a4f86", { seed: 6 }));
       // right: navy tower, number 102
       tower(22, 8, 15, 13, H1 - 4, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 7, band: "#d9d3c9", bandX: 0, bandW: 0.26, sign: { text: "102", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "102", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 8 }));
+      // 101 to the left, 103 to the right
+      tower(-34, 2, 15, 13, H1 - 6, "#cfc6bb", "#3a3c42", "#e2dbd1", facade(15, H1, 5, "#cfc6bb", "#3b3d43", "#e5ded4", { seed: 9, band: "#6e625a", bandX: 0.74, bandW: 0.26, sign: { text: "101", size: 120, x: 0.38, y: 0.06 }, sign2: { text: "101", size: 70, x: 0.38, y: 0.86 } }), facade(13, H1, 4, "#bdb4a9", "#3b3d43", "#d6cfc5", { seed: 10 }));
+      tower(38, 2, 15, 13, H1 - 2, "#6e625a", "#2a2a2e", "#857a70", facade(15, H1, 5, "#6e625a", "#28282c", "#8b8076", { seed: 11, band: "#27408a", bandX: 0, bandW: 0.26, sign: { text: "103", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "103", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#62584f", "#28282c", "#7c7168", { seed: 12 }));
       // podium and garden at the foot
-      const pod = new THREE.Mesh(new THREE.BoxGeometry(60, 6, 44), new THREE.MeshLambertMaterial({ color: 0x8c857a })); pod.position.set(2, 3, 6); A.add(pod);
+      const pod = new THREE.Mesh(new THREE.BoxGeometry(92, 6, 44), new THREE.MeshLambertMaterial({ color: 0x8c857a })); pod.position.set(2, 3, 6); A.add(pod);
     }
-    const main = () => ({ x: 0, z: 12.8, yaw: 0, pitch: 0.09 });
+    const main = () => ({ x: -3, z: 12.6, yaw: -0.62, pitch: 0.17 });
     stops.push({ kind: "art", outside: true, data: { year: "", co: "금호 아카이브", title: "아카이브 밖으로", cap: "금호고속 버스가 서는 2차선 도로",
       detail: "아카이브 문을 나서면 2차선 도로에 금호고속 버스가 서 있습니다. 버스를 누르면 출발해 눈앞을 지나갑니다. 길 건너 울창한 가로수 너머로 금호건설이 지은 울산 신정 아테라가 보입니다." }, pose: main });
     stops.push({ kind: "art", outside: true, outBus: true, data: { year: "", co: "금호고속", title: "금호고속 버스", cap: "1970년 첫 고속버스 운행 이후 전국을 잇는 금호고속",
@@ -6839,7 +6867,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       detail: "길 건너 멀리 보이는 아파트는 금호건설이 지은 울산 신정 공동주택(아테라)입니다. 2022년 10월 착공해 2025년 12월 준공했습니다." }, pose: () => ({ x: 4, z: 12.8, yaw: -0.06, pitch: 0.22 }) });
     stops.push({ kind: "door", side: 2, u: 0, cy: 1.8, w: 4.2, h: 4.4, target: back, label: lbl });
     buildChips(); updateHud(); setNav();
-    setZoom(1); zoom = zoomTarget; camera.fov = baseFov; camera.updateProjectionMatrix();
+    setZoom(0.8); zoom = zoomTarget; camera.fov = baseFov / zoom; camera.updateProjectionMatrix();
     cur = 0; moveTo(main(), true); showCard();
   }
   function outBusGo() { if (OUT.bus && OUT.st === "idle") { OUT.st = "go"; OUT.v = 0; if (typeof sfxWhoosh === "function") sfxWhoosh(); } }
@@ -6856,7 +6884,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!OUT.bus) return;
     if (OUT.st === "go") { OUT.v = Math.min(16, OUT.v + dt * 2.6); OUT.x -= OUT.v * dt; if (OUT.x < -90) { OUT.st = "gone"; OUT.t = 0; OUT.bus.visible = false; } }
     else if (OUT.st === "gone") { OUT.t += dt; if (OUT.t > 3) { OUT.st = "come"; OUT.t = 0; OUT.bus.visible = true; } }
-    else if (OUT.st === "come") { OUT.t += dt; const e = Math.min(1, OUT.t / 7), q = 1 - Math.pow(1 - e, 3); OUT.x = 90 * (1 - q); if (e >= 1) { OUT.x = 0; OUT.st = "idle"; } }
+    else if (OUT.st === "come") { OUT.t += dt; const e = Math.min(1, OUT.t / 9), q = 1 - Math.pow(1 - e, 2.4); OUT.x = 90 * (1 - q); if (e >= 1) { OUT.x = 0; OUT.st = "idle"; } }
     OUT.bus.position.x = OUT.x;
   }
   function buildLobby() {
@@ -6882,7 +6910,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       text: DATA.map((h, i) => `${HL(i)}${h.span ? ` (${h.span.replace(/ — /, "~")})` : ""}  ${h.title}`).join("\n") }, 3.4, 3.1);
     // the way out appears only once every hall has been visited (?outside=1 shows it anyway)
     if (DATA.every((h, i) => VISITED.has(i)) || /[?&]outside=1/.test(location.search)) {
-      const OUTT = { outside: true }, ol = { title: "바깥으로", sub: "OUTSIDE · 금호고속 정류장" };
+      const OUTT = { outside: true }, ol = { title: "EXIT", sub: "바깥으로 · 금호고속 정류장" };
       buildOutDoor(2, -5.7, OUTT);
       stops.push({ kind: "door", side: 2, u: -5.7, cy: 1.6, w: 2.9, h: 3.0, target: OUTT, label: ol, outDoor: true }); }
     addLobbyArrows();
@@ -7396,7 +7424,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function buildHall(hi) {
     const h = DATA[hi];
-    VISITED.add(hi); try { localStorage.setItem("kumhoVisited", JSON.stringify([...VISITED])); } catch (e) {}
+    VISITED.add(hi);
     clearWorld(); mode = "hall"; hallIndex = hi; RT = true; DR = !!h.ring2;
     if(h.key === "works") renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));
     if (SR.el || kWrap) { if ($("kQ")) $("kQ").value = ""; if ($("srQ")) $("srQ").value = ""; srIndex(); } // each hall's kiosk opens on the index
@@ -7764,7 +7792,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       set("cDetail", it.detail);
       set("cCount", `${String(s.idx + 1).padStart(3, "0")} / ${String(total).padStart(3, "0")}`);
     } else if (s.kind === "door" && s.target && s.target.outside) {
-      set("cYear", "OUTSIDE"); set("cTitle", "바깥으로 나가기"); set("cCap", "금호고속 버스가 서는 2차선 도로");
+      set("cYear", "EXIT"); set("cTitle", "바깥으로 나가기"); set("cCap", "금호고속 버스가 서는 2차선 도로");
       set("cDetail", "문을 열고 나가면 금호고속 버스가 정차한 거리와 길 건너 울산 신정 아테라를 볼 수 있습니다."); set("cCount", "");
       $("enterBtn2").textContent = "문 열고 나가기";
     } else if (s.kind === "door" && mode === "lobby") {
@@ -8973,7 +9001,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function placeVK() { // desktop: bottom-right corner beside the card; narrow screens and touch: right edge just above the card
     const el = $("vkeys"); if (!el) return;
     const now = performance.now(); if (now - vkAt < 250) return; vkAt = now;
-    const off = vkBlocked() || (mode !== "hall" && mode !== "lobby");
+    const off = vkBlocked() || (mode !== "hall" && mode !== "lobby" && mode !== "outside");
     el.hidden = off; if (off) return;
     const c = $("card"), host = el.offsetParent; if (!c || !host) return;
     const cr = c.getBoundingClientRect(), hr = host.getBoundingClientRect();
