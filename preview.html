@@ -3867,11 +3867,32 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
     taxiEnv=new THREE.CubeTexture(faces); taxiEnv.encoding=THREE.sRGBEncoding; taxiEnv.needsUpdate=true; return taxiEnv;
   }
 
+const ANISO=8;
+  function dioLook(root, tone, file) {
+    const env=taxiEnvironment();
+    root.traverse(o=>{
+      if(!o.isMesh)return;
+      if(!o.geometry.attributes.normal)o.geometry.computeVertexNormals();
+      const materials=Array.isArray(o.material)?o.material:[o.material];
+      materials.forEach(mt=>{
+        mt.envMap=env; mt.envMapIntensity=0.8;
+        if ((file||"").includes("model-icn")) {
+          mt.color.setRGB(0.82,0.86,0.88); mt.envMapIntensity=0.55;
+          mt.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace("#include <map_fragment>","#include <map_fragment>\nfloat icnL=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722)); diffuseColor.rgb=clamp(mix(vec3(icnL),diffuseColor.rgb,1.16),0.,1.);");};
+          mt.customProgramCacheKey=()=>"icn-rich-v1";
+        }
+        if(mt.normalMap)mt.normalScale.set(0.65,0.65);
+        [mt.map,mt.metalnessMap,mt.roughnessMap,mt.normalMap].forEach(t=>{if(t)t.anisotropy=ANISO;});
+        mt.needsUpdate=true;
+      });
+    });
+  }
+
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(1.5);renderer.outputEncoding=THREE.sRGBEncoding;document.body.appendChild(renderer.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x17191c);const camera=new THREE.PerspectiveCamera(32,1,.05,100);
 scene.add(new THREE.HemisphereLight(0xeef2f8,0x4a443c,.9));const k=new THREE.DirectionalLight(0xfff2db,1.2);k.position.set(-4,6,5);scene.add(k);const f=new THREE.DirectionalLight(0xe6efff,.55);f.position.set(5,3,-4);scene.add(f);
 const loader=new THREE.GLTFLoader().setMeshoptDecoder(MeshoptDecoder);let model=null,az=.75,el=.28,dist=8.8,ty=1.2;
-function load(key){document.getElementById('status').textContent='불러오는 중…';window.previewReady=false;if(model){scene.remove(model);model.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});model=null;} loader.load('assets/'+key+'.glb',g=>{model=g.scene;const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),c=box.getCenter(new THREE.Vector3());const scale=3.6/Math.max(size.x,size.y,size.z);model.scale.setScalar(scale);model.position.set(-c.x*scale,-box.min.y*scale,-c.z*scale);ty=size.y*scale*.45;model.traverse(o=>{if(o.isMesh){o.material.envMap=taxiEnvironment();o.material.envMapIntensity=.8;if(o.material.normalMap)o.material.normalScale.set(.65,.65);if(o.material.map)o.material.map.anisotropy=renderer.capabilities.getMaxAnisotropy();}});scene.add(model);document.getElementById('status').textContent='';window.previewReady=true;},undefined,e=>{document.getElementById('status').textContent='로딩 실패: '+e.message;});}
+function load(key){document.getElementById('status').textContent='불러오는 중…';window.previewReady=false;if(model){scene.remove(model);model.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose();}});model=null;} loader.load('assets/'+key+'.glb',g=>{model=g.scene;const box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),c=box.getCenter(new THREE.Vector3());const scale=3.6/Math.max(size.x,size.y,size.z);model.scale.setScalar(scale);model.position.set(-c.x*scale,-box.min.y*scale,-c.z*scale);ty=size.y*scale*.45;model.traverse(o=>{if(o.isMesh){o.material.envMap=taxiEnvironment();o.material.envMapIntensity=.8;if(o.material.normalMap)o.material.normalScale.set(.65,.65);if(o.material.map)o.material.map.anisotropy=renderer.capabilities.getMaxAnisotropy();}});dioLook(model,"pbr","assets/"+key+".glb");scene.add(model);document.getElementById('status').textContent='';window.previewReady=true;},undefined,e=>{document.getElementById('status').textContent='로딩 실패: '+e.message;});}
 document.getElementById('choice').onchange=e=>load(e.target.value);load(new URLSearchParams(location.search).get('model')||'model-auh-tower');
 let drag=null;renderer.domElement.onpointerdown=e=>{drag=[e.clientX,e.clientY];renderer.domElement.setPointerCapture(e.pointerId)};renderer.domElement.onpointermove=e=>{if(!drag)return;az-=(e.clientX-drag[0])*.008;el=Math.max(-.2,Math.min(1.3,el+(e.clientY-drag[1])*.006));drag=[e.clientX,e.clientY]};renderer.domElement.onpointerup=()=>drag=null;renderer.domElement.onwheel=e=>{e.preventDefault();dist=Math.max(3,Math.min(13,dist*Math.exp(e.deltaY*.001)))};
 function frame(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();camera.position.set(Math.sin(az)*Math.cos(el)*dist,ty+Math.sin(el)*dist,Math.cos(az)*Math.cos(el)*dist);camera.lookAt(0,ty,0);renderer.render(scene,camera);if(!window.previewReady)requestAnimationFrame(frame)}frame();
