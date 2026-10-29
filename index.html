@@ -165,6 +165,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 #t3d{position:fixed;inset:0;z-index:13;background:radial-gradient(ellipse at 45% 42%,#3a3730 0%,#1a1916 55%,#0c0c0b 100%)}
 #t3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #t3d canvas.drag{cursor:grabbing}
+body.t3on .viewport{position:fixed;inset:0;z-index:12}body.t3on #t3d{background:transparent}body.t3on #stage{filter:none!important;transition:none!important}body.t3on .viewport>:not(#stage){visibility:hidden!important}
 #t3dClose{position:absolute;top:16px;right:16px;z-index:2}
 #t3d .meta{position:absolute;left:28px;bottom:28px;max-width:380px;border-left:1px solid #71634c;padding-left:20px;pointer-events:none}
 #t3d .meta .k{font-size:12px;letter-spacing:2px;color:var(--gold)}
@@ -4665,7 +4666,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
           for (const k of ["map", "normalMap", "metalnessMap", "roughnessMap", "aoMap", "emissiveMap", "alphaMap"]) { const t = m[k]; if (t && !keep.has(t) && !done.has(t)) { done.add(t); t.dispose(); } }
           if (m.uniforms) {} m.dispose(); } });
       OUT.grow = null; }
-    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.tvStop = null; OUT.walls = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; document.body.classList.remove("riding"); if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
+    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; document.body.classList.remove("riding"); if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
@@ -6797,7 +6798,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const bk = new THREE.Mesh(new THREE.BoxGeometry(6.56, 1.36, 0.12), lam(0x6f5c3c)); bk.position.set(0, 6.1, HZ - 0.02); world.add(bk);
       [sg, bk].forEach((m) => { m.userData.idx = "outGate"; pickables.push(m); }); }   // the name board: a click brings the visitor to the door
     // the bus stop: a glass shelter on the pavement just past the bus, with a bench, a lit route board and the Kumho stop sign
-    { const S = new THREE.Group(); S.position.set(12.5, 0.15, 5.6); world.add(S);
+    { const S = new THREE.Group(); S.position.set(4.2, 0.15, 5.6); world.add(S);   // beside the bus where it stops
       const frame = lam(0x2f3236), roofM = lam(0x3a3d42), wood = lam(0x8a6a48);
       const glass = new THREE.MeshBasicMaterial({ color: 0xcfe0e6, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide });
       const W = 5.4, D = 1.9, H = 2.6;
@@ -6816,29 +6817,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       // bench of timber slats on steel legs
       bx(3.0, 0.06, 0.42, 0.4, 0.48, D / 2 - 0.35, wood); bx(3.0, 0.3, 0.05, 0.4, 0.72, D / 2 - 0.12, wood);
       [-0.95, 1.75].forEach((x) => bx(0.06, 0.48, 0.38, x, 0.24, D / 2 - 0.35, frame));
-      // 금호건설TV: a screen on the back glass, facing the archive; a click walks up to it, a second click plays the film
-      const SWd = 1.6, SHt = 0.9, sx = -W / 2 + 1.05, sy = 1.62, sz = D / 2 + 0.05;
-      bx(SWd + 0.1, SHt + 0.1, 0.06, sx, sy, D / 2 + 0.0, frame);
-      const posterM = new THREE.MeshBasicMaterial({ map: canvasTex(640, 360, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, "#1d2a44"); gr.addColorStop(1, "#0d1220"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
-        g.fillStyle = "#fff"; g.font = `800 64px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("금호건설TV", w / 2, h * 0.42);
-        g.fillStyle = "#e10a17"; g.beginPath(); g.moveTo(w / 2 - 22, h * 0.62); g.lineTo(w / 2 + 26, h * 0.72); g.lineTo(w / 2 - 22, h * 0.82); g.closePath(); g.fill(); }) });
-      new THREE.TextureLoader().load(OUT_TV_POSTER, (t) => { t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; posterM.map = t; posterM.needsUpdate = true; });   // the 금호건설TV card from Special Hall I
-      const scr = new THREE.Mesh(new THREE.PlaneGeometry(SWd, SHt), posterM); scr.position.set(sx, sy, sz); S.add(scr);
-      const tvl = canvasTex(512, 64, (g) => { g.fillStyle = "#24272b"; g.fillRect(0, 0, 512, 64); g.fillStyle = "#e10a17"; g.fillRect(0, 0, 10, 64);
-        g.fillStyle = "#fff"; g.font = `700 30px ${FONT}`; g.textBaseline = "middle"; g.textAlign = "left"; g.fillText("금호건설TV", 30, 33); g.fillStyle = "#b9bcc0"; g.font = `500 22px ${FONT}`; g.textAlign = "right"; g.fillText("YouTube", 492, 34); });
-      const tl = plane(SWd + 0.1, 0.2, new THREE.MeshBasicMaterial({ map: tvl })); tl.position.set(sx, sy - SHt / 2 - 0.17, sz); S.add(tl);
-      tl.userData.idx = "ytChannel"; tl.userData.url = "https://www.youtube.com/@kumhoenc"; pickables.push(tl);
-      S.updateMatrixWorld(true);
-      const Y = { video: "bW86IsTcs-o", title: "금호건설TV", sub: "금호건설의 현장과 사람, 브랜드 이야기를 영상으로 전합니다.", detail: "화면을 누르면 영상이 재생되고, '금호건설TV 바로가기'를 누르면 유튜브 채널로 이동합니다.", channel: "https://www.youtube.com/@kumhoenc", channelLabel: "금호건설TV 바로가기" };
-      const corners = [[-SWd / 2, SHt / 2], [SWd / 2, SHt / 2], [SWd / 2, -SHt / 2], [-SWd / 2, -SHt / 2]].map(([x, y]) => scr.localToWorld(new THREE.Vector3(x, y, 0.005)));
-      scr.userData.idx = "yt"; scr.userData.Y = Y; pickables.push(scr);
-      const wpos = scr.getWorldPosition(new THREE.Vector3());
+      // (the 금호건설TV screen was removed at the user's request)
       { const p0 = S.position; OUT.walls = [[p0.x - W / 2, p0.x + W / 2, p0.z + D / 2 - 0.05, p0.z + D / 2 + 0.05], [p0.x + W / 2 - 0.05, p0.x + W / 2 + 0.05, p0.z - D / 2 + 0.2, p0.z + D / 2 + 0.05]]; }
-      OUT.tvStop = { kind: "yt", outside: true, data: Y, rec: { corners, Y }, pose: () => ({ x: wpos.x, z: wpos.z + 2.3, yaw: 0, pitch: 0.03 }) };
     }
     // street lamps on both pavements
     const poleM = lam(0x3a3a3c), lampM = basic(0xfff2d6);
-    for (const x of [-36, -12, 12, 36]) [[4.3, 1], [-5.2, -1]].forEach(([z, s]) => { if (x === 12 && z > 0) return;   // none in front of the bus shelter
+    for (const x of [-36, -12, 12, 36]) [[4.3, 1], [-5.2, -1]].forEach(([z, s]) => {   // none in front of the bus shelter
       const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 7, 10), poleM); p.position.set(x, 3.5, z); world.add(p);
       const a = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 1.6), poleM); a.position.set(x, 6.95, z - s * 0.8); world.add(a);
       const l = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.3), lampM); l.position.set(x, 6.86, z - s * 1.55); world.add(l); });
@@ -7075,7 +7059,6 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       detail: "아카이브 문을 나서면 도로에 금호고속 버스가 서 있습니다. 버스를 누르면 출발해 눈앞을 지나갑니다. 길 건너 울창한 가로수 너머로 금호건설이 지은 아테라 아파트 단지가 보입니다." }, pose: main });
     stops.push({ kind: "art", outside: true, outBus: true, epi: true, data: OUT_EPILOGUE, pose: () => ({ x: 1, z: 11.5, yaw: -0.04, pitch: 0.02 }) });
     stops.push({ kind: "art", outside: true, outApt: true, epi: true, data: OUT_EPILOGUE, pose: () => ({ x: 4, z: 12.8, yaw: -0.06, pitch: 0.22 }) });
-    if (OUT.tvStop) stops.push(OUT.tvStop);
     stops.push({ kind: "door", side: 2, u: 0, cy: 1.8, w: 4.2, h: 4.4, target: back, label: lbl });
     buildChips(); updateHud(); setNav();
     setZoom(0.8); zoom = zoomTarget; camera.fov = baseFov / zoom; camera.updateProjectionMatrix();
@@ -7375,11 +7358,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const key=new THREE.DirectionalLight(0xfff2db,1.15); key.position.set(C.x+3,5,C.z-4); world.add(key);
     const fill=new THREE.DirectionalLight(0xe6efff,0.55); fill.position.set(C.x-3,3,C.z+2); world.add(fill);
     const expectedWorld=world;
-    taxiClone().then((mesh)=>{
+    decodeTaxi().then(({geometry,texture,surface,normal})=>{
       if(world!==expectedWorld || mode!=="lobby") return;
-      mesh.traverse((o)=>{ if(o.isMesh) o.userData.taxiShared=true; });
+      // Original GLB PBR textures: blue = metalness, green = roughness.
+      const mat=new THREE.MeshStandardMaterial({map:texture, metalness:1, roughness:1, metalnessMap:surface, roughnessMap:surface, normalMap:normal, normalScale:new THREE.Vector2(0.65,0.65), envMap:taxiEnvironment(), envMapIntensity:0.8, side:THREE.DoubleSide});
+      const mesh=new THREE.Mesh(geometry,mat); const scale=4.15/1.90101;   // the one decoded geometry, shared with the 3D view (never copied)
+      mesh.userData.taxiShared=true; mesh.scale.setScalar(scale); mesh.position.y=0.379509*scale-0.075;
       holder.add(mesh);
-    }).catch(err=>{console.error("택시 모델 로딩 실패",err); document.getElementById("taxiNotice").textContent="택시 모델을 불러오지 못했습니다. assets 폴더의 taxi-model.glb 파일을 확인해 주세요."; document.getElementById("taxiNotice").hidden=false;});
+    }).catch(err=>{console.error("택시 모델 로딩 실패",err); document.getElementById("taxiNotice").textContent="택시 모델을 불러오지 못했습니다. assets 폴더의 taxi-model-1.bin과 taxi-model-2.bin 파일을 확인해 주세요."; document.getElementById("taxiNotice").hidden=false;});
     // information display: the same ivory kiosk monitor as in the halls — photo left, text right (as in the pop-up)
     { const W=1440, H=992, d=CAR.data;
       const cv=document.createElement("canvas"); cv.width=W; cv.height=H; const c=cv.getContext("2d");
@@ -8196,11 +8182,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
 
     const it = s.data; $("t3dTitle").textContent = it.title; $("t3dCap").textContent = it.cap || ""; $("t3dDetail").textContent = it.detail || "";
     $("t3d").hidden = false; T3.on = true; $("t3dClose").focus();
-    if (!T3.r) {
+    document.body.classList.add("t3on");
+    if (!T3.scene) {
       const cv = $("t3dCanvas");
-      T3.r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
-      T3.r.outputEncoding = THREE.sRGBEncoding; T3.r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      T3.r = true;   // drawn by the main renderer (one WebGL context for the whole archive)
       T3.scene = new THREE.Scene(); T3.cam = new THREE.PerspectiveCamera(32, 1, 0.05, 100);
+      T3.scene.background = canvasTex(512, 512, (g, w, h) => { const r = g.createRadialGradient(w * 0.45, h * 0.42, 0, w * 0.45, h * 0.42, w * 0.75); r.addColorStop(0, "#3a3730"); r.addColorStop(0.55, "#1a1916"); r.addColorStop(1, "#0c0c0b"); g.fillStyle = r; g.fillRect(0, 0, w, h); });
       T3.scene.add(new THREE.HemisphereLight(0xeef2f8, 0x4a443c, 0.9));
       const k = new THREE.DirectionalLight(0xfff2db, 1.2); k.position.set(-4, 6, 5); T3.scene.add(k);
       const f = new THREE.DirectionalLight(0xe6efff, 0.55); f.position.set(5, 3, -4); T3.scene.add(f);
@@ -8231,10 +8218,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       T3.az = 0.75; T3.el = 0.22;
       const done = (obj, ty, d0, rr) => { if (T3.key !== key) return; T3.scene.add(obj); T3.mesh = obj; T3.ty = ty; T3.d0 = T3.dist = d0; T3.ring.scale.setScalar(rr / 3); T3.shadow.scale.setScalar(rr / 3); $("t3dLoad").hidden = true; };
       const fail = () => { $("t3dLoad").textContent = "3D 모델을 불러오지 못했습니다."; };
-      if (!s.model3d) taxiClone().then((m) => { m.rotation.y = Math.PI; done(m, 0.82, 7.2, 3); }).catch(fail);
-      else if (false) decodeTaxi().then(({ geometry, texture, surface, normal }) => {
+      if (!s.model3d) decodeTaxi().then(({ geometry, texture, surface, normal }) => {
         const mat = new THREE.MeshStandardMaterial({ map: texture, metalness: 1, roughness: 1, metalnessMap: surface, roughnessMap: surface, normalMap: normal, normalScale: new THREE.Vector2(0.65, 0.65), envMap: taxiEnvironment(), envMapIntensity: 0.8, side: THREE.DoubleSide });
-        const m = new THREE.Mesh(geometry.clone(), mat), sc = 4.15 / 1.90101;
+        const m = new THREE.Mesh(geometry, mat), sc = 4.15 / 1.90101;
         m.scale.setScalar(sc); m.position.y = 0.379509 * sc - 0.075; m.rotation.y = Math.PI; done(m, 0.82, 7.2, 3);
       }).catch(fail);
       else {
@@ -8252,26 +8238,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     cancelAnimationFrame(T3.raf);
     const tick = (now) => {
       if (!T3.on) return;
-      const cv = T3.r.domElement, w = cv.clientWidth, h = cv.clientHeight, pr = T3.r.getPixelRatio();
-      if (cv.width !== Math.round(w * pr) || cv.height !== Math.round(h * pr)) { T3.r.setSize(w, h, false); T3.cam.aspect = w / h; T3.cam.updateProjectionMatrix(); }
+      const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1;
+      if (Math.abs(T3.cam.aspect - w / h) > 1e-3) { T3.cam.aspect = w / h; T3.cam.updateProjectionMatrix(); }
       const dt = T3.last ? Math.min(0.05, (now - T3.last) / 1000) : 0.016; T3.last = now;
       if (!T3.ptr.size && now - T3.idle > 4000) T3.az += dt * 0.12;          // slow showroom turn while untouched
       const ty = T3.ty || 0.82, c = Math.cos(T3.el);
       T3.cam.position.set(Math.sin(T3.az) * c * T3.dist, ty + Math.sin(T3.el) * T3.dist, Math.cos(T3.az) * c * T3.dist);
       T3.cam.lookAt(0, ty, 0);
-      T3.r.render(T3.scene, T3.cam);
       T3.raf = requestAnimationFrame(tick);
     };
     T3.last = 0; T3.raf = requestAnimationFrame(tick);
   }
-  function close3D() {
-    T3.on = false; cancelAnimationFrame(T3.raf); $("t3d").hidden = true;
-    if (T3.r) {   // release the second WebGL context: drop the renderer and swap in a fresh canvas for next time
-      const old = T3.r.domElement; T3.r.dispose(); T3.r.forceContextLoss();
-      const fresh = old.cloneNode(false); old.parentNode.replaceChild(fresh, old);
-      T3.r = null; T3.scene = null; T3.mesh = null; T3.key = null; T3.ptr.clear(); T3.pd = null;
-    }
-  }
+  function close3D() { T3.on = false; cancelAnimationFrame(T3.raf); $("t3d").hidden = true; document.body.classList.remove("t3on"); T3.ptr.clear(); T3.pd = null; }
   function closeLB() { $("lb").hidden = true; $("lb").style.zIndex = ""; }
   // map pop-ups: clicking the photo opens the same large view as the wall photo (detail text included)
   (() => {
@@ -9743,7 +9721,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const b = $("bearing");
     if (b) { const q = Math.round(wrapAngle(-cam.yaw) / (Math.PI / 2)); b.textContent = SIDE_NAME[((q % 4) + 4) % 4]; }
     stepCar();
-    if (!T3.on) renderer.render(scene, camera);   // the 3D taxi view covers the screen: draw only that
+    if (T3.on && T3.scene) renderer.render(T3.scene, T3.cam);   // the 3D taxi view: same renderer, the gallery is not drawn meanwhile
+    else renderer.render(scene, camera);
     placeWallMap(); placeYT(); placeKiosk();
     requestAnimationFrame(frame);
   }
