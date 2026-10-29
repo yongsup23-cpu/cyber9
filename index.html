@@ -6204,11 +6204,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         sky = mix(sky, sky*1.35 + vec3(.05), drop*uRain*.6);
       }
       // snow
-      if (uSnow > 0.0) {
-        vec2 q = vec2(phi*38.0 + sin(uT*.6 + el*9.0)*.3, el*18.0 + uT*1.3); vec2 si = floor(q);
-        vec2 so = vec2(hash(si+.4), hash(si+5.2)) - .5; float flake = step(.6, hash(si+2.2)) * smoothstep(.16, .04, length(fract(q)-.5-so*.6));
-        sky += vec3(.85,.88,.92) * flake * uSnow * .6;
-      }
+      sky = mix(sky, sky * .9 + vec3(.08), uSnow * .5);   // the falling flakes themselves are real particles outside the glass
       sky += uFlash * vec3(.55,.6,.75) * (.6 + .4*n);
       // curtain-wall glass: light tint, faint vertical sheen and a fresnel reflection of the warm lobby
       vec3 colr = sky * vec3(.98, .99, 1.0) * 1.12 * mix(1.0, uLum, uDay);
@@ -6565,6 +6561,17 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     addGlass();
     }
     skyDome = { u, t: skyTarget(), first: true };
+    { // snow falling over the lobby, seen through the glass roof: flakes melt away where they meet the glass
+      const roofY = ROOF === "vault" ? (x) => Y0 + 0.62 * HX * Math.sqrt(Math.max(0, 1 - (x / HX) * (x / HX))) + 0.05 : () => Y0 + 2.6;
+      const NS = 2600, X = HX + 12, ZA = -HZ - 14, ZB = HZ + 3, YA = Y0 - 1, YB = Y0 + 13;
+      const p = new Float32Array(NS * 3), ph = new Float32Array(NS);
+      let sd = 99; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < NS; i++) { p.set([(r() * 2 - 1) * X, YA + r() * (YB - YA), ZA + r() * (ZB - ZA)], i * 3); ph[i] = r() * 6.28; }
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(p, 3));
+      const tex = canvasTex(64, 64, (c) => { const rg = c.createRadialGradient(32, 32, 0, 32, 32, 30); rg.addColorStop(0, "rgba(255,255,255,1)"); rg.addColorStop(0.45, "rgba(255,255,255,.8)"); rg.addColorStop(1, "rgba(255,255,255,0)"); c.fillStyle = rg; c.fillRect(0, 0, 64, 64); });
+      const pts = new THREE.Points(g, new THREE.PointsMaterial({ map: tex, size: 0.3, transparent: true, opacity: 0, depthWrite: false, color: 0xffffff }));
+      pts.frustumCulled = false; pts.visible = false; pts.renderOrder = 2; world.add(pts);
+      skyDome.snow = { pts, ph, t: 0, X, ZA, ZB, YA, YB, inside: (x, y, z) => Math.abs(x) < HX && z > -HZ && z < HZ && y < roofY(x) }; }
     fetchWeather(); skyChip(true);
   }
   /* soft floor shadows of the lobby doors, cast away from the real sun through the glass roof */
@@ -6615,6 +6622,15 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       DOME.alu[1].color.setRGB(0.36 * lv + 0.04, 0.375 * lv + 0.04, 0.395 * lv + 0.045);
       DOME.alu[2].color.setRGB(0.12 * lv + 0.03, 0.12 * lv + 0.03, 0.115 * lv + 0.03); }
     stepSeasonTree(dt, u);
+    if (skyDome.snow) { const S = skyDome.snow, m = S.pts.material;
+      m.opacity += ((t.snow || 0) * 0.95 - m.opacity) * k; S.pts.visible = m.opacity > 0.01;
+      if (S.pts.visible) { S.t += dt; const a = S.pts.geometry.attributes.position, p = a.array, W = 2 * S.X, D = S.ZB - S.ZA, H = S.YB - S.YA;
+        for (let i = 0, n = S.ph.length; i < n; i++) { const o = i * 3, f = S.ph[i];
+          let x = p[o] + (Math.sin(S.t * 0.8 + f) * 0.35 + 0.25) * dt, y = p[o + 1] - (0.9 + 0.5 * Math.sin(f * 3.1)) * dt, z = p[o + 2] + Math.cos(S.t * 0.6 + f * 1.3) * 0.25 * dt;
+          if (y < S.YA || S.inside(x, y, z)) y = S.YB - Math.random() * 1.5;
+          if (x > S.X) x -= W; else if (x < -S.X) x += W; if (z > S.ZB) z -= D; else if (z < S.ZA) z += D;
+          p[o] = x; p[o + 1] = y; p[o + 2] = z; }
+        a.needsUpdate = true; } }
     if (t.storm && !reduce && Math.random() < dt * 0.18) u.uFlash.value = 0.9 + Math.random() * 0.3;
     u.uFlash.value *= Math.exp(-dt * 7);
     if (Math.floor(now / 60000) !== skyDome.min) { skyDome.min = Math.floor(now / 60000); fetchWeather(); skyLabel(); }
@@ -6875,7 +6891,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       W.snow = new THREE.Points(sg, new THREE.PointsMaterial({ map: flakeTex, size: 0.2, transparent: true, opacity: 0, depthWrite: false, color: 0xffffff })); W.snow.frustumCulled = false; W.snow.visible = false; W.sph = sph; world.add(W.snow);
       OUT.wx = W; OUT.snap = true; }
     // Ulsan Sinjeong Artera, drawn as clean straight towers after the photograph (the scanned model warped up close)
-    { const A = new THREE.Group(); A.position.set(10, 0, -200); world.add(A); OUT.aptMats = [];
+    { const A = new THREE.Group(); A.position.set(58, 0, -200); world.add(A); OUT.aptMats = [];
       const FL = 37, FH = 2.9;
       const facade = (W, H, cols, base, glass, frame, opt) => {
         const tw = 512, th = 2048;
@@ -6907,23 +6923,22 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       };
       const H1 = FL * FH;
       // left: tall greige tower with the lit ARTERA sign
-      tower(-17, 6, 17, 14, H1 + 6, "#6e625a", "#2a2a2e", "#857a70",
+      tower(-36, 6, 17, 14, H1 + 6, "#6e625a", "#2a2a2e", "#857a70",
         facade(17, H1, 6, "#6e625a", "#28282c", "#8b8076", { seed: 1, band: "#5d534c", bandX: 0, bandW: 0.32, sign: { text: "ARTERA", size: 150, vertical: true, x: 0.16, y: 0.14 } }),
         facade(14, H1, 4, "#62584f", "#28282c", "#7c7168", { seed: 2 }));
       // centre front: pale beige tower
-      tower(-3, 16, 16, 13, H1 - 8, "#cfc6bb", "#3a3c42", "#e2dbd1", facade(16, H1, 6, "#cfc6bb", "#3b3d43", "#e5ded4", { seed: 3 }), facade(13, H1, 4, "#bdb4a9", "#3b3d43", "#d6cfc5", { seed: 4 }));
+      tower(-12, 16, 16, 13, H1 - 8, "#cfc6bb", "#3a3c42", "#e2dbd1", facade(16, H1, 6, "#cfc6bb", "#3b3d43", "#e5ded4", { seed: 3 }), facade(13, H1, 4, "#bdb4a9", "#3b3d43", "#d6cfc5", { seed: 4 }));
       // back centre: deep navy tower
-      tower(9, -4, 16, 14, H1 + 2, "#2c3f74", "#1d2233", "#3d528a", facade(16, H1, 6, "#2c3f74", "#1b2030", "#40568e", { seed: 5, band: "#b9b1a6", bandX: 0.72, bandW: 0.28 }), facade(14, H1, 4, "#283968", "#1b2030", "#3a4f86", { seed: 6 }));
+      tower(12, -4, 16, 14, H1 + 2, "#2c3f74", "#1d2233", "#3d528a", facade(16, H1, 6, "#2c3f74", "#1b2030", "#40568e", { seed: 5, band: "#b9b1a6", bandX: 0.72, bandW: 0.28 }), facade(14, H1, 4, "#283968", "#1b2030", "#3a4f86", { seed: 6 }));
       // right: navy tower, number 102
-      tower(22, 8, 15, 13, H1 - 4, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 7, band: "#d9d3c9", bandX: 0, bandW: 0.26, sign: { text: "102", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "102", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 8 }));
+      tower(36, 8, 15, 13, H1 - 4, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 7, band: "#d9d3c9", bandX: 0, bandW: 0.26, sign: { text: "102", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "102", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 8 }));
       // 101 to the left, 103 to the right
-      tower(-41, 2, 15, 13, H1 - 6, "#cfc6bb", "#3a3c42", "#e2dbd1", facade(15, H1, 5, "#cfc6bb", "#3b3d43", "#e5ded4", { seed: 9, band: "#6e625a", bandX: 0.74, bandW: 0.26, sign: { text: "101", size: 120, x: 0.38, y: 0.06 }, sign2: { text: "101", size: 70, x: 0.38, y: 0.86 } }), facade(13, H1, 4, "#bdb4a9", "#3b3d43", "#d6cfc5", { seed: 10 }));
-      tower(42, 2, 15, 13, H1 - 2, "#6e625a", "#2a2a2e", "#857a70", facade(15, H1, 5, "#6e625a", "#28282c", "#8b8076", { seed: 11, band: "#27408a", bandX: 0, bandW: 0.26, sign: { text: "103", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "103", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#62584f", "#28282c", "#7c7168", { seed: 12 }));
-      // a further tower far left (no number) and 104 far right: the same scale as 102, standing apart with open sky between
-      tower(-64, -2, 15, 13, H1 - 4, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 13, band: "#d9d3c9", bandX: 0.74, bandW: 0.26 }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 14 }));
-      tower(65, -2, 15, 13, H1 - 5, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 15, band: "#d9d3c9", bandX: 0, bandW: 0.26, sign: { text: "104", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "104", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 16 }));
+      tower(-62, 2, 15, 13, H1 - 6, "#cfc6bb", "#3a3c42", "#e2dbd1", facade(15, H1, 5, "#cfc6bb", "#3b3d43", "#e5ded4", { seed: 9, band: "#6e625a", bandX: 0.74, bandW: 0.26 }), facade(13, H1, 4, "#bdb4a9", "#3b3d43", "#d6cfc5", { seed: 10 }));
+      tower(68, 2, 15, 13, H1 - 2, "#6e625a", "#2a2a2e", "#857a70", facade(15, H1, 5, "#6e625a", "#28282c", "#8b8076", { seed: 11, band: "#27408a", bandX: 0, bandW: 0.26, sign: { text: "103", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "103", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#62584f", "#28282c", "#7c7168", { seed: 12 }));
+      // 101 far left: the same scale as 102, standing apart with open sky between
+      tower(-86, -2, 15, 13, H1 - 4, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 13, band: "#d9d3c9", bandX: 0.74, bandW: 0.26, sign: { text: "101", size: 120, x: 0.38, y: 0.06 }, sign2: { text: "101", size: 70, x: 0.38, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 14 }));
       // podium and garden at the foot
-      const pod = new THREE.Mesh(new THREE.BoxGeometry(152, 6, 44), new THREE.MeshLambertMaterial({ color: 0x8c857a })); pod.position.set(1, 3, 6); A.add(pod);
+      const pod = new THREE.Mesh(new THREE.BoxGeometry(172, 6, 44), new THREE.MeshLambertMaterial({ color: 0x8c857a })); pod.position.set(-9, 3, 6); A.add(pod);
     }
     const main = () => ({ x: -3, z: 12.6, yaw: -0.62, pitch: 0.17 });
     stops.push({ kind: "art", outside: true, data: { year: "", co: "금호 아카이브", title: "아카이브 밖으로", cap: "금호고속 버스가 서는 2차선 도로",
