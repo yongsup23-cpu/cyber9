@@ -4669,7 +4669,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
-    world.traverse(o=>{if(!o.userData.archiveQualityModel)return;for(const m of (Array.isArray(o.material)?o.material:[o.material])){if(!m)continue;for(const key of ['map','normalMap','metalnessMap','roughnessMap','aoMap','emissiveMap']){const t=m[key];if(t&&!released.has(t)){released.add(t);t.dispose();}}m.dispose();}});
+    world.traverse(o=>{if(!o.userData.archiveQualityModel||o.userData.taxiShared)return;for(const m of (Array.isArray(o.material)?o.material:[o.material])){if(!m)continue;for(const key of ['map','normalMap','metalnessMap','roughnessMap','aoMap','emissiveMap']){const t=m[key];if(t&&!released.has(t)){released.add(t);t.dispose();}}m.dispose();}});
     renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
     scene.remove(world);
     world.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
@@ -7304,6 +7304,22 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const [texture, surface, normal] = await Promise.all([loadModelTexture(parts[4],true),loadModelTexture(parts[5],false),loadModelTexture(parts[6],false)]);
     taxiDecoded = { geometry, texture, surface, normal }; return taxiDecoded;
   }
+  // the founding taxi as one compact model (about 300k triangles, the original 2048px textures, 4 MB), loaded once;
+  // the lobby and the 3D view each take a clone that shares its geometry and textures
+  let taxiGLB = null;
+  function loadTaxiGLB() {
+    if (taxiGLB) return taxiGLB;
+    if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
+    taxiGLB = (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => new Promise((res, rej) => gltfLoader.load("assets/taxi-model.glb", (g) => {
+      const m = g.scene; m.traverse((o) => { if (o.isMesh) { const mt = o.material; mt.envMap = taxiEnvironment(); mt.envMapIntensity = 0.8; mt.side = THREE.DoubleSide; if (mt.normalMap) mt.normalScale.set(0.65, 0.65); [mt.map, mt.metalnessMap, mt.roughnessMap, mt.normalMap].forEach((t) => { if (t) t.anisotropy = ANISO; }); } });
+      const bb = new THREE.Box3().setFromObject(m), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3());
+      const k = 4.15 / Math.max(bs.x, bs.z), wrap = new THREE.Group(); m.position.set(-bc.x, -bb.min.y, -bc.z); wrap.add(m); wrap.scale.setScalar(k);
+      if (bs.z > bs.x) wrap.rotation.y = Math.PI / 2;
+      const out = new THREE.Group(); out.add(wrap); out.position.y = -0.075; res(out);
+    }, undefined, (e) => { taxiGLB = null; rej(e); })));
+    return taxiGLB;
+  }
+  const taxiClone = () => loadTaxiGLB().then((t) => t.clone(true));
   let taxiEnv = null;
   function taxiEnvironment() {
     if (taxiEnv) return taxiEnv;
@@ -7359,14 +7375,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const key=new THREE.DirectionalLight(0xfff2db,1.15); key.position.set(C.x+3,5,C.z-4); world.add(key);
     const fill=new THREE.DirectionalLight(0xe6efff,0.55); fill.position.set(C.x-3,3,C.z+2); world.add(fill);
     const expectedWorld=world;
-    decodeTaxi().then(({geometry,texture,surface,normal})=>{
+    taxiClone().then((mesh)=>{
       if(world!==expectedWorld || mode!=="lobby") return;
-      // Original GLB PBR textures: blue = metalness, green = roughness.
-      const mat=new THREE.MeshStandardMaterial({map:texture, metalness:1, roughness:1, metalnessMap:surface, roughnessMap:surface, normalMap:normal, normalScale:new THREE.Vector2(0.65,0.65), envMap:taxiEnvironment(), envMapIntensity:0.8, side:THREE.DoubleSide});
-      const mesh=new THREE.Mesh(geometry.clone(),mat); const scale=4.15/1.90101;
-      mesh.scale.setScalar(scale); mesh.position.y=0.379509*scale-0.075;
+      mesh.traverse((o)=>{ if(o.isMesh) o.userData.taxiShared=true; });
       holder.add(mesh);
-    }).catch(err=>{console.error("택시 모델 로딩 실패",err); document.getElementById("taxiNotice").textContent="택시 모델을 불러오지 못했습니다. assets 폴더의 taxi-model-1.bin과 taxi-model-2.bin 파일을 확인해 주세요."; document.getElementById("taxiNotice").hidden=false;});
+    }).catch(err=>{console.error("택시 모델 로딩 실패",err); document.getElementById("taxiNotice").textContent="택시 모델을 불러오지 못했습니다. assets 폴더의 taxi-model.glb 파일을 확인해 주세요."; document.getElementById("taxiNotice").hidden=false;});
     // information display: the same ivory kiosk monitor as in the halls — photo left, text right (as in the pop-up)
     { const W=1440, H=992, d=CAR.data;
       const cv=document.createElement("canvas"); cv.width=W; cv.height=H; const c=cv.getContext("2d");
@@ -8218,7 +8231,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       T3.az = 0.75; T3.el = 0.22;
       const done = (obj, ty, d0, rr) => { if (T3.key !== key) return; T3.scene.add(obj); T3.mesh = obj; T3.ty = ty; T3.d0 = T3.dist = d0; T3.ring.scale.setScalar(rr / 3); T3.shadow.scale.setScalar(rr / 3); $("t3dLoad").hidden = true; };
       const fail = () => { $("t3dLoad").textContent = "3D 모델을 불러오지 못했습니다."; };
-      if (!s.model3d) decodeTaxi().then(({ geometry, texture, surface, normal }) => {
+      if (!s.model3d) taxiClone().then((m) => { m.rotation.y = Math.PI; done(m, 0.82, 7.2, 3); }).catch(fail);
+      else if (false) decodeTaxi().then(({ geometry, texture, surface, normal }) => {
         const mat = new THREE.MeshStandardMaterial({ map: texture, metalness: 1, roughness: 1, metalnessMap: surface, roughnessMap: surface, normalMap: normal, normalScale: new THREE.Vector2(0.65, 0.65), envMap: taxiEnvironment(), envMapIntensity: 0.8, side: THREE.DoubleSide });
         const m = new THREE.Mesh(geometry.clone(), mat), sc = 4.15 / 1.90101;
         m.scale.setScalar(sc); m.position.y = 0.379509 * sc - 0.075; m.rotation.y = Math.PI; done(m, 0.82, 7.2, 3);
@@ -8250,7 +8264,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     };
     T3.last = 0; T3.raf = requestAnimationFrame(tick);
   }
-  function close3D() { T3.on = false; cancelAnimationFrame(T3.raf); $("t3d").hidden = true; }
+  function close3D() {
+    T3.on = false; cancelAnimationFrame(T3.raf); $("t3d").hidden = true;
+    if (T3.r) {   // release the second WebGL context: drop the renderer and swap in a fresh canvas for next time
+      const old = T3.r.domElement; T3.r.dispose(); T3.r.forceContextLoss();
+      const fresh = old.cloneNode(false); old.parentNode.replaceChild(fresh, old);
+      T3.r = null; T3.scene = null; T3.mesh = null; T3.key = null; T3.ptr.clear(); T3.pd = null;
+    }
+  }
   function closeLB() { $("lb").hidden = true; $("lb").style.zIndex = ""; }
   // map pop-ups: clicking the photo opens the same large view as the wall photo (detail text included)
   (() => {
@@ -9722,7 +9743,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const b = $("bearing");
     if (b) { const q = Math.round(wrapAngle(-cam.yaw) / (Math.PI / 2)); b.textContent = SIDE_NAME[((q % 4) + 4) % 4]; }
     stepCar();
-    renderer.render(scene, camera);
+    if (!T3.on) renderer.render(scene, camera);   // the 3D taxi view covers the screen: draw only that
     placeWallMap(); placeYT(); placeKiosk();
     requestAnimationFrame(frame);
   }
