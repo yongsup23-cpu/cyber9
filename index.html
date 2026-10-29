@@ -4661,7 +4661,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
           for (const k of ["map", "normalMap", "metalnessMap", "roughnessMap", "aoMap", "emissiveMap", "alphaMap"]) { const t = m[k]; if (t && !keep.has(t) && !done.has(t)) { done.add(t); t.dispose(); } }
           if (m.uniforms) {} m.dispose(); } });
       OUT.grow = null; }
-    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
+    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
@@ -6737,6 +6737,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       c = mix(c, mix(vec3(.05,.055,.06), vec3(.62,.64,.66), uDay), uOver * .85);
       float sd = max(dot(d, normalize(uSun)), 0.0); c += uDay * (1.0 - uOver) * (1.0 - cov) * (vec3(1.,.95,.8) * smoothstep(.9996, .9999, sd) + vec3(1.,.8,.5) * pow(sd, 90.0) * .25);
       c += vec3(.75,.8,1.0) * uFlash * (0.5 + 0.5 * el);
+      // stars on a clear night, twinkling, hidden by cloud and daylight
+      vec2 sp = vec2(atan(d.z, d.x) * 160.0, asin(clamp(d.y, -1.0, 1.0)) * 160.0); vec2 sc = floor(sp), sf = fract(sp) - .5;
+      float sr = hs(sc), so = hs(sc + 13.7);
+      float star = step(.985, sr) * smoothstep(.18 + .12 * so, .0, length(sf - (vec2(so, hs(sc + 5.1)) - .5) * .5));
+      star *= (.55 + .45 * sin(uTime * (1.5 + 3.0 * so) + sr * 40.0)) * (.4 + .6 * so);
+      c += vec3(.92,.95,1.0) * star * (1.0 - uDay) * (1.0 - uOver) * (1.0 - cov) * smoothstep(.04, .2, el) * 1.4;
       gl_FragColor = vec4(c, 1.0); }`;
   function outHorizon(t, out) {   // the sky colour at the horizon (also the fog colour)
     const day = t.day, ov = t.over;
@@ -6926,6 +6932,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       tower(-36, 6, 17, 14, H1 + 6, "#6e625a", "#2a2a2e", "#857a70",
         facade(17, H1, 6, "#6e625a", "#28282c", "#8b8076", { seed: 1, band: "#5d534c", bandX: 0, bandW: 0.32, sign: { text: "ARTERA", size: 150, vertical: true, x: 0.16, y: 0.14 } }),
         facade(14, H1, 4, "#62584f", "#28282c", "#7c7168", { seed: 2 }));
+      { // the ARTERA sign again, unaffected by fog: in every weather (snow, rain, mist) the name still reads
+        const W = 17, Hh = H1 + 6, fx = 0.32, fy = 0.3, cw = Math.round(512 * fx), ch = Math.round(2048 * fy);
+        const tx = canvasTex(cw, ch, (g) => { g.clearRect(0, 0, cw, ch); g.fillStyle = "#f4f1ea"; g.font = `800 150px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle";
+          g.translate(0.16 * 512, 0.14 * 2048); g.rotate(Math.PI / 2); g.fillText("ARTERA", 0, 0); });
+        const m = new THREE.MeshBasicMaterial({ map: tx, transparent: true, opacity: 1, fog: false, depthWrite: false });
+        const sg = new THREE.Mesh(new THREE.PlaneGeometry(W * fx, Hh * fy), m); sg.position.set(-36 - W / 2 + W * fx / 2, Hh - Hh * fy / 2, 6 + 7 + 0.08); A.add(sg); OUT.arteraSign = m; }
       // centre front: pale beige tower
       tower(-12, 16, 16, 13, H1 - 8, "#cfc6bb", "#3a3c42", "#e2dbd1", facade(16, H1, 6, "#cfc6bb", "#3b3d43", "#e5ded4", { seed: 3 }), facade(13, H1, 4, "#bdb4a9", "#3b3d43", "#d6cfc5", { seed: 4 }));
       // back centre: deep navy tower
