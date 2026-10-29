@@ -4665,7 +4665,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
           for (const k of ["map", "normalMap", "metalnessMap", "roughnessMap", "aoMap", "emissiveMap", "alphaMap"]) { const t = m[k]; if (t && !keep.has(t) && !done.has(t)) { done.add(t); t.dispose(); } }
           if (m.uniforms) {} m.dispose(); } });
       OUT.grow = null; }
-    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.tvStop = null; OUT.walls = null; if (OUT.st === "ride") { busy = false; document.body.classList.remove("riding"); if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
+    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.tvStop = null; OUT.walls = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; document.body.classList.remove("riding"); if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
@@ -6767,7 +6767,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const u = { uDay: { value: 1 }, uTwi: { value: 0 }, uOver: { value: 0 }, uDawn: { value: 0 }, uCloud: { value: 0.2 }, uFlash: { value: 0 }, uTime: { value: 0 }, uSun: { value: new THREE.Vector3(0.3, 0.8, -0.5) } };
     const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 16), new THREE.ShaderMaterial({ uniforms: u, vertexShader: "varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }", fragmentShader: OUT_SKY_FS, side: THREE.BackSide, depthWrite: false }));
     sky.renderOrder = -10; world.add(sky); OUT.sky = u;
-    camera.far = 1000; camera.updateProjectionMatrix();   // the street needs a far horizon (the halls use 160)
+    camera.far = 1000; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));   // the street needs a far horizon (the halls use 160)
     scene.fog = new THREE.Fog(0x9fb0c2, 70, 520);
     OUT.hemi = new THREE.HemisphereLight(0xeef3ff, 0x4b4a40, 1.0); world.add(OUT.hemi);
     OUT.sun = new THREE.DirectionalLight(0xfff0d8, 1.0); OUT.sun.position.set(30, 60, 40); world.add(OUT.sun);
@@ -6924,11 +6924,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const lp = g.worldToLocal(hit.point.clone()), d = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mt);
         d.position.set(lp.x, lp.y, lp.z + sd * 0.012); d.rotation.y = sd > 0 ? 0 : Math.PI; g.add(d); }));
     });
-    // easter egg: the founding taxi from the lobby, waiting off-stage until the bus has been sent off twice
-    decodeTaxi().then(({ geometry, texture, surface, normal }) => {
-      if (world !== ow || mode !== "outside") return;
-      const mat = new THREE.MeshStandardMaterial({ map: texture, metalness: 1, roughness: 1, metalnessMap: surface, roughnessMap: surface, normalMap: normal, normalScale: new THREE.Vector2(0.65, 0.65), envMap: taxiEnvironment(), envMapIntensity: 0.8, side: THREE.DoubleSide });
-      const mesh = new THREE.Mesh(geometry.clone(), mat), sc = 4.15 / 1.90101; mesh.scale.setScalar(sc); mesh.position.y = 0.379509 * sc - 0.075; mesh.rotation.y = OUT_TAXI_YAW;
+    // easter egg: the founding taxi, waiting off-stage until the bus has been sent off twice.
+    // A light copy (75k triangles, 1.3 MB) fetched only after the bus first leaves, instead of the 1.9M-triangle lobby model.
+    OUT.loadTaxi = () => { if (OUT.taxiReq) return; OUT.taxiReq = true;
+    load("assets/outside-taxi.glb", (m0) => {
+      const bb = new THREE.Box3().setFromObject(m0), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3());
+      m0.position.set(-bc.x, -bb.min.y, -bc.z); dioLook(m0, "pbr", "taxi");
+      const mesh = new THREE.Group(); mesh.add(m0); mesh.scale.setScalar(4.15 / Math.max(bs.x, bs.z)); mesh.rotation.y = (bs.x >= bs.z ? 0 : Math.PI / 2) + OUT_TAXI_YAW;
       const g = new THREE.Group(); g.add(mesh); g.position.set(90, 0.02, 1.75); g.visible = false; world.add(g);
       const pb = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1.9, 2.0), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.y = 0.95; pb.userData.idx = "outBus"; g.add(pb); pickables.push(pb);
       OUT.taxi = g; OUT.taxiMesh = mesh;
@@ -6975,13 +6977,22 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         [0.75, -0.75].forEach((z) => add(B(0.05, 0.6, 0.06), choc, -0.52, 1.27, z, 0, 0, -0.36));
         add(B(0.02, 0.06, 0.21), chrome, -0.44, 1.46, 0.02); add(B(0.004, 0.048, 0.196), std(0x2a2826, 0.9, 0.08), -0.429, 1.46, 0.02);
         add(B(0.012, 0.06, 0.012), chrome, -0.44, 1.51, 0.02);
-        add(B(1.9, 0.04, 1.52), lining, 0.5, 1.6, 0);
+        add(B(2.05, 0.04, 1.52), lining, 0.53, 1.6, 0);
         [0.5, -0.5].forEach((z) => add(B(0.05, 0.03, 0.03), chrome, -0.36, 1.55, z));
         // driver's door: burgundy metal over a wood panel, chrome handle; window frame
         add(B(1.6, 0.14, 0.04), choc2, 0.1, 0.98, 0.76); add(B(1.6, 0.4, 0.04), wood, 0.1, 0.7, 0.76);
         add(B(0.1, 0.016, 0.02), chrome, -0.2, 0.74, 0.735, 0, 0, -0.3); add(B(0.012, 0.012, 0.03), chrome, -0.16, 0.76, 0.745);
         add(B(0.05, 0.6, 0.05), choc, 0.45, 1.3, 0.76); add(B(0.05, 0.6, 0.05), choc, 0.45, 1.3, -0.76);
         add(B(1.6, 0.4, 0.04), choc2, 0.1, 0.72, -0.76);
+        // the rest of the cabin, so looking round never shows the street through the car: rear doors, seats, back panel, floor
+        const leather = std(0x33201a, 0.05, 0.6, 0.3), floorM = std(0x1a1210, 0.0, 0.9);
+        [0.76, -0.76].forEach((z) => { add(B(0.66, 0.14, 0.04), choc2, 1.22, 0.98, z); add(B(0.66, 0.4, 0.04), wood, 1.22, 0.7, z);
+          add(B(0.05, 0.62, 0.05), choc, 0.92, 1.3, z); add(B(0.08, 0.62, 0.05), choc, 1.53, 1.3, z); add(B(2.4, 0.03, 0.04), chrome, 0.35, 0.92, z * 0.985); });
+        add(B(0.05, 1.3, 1.52), lining, 1.57, 0.95, 0);                                   // back panel
+        const rw = add(B(0.01, 0.16, 0.6), std(0x8fa3b0, 0.2, 0.1, 1.2), 1.54, 1.38, 0);   // small rear window
+        add(B(0.12, 0.62, 1.4), leather, 0.44, 0.84, 0); add(B(0.1, 0.06, 1.4), leather, 0.44, 1.16, 0);   // front bench back, behind the driver
+        add(B(0.5, 0.16, 1.42), leather, 1.25, 0.56, 0); add(B(0.14, 0.62, 1.42), leather, 1.47, 0.9, 0);   // rear bench
+        add(B(2.6, 0.04, 1.5), floorM, 0.25, 0.42, 0);
         // the long black bonnet with its chrome centre strip and ornament, rounded wings, wiper arms
         const hood = add(new THREE.CylinderGeometry(0.42, 0.42, 1.55, 32, 1, false, 0, Math.PI), black, -1.55, 0.93, 0, 0, 0, Z); hood.scale.set(0.28, 1, 1);
         add(B(1.55, 0.012, 0.025), chrome, -1.55, 1.05, 0);
@@ -6989,14 +7000,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         [0.62, -0.62].forEach((z) => add(new THREE.CylinderGeometry(0.16, 0.16, 1.3, 20, 1, false, 0, Math.PI), black, -1.6, 0.8, z, 0, 0, Z).scale.set(0.8, 1, 1));
         [0.3, -0.4].forEach((z) => add(B(0.012, 0.01, 0.42), dark, -0.7, 1.06, z, 0, 0.35, 0));
       }
-    }).catch((e) => console.error("택시 모델 로딩 실패", e));
+    }); };
     // weather: rain streaks, snowflakes, lightning, fog, drifting clouds, following the live sky (or the preview)
     { const W = { t: 0, flash: 0, nextBolt: 4, wet: 0, snowAmt: 0, roadM: road.material, roadDry: road.material.color.clone(), snowCover };
-      const NR = 3200, rp = new Float32Array(NR * 6), rs = new Float32Array(NR);
+      const LITE = matchMedia("(pointer: coarse)").matches, NR = LITE ? 1600 : 3200, rp = new Float32Array(NR * 6), rs = new Float32Array(NR);
       for (let i = 0; i < NR; i++) { const x = (rnd() - 0.5) * 60, y = rnd() * 22, z = (rnd() - 0.5) * 50; rs[i] = 0.8 + rnd() * 0.4; rp.set([x, y, z, x - 0.05, y - 0.55, z], i * 6); }
       const rg = new THREE.BufferGeometry(); rg.setAttribute("position", new THREE.BufferAttribute(rp, 3));
       W.rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0xc4ccd6, transparent: true, opacity: 0, depthWrite: false })); W.rain.frustumCulled = false; W.rain.visible = false; W.rs = rs; world.add(W.rain);
-      const NS = 3600, sp = new Float32Array(NS * 3), sph = new Float32Array(NS);
+      const NS = LITE ? 1800 : 3600, sp = new Float32Array(NS * 3), sph = new Float32Array(NS);
       for (let i = 0; i < NS; i++) { sp.set([(rnd() - 0.5) * 60, rnd() * 20, (rnd() - 0.5) * 50], i * 3); sph[i] = rnd() * 6.28; }
       const sg = new THREE.BufferGeometry(); sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
       const flakeTex = canvasTex(64, 64, (g) => { const r = g.createRadialGradient(32, 32, 0, 32, 32, 30); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.45, "rgba(255,255,255,.8)"); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 64, 64); });
@@ -7007,7 +7018,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const FL = 37, FH = 2.9;
       const facade = (W, H, cols, base, glass, frame, opt) => {
         const tw = 512, th = 2048;
-        const draw = (lit) => canvasTex(tw / 2, th / 2, (g) => { g.scale(0.5, 0.5);
+        const rs = opt.sign || opt.band ? 0.5 : 0.35;   // plain side faces need less detail
+        const draw = (lit) => canvasTex(Math.round(tw * rs), Math.round(th * rs), (g) => { g.scale(rs, rs);
           g.fillStyle = lit ? "#000" : base; g.fillRect(0, 0, tw, th);
           const rows = FL, rh = th / rows, cw = tw / cols;
           for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
@@ -7070,7 +7082,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     cur = 0; moveTo(main(), true); showCard();
     fetchWeather(); skyChip(true);
   }
-  function outBusGo() { if (OUT.veh && OUT.st === "idle") { if (OUT.kind === "bus") OUT.n++; OUT.st = "go"; OUT.v = 0; if (typeof sfxWhoosh === "function") sfxWhoosh(); } }
+  function outBusGo() { if (OUT.veh && OUT.st === "idle") { if (OUT.kind === "bus") { OUT.n++; if (OUT.loadTaxi) OUT.loadTaxi(); } OUT.st = "go"; OUT.v = 0; if (typeof sfxWhoosh === "function") sfxWhoosh(); } }
   function taxiCSS() { if ($("taxiCSS")) return; const st = document.createElement("style"); st.id = "taxiCSS";
       st.textContent = "#taxiAsk{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:60;background:rgba(0,0,0,.35)}#taxiAsk[hidden]{display:none}#taxiAsk .box{background:rgba(22,24,22,.96);border:1px solid #71634c;padding:22px 28px 20px;min-width:min(320px,calc(100vw - 32px));text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5)}#taxiAsk .k{margin:0 0 8px;font-size:12px;letter-spacing:2px;color:#c9a86a}#taxiAsk .q{margin:0 0 18px;font-family:'Noto Serif KR',serif;font-size:20px;color:#ece6da}#taxiAsk .b{display:flex;gap:10px;justify-content:center}#taxiAsk button{min-width:96px;min-height:40px;font:inherit;font-size:14px;cursor:pointer;border:1px solid #b89d68;background:transparent;color:#ece6da}#taxiAsk button.y{background:#b89d68;color:#171712}body.riding #card,body.riding #vkeys{visibility:hidden}#taxiFade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .9s ease;z-index:59}#taxiToast{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:58;padding:10px 20px;background:rgba(22,24,22,.88);border:1px solid #71634c;color:#ece6da;font-family:'Noto Serif KR',serif;font-size:18px;opacity:0;transition:opacity .6s;pointer-events:none}";
       document.head.appendChild(st); }
@@ -7130,7 +7142,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (OUT.st === "ride") {   // riding the founding taxi: a chase view from just behind and beside it, for about ten seconds
       OUT.t += dt; OUT.v = Math.min(13, OUT.v + dt * 2.4); OUT.x -= OUT.v * dt; OUT.veh.position.x = OUT.x;
       // the view follows the taxi, but dragging (or the arrow keys) still turns it left and right
-      if (OUT.lastYaw != null) OUT.look = Math.max(-2.6, Math.min(2.6, (OUT.look || 0) + wrapAngle(cam.yaw - OUT.lastYaw)));
+      if (OUT.lastYaw != null) OUT.look = Math.max(-1.25, Math.min(1.25, (OUT.look || 0) + wrapAngle(cam.yaw - OUT.lastYaw)));   // forward and to the sides only, never to the back
       if (OUT.lastPitch != null) OUT.lookP = Math.max(-0.5, Math.min(0.5, (OUT.lookP || 0) + (cam.pitch - OUT.lastPitch)));
       cam.x = OUT.x + 0.14; cam.z = 1.75 + 0.36; cam.y = 1.34 + Math.sin(OUT.t * 9) * 0.006 * Math.min(1, OUT.v / 6);   // the driver's seat
       cam.yaw = Math.PI / 2 + (OUT.look || 0); cam.pitch = -0.15 + (OUT.lookP || 0);
