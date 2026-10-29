@@ -6127,7 +6127,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       st.textContent = "#skyChip{display:grid;grid-template-columns:auto auto;justify-content:start;gap:4px;margin-top:10px;pointer-events:auto}#skyChip button{font:12px/1 inherit;font-family:inherit;color:#d6c9b3;background:rgba(23,24,21,.7);border:1px solid rgba(201,168,106,.35);border-radius:999px;padding:5px 10px;cursor:pointer}#skyChip button:hover{border-color:#c9a86a;color:#f0e2c4}#skyLoc{position:absolute;z-index:30;width:300px;padding:12px;background:rgba(18,18,16,.96);border:1px solid rgba(201,168,106,.45);border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.6);color:#d6c9b3;font-size:12px}#skyLoc form{display:flex;gap:6px}#skyLoc input{flex:1;min-width:0;background:#0d0e0d;border:1px solid #4a4436;border-radius:6px;color:#f0e2c4;padding:7px 9px;font:13px inherit;font-family:inherit}#skyLoc button{cursor:pointer;font-family:inherit;color:#d6c9b3;background:rgba(40,38,32,.9);border:1px solid rgba(201,168,106,.35);border-radius:6px;padding:6px 9px;font-size:12px}#skyLoc .cities{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}#skyLoc .cities button{border-radius:999px;padding:4px 9px}#skyLoc .msg{min-height:16px;margin-top:7px;color:#c9a86a}@media (max-width:700px){#skyChip{margin-top:4px}#skyChip button{font-size:11px;padding:4px 8px}}";
       document.head.appendChild(st); host.insertBefore(el, host.firstChild); // column-reverse: first child sits at the bottom
       el.querySelector(".loc").addEventListener("click", (e) => { e.stopPropagation(); skyLocPanel(el); });
-      el.querySelector(".w").addEventListener("click", (e) => { e.stopPropagation(); SKYW.prevW = (SKYW.prevW + 1) % SKY_PREVIEW.length; skyLabel(); if (skyDome) skyDome.first = true; });
+      el.querySelector(".w").addEventListener("click", (e) => { e.stopPropagation(); SKYW.prevW = (SKYW.prevW + 1) % SKY_PREVIEW.length; skyLabel(); if (skyDome) skyDome.first = true; OUT.snap = true; });
       el.querySelector(".tm").addEventListener("click", (e) => { e.stopPropagation(); SKYW.prevT = (SKYW.prevT + 1) % TIME_PREVIEW.length; skyLabel(); if (skyDome) skyDome.first = true; });
       el.querySelector(".ss").addEventListener("click", (e) => { e.stopPropagation(); setSeasonPreview(); });
     }
@@ -6456,7 +6456,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   /* weather chip: preview another season (the tree is rebuilt and sways once) */
   function setSeasonPreview() {
     SKYW.prevS = ((SKYW.prevS || 0) + 1) % SEASON_PREVIEW.length; skyLabel();
-    if (mode === "outside") { if (OUT.grow) OUT.grow(seasonNow()); return; }
+    if (mode === "outside") { if (OUT.grow) OUT.grow(seasonNow()); OUT.snap = true; return; }
     const T = DOME && DOME.tree; if (!T) return;
     [T.tree].forEach((o) => { world.remove(o); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); });
     buildSeasonTree(...T.args); if (skyDome) stepSeasonTree(0, skyDome.u); DOME.tree.t0 = performance.now() - 1500;
@@ -7182,8 +7182,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         let x = p[o] + Math.sin(W.t * 0.8 + ph) * 0.35 * dt + 0.25 * dt, z = p[o + 2] + Math.cos(W.t * 0.6 + ph * 1.3) * 0.25 * dt;
         if (y < 0) y += 20; p[o] = wrapX(x); p[o + 1] = y; p[o + 2] = wrapZ(z); }
       a.needsUpdate = true; }
-    if (sT > 0) W.snowAmt = OUT.snap ? 1 : Math.min(1, W.snowAmt + dt * 0.05);
-    W.snowCover.visible = seasonNow() === "winter" || (sT > 0 && W.snowAmt > 0.02) || W.snowAmt > 0.3;
+    // lying snow builds up while it snows and melts away once it stops (a preview change switches it at once)
+    W.snowAmt = sT > 0 ? (OUT.snap ? 1 : Math.min(1, W.snowAmt + dt * 0.05)) : (OUT.snap ? 0 : Math.max(0, W.snowAmt - dt * 0.05));
+    W.snowCover.visible = seasonNow() === "winter" || W.snowAmt > 0.3;
     // lightning in a storm
     if (t.storm) { W.nextBolt -= dt; if (W.nextBolt <= 0) { W.flash = 1; W.nextBolt = 3 + Math.random() * 7; W.dbl = Math.random() < 0.5 ? 0.18 : -1; } }
     if (W.dbl > 0) { W.dbl -= dt; if (W.dbl <= 0) { W.flash = 0.8; W.dbl = -1; } }
