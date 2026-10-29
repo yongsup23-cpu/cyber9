@@ -4654,6 +4654,13 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   let anim = null, looked = false;
 
   function clearWorld() {
+    if (mode === "outside") {   // the street builds its own textures and materials: free them (the cached taxi textures and the shared env map stay)
+      const keep = new Set([taxiEnv, softTex, taxiDecoded && taxiDecoded.texture, taxiDecoded && taxiDecoded.surface, taxiDecoded && taxiDecoded.normal]), done = new Set();
+      world.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+        for (const m of ms) { if (done.has(m)) continue; done.add(m);
+          for (const k of ["map", "normalMap", "metalnessMap", "roughnessMap", "aoMap", "emissiveMap", "alphaMap"]) { const t = m[k]; if (t && !keep.has(t) && !done.has(t)) { done.add(t); t.dispose(); } }
+          if (m.uniforms) {} m.dispose(); } });
+      OUT.grow = null; }
     scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
@@ -6449,7 +6456,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   /* weather chip: preview another season (the tree is rebuilt and sways once) */
   function setSeasonPreview() {
     SKYW.prevS = ((SKYW.prevS || 0) + 1) % SEASON_PREVIEW.length; skyLabel();
-    if (mode === "outside") { buildOutside(); return; }
+    if (mode === "outside") { if (OUT.grow) OUT.grow(seasonNow()); return; }
     const T = DOME && DOME.tree; if (!T) return;
     [T.tree].forEach((o) => { world.remove(o); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); });
     buildSeasonTree(...T.args); if (skyDome) stepSeasonTree(0, skyDome.u); DOME.tree.t0 = performance.now() - 1500;
@@ -6765,42 +6772,53 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const a = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 1.6), poleM); a.position.set(x, 6.95, z - s * 0.8); world.add(a);
       const l = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.3), lampM); l.position.set(x, 6.86, z - s * 1.55); world.add(l); });
     // dense trees across the road, four staggered rows, coloured for the season; instanced so hundreds stay cheap
-    const SEAS = seasonNow();
-    const PALT = { spring: { g: [0.24, 0.42, 0.34], blossom: 0.28, ground: 0x5a6e44 }, summer: { g: [0.27, 0.45, 0.2], blossom: 0, ground: 0x46583a },
-      autumn: { g: [0.08, 0.7, 0.36], mix: [[0.02, 0.72, 0.38], [0.08, 0.78, 0.42], [0.12, 0.75, 0.45], [0.2, 0.45, 0.3]], ground: 0x6a5f40 },
-      winter: { bare: true, snow: true, ground: 0xf1f3f5 } }[SEAS] || { g: [0.27, 0.45, 0.2], ground: 0x46583a };
-    grass.material.color.setHex(PALT.ground);
-    const hedge = new THREE.Mesh(new THREE.BoxGeometry(400, 0.9, 0.9), lam(SEAS === "winter" ? 0xe6eaed : SEAS === "autumn" ? 0x5a5a30 : 0x34512c)); hedge.position.set(0, 0.6, -4.3); world.add(hedge);
+    // dense trees across the road, four staggered rows; instanced so hundreds stay cheap.
+    // The season only recolours them (no rebuild), so the season preview is instant and allocates nothing.
+    const hedge = new THREE.Mesh(new THREE.BoxGeometry(400, 0.9, 0.9), lam(0x34512c)); hedge.position.set(0, 0.6, -4.3); world.add(hedge);
     const leafTex = canvasTex(256, 256, (g) => { g.fillStyle = "#ffffff"; g.fillRect(0, 0, 256, 256);   // dappled foliage, multiplied by each crown's colour
       let sd = 77; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
       for (let i = 0; i < 2600; i++) { const v = 120 + r() * 135; g.fillStyle = `rgb(${v},${v},${v})`; g.beginPath(); g.ellipse(r() * 256, r() * 256, 2 + r() * 5, 1.5 + r() * 3, r() * 3, 0, Math.PI * 2); g.fill(); } });
     leafTex.wrapS = leafTex.wrapT = THREE.RepeatWrapping; leafTex.repeat.set(2, 2);
     const trees = []; for (let r = 0; r < 4; r++) for (let x = -60; x <= 60; x += 2.1) trees.push([x + (r % 2) * 1.05 + (rnd() - 0.5) * 0.6, -5.8 - r * 1.8 + (rnd() - 0.5) * 0.5, 5.6 + rnd() * 1.6]);
-    const barkM = lam(SEAS === "winter" ? 0x6b6058 : 0x4a3a2c), limbM = SEAS === "winter" ? lam(0xdfe3e6) : barkM;   // winter limbs carry snow
+    const barkM = lam(0x4a3a2c), limbM = lam(0x4a3a2c);
     const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.1, 0.19, 1, 8), barkM, trees.length);
-    const NB = PALT.bare ? 14 : 7, branch = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.025, 0.06, 1, 5), limbM, trees.length * NB);
-    const NC = PALT.bare ? 5 : 7, crown = NC ? new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshLambertMaterial({ color: 0xffffff, map: leafTex }), trees.length * NC) : null;
-    const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), P = new THREE.Vector3(), col = new THREE.Color(), up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3(); let ci = 0, bi = 0;
-    trees.forEach(([x, z, h], i) => {
-      M.compose(P.set(x, h * 0.32, z), Q.identity(), S.set(1, h * 0.64, 1)); trunk.setMatrixAt(i, M);
-      for (let k = 0; k < NB; k++) {   // limbs fanning up and out from the trunk (they carry the crown, and are all a winter tree shows)
-        const a = rnd() * 6.28, el = 0.5 + rnd() * 0.5, len = (PALT.bare ? 2.2 : 1.4) + rnd() * 1.4, y0 = h * (0.45 + rnd() * 0.25);
-        dir.set(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el)); Q.setFromUnitVectors(up, dir);
-        M.compose(P.set(x + dir.x * len / 2, y0 + dir.y * len / 2, z + dir.z * len / 2), Q, S.set(1, len, 1)); branch.setMatrixAt(bi++, M); }
-      for (let k = 0; k < NC; k++) { const s = (PALT.snow ? 0.45 : 0.85) + rnd() * (PALT.snow ? 0.4 : 0.75), a = rnd() * 6.28, rr = rnd() * 1.1;
-        M.compose(P.set(x + Math.cos(a) * rr, h * 0.6 + rnd() * h * 0.38, z + Math.sin(a) * rr * 0.8), Q.setFromAxisAngle(up, rnd() * 6), S.set(s * 1.15, s * (0.85 + rnd() * 0.3), s * 1.15)); crown.setMatrixAt(ci, M);
-        if (PALT.snow) col.setRGB(0.9 + rnd() * 0.08, 0.92 + rnd() * 0.06, 0.95 + rnd() * 0.04);
-        else if (PALT.mix) { const m = PALT.mix[Math.floor(rnd() * PALT.mix.length)]; col.setHSL(m[0] + (rnd() - 0.5) * 0.03, m[1], m[2] * (0.7 + rnd() * 0.45)); }
-        else if (PALT.blossom && (i % 5 === 0)) col.setHSL(0.94 + rnd() * 0.03, 0.55, 0.78 + rnd() * 0.1);   // a cherry among the greens
-        else col.setHSL(PALT.g[0] + (rnd() - 0.5) * 0.06, PALT.g[1] + (rnd() - 0.5) * 0.12, PALT.g[2] * (0.7 + rnd() * 0.5));
-        crown.setColorAt(ci++, col); } });
-    world.add(trunk); world.add(branch); if (crown) world.add(crown);
+    const branch = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.025, 0.06, 1, 5), limbM, trees.length * 14);
+    const crown = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshLambertMaterial({ color: 0xffffff, map: leafTex }), trees.length * 7);
+    const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), P = new THREE.Vector3(), col = new THREE.Color(), up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3();
+    trees.forEach(([x, z, h], i) => { M.compose(P.set(x, h * 0.32, z), Q.identity(), S.set(1, h * 0.64, 1)); trunk.setMatrixAt(i, M); });
+    const growTrees = (SEAS) => {
+      const PALT = { spring: { g: [0.24, 0.42, 0.34], blossom: 0.28, ground: 0x5a6e44 }, summer: { g: [0.27, 0.45, 0.2], blossom: 0, ground: 0x46583a },
+        autumn: { g: [0.08, 0.7, 0.36], mix: [[0.02, 0.72, 0.38], [0.08, 0.78, 0.42], [0.12, 0.75, 0.45], [0.2, 0.45, 0.3]], ground: 0x6a5f40 },
+        winter: { bare: true, snow: true, ground: 0xf1f3f5 } }[SEAS] || { g: [0.27, 0.45, 0.2], ground: 0x46583a };
+      let sd = 4242; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;   // same shapes every time for a season
+      grass.material.color.setHex(PALT.ground);
+      hedge.material.color.setHex(SEAS === "winter" ? 0xe6eaed : SEAS === "autumn" ? 0x5a5a30 : 0x34512c);
+      barkM.color.setHex(SEAS === "winter" ? 0x6b6058 : 0x4a3a2c); limbM.color.setHex(SEAS === "winter" ? 0xdfe3e6 : 0x4a3a2c);   // winter limbs carry snow
+      const NB = PALT.bare ? 14 : 7, NC = PALT.bare ? 5 : 7; let ci = 0, bi = 0;
+      trees.forEach(([x, z, h], i) => {
+        for (let k = 0; k < NB; k++) {   // limbs fanning up and out from the trunk (they carry the crown, and are all a winter tree shows)
+          const a = rnd() * 6.28, el = 0.5 + rnd() * 0.5, len = (PALT.bare ? 2.2 : 1.4) + rnd() * 1.4, y0 = h * (0.45 + rnd() * 0.25);
+          dir.set(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el)); Q.setFromUnitVectors(up, dir);
+          M.compose(P.set(x + dir.x * len / 2, y0 + dir.y * len / 2, z + dir.z * len / 2), Q, S.set(1, len, 1)); branch.setMatrixAt(bi++, M); }
+        for (let k = 0; k < NC; k++) { const s = (PALT.snow ? 0.45 : 0.85) + rnd() * (PALT.snow ? 0.4 : 0.75), a = rnd() * 6.28, rr = rnd() * 1.1;
+          M.compose(P.set(x + Math.cos(a) * rr, h * 0.6 + rnd() * h * 0.38, z + Math.sin(a) * rr * 0.8), Q.setFromAxisAngle(up, rnd() * 6), S.set(s * 1.15, s * (0.85 + rnd() * 0.3), s * 1.15)); crown.setMatrixAt(ci, M);
+          if (PALT.snow) col.setRGB(0.9 + rnd() * 0.08, 0.92 + rnd() * 0.06, 0.95 + rnd() * 0.04);
+          else if (PALT.mix) { const m = PALT.mix[Math.floor(rnd() * PALT.mix.length)]; col.setHSL(m[0] + (rnd() - 0.5) * 0.03, m[1], m[2] * (0.7 + rnd() * 0.45)); }
+          else if (PALT.blossom && (i % 5 === 0)) col.setHSL(0.94 + rnd() * 0.03, 0.55, 0.78 + rnd() * 0.1);   // a cherry among the greens
+          else col.setHSL(PALT.g[0] + (rnd() - 0.5) * 0.06, PALT.g[1] + (rnd() - 0.5) * 0.12, PALT.g[2] * (0.7 + rnd() * 0.5));
+          crown.setColorAt(ci++, col); } });
+      branch.count = bi; crown.count = ci;
+      branch.instanceMatrix.needsUpdate = true; crown.instanceMatrix.needsUpdate = true; if (crown.instanceColor) crown.instanceColor.needsUpdate = true;
+    };
+    world.add(trunk); world.add(branch); world.add(crown);
     // snow over the verges, the pavements' edges and the far ground: always in winter, and whenever it is snowing
     const snowCover = new THREE.Group(); world.add(snowCover);
     { const snow = new THREE.Mesh(new THREE.PlaneGeometry(400, 9), lam(0xf4f6f8)); snow.rotation.x = -Math.PI / 2; snow.position.set(0, 0.02, -11); snowCover.add(snow);
       const far = new THREE.Mesh(new THREE.PlaneGeometry(900, 590), lam(0xf1f3f5)); far.rotation.x = -Math.PI / 2; far.position.set(0, 0.0, -312); snowCover.add(far);
       [[3.75, 0.5], [-3.75, 0.5], [-6.6, 1.6], [8.5, 9.6]].forEach(([z, d]) => { const sn = new THREE.Mesh(new THREE.BoxGeometry(400, 0.05, d), lam(0xf2f4f6)); sn.position.set(0, z > 0 || z < -5 ? 0.17 : 0.03, z); snowCover.add(sn); });
-      snowCover.visible = SEAS === "winter"; }
+    }
+    OUT.grow = (SEAS) => { growTrees(SEAS); snowCover.visible = SEAS === "winter"; };
+    OUT.grow(seasonNow());
     // a distant skyline, faded by the fog
     const city = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), lam(0x5d6470), 70);
     for (let i = 0; i < 70; i++) { const w = 12 + rnd() * 22, h = 14 + rnd() * 46; M.compose(P.set(-260 + rnd() * 520, h / 2, -180 - rnd() * 140), Q.identity(), S.set(w, h, 10 + rnd() * 16)); city.setMatrixAt(i, M); }
@@ -6861,7 +6879,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const FL = 37, FH = 2.9;
       const facade = (W, H, cols, base, glass, frame, opt) => {
         const tw = 512, th = 2048;
-        const draw = (lit) => canvasTex(tw, th, (g) => {
+        const draw = (lit) => canvasTex(tw / 2, th / 2, (g) => { g.scale(0.5, 0.5);
           g.fillStyle = lit ? "#000" : base; g.fillRect(0, 0, tw, th);
           const rows = FL, rh = th / rows, cw = tw / cols;
           for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
@@ -6901,8 +6919,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       // 101 to the left, 103 to the right
       tower(-41, 2, 15, 13, H1 - 6, "#cfc6bb", "#3a3c42", "#e2dbd1", facade(15, H1, 5, "#cfc6bb", "#3b3d43", "#e5ded4", { seed: 9, band: "#6e625a", bandX: 0.74, bandW: 0.26, sign: { text: "101", size: 120, x: 0.38, y: 0.06 }, sign2: { text: "101", size: 70, x: 0.38, y: 0.86 } }), facade(13, H1, 4, "#bdb4a9", "#3b3d43", "#d6cfc5", { seed: 10 }));
       tower(42, 2, 15, 13, H1 - 2, "#6e625a", "#2a2a2e", "#857a70", facade(15, H1, 5, "#6e625a", "#28282c", "#8b8076", { seed: 11, band: "#27408a", bandX: 0, bandW: 0.26, sign: { text: "103", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "103", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#62584f", "#28282c", "#7c7168", { seed: 12 }));
-      // 105 far left and 104 far right: the same scale as 102, standing apart with open sky between
-      tower(-64, -2, 15, 13, H1 - 4, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 13, band: "#d9d3c9", bandX: 0.74, bandW: 0.26, sign: { text: "105", size: 120, x: 0.38, y: 0.06 }, sign2: { text: "105", size: 70, x: 0.38, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 14 }));
+      // a further tower far left (no number) and 104 far right: the same scale as 102, standing apart with open sky between
+      tower(-64, -2, 15, 13, H1 - 4, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 13, band: "#d9d3c9", bandX: 0.74, bandW: 0.26 }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 14 }));
       tower(65, -2, 15, 13, H1 - 5, "#27408a", "#1c2238", "#c9c2b6", facade(15, H1, 5, "#27408a", "#1c2238", "#3b55a0", { seed: 15, band: "#d9d3c9", bandX: 0, bandW: 0.26, sign: { text: "104", size: 120, x: 0.62, y: 0.06 }, sign2: { text: "104", size: 70, x: 0.62, y: 0.86 } }), facade(13, H1, 4, "#24397c", "#1c2238", "#c9c2b6", { seed: 16 }));
       // podium and garden at the foot
       const pod = new THREE.Mesh(new THREE.BoxGeometry(152, 6, 44), new THREE.MeshLambertMaterial({ color: 0x8c857a })); pod.position.set(1, 3, 6); A.add(pod);
