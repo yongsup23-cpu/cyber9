@@ -4666,7 +4666,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
           for (const k of ["map", "normalMap", "metalnessMap", "roughnessMap", "aoMap", "emissiveMap", "alphaMap"]) { const t = m[k]; if (t && !keep.has(t) && !done.has(t)) { done.add(t); t.dispose(); } }
           if (m.uniforms) {} m.dispose(); } });
       OUT.grow = null; }
-    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; document.body.classList.remove("riding"); if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
+    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
@@ -6969,17 +6969,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         add(B(1.6, 0.4, 0.04), choc2, 0.1, 0.72, -0.76);
         // the rest of the cabin, so looking round never shows the street through the car: rear doors, seats, back panel, floor
         const leather = std(0x33201a, 0.05, 0.6, 0.3), floorM = std(0x1a1210, 0.0, 0.9);
-        [0.76, -0.76].forEach((z) => { add(B(0.66, 0.14, 0.04), choc2, 1.22, 0.98, z); add(B(0.66, 0.4, 0.04), wood, 1.22, 0.7, z);
+        [0.76, -0.76].forEach((z) => { add(B(0.64, 0.14, 0.04), choc2, 1.235, 0.98, z); add(B(0.64, 0.4, 0.04), wood, 1.235, 0.7, z);
           add(B(0.05, 0.62, 0.05), choc, 0.92, 1.3, z); add(B(0.08, 0.62, 0.05), choc, 1.53, 1.3, z); add(B(2.4, 0.03, 0.04), chrome, 0.35, 0.92, z * 0.985); });
         add(B(0.05, 1.3, 1.52), lining, 1.57, 0.95, 0);                                   // back panel
-        const rw = add(B(0.01, 0.16, 0.6), std(0x8fa3b0, 0.2, 0.1, 1.2), 1.54, 1.38, 0);   // small rear window
+        const rw = add(B(0.01, 0.16, 0.6), std(0x8fa3b0, 0.2, 0.1, 1.2), 1.535, 1.38, 0);   // small rear window
         add(B(0.12, 0.62, 1.4), leather, 0.44, 0.84, 0); add(B(0.1, 0.06, 1.4), leather, 0.44, 1.16, 0);   // front bench back, behind the driver
         add(B(0.5, 0.16, 1.42), leather, 1.25, 0.56, 0); add(B(0.14, 0.62, 1.42), leather, 1.47, 0.9, 0);   // rear bench
         add(B(2.6, 0.04, 1.5), floorM, 0.25, 0.42, 0);
         add(B(0.06, 0.34, 1.5), floorM, -0.86, 0.6, 0);                                   // firewall / footwell front
         add(B(0.3, 0.06, 1.5), floorM, -0.72, 0.44, 0, 0, 0, 0.5);                        // toe board
-        [0.76, -0.76].forEach((z) => { add(B(2.6, 0.14, 0.04), wood, 0.25, 0.47, z); add(B(0.5, 0.6, 0.04), choc2, -0.65, 0.72, z); });   // lower door sills, kick panels
-        add(B(2.4, 0.12, 0.26), floorM, 0.2, 0.5, 0);                                     // transmission tunnel
+        // lower sills and kick panels sit just inside the door skins (never in the same plane, which made them flicker)
+        [1, -1].forEach((sg) => { add(B(2.6, 0.14, 0.03), wood, 0.25, 0.48, sg * 0.715); add(B(0.5, 0.6, 0.02), choc2, -0.65, 0.72, sg * 0.725); });
+        add(B(2.4, 0.12, 0.26), floorM, 0.2, 0.515, 0);                                   // transmission tunnel, clear of the floor
         // the long black bonnet with its chrome centre strip and ornament, rounded wings, wiper arms
         const hood = add(new THREE.CylinderGeometry(0.42, 0.42, 1.55, 32, 1, false, 0, Math.PI), black, -1.55, 0.93, 0, 0, 0, Z); hood.scale.set(0.28, 1, 1);
         add(B(1.55, 0.012, 0.025), chrome, -1.55, 1.05, 0);
@@ -7100,11 +7101,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (mode !== "outside" || OUT.kind !== "taxi" || !OUT.veh) return;
     if (OUT.st === "come") { OUT.st = "idle"; OUT.x = 0; OUT.veh.position.x = 0; }   // still pulling in: it stops at once
     if (OUT.st !== "idle") return;
-    anim = null; busy = true; taxiCSS(); document.body.classList.add("riding"); if (OUT.taxiIn) { OUT.taxiIn.visible = true; OUT.taxiMesh.visible = false; } OUT.st = "ride"; OUT.t = 0; OUT.v = 0; OUT.fade = false; OUT.look = 0; OUT.lookP = 0; OUT.lastYaw = null; OUT.lastPitch = null;
+    anim = null; busy = true; camera.near = 0.12; camera.updateProjectionMatrix(); taxiCSS(); document.body.classList.add("riding"); if (OUT.taxiIn) { OUT.taxiIn.visible = true; OUT.taxiMesh.visible = false; } OUT.st = "ride"; OUT.t = 0; OUT.v = 0; OUT.fade = false; OUT.look = 0; OUT.lookP = 0; OUT.lastYaw = null; OUT.lastPitch = null;
     if (typeof sfxWhoosh === "function") sfxWhoosh(); taxiToast("택시가 출발합니다 · 화면을 끌면 차 안을 둘러볼 수 있어요", 3200); if (OUT.zoomRide == null) { OUT.zoomRide = zoomTarget; setZoom(0.85); }
   }
   function taxiArrive() {   // back at the archive: the taxi at the kerb, the visitor on the pavement beside it, the entrance ahead
     if (mode !== "outside" || !OUT.veh) { busy = false; taxiFade(false); return; }
+    camera.near = 0.05; camera.updateProjectionMatrix();
     OUT.x = 0; OUT.veh.position.x = 0; OUT.st = "arrived"; OUT.t = 0; OUT.v = 0; if (OUT.taxiIn) { OUT.taxiIn.visible = false; OUT.taxiMesh.visible = true; }
     moveTo({ x: -7.5, z: 7.6, yaw: -Math.atan2(7.5, -0.4), pitch: 0.06 }, true); if (OUT.zoomRide != null) { setZoom(OUT.zoomRide); OUT.zoomRide = null; }
     busy = false; document.body.classList.remove("riding"); taxiFade(false); setTimeout(() => taxiToast("금호 아카이브에 도착했습니다", 3000), 500);
