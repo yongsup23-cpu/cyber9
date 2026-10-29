@@ -6941,8 +6941,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const pod = new THREE.Mesh(new THREE.BoxGeometry(172, 6, 44), new THREE.MeshLambertMaterial({ color: 0x8c857a })); pod.position.set(-9, 3, 6); A.add(pod);
     }
     const main = () => ({ x: -3, z: 12.6, yaw: -0.62, pitch: 0.17 });
-    stops.push({ kind: "art", outside: true, data: { year: "", co: "금호 아카이브", title: "아카이브 밖으로", cap: "금호고속 버스가 서는 2차선 도로",
-      detail: "아카이브 문을 나서면 2차선 도로에 금호고속 버스가 서 있습니다. 버스를 누르면 출발해 눈앞을 지나갑니다. 길 건너 울창한 가로수 너머로 금호건설이 지은 울산 신정 아테라가 보입니다." }, pose: main });
+    stops.push({ kind: "art", outside: true, data: { year: "", co: "금호 아카이브", title: "아카이브 밖으로", cap: "금호고속과 아테라 아파트 단지",
+      detail: "아카이브 문을 나서면 2차선 도로에 금호고속 버스가 서 있습니다. 버스를 누르면 출발해 눈앞을 지나갑니다. 길 건너 울창한 가로수 너머로 금호건설이 지은 아테라 아파트 단지가 보입니다." }, pose: main });
     stops.push({ kind: "art", outside: true, outBus: true, epi: true, data: OUT_EPILOGUE, pose: () => ({ x: 1, z: 11.5, yaw: -0.04, pitch: 0.02 }) });
     stops.push({ kind: "art", outside: true, outApt: true, epi: true, data: OUT_EPILOGUE, pose: () => ({ x: 4, z: 12.8, yaw: -0.06, pitch: 0.22 }) });
     stops.push({ kind: "door", side: 2, u: 0, cy: 1.8, w: 4.2, h: 4.4, target: back, label: lbl });
