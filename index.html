@@ -6783,6 +6783,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const grass = new THREE.Mesh(new THREE.PlaneGeometry(900, 600), lam(0x4a5a3c)); grass.rotation.x = -Math.PI / 2; grass.position.set(0, -0.01, -307.5); world.add(grass);
     // the archive behind: dark stone facade, a gold band, the way back in
     const fac = plane(60, 12, basic(0x24221d)); fac.position.set(0, 6, HZ); fac.rotation.y = Math.PI; world.add(fac);
+    { // the building's body: a real box behind the facade, so its ends read as stone walls with depth, not a flat sheet
+      const side = basic(0x2e2b25), top = basic(0x1a1814), D = 24;
+      const body = new THREE.Mesh(new THREE.BoxGeometry(60, 12, D), [side, side, top, top, side, side]); body.position.set(0, 6, HZ + D / 2 + 0.03); world.add(body);
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(60.6, 0.45, D + 0.6), basic(0x3a352d)); cap.position.set(0, 12.2, HZ + D / 2); world.add(cap);
+      [-1, 1].forEach((sx) => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.08, D), basic(0x9d875e)); b.position.set(sx * 30.02, 4.2, HZ + D / 2); world.add(b);
+        const pil = new THREE.Mesh(new THREE.BoxGeometry(0.7, 12, 0.7), basic(0x38332b)); pil.position.set(sx * 29.75, 6, HZ + 0.3); world.add(pil); }); }
     const band = plane(60, 0.08, basic(0x9d875e)); band.position.set(0, 4.2, HZ - 0.01); band.rotation.y = Math.PI; world.add(band);
     const back = { lobby: true }, lbl = { title: "로비로 돌아가기", sub: "금호 아카이브", kicker: "ENTRANCE" };
     buildInDoor(2, 0, back);
@@ -6868,6 +6874,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     world.add(trunk); world.add(branch); world.add(crown);
     // snow over the verges, the pavements' edges and the far ground: always in winter, and whenever it is snowing
     const snowCover = new THREE.Group(); world.add(snowCover);
+    { const rs = new THREE.Mesh(new THREE.BoxGeometry(60.7, 0.12, 25), lam(0xf4f6f8)); rs.position.set(0, 12.48, HZ + 12); snowCover.add(rs); }
     { const snow = new THREE.Mesh(new THREE.PlaneGeometry(400, 9), lam(0xf4f6f8)); snow.rotation.x = -Math.PI / 2; snow.position.set(0, 0.02, -11); snowCover.add(snow);
       const far = new THREE.Mesh(new THREE.PlaneGeometry(900, 590), lam(0xf1f3f5)); far.rotation.x = -Math.PI / 2; far.position.set(0, 0.0, -312); snowCover.add(far);
       [[3.75, 0.5], [-3.75, 0.5], [-6.6, 1.6], [8.5, 9.6]].forEach(([z, d]) => { const sn = new THREE.Mesh(new THREE.BoxGeometry(400, 0.05, d), lam(0xf2f4f6)); sn.position.set(0, z > 0 || z < -5 ? 0.17 : 0.03, z); snowCover.add(sn); });
