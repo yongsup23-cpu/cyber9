@@ -6885,6 +6885,135 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const city = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), lam(0x5d6470), 70);
     for (let i = 0; i < 70; i++) { const w = 12 + rnd() * 22, h = 14 + rnd() * 46; M.compose(P.set(-260 + rnd() * 520, h / 2, -180 - rnd() * 140), Q.identity(), S.set(w, h, 10 + rnd() * 16)); city.setMatrixAt(i, M); }
     world.add(city);
+    // ---- the taxi's road through Kumho's homes: built the first time the taxi sets off (keeps the street itself light) ----
+    // Past the archive the road runs on; on the right stand Kumho Construction's complexes in the order they were built
+    // (금호 베스트빌, 리첸시아, 어울림 old BI, 어울림 new BI, 아테라); Kumho buses of each era wait at the kerb.
+    // The far (left) side is closed by a long wall, so only the right side needs to be drawn.
+    OUT.LANE = { x0: -165, x1: -620 };
+    OUT.buildLane = () => {
+      if (OUT.lane) return; const L = new THREE.Group(); world.add(L); OUT.lane = L;
+      const X0 = -150, X1 = -660, LEN = X0 - X1, XC = (X0 + X1) / 2;
+      const strip = (w, d, x, y, z, m) => { const p = new THREE.Mesh(new THREE.BoxGeometry(w, 0.15, d), m); p.position.set(x, y, z); L.add(p); return p; };
+      const rd = new THREE.Mesh(new THREE.PlaneGeometry(LEN, 7), road.material); rd.rotation.x = -Math.PI / 2; rd.position.set(XC, 0, 0); L.add(rd);
+      [[-0.1, 0xe2b236], [0.1, 0xe2b236], [3.25, 0xe8e6de], [-3.25, 0xe8e6de]].forEach(([z, c]) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(LEN, 0.12), basic(c)); m.rotation.x = -Math.PI / 2; m.position.set(XC, 0.006, z); L.add(m); });
+      const paveM = lam(0x76736c), kerbM = lam(0xbdb8ad);
+      strip(LEN, 2.2, XC, 0.075, 4.6, paveM); strip(LEN, 0.22, XC, 0.08, 3.61, kerbM);           // left pavement
+      strip(LEN, 5.5, XC, 0.075, -6.25, paveM); strip(LEN, 0.22, XC, 0.08, -3.61, kerbM);        // right pavement (the buses park on it)
+      const gr = new THREE.Mesh(new THREE.PlaneGeometry(LEN, 120), grass.material); gr.rotation.x = -Math.PI / 2; gr.position.set(XC, -0.01, -69); L.add(gr);
+      // the wall on the far side: pale stone panels with a darker cap
+      { const wm = canvasTex(512, 128, (g) => { g.fillStyle = "#b9b2a6"; g.fillRect(0, 0, 512, 128); g.strokeStyle = "rgba(90,84,74,.35)"; g.lineWidth = 2;
+          for (let x = 0; x <= 512; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 128); g.stroke(); } g.beginPath(); g.moveTo(0, 64); g.lineTo(512, 64); g.stroke(); });
+        wm.wrapS = THREE.RepeatWrapping; wm.repeat.set(LEN / 8, 1);
+        const w = new THREE.Mesh(new THREE.BoxGeometry(LEN, 4.2, 0.4), new THREE.MeshLambertMaterial({ map: wm })); w.position.set(XC, 2.1, 5.9); L.add(w);
+        const c = new THREE.Mesh(new THREE.BoxGeometry(LEN, 0.3, 0.6), lam(0x6f685d)); c.position.set(XC, 4.35, 5.9); L.add(c);
+        const e = new THREE.Mesh(new THREE.BoxGeometry(0.6, 4.6, 2.6), lam(0x6f685d)); e.position.set(X0 + 0.3, 2.3, 4.8); L.add(e); }
+      // a window-grid facade drawn on a canvas; opt.marks paint signs and logos over it
+      const facadeTex = (opt) => { const tw = 512, th = Math.round(512 * opt.h / opt.w * (opt.sq || 1));
+        const c = canvasTex(tw, Math.min(2048, th), (g, W, H) => {
+          g.fillStyle = opt.base; g.fillRect(0, 0, W, H);
+          if (opt.glass) { const gg = g.createLinearGradient(0, 0, W, H); gg.addColorStop(0, opt.glass[0]); gg.addColorStop(1, opt.glass[1]); g.fillStyle = gg; g.fillRect(0, 0, W, H);
+            g.strokeStyle = opt.frame; g.lineWidth = 2; for (let x = 0; x <= W; x += W / opt.cols) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
+            for (let y = 0; y <= H; y += H / opt.floors) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); } }
+          else { const rh = H / opt.floors, cw = W / opt.cols;
+            for (let r = opt.skip || 0; r < opt.floors; r++) for (let k = 0; k < opt.cols; k++) {
+              const x = k * cw + cw * 0.16, y = r * rh + rh * 0.2, w = cw * 0.68, h = rh * 0.58;
+              g.fillStyle = opt.win; g.fillRect(x, y, w, h); g.fillStyle = opt.frame; g.fillRect(x, y + h * 0.55, w, 2); if (opt.rail) { g.fillStyle = opt.rail; g.fillRect(x - 2, y + h - 3, w + 4, 4); } } }
+          (opt.bands || []).forEach(([x0, x1, col, y0, y1]) => { g.fillStyle = col; g.fillRect(x0 * W, (y0 || 0) * H, (x1 - x0) * W, ((y1 == null ? 1 : y1) - (y0 || 0)) * H); });
+          (opt.marks || []).forEach((m) => m(g, W, H)); });
+        c.anisotropy = ANISO; return new THREE.MeshLambertMaterial({ map: c }); };
+      const text = (t, x, y, size, col, weight, vertical) => (g, W, H) => { g.save(); g.fillStyle = col; g.font = `${weight || 800} ${size * W / 512}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle";
+        g.translate(x * W, y * H); if (vertical) g.rotate(Math.PI / 2); g.fillText(t, 0, 0); g.restore(); };
+      const box = (x, z, w, h, d, front, side, roof) => { const r = roof || lam(0xcfcac2);
+        const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [side, side, r, r, front, side]); b.position.set(x, h / 2, z); L.add(b); return b; };
+      // a sign beside the road naming the complex
+      const roadSign = (x, title, sub) => { const t = canvasTex(512, 160, (g) => { g.fillStyle = "#1e2a5c"; g.fillRect(0, 0, 512, 160); g.fillStyle = "#f07f2f"; g.fillRect(0, 0, 512, 10);
+          g.fillStyle = "#fff"; g.font = `800 58px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(title, 256, 70); g.fillStyle = "#cfd6e6"; g.font = `500 30px ${FONT}`; g.fillText(sub, 256, 128); });
+        const s = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.0), new THREE.MeshBasicMaterial({ map: t })); s.position.set(x, 2.4, -9.2); L.add(s);
+        [-1.3, 1.3].forEach((dx) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.4, 8), lam(0x3a3a3c)); p.position.set(x + dx, 1.2, -9.25); L.add(p); }); };
+
+      // 1. 금호 베스트빌: white fifteen-storey slabs, each ending toward the road in a pointed gable with the name and the block number
+      { const cx = -215, mint = "#a9d7cf";
+        [[-24, -50, 101], [-7, -56, 102], [10, -50, 103], [27, -56, 104]].forEach(([dx, z, no], i) => {
+          const W = 14, H = 44, D = 34;
+          const end = facadeTex({ w: W, h: H, floors: 15, cols: 4, base: "#f3f2ee", win: "#7f8c96", frame: "#e9e8e3", rail: "#dfe6e6",
+            bands: [[0.0, 0.08, mint, 0.3, 1], [0.92, 1, "#c7cbcf", 0.1, 1]], marks: i === 0 ? [text("금호", 0.5, 0.06, 56, "#4a4f57"), text("베스트빌", 0.5, 0.12, 56, "#4a4f57"), (g, Wd, Hd) => { g.fillStyle = "#8d9aa6"; g.fillRect(Wd * 0.3, Hd * 0.17, Wd * 0.4, Hd * 0.07); }, text(String(no), 0.5, 0.205, 46, "#fff", 700)] : [text(String(no), 0.5, 0.08, 46, "#8d9aa6", 700)] });
+          const side = facadeTex({ w: D, h: H, floors: 15, cols: 9, base: "#f3f2ee", win: "#78858f", frame: "#e9e8e3", rail: "#dfe6e6", bands: [[0.32, 0.36, mint], [0.66, 0.7, mint]] });
+          box(cx + dx, z, W, H, D, end, side, lam(0xe9e7e2));
+          // the pointed gable over the road end: a triangular prism, ridge running back from the road
+          const sh = new THREE.Shape(); sh.moveTo(-W / 2 - 0.4, 0); sh.lineTo(W / 2 + 0.4, 0); sh.lineTo(0, 7.5); sh.closePath();
+          const gm = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: D, bevelEnabled: false }), lam(0xf1f0eb)); gm.position.set(cx + dx, H, z - D / 2); L.add(gm);
+          const rm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, D + 0.2), lam(0xb9bfc4)); rm.position.set(cx + dx, H + 7.4, z); L.add(rm);
+          // the round stair tower beside each slab
+          const st = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, H + 3, 20), facadeTex({ w: 14, h: H + 3, floors: 16, cols: 3, base: "#f3f2ee", win: "#8794a0", frame: "#e9e8e3" }));
+          st.position.set(cx + dx + W / 2 + 1.8, (H + 3) / 2, z + D / 2 - 3); L.add(st); });
+        roadSign(cx + 8, "금호 베스트빌", "금호건설 아파트"); }
+
+      // 2. 리첸시아: two slim glass towers with a crown, over a stone podium carrying the name
+      { const cx = -300;
+        const glass = (w, h, cols, fl) => facadeTex({ w, h, floors: fl, cols, base: "#5d86c4", glass: ["#7aa3d9", "#2f5797"], frame: "rgba(220,232,248,.75)", sq: 0.9 });
+        [[-14, -58, 22, 112, 18], [18, -64, 20, 98, 16]].forEach(([dx, z, W, H, D], i) => {
+          const front = glass(W, H, 10, 40), side = glass(D, H, 8, 40);
+          box(cx + dx, z, W, H, D, front, side, lam(0xd6dbe2));
+          const crown = facadeTex({ w: W * 0.8, h: 7, floors: 1, cols: 1, base: "#e6e3dc", win: "#e6e3dc", frame: "#e6e3dc", marks: [text("RICHENSIA", 0.5, 0.5, 70, "#2b3a55", 600)] });
+          const c = new THREE.Mesh(new THREE.BoxGeometry(W * 0.82, 7, D * 0.82), [lam(0xe6e3dc), lam(0xe6e3dc), lam(0xd9d5cc), lam(0xd9d5cc), crown, lam(0xe6e3dc)]); c.position.set(cx + dx, H + 3.5, z); L.add(c);
+          const cap = new THREE.Mesh(new THREE.BoxGeometry(W * 0.6, 3, D * 0.6), lam(0xd9d5cc)); cap.position.set(cx + dx, H + 8.5, z); L.add(cap); });
+        const pod = facadeTex({ w: 62, h: 12, floors: 3, cols: 18, base: "#e8e2d6", win: "#7f97b8", frame: "#e8e2d6", marks: [text("RICHENSIA", 0.5, 0.86, 30, "#7d6a4e", 600)] });
+        box(cx, -42, 62, 12, 14, pod, lam(0xe2dccf));
+        roadSign(cx + 6, "리첸시아", "금호건설 주상복합"); }
+
+      // 3. 어울림 (old BI): tall cream towers, the blue molecule mark and the name at the crown
+      { const cx = -385;
+        const mol = (x, y, s) => (g, W, H) => { const X = x * W, Y = y * H, S = s * W / 512; g.save(); g.strokeStyle = "#2a3b9c"; g.fillStyle = "#2a3b9c"; g.lineWidth = 7 * S; g.lineCap = "round";
+          g.beginPath(); g.moveTo(X - 46 * S, Y - 40 * S); g.quadraticCurveTo(X, Y, X + 44 * S, Y + 42 * S); g.stroke();
+          g.beginPath(); g.moveTo(X + 40 * S, Y - 40 * S); g.quadraticCurveTo(X, Y + 4 * S, X - 30 * S, Y + 20 * S); g.stroke();
+          g.beginPath(); g.moveTo(X - 6 * S, Y - 22 * S); g.lineTo(X + 4 * S, Y + 40 * S); g.stroke();
+          [[-46, -40, 15], [40, -40, 12], [-6, -22, 9], [44, 6, 9], [4, 42, 9], [-30, 20, 8]].forEach(([a, b, r]) => { g.beginPath(); g.arc(X + a * S, Y + b * S, r * S, 0, 7); g.fill(); }); g.restore(); };
+        [[-16, -54, 101], [16, -60, 102]].forEach(([dx, z, no]) => { const W = 22, H = 76, D = 15;
+          const front = facadeTex({ w: W, h: H, floors: 26, cols: 6, base: "#e6dfd2", win: "#6f7782", frame: "#efe9de", rail: "#d6cebf",
+            bands: [[0.44, 0.56, "#d9d1c3"]], marks: [mol(0.5, 0.045, 0.9), text("어울림", 0.5, 0.1, 56, "#3d5fb8"), text(String(no), 0.5, 0.15, 44, "#5a5f68", 700)], skip: 4 });
+          const side = facadeTex({ w: D, h: H, floors: 26, cols: 4, base: "#e6dfd2", win: "#6f7782", frame: "#efe9de", rail: "#d6cebf" });
+          box(cx + dx, z, W, H, D, front, side, lam(0xd9d2c5));
+          const top = new THREE.Mesh(new THREE.BoxGeometry(W + 0.6, 1.2, D + 0.6), lam(0xcfc6b6)); top.position.set(cx + dx, H + 0.6, z); L.add(top); });
+        roadSign(cx + 4, "어울림", "금호건설 아파트 · 기존 BI"); }
+
+      // 4. 어울림 (new BI): white towers, three red dots over the name, red and grey stripes at the foot
+      { const cx = -465;
+        const dots = (x, y, s) => (g, W, H) => { const S = s * W / 512; g.fillStyle = "#c8102e"; [[-46, 0, 24], [0, 4, 26], [48, 0, 25]].forEach(([a, b, r]) => { g.beginPath(); g.ellipse(x * W + a * S, y * H + b * S, r * S * 1.05, r * S, 0, 0, 7); g.fill(); }); };
+        [[-24, -56, 107], [0, -52, 108], [24, -58, 109]].forEach(([dx, z, no]) => { const W = 18, H = 64, D = 14;
+          const front = facadeTex({ w: W, h: H, floors: 22, cols: 5, base: "#f2f1ee", win: "#6b7480", frame: "#f7f6f3", skip: 4,
+            bands: [[0.18, 0.24, "#c8102e", 0.78, 1], [0.6, 0.66, "#9aa0a8", 0.72, 1], [0.8, 0.86, "#c8102e", 0.8, 1]],
+            marks: [dots(0.5, 0.05, 0.9), text("어울림", 0.5, 0.1, 54, "#c8102e"), text(String(no), 0.5, 0.155, 44, "#5a5f68", 700)] });
+          const side = facadeTex({ w: D, h: H, floors: 22, cols: 4, base: "#f2f1ee", win: "#6b7480", frame: "#f7f6f3" });
+          box(cx + dx, z, W, H, D, front, side, lam(0xe6e4df));
+          const crown = new THREE.Mesh(new THREE.BoxGeometry(W * 0.5, 6, D * 0.7), lam(0xe9e7e2)); crown.position.set(cx + dx + W * 0.15, H + 3, z); L.add(crown); });
+        roadSign(cx + 6, "어울림", "금호건설 아파트 · 새 BI"); }
+
+      // 5. 아테라: greige and navy towers with the ARTERA name running up the band
+      { const cx = -545;
+        [[-22, -54, "#6e625a", "#5d534c", "ARTERA"], [2, -60, "#27408a", "#d9d3c9", "102"], [26, -54, "#cfc6bb", "#6e625a", "103"]].forEach(([dx, z, base, band, sign], i) => {
+          const W = 17, H = 96 - i * 6, D = 14;
+          const front = facadeTex({ w: W, h: H, floors: 33, cols: 6, base, win: "#28282c", frame: base,
+            bands: [[0, 0.3, band]], marks: [sign === "ARTERA" ? text("ARTERA", 0.15, 0.16, 120, "#f4f1ea", 800, true) : text(sign, 0.62, 0.05, 60, "#f4f1ea", 700)] });
+          const side = facadeTex({ w: D, h: H, floors: 33, cols: 4, base, win: "#28282c", frame: base });
+          box(cx + dx, z, W, H, D, front, side, lam(0x857a70));
+          const roof = new THREE.Mesh(new THREE.BoxGeometry(W * 0.5, 3.2, D * 0.6), lam(0x857a70)); roof.position.set(cx + dx - W * 0.15, H + 1.6, z); L.add(roof); });
+        roadSign(cx + 6, "아테라", "금호건설 주거 브랜드"); }
+
+      // Kumho buses of each era at the kerb: photographs cut out and stood up, turning to face the passing taxi
+      OUT.laneBus = [];
+      const shadowM = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.32, depthWrite: false });
+      [["lane_bus1.png", 1.12, "1960년대 초 · 광주여객 카브차", -208], ["lane_bus2.png", 1.28, "1990년대 · 금호고속관광 버스", -292],
+       ["lane_bus3.png", 1.1, "1992 · 첫 우등고속버스", -372], ["lane_bus4.png", 1.81, "현재 · 금호고속 우등 고속버스", -452]].forEach(([file, ar, label, x]) => {
+        const H = 3.7, W = H * ar, z = -6.0;
+        const m = new THREE.MeshBasicMaterial({ transparent: true, alphaTest: 0.35, side: THREE.DoubleSide, color: 0xffffff });
+        new THREE.TextureLoader().load("assets/img/" + file, (t) => { t.anisotropy = ANISO; if ("encoding" in t && THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding; m.map = t; m.needsUpdate = true; });
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(W, H), m); p.position.set(x, H / 2 + 0.12, z); L.add(p);
+        const sh = new THREE.Mesh(new THREE.CircleGeometry(1, 32), shadowM); sh.rotation.x = -Math.PI / 2; sh.scale.set(W * 0.5, 1.6, 1); sh.position.set(x, 0.16, z); L.add(sh);
+        const t = canvasTex(512, 96, (g) => { g.fillStyle = "rgba(20,24,40,.88)"; g.fillRect(0, 0, 512, 96); g.fillStyle = "#f07f2f"; g.fillRect(0, 0, 8, 96);
+          g.fillStyle = "#fff"; g.font = `700 36px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(label, 260, 50); });
+        const s = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.52), new THREE.MeshBasicMaterial({ map: t, side: THREE.DoubleSide })); s.position.set(x, H + 0.55, z); L.add(s);
+        OUT.laneBus.push(p, s); });
+    };
     // models: the Kumho Express bus at the kerb (heading +x, its door side toward the pavement), Ulsan Artera far behind the trees
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
     const ow = world, load = (file, fn) => gltfLoader && (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => gltfLoader.load(file, (g) => { if (world === ow) fn(g.scene); }, undefined, (e) => console.error("바깥 모형 로딩 실패", file, e)));
@@ -6995,6 +7124,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         add(new THREE.SphereGeometry(0.022, 16, 12), chrome, -2.3, 1.07, 0); add(B(0.1, 0.03, 0.008), chrome, -2.25, 1.09, 0, 0, 0, 0.3);
         [0.62, -0.62].forEach((z) => add(new THREE.CylinderGeometry(0.16, 0.16, 1.3, 20, 1, false, 0, Math.PI), black, -1.6, 0.8, z, 0, 0, Z).scale.set(0.8, 1, 1));
         [0.3, -0.4].forEach((z) => add(B(0.012, 0.01, 0.42), dark, -0.7, 1.06, z, 0, 0.35, 0));
+        // a raised roof: the header, lining and visors lifted and the pillars stretched, so the towers' tops show through the windows
+        { const RISE = 0.95;
+          C.children.forEach((o) => { const p = o.geometry && o.geometry.parameters, hh = p && p.height;
+            if (o.position.y > 1.42) o.position.y += RISE;
+            else if (hh && hh > 0.45 && hh < 0.66 && o.position.y > 1.2 && o.position.y < 1.36) { o.scale.y = (hh + RISE) / hh; o.position.y += RISE / 2; }
+            else if (hh && Math.abs(hh - 1.3) < 0.01 && o.position.x > 1.5) { o.scale.y = (hh + RISE) / hh; o.position.y += RISE / 2; } }); }
       }
     }); };
     // weather: rain streaks, snowflakes, lightning, fog, drifting clouds, following the live sky (or the preview)
@@ -7109,8 +7244,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (mode !== "outside" || OUT.kind !== "taxi" || !OUT.veh) return;
     if (OUT.st === "come") { OUT.st = "idle"; OUT.x = 0; OUT.veh.position.x = 0; }   // still pulling in: it stops at once
     if (OUT.st !== "idle") return;
-    anim = null; busy = true; camera.near = 0.12; camera.updateProjectionMatrix(); taxiCSS(); document.body.classList.add("riding"); if (OUT.taxiIn) { OUT.taxiIn.visible = true; OUT.taxiMesh.visible = false; } OUT.st = "ride"; OUT.t = 0; OUT.v = 0; OUT.fade = false; OUT.look = 0; OUT.lookP = 0; OUT.lastYaw = null; OUT.lastPitch = null;
-    if (typeof sfxWhoosh === "function") sfxWhoosh(); taxiToast("택시가 출발합니다 · 화면을 끌면 차 안을 둘러볼 수 있어요", 3200); if (OUT.zoomRide == null) { OUT.zoomRide = zoomTarget; setZoom(0.85); }
+    anim = null; busy = true; camera.near = 0.12; camera.updateProjectionMatrix(); taxiCSS(); document.body.classList.add("riding"); if (OUT.taxiIn) { OUT.taxiIn.visible = true; OUT.taxiMesh.visible = false; } if (OUT.buildLane) OUT.buildLane(); OUT.x = OUT.LANE ? OUT.LANE.x0 : 0; OUT.veh.position.x = OUT.x; OUT.st = "ride"; OUT.t = 0; OUT.v = 0; OUT.fade = false; OUT.look = 0; OUT.lookP = 0; OUT.lastYaw = null; OUT.lastPitch = null;
+    if (typeof sfxWhoosh === "function") sfxWhoosh(); taxiToast("택시가 출발합니다 · 오른쪽으로 금호건설의 아파트가, 길가에는 시대별 금호고속 버스가 지나갑니다 · 화면을 끌면 위아래로 둘러볼 수 있어요", 5200); if (OUT.zoomRide == null) { OUT.zoomRide = zoomTarget; setZoom(0.85); }
   }
   function taxiArrive() {   // back at the archive: the taxi at the kerb, the visitor on the pavement beside it, the entrance ahead
     if (mode !== "outside" || !OUT.veh) { busy = false; taxiFade(false); return; }
@@ -7141,14 +7276,15 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!OUT.veh) return;
     const taxi = OUT.kind === "taxi";
     if (OUT.st === "ride") {   // riding the founding taxi: a chase view from just behind and beside it, for about ten seconds
-      OUT.t += dt; OUT.v = Math.min(13, OUT.v + dt * 2.4); OUT.x -= OUT.v * dt; OUT.veh.position.x = OUT.x;
+      OUT.t += dt; OUT.v = Math.min(10.5, OUT.v + dt * 2.2); OUT.x -= OUT.v * dt; OUT.veh.position.x = OUT.x;
+      if (OUT.laneBus) for (const b of OUT.laneBus) b.rotation.y = Math.atan2(camera.position.x - b.position.x, camera.position.z - b.position.z);   // the bus photos turn toward the taxi
       // the view follows the taxi, but dragging (or the arrow keys) still turns it left and right
       if (OUT.lastYaw != null) OUT.look = Math.max(-1.25, Math.min(1.25, (OUT.look || 0) + wrapAngle(cam.yaw - OUT.lastYaw)));   // forward and to the sides only, never to the back
-      if (OUT.lastPitch != null) OUT.lookP = Math.max(-0.5, Math.min(0.5, (OUT.lookP || 0) + (cam.pitch - OUT.lastPitch)));
+      if (OUT.lastPitch != null) OUT.lookP = Math.max(-0.5, Math.min(1.15, (OUT.lookP || 0) + (cam.pitch - OUT.lastPitch)));   // high enough to see the towers' tops
       cam.x = OUT.x + 0.14; cam.z = 1.75 + 0.36; cam.y = 1.34 + Math.sin(OUT.t * 9) * 0.006 * Math.min(1, OUT.v / 6);   // the driver's seat
       cam.yaw = Math.PI / 2 + (OUT.look || 0); cam.pitch = -0.15 + (OUT.lookP || 0);
       OUT.lastYaw = cam.yaw; OUT.lastPitch = cam.pitch;
-      if (OUT.t > 10 && !OUT.fade) { OUT.fade = true; taxiFade(true, taxiArrive); }
+      if ((OUT.LANE ? OUT.x < OUT.LANE.x1 : OUT.t > 10) && !OUT.fade) { OUT.fade = true; taxiFade(true, taxiArrive); }
       return; }
     if (OUT.st === "arrived") { OUT.t += dt; if (OUT.t > 4) { OUT.st = "go"; OUT.v = 0; if (typeof sfxWhoosh === "function") sfxWhoosh(); } return; }
     if (OUT.st === "go") { OUT.v = Math.min(taxi ? 13 : 16, OUT.v + dt * (taxi ? 3.4 : 2.6)); OUT.x -= OUT.v * dt; if (OUT.x < -90) { OUT.st = "gone"; OUT.t = 0; OUT.veh.visible = false; } }
