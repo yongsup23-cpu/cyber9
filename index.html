@@ -5611,7 +5611,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     kWrap.style.cssText = "position:absolute;left:0;top:0;width:960px;height:661px;transform-origin:0 0;display:none;z-index:1;backface-visibility:hidden;touch-action:pan-x pan-y";
     ["gesturestart", "gesturechange"].forEach((ev) => kWrap.addEventListener(ev, (e) => e.preventDefault(), { passive: false }));
     kWrap.addEventListener("touchmove", (e) => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
-    kWrap.innerHTML = `<div class="kin"><div class="ktop"><div class="kh"><small>KUMHO ARCHIVES</small><b>사진 조회</b></div>
+    kWrap.innerHTML = `<div class="kin"><div class="ktop"><div class="kh"><small><img src="${CI_EN.src}" alt="KUMHO ARCHIVES" style="display:block;height:.95em;width:auto;margin-bottom:.25em"></small><b>사진 조회</b></div>
 <form id="kForm"><input id="kQ" type="search" placeholder="검색어 입력 (예: 고속버스, 타이어, 아시아나, 1988)" autocomplete="off" aria-label="검색어"><button type="submit" class="pri">검색</button></form><button type="button" id="kExit" aria-label="나가기">✕</button></div>
 <div class="ktabs" id="kTabs"></div>
 <div class="kview"><div class="kmon" id="kMon"></div>
@@ -5717,7 +5717,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
 @media (max-width:700px){#srch .cap{flex-direction:column}#srch .ttl{display:none}}`;
     document.head.appendChild(css);
     const el = document.createElement("div"); el.id = "srch"; el.hidden = true;
-    el.innerHTML = `<div class="kio" role="dialog" aria-label="사진 조회"><div class="top"><span class="ttl"><small>KUMHO ARCHIVES</small>사진 조회</span>
+    el.innerHTML = `<div class="kio" role="dialog" aria-label="사진 조회"><div class="top"><span class="ttl"><small><img src="${CI_EN.src}" alt="KUMHO ARCHIVES" style="display:block;height:.95em;width:auto;margin-bottom:.25em"></small>사진 조회</span>
 <form id="srForm"><input id="srQ" type="search" placeholder="검색어 입력  (예: 고속버스, 타이어, 아시아나, 1988)" autocomplete="off" aria-label="검색어"><button class="pri" type="submit">검색</button></form>
 <button class="x" type="button" id="srClose" aria-label="닫기">✕</button></div>
 <div class="ktabs" id="srTabs"></div>
