@@ -7133,53 +7133,44 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const GATES = [{ x: -32, big: "창립 85년", sub: "2031" }, { x: -62, big: "창립 90년", sub: "2036" }, { x: -92, big: "창립 95년", sub: "2041" },
     { x: -122, big: "창립 100년", sub: "2046", gold: true }, { x: -156, big: "다음 100년을 준비하며", sub: "금호는 계속 달립니다", last: true }];
   const GATE_END = -172;
-  function gateTex(G) {   // a hologram panel: tinted glass, neon edges and corner brackets, glowing letters
+  function gateTex(G) {   // a calm glass panel: dark tinted glass, thin pale edges and corner brackets, clear white letters
     return canvasTex(2048, 1152, (g, W, H) => {
-      const C = G.gold ? "255,214,140" : "95,240,255";   // 100 years glows warm, the rest cyan
-      const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, `rgba(${C},0.06)`); bg.addColorStop(0.5, "rgba(4,30,46,0.42)"); bg.addColorStop(1, `rgba(${C},0.06)`);
+      const C = G.gold ? "240,217,168" : "226,234,242";   // 100 years in soft champagne, the rest in pale silver
+      const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "rgba(14,22,38,0.50)"); bg.addColorStop(0.5, "rgba(14,22,38,0.68)"); bg.addColorStop(1, "rgba(14,22,38,0.50)");
       g.fillStyle = bg; g.fillRect(0, 0, W, H);
-      g.strokeStyle = `rgba(${C},0.10)`; g.lineWidth = 2;   // faint grid
+      g.strokeStyle = "rgba(226,234,242,0.06)"; g.lineWidth = 2;   // a very faint grid
       for (let x = 0; x <= W; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
       for (let y = 0; y <= H; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
-      g.shadowColor = `rgba(${C},1)`; g.shadowBlur = 36; g.strokeStyle = `rgba(${C},0.95)`; g.lineWidth = 8; g.strokeRect(36, 36, W - 72, H - 72);
-      g.lineWidth = 16; const L = 150;
+      g.strokeStyle = `rgba(${C},0.85)`; g.lineWidth = 6; g.strokeRect(36, 36, W - 72, H - 72);
+      g.lineWidth = 14; const L = 150;
       [[36, 36, 1, 1], [W - 36, 36, -1, 1], [36, H - 36, 1, -1], [W - 36, H - 36, -1, -1]].forEach(([x, y, sx, sy]) => { g.beginPath(); g.moveTo(x + sx * L, y); g.lineTo(x, y); g.lineTo(x, y + sy * L); g.stroke(); });
       g.textAlign = "center"; g.textBaseline = "middle";
       const big = G.last ? 160 : 270;
-      g.font = `700 ${big}px ${FONT}`; g.shadowBlur = 60; g.fillStyle = `rgba(${C},0.9)`; g.fillText(G.big, W / 2, H * (G.last ? 0.44 : 0.45));
-      g.shadowBlur = 18; g.fillStyle = "#f2feff"; g.fillText(G.big, W / 2, H * (G.last ? 0.44 : 0.45));
-      g.shadowBlur = 24; g.fillStyle = `rgba(${C},1)`;
+      g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = 20; g.shadowOffsetY = 4;
+      g.font = `700 ${big}px ${FONT}`; g.fillStyle = G.gold ? "#f6e3b8" : "#ffffff"; g.fillText(G.big, W / 2, H * (G.last ? 0.44 : 0.45));
+      g.shadowBlur = 10; g.fillStyle = `rgb(${C})`;
       g.font = G.last ? `700 76px ${FONT}` : `700 84px Arial, sans-serif`;
       const sub = G.last ? G.sub : G.sub.split("").join(String.fromCharCode(8202, 8202, 8202));
       g.fillText(sub, W / 2, H * (G.last ? 0.69 : 0.74));
-      g.fillRect(W / 2 - 90, H * (G.last ? 0.575 : 0.625), 180, 5);
+      g.shadowBlur = 0; g.shadowOffsetY = 0; g.fillRect(W / 2 - 90, H * (G.last ? 0.575 : 0.625), 180, 5);
     });
-  }
-  let SCAN = null;
-  function scanTex() {   // fine horizontal scanlines, scrolled upward while riding
-    if (SCAN) return SCAN;
-    const c = document.createElement("canvas"); c.width = 4; c.height = 16; const g = c.getContext("2d");
-    g.fillStyle = "rgba(160,250,255,0.55)"; g.fillRect(0, 0, 4, 3); g.fillStyle = "rgba(160,250,255,0.12)"; g.fillRect(0, 3, 4, 3);
-    SCAN = new THREE.CanvasTexture(c); SCAN.wrapS = SCAN.wrapT = THREE.RepeatWrapping; SCAN.repeat.set(1, 70); return SCAN;
   }
   function rideGates(on) {
     if (on && mode === "outside") {
       if (!OUT.gates || !OUT.gates[0].mesh.parent) OUT.gates = GATES.map((G) => {
         const mat = new THREE.MeshBasicMaterial({ map: gateTex(G), transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false });
-        const hue = G.gold ? 0xffd68c : 0x5ff0ff;
-        const scanM = new THREE.MeshBasicMaterial({ map: scanTex(), color: hue, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false, blending: THREE.AdditiveBlending });
-        const edgeM = new THREE.MeshBasicMaterial({ color: hue, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false, blending: THREE.AdditiveBlending });
+        const hue = G.gold ? 0xf0d9a8 : 0xe2eaf2;
+        const edgeM = new THREE.MeshBasicMaterial({ color: hue, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false });
         // two leaves, each carrying its half of the panel, that slide apart from the middle like a door as the taxi arrives
         const mesh = new THREE.Group(); mesh.rotation.y = Math.PI / 2; mesh.position.set(G.x, 3.0, -1.0); world.add(mesh);
         const leaves = [0, 1].map((k) => { const geo = new THREE.PlaneGeometry(4.8, 5.4), uv = geo.attributes.uv;
           for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * 0.5 + k * 0.5);
           const m = new THREE.Mesh(geo, mat); m.position.x = k ? 2.4 : -2.4; mesh.add(m);
-          const sl = new THREE.Mesh(geo, scanM); sl.position.z = 0.01; m.add(sl);   // scanlines over the leaf
           const ed = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 5.4), edgeM); ed.position.set(k ? -2.4 : 2.4, 0, 0.02); m.add(ed);   // a neon seam where the leaves meet
           return m; });
-        const glow = new THREE.Mesh(new THREE.PlaneGeometry(9.6, 0.08), new THREE.MeshBasicMaterial({ color: hue, transparent: true, opacity: 0, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
+        const glow = new THREE.Mesh(new THREE.PlaneGeometry(9.6, 0.08), new THREE.MeshBasicMaterial({ color: hue, transparent: true, opacity: 0, depthWrite: false, fog: false }));
         glow.rotation.x = -Math.PI / 2; glow.rotation.z = Math.PI / 2; glow.position.set(G.x, 0.02, -1.0); world.add(glow);   // a line of light on the road where the veil stands
-        const q = { G, mesh, mat, glow, leaves, scanM, edgeM, passed: false };
+        const q = { G, mesh, mat, glow, leaves, edgeM, passed: false };
         if (document.fonts) { const fs = [`700 100px "Noto Sans KR"`, G.big], fs2 = [`700 70px "Noto Sans KR"`, G.sub];   // Korean web fonts arrive in slices: redraw once these letters are in
           if (!document.fonts.check(...fs) || !document.fonts.check(...fs2)) Promise.all([document.fonts.load(...fs), document.fonts.load(...fs2)]).then(() => { const old = q.mat.map; q.mat.map = gateTex(G); q.mat.needsUpdate = true; if (old) old.dispose(); }).catch(() => {}); }
         return q;
@@ -7189,17 +7180,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function rideGatesStep() {
     if (!OUT.gates) return;
-    if (SCAN) SCAN.offset.y = -((OUT.t || 0) * 0.35 % 1);
     for (const q of OUT.gates) {
       const d = OUT.x - q.G.x;                       // metres still to go before the taxi reaches this veil
       const near = Math.max(0, Math.min(1, (70 - d) / 40));   // fades in out of the distance
       const o = Math.max(0, Math.min(1, (16 - d) / 13)), e = o * o * (3 - 2 * o);   // the doors part from the middle over the last stretch
       q.leaves[0].position.x = -2.4 - 5.2 * e; q.leaves[1].position.x = 2.4 + 5.2 * e;
-      let op = 0.92 * near; if (d < 0) op *= Math.max(0, 1 + d / 6);              // and fade once the taxi is through
-      const i = OUT.gates.indexOf(q), T = OUT.t || 0;
-      const fl = (0.93 + 0.07 * Math.sin(T * 31 + i * 2.1)) * (Math.sin(T * 5.3 + i * 1.7) > 0.985 ? 0.45 : 1);   // hologram shimmer, with the odd dropout
-      op *= fl;
-      q.mat.opacity = op; q.glow.material.opacity = 0.9 * op * (1 - e); q.scanM.opacity = 0.35 * op; q.edgeM.opacity = op * (0.6 + 0.4 * e);
+      let op = 0.96 * near; if (d < 0) op *= Math.max(0, 1 + d / 6);              // and fade once the taxi is through
+      q.mat.opacity = op; q.glow.material.opacity = 0.7 * op * (1 - e); q.edgeM.opacity = 0.8 * op;
       if (d < 14 && !q.opened) { q.opened = true; if (typeof sfxWhoosh === "function") sfxWhoosh(); }
       if (d < 0) q.passed = true;
     }
