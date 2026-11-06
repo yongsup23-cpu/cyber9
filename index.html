@@ -6799,12 +6799,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     // ground: road, kerbs, pavements, grass beyond
     const road = new THREE.Mesh(new THREE.PlaneGeometry(400, 7), lam(0x2c2e31)); road.rotation.x = -Math.PI / 2; world.add(road);
     const mark = (w, d, x, z, col) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), basic(col)); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.006, z); world.add(m); };
-    mark(400, 0.12, 0, -0.1, 0xe2b236); mark(400, 0.12, 0, 0.1, 0xe2b236);                 // double yellow centre line
     mark(400, 0.12, 0, 3.25, 0xe8e6de); mark(400, 0.12, 0, -3.25, 0xe8e6de);              // edge lines
     const pave = (z0, z1) => { const b = new THREE.Mesh(new THREE.BoxGeometry(400, 0.15, z1 - z0), lam(0x76736c)); b.position.set(0, 0.075, (z0 + z1) / 2); world.add(b);
       const k = new THREE.Mesh(new THREE.BoxGeometry(400, 0.16, 0.22), lam(0xbdb8ad)); k.position.set(0, 0.08, z0 > 0 ? z0 + 0.11 : z1 - 0.11); world.add(k); };
     pave(3.5, HZ); pave(-7.5, -3.5);
     const grass = new THREE.Mesh(new THREE.PlaneGeometry(900, 600), lam(0x4a5a3c)); grass.rotation.x = -Math.PI / 2; grass.position.set(0, -0.01, -307.5); world.add(grass);
+    { const g2 = new THREE.Mesh(new THREE.PlaneGeometry(900, 600), grass.material); g2.rotation.x = -Math.PI / 2; g2.position.set(0, -0.01, HZ + 299); world.add(g2); }   // ground beside and behind the archive too, so its ends never float over the sky
     // the archive behind: dark stone facade, a gold band, the way back in
     const fac = plane(60, 12, basic(0x24221d)); fac.position.set(0, 6, HZ); fac.rotation.y = Math.PI; world.add(fac);
     { // the building's body: a real box behind the facade, so its ends read as stone walls with depth, not a flat sheet
@@ -7128,6 +7128,25 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     el._shown = performance.now(); el.hidden = false; if (!matchMedia("(pointer: coarse)").matches) el.querySelector(".y").focus();
   }
+  function rideNum(on) {   // while riding: a faint, soft numeral ahead counting the years on, 80 to 100, then the next century
+    let el = $("rideNum");
+    if (!el) { const st = document.createElement("style"); st.textContent = "#rideNum{position:fixed;left:0;right:0;top:7vh;z-index:40;pointer-events:none;text-align:center;color:#fff;opacity:0;transition:opacity .8s}#rideNum .n{font:200 min(30vw,36vh)/1 'Noto Sans KR',Arial,sans-serif;letter-spacing:-.03em;opacity:.3;filter:blur(1.6px);text-shadow:0 0 50px rgba(255,255,255,.45);will-change:filter,transform}#rideNum .y{margin-top:.4vh;font:500 min(2.6vw,3vh)/1 Arial,sans-serif;letter-spacing:.5em;opacity:.55;text-shadow:0 1px 8px rgba(0,0,0,.5)}#rideNum .m{position:absolute;left:0;right:0;top:9vh;opacity:0;text-shadow:0 2px 18px rgba(0,0,0,.55)}#rideNum .m b{display:block;font:700 min(6vw,7.4vh)/1.2 'Noto Serif KR',serif;letter-spacing:.04em}#rideNum .m span{display:block;margin-top:1.6vh;font:500 min(2.6vw,3.2vh)/1.3 'Noto Sans KR',sans-serif;letter-spacing:.3em;opacity:.85}";
+      document.head.appendChild(st);
+      el = document.createElement("div"); el.id = "rideNum"; el.setAttribute("aria-hidden", "true");
+      el.innerHTML = '<div class="n">80</div><div class="y">2026</div><div class="m"><b>그리고, 다음 100년</b><span>금호는 계속 달립니다</span></div>'; document.body.appendChild(el); }
+    el.style.opacity = on ? "1" : "0"; if (on) rideNumAt(0);
+  }
+  function rideNumAt(t) {
+    const el = $("rideNum"); if (!el) return;
+    const n = el.firstChild, y = n.nextSibling, m = y.nextSibling;
+    const u = Math.max(0, Math.min(1, (t - 0.8) / 5.6)), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;   // slow, quicker, then settling on 100
+    const N = Math.round(80 + 20 * e); if (n.textContent !== String(N)) { n.textContent = N; y.textContent = String(1946 + N); }
+    const pulse = t > 6.4 && t < 7.4 ? Math.sin((t - 6.4) / 1.0 * Math.PI) : 0;   // 100 arrives with a soft swell
+    const out = Math.max(0, Math.min(1, (t - 7.6) / 1.2));                        // then the numeral dissolves...
+    n.style.transform = `scale(${1 + 0.06 * pulse + 0.18 * out})`; n.style.filter = `blur(${1.6 + 14 * out}px)`; n.style.opacity = String(0.3 * (1 + 0.6 * pulse) * (1 - out));
+    y.style.opacity = String(0.55 * (1 - out));
+    m.style.opacity = String(Math.max(0, Math.min(1, (t - 8.2) / 1.0)));        // ...into the line for the century after it
+  }
   function taxiToast(text, ms) {
     let t = $("taxiToast"); if (!t) { t = document.createElement("div"); t.id = "taxiToast"; document.body.appendChild(t); }
     t.textContent = text; t.style.opacity = "1"; clearTimeout(t._h); t._h = setTimeout(() => { t.style.opacity = "0"; }, ms || 2600);
@@ -7153,15 +7172,15 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (mode !== "outside" || OUT.kind !== "taxi" || !OUT.veh) return;
     if (OUT.st === "come") { OUT.st = "idle"; OUT.x = 0; OUT.veh.position.x = 0; }   // still pulling in: it stops at once
     if (OUT.st !== "idle") return;
-    anim = null; busy = true; camera.near = 0.12; camera.updateProjectionMatrix(); taxiCSS(); document.body.classList.add("riding"); if (OUT.taxiIn) { OUT.taxiIn.visible = true; OUT.taxiMesh.visible = false; } if (OUT.buildLane) OUT.buildLane(); OUT.x = OUT.LANE ? OUT.LANE.x0 : 0; OUT.veh.position.x = OUT.x; OUT.vehZ = OUT.veh.position.z; OUT.veh.position.z = -1.75; OUT.paused = false; OUT.st = "ride"; OUT.t = 0; OUT.v = 0; OUT.fade = false; OUT.look = 0; OUT.lookP = 0; OUT.lastYaw = null; OUT.lastPitch = null;
+    anim = null; busy = true; camera.near = 0.12; camera.updateProjectionMatrix(); taxiCSS(); rideNum(true); document.body.classList.add("riding"); if (OUT.taxiIn) { OUT.taxiIn.visible = true; OUT.taxiMesh.visible = false; } if (OUT.buildLane) OUT.buildLane(); OUT.x = OUT.LANE ? OUT.LANE.x0 : 0; OUT.veh.position.x = OUT.x; OUT.vehZ = OUT.veh.position.z; OUT.veh.position.z = -1.75; OUT.paused = false; OUT.st = "ride"; OUT.t = 0; OUT.v = 0; OUT.fade = false; OUT.look = 0; OUT.lookP = 0; OUT.lastYaw = null; OUT.lastPitch = null;
     if (typeof sfxWhoosh === "function") sfxWhoosh(); taxiToast("택시가 출발합니다 · 화면을 끌면 차 안을 둘러볼 수 있어요", 3200); if (OUT.zoomRide == null) { OUT.zoomRide = zoomTarget; setZoom(0.85); }
   }
   function taxiArrive() {   // back at the archive: the taxi at the kerb, the visitor on the pavement beside it, the entrance ahead
-    if (mode !== "outside" || !OUT.veh) { busy = false; taxiFade(false); return; }
+    if (mode !== "outside" || !OUT.veh) { busy = false; rideNum(false); taxiFade(false); return; }
     camera.near = 0.05; camera.updateProjectionMatrix();
     if (OUT.roofHide) for (const o of OUT.roofHide) o.visible = true; laneGoHide(); if (OUT.vehZ != null) OUT.veh.position.z = OUT.vehZ; OUT.x = 0; OUT.veh.position.x = 0; OUT.st = "arrived"; OUT.t = 0; OUT.v = 0; if (OUT.taxiIn) { OUT.taxiIn.visible = false; OUT.taxiMesh.visible = true; }
     moveTo({ x: -7.5, z: 7.6, yaw: -Math.atan2(7.5, -0.4), pitch: 0.06 }, true); if (OUT.zoomRide != null) { setZoom(OUT.zoomRide); OUT.zoomRide = null; }
-    busy = false; document.body.classList.remove("riding"); taxiFade(false); setTimeout(() => taxiToast("금호 아카이브에 도착했습니다", 3000), 500);
+    busy = false; document.body.classList.remove("riding"); rideNum(false); taxiFade(false); setTimeout(() => taxiToast("금호 아카이브에 도착했습니다", 3000), 500);
   }
   function outSwap(kind) {   // which vehicle pulls up next: after the bus has left twice, the founding taxi comes instead
     const v = kind === "taxi" ? OUT.taxi : OUT.bus; if (!v) return;
@@ -7194,7 +7213,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       cam.x = OUT.x + 0.14; cam.z = OUT.veh.position.z + 0.36; cam.y = 1.34 + Math.sin(OUT.t * 9) * 0.006 * Math.min(1, OUT.v / 6);   // the driver's seat
       cam.yaw = Math.PI / 2 + (OUT.look || 0); cam.pitch = -0.15 + (OUT.lookP || 0);
       OUT.lastYaw = cam.yaw; OUT.lastPitch = cam.pitch;
-      if ((OUT.LANE ? OUT.x < OUT.LANE.x1 : OUT.t > 10) && !OUT.fade) { OUT.fade = true; taxiFade(true, taxiArrive); }
+      rideNumAt(OUT.t);
+      if ((OUT.LANE ? OUT.x < OUT.LANE.x1 : OUT.t > 11.5) && !OUT.fade) { OUT.fade = true; taxiFade(true, taxiArrive); }
       return; }
     if (OUT.st === "arrived") { OUT.t += dt; if (OUT.t > 4) { OUT.st = "go"; OUT.v = 0; if (typeof sfxWhoosh === "function") sfxWhoosh(); } return; }
     if (OUT.st === "go") { OUT.v = Math.min(taxi ? 13 : 19.2, OUT.v + dt * (taxi ? 3.4 : 3.12)); OUT.x -= OUT.v * dt; if (OUT.x < -90) { OUT.st = "gone"; OUT.t = 0; OUT.veh.visible = false; } }
@@ -7262,7 +7282,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       text: DATA.map((h, i) => `${HL(i)}${h.span ? ` (${h.span.replace(/ — /, "~")})` : ""}  ${h.title}`).join("\n") }, 3.4, 3.1);
     // the way out appears only once every hall has been visited (?outside=1 shows it anyway)
     if (DATA.every((h, i) => VISITED.has(i)) || /[?&]outside=1/.test(location.search)) {
-      const OUTT = { outside: true }, ol = { title: "EXIT", sub: "바깥으로 · 금호고속 정류장" };
+      const OUTT = { outside: true }, ol = { title: "EXIT", sub: "바깥으로 · 금호 아카이브 역" };
       buildOutDoor(2, -5.7, OUTT);
       stops.push({ kind: "door", side: 2, u: -5.7, cy: 1.6, w: 2.9, h: 3.0, target: OUTT, label: ol, outDoor: true }); }
     addLobbyArrows();
@@ -8085,7 +8105,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function updateHud() {
     $("roomName").classList.toggle("ci", mode === "lobby");
-    if (mode === "outside") { $("roomNo").textContent = "OUTSIDE"; $("roomName").textContent = "금호고속 정류장"; return; }
+    if (mode === "outside") { $("roomNo").textContent = "OUTSIDE"; $("roomName").textContent = "금호 아카이브 역"; return; }
     if (mode === "lobby") { $("roomNo").innerHTML = `<img src="${CI_EN.src}" alt="KUMHO ARCHIVES" style="display:block;height:11px;width:auto;margin-top:2px">`; $("roomName").textContent = "금호아카이브"; }
     else {
       const h = DATA[hallIndex];
