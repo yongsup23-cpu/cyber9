@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script id="naverjs" async src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=n9cdl9yr3r&submodules=geocoder" onload="window.__naverLoaded=1;window.__onNaver&&window.__onNaver(true)" onerror="window.__naverError=1;window.__onNaver&&window.__onNaver(false)"></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;500;700&display=swap">
 <style>
 :root{--bg:#111211;--panel:#171815;--line:#34332e;--line2:#45443d;--ink:#eee7db;--ink2:#d9cfbf;--mute:#b6ad9e;--gold:#d3bb8c;--gold2:#bda477;--btn:#20211f;color-scheme:dark}
 *{box-sizing:border-box}
@@ -6786,6 +6786,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function buildOutside() {
     clearWorld(); mode = "outside"; hallIndex = -1; RT = false; DR = false; WALL_H = 12; HX = 26; HZ = 14; ticker = null; DOME = null;
+    if (document.fonts) try { GATES.forEach((G) => { document.fonts.load(`700 100px "Noto Serif KR"`, G.big); document.fonts.load(`700 70px "Noto Sans KR"`, G.sub); }); } catch (e) {}
     const lam = (c) => new THREE.MeshLambertMaterial({ color: c });
     let seed = 2026; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     // sky, fog, light that follow the live sky (time of day, weather) of the chosen place
@@ -6852,7 +6853,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     // street lamps on both pavements
     const poleM = lam(0x3a3a3c), lampM = basic(0xfff2d6);
-    for (const x of [-36, -12, 12, 36]) [[4.3, 1], [-5.2, -1]].forEach(([z, s]) => {   // none in front of the bus shelter
+    for (const x of [-180, -156, -132, -108, -84, -60, -36, -12, 12, 36]) [[4.3, 1], [-5.2, -1]].forEach(([z, s]) => {   // none in front of the bus shelter
       const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 7, 10), poleM); p.position.set(x, 3.5, z); world.add(p);
       const a = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 1.6), poleM); a.position.set(x, 6.95, z - s * 0.8); world.add(a);
       const l = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.3), lampM); l.position.set(x, 6.86, z - s * 1.55); world.add(l); });
@@ -6864,7 +6865,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       let sd = 77; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
       for (let i = 0; i < 2600; i++) { const v = 120 + r() * 135; g.fillStyle = `rgb(${v},${v},${v})`; g.beginPath(); g.ellipse(r() * 256, r() * 256, 2 + r() * 5, 1.5 + r() * 3, r() * 3, 0, Math.PI * 2); g.fill(); } });
     leafTex.wrapS = leafTex.wrapT = THREE.RepeatWrapping; leafTex.repeat.set(2, 2);
-    const trees = []; for (let r = 0; r < 4; r++) for (let x = -60; x <= 60; x += 2.1) trees.push([x + (r % 2) * 1.05 + (rnd() - 0.5) * 0.6, -5.8 - r * 1.8 + (rnd() - 0.5) * 0.5, 5.6 + rnd() * 1.6]);
+    const trees = []; for (let r = 0; r < 4; r++) for (let x = -190; x <= 60; x += 2.1) trees.push([x + (r % 2) * 1.05 + (rnd() - 0.5) * 0.6, -5.8 - r * 1.8 + (rnd() - 0.5) * 0.5, 5.6 + rnd() * 1.6]);
     const barkM = lam(0x4a3a2c), limbM = lam(0x4a3a2c);
     const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.1, 0.19, 1, 8), barkM, trees.length);
     const branch = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.025, 0.06, 1, 5), limbM, trees.length * 14);
@@ -7128,24 +7129,53 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     el._shown = performance.now(); el.hidden = false; if (!matchMedia("(pointer: coarse)").matches) el.querySelector(".y").focus();
   }
-  function rideNum(on) {   // while riding: a faint, soft numeral ahead counting the years on, 80 to 100, then the next century
-    let el = $("rideNum");
-    if (!el) { const st = document.createElement("style"); st.textContent = "#rideNum{position:fixed;left:0;right:0;top:7vh;z-index:40;pointer-events:none;text-align:center;color:#fff;opacity:0;transition:opacity .8s}#rideNum .n{font:200 min(30vw,36vh)/1 'Noto Sans KR',Arial,sans-serif;letter-spacing:-.03em;opacity:.3;filter:blur(1.6px);text-shadow:0 0 50px rgba(255,255,255,.45);will-change:filter,transform}#rideNum .y{margin-top:.4vh;font:500 min(2.6vw,3vh)/1 Arial,sans-serif;letter-spacing:.5em;opacity:.55;text-shadow:0 1px 8px rgba(0,0,0,.5)}#rideNum .m{position:absolute;left:0;right:0;top:9vh;opacity:0;text-shadow:0 2px 18px rgba(0,0,0,.55)}#rideNum .m b{display:block;font:700 min(6vw,7.4vh)/1.2 'Noto Serif KR',serif;letter-spacing:.04em}#rideNum .m span{display:block;margin-top:1.6vh;font:500 min(2.6vw,3.2vh)/1.3 'Noto Sans KR',sans-serif;letter-spacing:.3em;opacity:.85}";
-      document.head.appendChild(st);
-      el = document.createElement("div"); el.id = "rideNum"; el.setAttribute("aria-hidden", "true");
-      el.innerHTML = '<div class="n">80</div><div class="y">2026</div><div class="m"><b>그리고, 다음 100년</b><span>금호는 계속 달립니다</span></div>'; document.body.appendChild(el); }
-    el.style.opacity = on ? "1" : "0"; if (on) rideNumAt(0);
+  // while riding: veils of light across the road, one for every five years ahead — the taxi drives through each in turn
+  const GATES = [{ x: -32, big: "창립 85년", sub: "2031" }, { x: -62, big: "창립 90년", sub: "2036" }, { x: -92, big: "창립 95년", sub: "2041" },
+    { x: -122, big: "창립 100년", sub: "2046", gold: true }, { x: -156, big: "다음 100년을 준비하며", sub: "금호는 계속 달립니다", last: true }];
+  const GATE_END = -172;
+  function gateTex(G) {
+    return canvasTex(2048, 1152, (g, W, H) => {
+      const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "rgba(18,22,32,0.30)"); bg.addColorStop(0.5, "rgba(18,22,32,0.52)"); bg.addColorStop(1, "rgba(18,22,32,0.30)");
+      g.fillStyle = bg; g.fillRect(0, 0, W, H);
+      g.strokeStyle = "rgba(233,206,150,0.95)"; g.lineWidth = 10; g.strokeRect(40, 40, W - 80, H - 80);
+      g.strokeStyle = "rgba(233,206,150,0.45)"; g.lineWidth = 3; g.strokeRect(78, 78, W - 156, H - 156);
+      g.textAlign = "center"; g.textBaseline = "middle";
+      g.shadowColor = "rgba(0,0,0,0.55)"; g.shadowBlur = 24;
+      const big = G.last ? 150 : 250;
+      g.fillStyle = G.gold || G.last ? "#ffe6b0" : "#fbf6ec";
+      g.font = `700 ${big}px "Noto Serif KR", "Nanum Myeongjo", serif`; g.fillText(G.big, W / 2, H * (G.last ? 0.44 : 0.46));
+      g.shadowBlur = 12; g.fillStyle = "rgba(240,222,180,0.95)";
+      g.font = G.last ? `700 72px ${FONT}` : `700 80px Arial, sans-serif`;
+      if (!G.last) { g.save(); g.translate(W / 2, H * 0.73); const t = G.sub.split("").join(String.fromCharCode(8202, 8202)); g.fillText(t, 0, 0); g.restore(); }
+      else g.fillText(G.sub, W / 2, H * 0.68);
+      g.fillStyle = "rgba(233,206,150,0.9)"; g.fillRect(W / 2 - 60, H * (G.last ? 0.57 : 0.62), 120, 4);
+    });
   }
-  function rideNumAt(t) {
-    const el = $("rideNum"); if (!el) return;
-    const n = el.firstChild, y = n.nextSibling, m = y.nextSibling;
-    const u = Math.max(0, Math.min(1, (t - 0.8) / 5.6)), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;   // slow, quicker, then settling on 100
-    const N = Math.round(80 + 20 * e); if (n.textContent !== String(N)) { n.textContent = N; y.textContent = String(1946 + N); }
-    const pulse = t > 6.4 && t < 7.4 ? Math.sin((t - 6.4) / 1.0 * Math.PI) : 0;   // 100 arrives with a soft swell
-    const out = Math.max(0, Math.min(1, (t - 7.6) / 1.2));                        // then the numeral dissolves...
-    n.style.transform = `scale(${1 + 0.06 * pulse + 0.18 * out})`; n.style.filter = `blur(${1.6 + 14 * out}px)`; n.style.opacity = String(0.3 * (1 + 0.6 * pulse) * (1 - out));
-    y.style.opacity = String(0.55 * (1 - out));
-    m.style.opacity = String(Math.max(0, Math.min(1, (t - 8.2) / 1.0)));        // ...into the line for the century after it
+  function rideGates(on) {
+    if (on && mode === "outside") {
+      if (!OUT.gates || !OUT.gates[0].mesh.parent) OUT.gates = GATES.map((G) => {
+        const mat = new THREE.MeshBasicMaterial({ map: gateTex(G), transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false });
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(9.6, 5.4), mat); mesh.rotation.y = Math.PI / 2; mesh.position.set(G.x, 3.0, -1.0); world.add(mesh);
+        const glow = new THREE.Mesh(new THREE.PlaneGeometry(9.6, 0.06), new THREE.MeshBasicMaterial({ color: 0xffd79a, transparent: true, opacity: 0, depthWrite: false, fog: false }));
+        glow.rotation.x = -Math.PI / 2; glow.rotation.z = Math.PI / 2; glow.position.set(G.x, 0.02, -1.0); world.add(glow);   // a line of light on the road where the veil stands
+        const q = { G, mesh, mat, glow, passed: false };
+        if (document.fonts) { const fs = [`700 100px "Noto Serif KR"`, G.big], fs2 = [`700 70px "Noto Sans KR"`, G.sub];   // Korean web fonts arrive in slices: redraw once these letters are in
+          if (!document.fonts.check(...fs) || !document.fonts.check(...fs2)) Promise.all([document.fonts.load(...fs), document.fonts.load(...fs2)]).then(() => { const old = q.mat.map; q.mat.map = gateTex(G); q.mat.needsUpdate = true; if (old) old.dispose(); }).catch(() => {}); }
+        return q;
+      });
+      for (const q of OUT.gates) { q.passed = false; q.mesh.visible = q.glow.visible = true; q.mat.opacity = 0; q.mesh.scale.set(1, 1, 1); }
+    } else if (OUT.gates) for (const q of OUT.gates) { q.mesh.visible = q.glow.visible = false; }
+  }
+  function rideGatesStep() {
+    if (!OUT.gates) return;
+    for (const q of OUT.gates) {
+      const d = OUT.x - q.G.x;                       // metres still to go before the taxi reaches this veil
+      const near = Math.max(0, Math.min(1, (70 - d) / 40));   // fades in out of the distance
+      let op = 0.92 * near, sc = 1;
+      if (d < 3) { const k = Math.max(0, Math.min(1, (3 - d) / 4)); op *= 1 - k; sc = 1 + 0.25 * k; }   // and parts as the taxi goes through it
+      q.mat.opacity = op; q.mesh.scale.set(sc, sc, 1); q.glow.material.opacity = 0.8 * op;
+      if (d < 0 && !q.passed) { q.passed = true; if (typeof sfxWhoosh === "function") sfxWhoosh(); }
+    }
   }
   function taxiToast(text, ms) {
     let t = $("taxiToast"); if (!t) { t = document.createElement("div"); t.id = "taxiToast"; document.body.appendChild(t); }
@@ -7172,15 +7202,15 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (mode !== "outside" || OUT.kind !== "taxi" || !OUT.veh) return;
     if (OUT.st === "come") { OUT.st = "idle"; OUT.x = 0; OUT.veh.position.x = 0; }   // still pulling in: it stops at once
     if (OUT.st !== "idle") return;
-    anim = null; busy = true; camera.near = 0.12; camera.updateProjectionMatrix(); taxiCSS(); rideNum(true); document.body.classList.add("riding"); if (OUT.taxiIn) { OUT.taxiIn.visible = true; OUT.taxiMesh.visible = false; } if (OUT.buildLane) OUT.buildLane(); OUT.x = OUT.LANE ? OUT.LANE.x0 : 0; OUT.veh.position.x = OUT.x; OUT.vehZ = OUT.veh.position.z; OUT.veh.position.z = -1.75; OUT.paused = false; OUT.st = "ride"; OUT.t = 0; OUT.v = 0; OUT.fade = false; OUT.look = 0; OUT.lookP = 0; OUT.lastYaw = null; OUT.lastPitch = null;
+    anim = null; busy = true; camera.near = 0.12; camera.updateProjectionMatrix(); taxiCSS(); rideGates(true); document.body.classList.add("riding"); if (OUT.taxiIn) { OUT.taxiIn.visible = true; OUT.taxiMesh.visible = false; } if (OUT.buildLane) OUT.buildLane(); OUT.x = OUT.LANE ? OUT.LANE.x0 : 0; OUT.veh.position.x = OUT.x; OUT.vehZ = OUT.veh.position.z; OUT.veh.position.z = -1.75; OUT.paused = false; OUT.st = "ride"; OUT.t = 0; OUT.v = 0; OUT.fade = false; OUT.look = 0; OUT.lookP = 0; OUT.lastYaw = null; OUT.lastPitch = null;
     if (typeof sfxWhoosh === "function") sfxWhoosh(); taxiToast("택시가 출발합니다 · 화면을 끌면 차 안을 둘러볼 수 있어요", 3200); if (OUT.zoomRide == null) { OUT.zoomRide = zoomTarget; setZoom(0.85); }
   }
   function taxiArrive() {   // back at the archive: the taxi at the kerb, the visitor on the pavement beside it, the entrance ahead
-    if (mode !== "outside" || !OUT.veh) { busy = false; rideNum(false); taxiFade(false); return; }
+    if (mode !== "outside" || !OUT.veh) { busy = false; rideGates(false); taxiFade(false); return; }
     camera.near = 0.05; camera.updateProjectionMatrix();
     if (OUT.roofHide) for (const o of OUT.roofHide) o.visible = true; laneGoHide(); if (OUT.vehZ != null) OUT.veh.position.z = OUT.vehZ; OUT.x = 0; OUT.veh.position.x = 0; OUT.st = "arrived"; OUT.t = 0; OUT.v = 0; if (OUT.taxiIn) { OUT.taxiIn.visible = false; OUT.taxiMesh.visible = true; }
     moveTo({ x: -7.5, z: 7.6, yaw: -Math.atan2(7.5, -0.4), pitch: 0.06 }, true); if (OUT.zoomRide != null) { setZoom(OUT.zoomRide); OUT.zoomRide = null; }
-    busy = false; document.body.classList.remove("riding"); rideNum(false); taxiFade(false); setTimeout(() => taxiToast("금호 아카이브에 도착했습니다", 3000), 500);
+    busy = false; document.body.classList.remove("riding"); rideGates(false); taxiFade(false); setTimeout(() => taxiToast("금호 아카이브에 도착했습니다", 3000), 500);
   }
   function outSwap(kind) {   // which vehicle pulls up next: after the bus has left twice, the founding taxi comes instead
     const v = kind === "taxi" ? OUT.taxi : OUT.bus; if (!v) return;
@@ -7204,7 +7234,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!OUT.veh) return;
     const taxi = OUT.kind === "taxi";
     if (OUT.st === "ride") {   // riding the founding taxi: a chase view from just behind and beside it, for about ten seconds
-      OUT.t += dt; OUT.v = OUT.paused ? Math.max(0, OUT.v - dt * 5) : Math.min(13, OUT.v + dt * 2.4); OUT.x -= OUT.v * dt; OUT.veh.position.x = OUT.x;   // a tapped bus or building brings the taxi to a gentle stop
+      OUT.t += dt; OUT.v = OUT.paused ? Math.max(0, OUT.v - dt * 5) : Math.min(9, OUT.v + dt * 2.2); OUT.x -= OUT.v * dt; OUT.veh.position.x = OUT.x;   // a tapped bus or building brings the taxi to a gentle stop
       if (OUT.roofHide) { const show = (OUT.look || 0) > -0.3; for (const o of OUT.roofHide) o.visible = show; }
       if (OUT.laneBus) for (const b of OUT.laneBus) b.rotation.y = Math.atan2(camera.position.x - b.position.x, camera.position.z - b.position.z);   // the era labels turn toward the taxi
       // the view follows the taxi, but dragging (or the arrow keys) still turns it left and right
@@ -7213,8 +7243,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       cam.x = OUT.x + 0.14; cam.z = OUT.veh.position.z + 0.36; cam.y = 1.34 + Math.sin(OUT.t * 9) * 0.006 * Math.min(1, OUT.v / 6);   // the driver's seat
       cam.yaw = Math.PI / 2 + (OUT.look || 0); cam.pitch = -0.15 + (OUT.lookP || 0);
       OUT.lastYaw = cam.yaw; OUT.lastPitch = cam.pitch;
-      rideNumAt(OUT.t);
-      if ((OUT.LANE ? OUT.x < OUT.LANE.x1 : OUT.t > 11.5) && !OUT.fade) { OUT.fade = true; taxiFade(true, taxiArrive); }
+      rideGatesStep();
+      if ((OUT.LANE ? OUT.x < OUT.LANE.x1 : OUT.x < GATE_END) && !OUT.fade) { OUT.fade = true; taxiFade(true, taxiArrive); }
       return; }
     if (OUT.st === "arrived") { OUT.t += dt; if (OUT.t > 4) { OUT.st = "go"; OUT.v = 0; if (typeof sfxWhoosh === "function") sfxWhoosh(); } return; }
     if (OUT.st === "go") { OUT.v = Math.min(taxi ? 13 : 19.2, OUT.v + dt * (taxi ? 3.4 : 3.12)); OUT.x -= OUT.v * dt; if (OUT.x < -90) { OUT.st = "gone"; OUT.t = 0; OUT.veh.visible = false; } }
