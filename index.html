@@ -4690,7 +4690,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
           for (const k of ["map", "normalMap", "metalnessMap", "roughnessMap", "aoMap", "emissiveMap", "alphaMap"]) { const t = m[k]; if (t && !keep.has(t) && !done.has(t)) { done.add(t); t.dispose(); } }
           if (m.uniforms) {} m.dispose(); } });
       OUT.grow = null; }
-    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.arteraMats = null; OUT.petals = null; OUT.bigTree = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); { const gb = document.getElementById("taxiGo"); if (gb) gb.hidden = true; } if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
+    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.arteraMats = null; OUT.petals = null; OUT.bigTree = null; OUT.bugs = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); { const gb = document.getElementById("taxiGo"); if (gb) gb.hidden = true; } if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
@@ -6478,17 +6478,33 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const mats = []; tree.traverse((o) => { if (o.material) { o.renderOrder = 2; mats.push(o.material); } });
     world.add(tree); tree.updateMatrixWorld(true);
     DOME.tree = { tree, mats, t0: null, args: [Y0, S, zfg, zb] };
+    if (SEASON === "spring" || SEASON === "autumn") {   // petals or leaves drifting down from the crown
+      const bb = new THREE.Box3().setFromObject(tree), N = 520, pp = new Float32Array(N * 3), pc = new Float32Array(N * 3), ph = new Float32Array(N), c = new THREE.Color();
+      let sd = 77; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      const X0 = bb.min.x - 4, X1 = bb.max.x + 4, Z0 = bb.min.z - 4, Z1 = bb.max.z + 4, TOP = bb.max.y * 0.85;
+      for (let i = 0; i < N; i++) { pp.set([X0 + r() * (X1 - X0), r() * TOP, Z0 + r() * (Z1 - Z0)], i * 3); ph[i] = r() * 6.28;
+        if (SEASON === "autumn") c.setHSL([0.0, 0.03, 0.07, 0.11, 0.14][i % 5], 0.75, 0.38 + r() * 0.18); else c.setHSL(0.94, 0.55 + r() * 0.3, 0.86 + r() * 0.08); c.toArray(pc, i * 3); }
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pp, 3)); g.setAttribute("color", new THREE.BufferAttribute(pc, 3));
+      const tex = canvasTex(32, 32, (q) => { q.clearRect(0, 0, 32, 32); q.fillStyle = "#fff"; q.beginPath();
+        if (SEASON === "autumn") { for (let k = 0; k <= 10; k++) { const a = k / 10 * Math.PI * 2, rr = k % 2 ? 7 : 14; q.lineTo(16 + Math.cos(a) * rr, 16 + Math.sin(a) * rr); } } else q.ellipse(16, 16, 12, 7, 0.6, 0, Math.PI * 2); q.fill(); });
+      const pts = new THREE.Points(g, new THREE.PointsMaterial({ map: tex, vertexColors: true, size: SEASON === "autumn" ? 0.42 : 0.3, transparent: true, depthWrite: false, alphaTest: 0.2 }));
+      pts.frustumCulled = false; pts.renderOrder = 2; world.add(pts); DOME.fall = { pts, ph, X0, X1, Z0, Z1, TOP, slow: SEASON === "autumn" ? 0.8 : 0.55 }; }
   }
   /* weather chip: preview another season (the tree is rebuilt and sways once) */
   function setSeasonPreview() {
     SKYW.prevS = ((SKYW.prevS || 0) + 1) % SEASON_PREVIEW.length; skyLabel();
     if (mode === "outside") { if (OUT.grow) OUT.grow(seasonNow()); OUT.snap = true; return; }
     const T = DOME && DOME.tree; if (!T) return;
-    [T.tree].forEach((o) => { world.remove(o); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); });
+    [T.tree].concat(DOME.fall ? [DOME.fall.pts] : []).forEach((o) => { world.remove(o); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); }); }); DOME.fall = null;
     buildSeasonTree(...T.args); if (skyDome) stepSeasonTree(0, skyDome.u); DOME.tree.t0 = performance.now() - 1500;
   }
   function stepSeasonTree(dt, u) {
     const T = DOME && DOME.tree; if (!T) return;
+    if (DOME.fall && dt) { const F = DOME.fall, a = F.pts.geometry.attributes.position, p = a.array, tt = performance.now() / 1000;   // the falling petals / leaves
+      for (let i = 0, n = F.ph.length; i < n; i++) { const o = i * 3, f = F.ph[i];
+        p[o + 1] -= (F.slow + 0.3 * Math.sin(f * 2.1)) * dt; p[o] += (Math.sin(tt * 1.2 + f) * 0.7 + 0.25) * dt; p[o + 2] += Math.cos(tt * 0.9 + f * 1.7) * 0.5 * dt;
+        if (p[o + 1] < 0 || p[o] > F.X1 + 6) { p[o] = F.X0 + ((f * 997) % 1) * (F.X1 - F.X0); p[o + 1] = F.TOP; p[o + 2] = F.Z0 + ((f * 613) % 1) * (F.Z1 - F.Z0); } }
+      a.needsUpdate = true; }
     // light: follows the sky (dim at night, warm at golden hour) and the slight tint of the glass
     const lv = (0.22 + 0.78 * u.uDay.value * (1 - 0.35 * u.uOver.value)) * (1 - u.uDay.value * (1 - u.uLum.value) * 0.8), g = u.uGold.value, tw = u.uTwi.value;
     const r = lv * (0.93 + 0.12 * g + 0.1 * tw), gg = lv * (0.96 + 0.03 * g), b = lv * (0.98 - 0.16 * g - 0.05 * tw);
@@ -6855,6 +6871,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       // bench of timber slats on steel legs
       bx(3.0, 0.06, 0.42, 0.4, 0.48, D / 2 - 0.35, wood); bx(3.0, 0.3, 0.05, 0.4, 0.72, D / 2 - 0.12, wood);
       [-0.95, 1.75].forEach((x) => bx(0.06, 0.48, 0.38, x, 0.24, D / 2 - 0.35, frame));
+      { const pk = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.9, 0.7), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(0.4, 0.55, D / 2 - 0.3); pk.userData.idx = "outBench"; S.add(pk); pickables.push(pk); }   // tap the bench to sit
       // (the 금호건설TV screen was removed at the user's request)
       { const p0 = S.position; OUT.walls = [[p0.x - W / 2, p0.x + W / 2, p0.z + D / 2 - 0.05, p0.z + D / 2 + 0.05], [p0.x + W / 2 - 0.05, p0.x + W / 2 + 0.05, p0.z - D / 2 + 0.2, p0.z + D / 2 + 0.05]]; }
     }
@@ -6867,13 +6884,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     // dense trees across the road, four staggered rows, coloured for the season; instanced so hundreds stay cheap
     // dense trees across the road, four staggered rows; instanced so hundreds stay cheap.
     // The season only recolours them (no rebuild), so the season preview is instant and allocates nothing.
-    const hedge = new THREE.Mesh(new THREE.BoxGeometry(400, 0.9, 0.9), lam(0x34512c)); hedge.position.set(0, 0.6, -4.3); world.add(hedge);
+    const hedge = new THREE.Mesh(new THREE.BoxGeometry(154, 0.9, 0.9), lam(0x34512c)); hedge.position.set(-123, 0.6, -4.3); world.add(hedge);   // the hedge, open where the crossings meet the far pavement
+    [[0, 84], [123, 154]].forEach(([x, w]) => { const h2 = new THREE.Mesh(new THREE.BoxGeometry(w, 0.9, 0.9), hedge.material); h2.position.set(x, 0.6, -4.3); world.add(h2); });
     const leafTex = canvasTex(256, 256, (g) => { g.fillStyle = "#ffffff"; g.fillRect(0, 0, 256, 256);   // dappled foliage, multiplied by each crown's colour
       let sd = 77; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
       for (let i = 0; i < 2600; i++) { const v = 120 + r() * 135; g.fillStyle = `rgb(${v},${v},${v})`; g.beginPath(); g.ellipse(r() * 256, r() * 256, 2 + r() * 5, 1.5 + r() * 3, r() * 3, 0, Math.PI * 2); g.fill(); } });
     leafTex.wrapS = leafTex.wrapT = THREE.RepeatWrapping; leafTex.repeat.set(2, 2);
     // trees in the attached design: broad domes built of many small rounded lobes on curved, spreading limbs
-    const trees = []; for (let r = 0; r < 3; r++) for (let x = -190; x <= 80; x += 6.4) trees.push([x + (r % 2) * 3.2, -8.2 - r * 7.1, 6.7 + rnd() * 1.6, 1]);
+    const trees = []; for (let r = 0; r < 3; r++) for (let x = -190; x <= 80; x += 6.4) { const tx = x + (r % 2) * 3.2; if (Math.abs(Math.abs(tx) - 44) < 4.2) continue; trees.push([tx, -8.2 - r * 7.1, 6.7 + rnd() * 1.6, 1]); }
     const NBELT = trees.length;
     for (let i = 0, n = 0; i < 900 && n < 110; i++) { const x = -40 + rnd() * 186, z = -30 - rnd() * 128;   // trees scattered over the park in front of the Artera, clear of its walks and plaza
       if (Math.hypot(x - 53, z + 95) < 15 || Math.abs(z + 118) < 3.5 || Math.abs((x - 20) * Math.cos(0.42) + (z + 70) * Math.sin(0.42)) < 3.5 || Math.abs((x - 88) * Math.cos(0.42) - (z + 70) * Math.sin(0.42)) < 3.5) continue;
@@ -6948,7 +6966,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     // a distant skyline, faded by the fog
     const city = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), lam(0x5d6470), 70);
     for (let i = 0; i < 70; i++) { const w = 12 + rnd() * 22, h = 14 + rnd() * 46; M.compose(P.set(-420 + rnd() * 840, h / 2, -430 - rnd() * 90), Q.identity(), S.set(w, h, 10 + rnd() * 16)); city.setMatrixAt(i, M); }
-    world.add(city);
+    // (the old box skyline stood behind the mountain ridge and read as buildings cut in half: no longer shown)
     // ---- the taxi's road through Kumho's homes: built the first time the taxi sets off (keeps the street itself light) ----
     // Past the archive the road runs on; on the right stand Kumho Construction's complexes in the order they were built
     // (금호 베스트빌, 리첸시아, 어울림 old BI, 어울림 new BI, 아테라); Kumho buses of each era wait at the kerb.
@@ -7232,10 +7250,34 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const KEEP = [[-34, 34, -14, 44], [-1e3, 1e3, -13, 15.5], [-46, 152, -246, -13], [-252, -150, -156, -64], [-212, -36, -240, -160], [128, 290, -150, -50]];
       const free = (x0, x1, z0, z1) => !KEEP.some(([a, b, c, d]) => x0 < b && x1 > a && z0 < d && z1 > c);
       const midKind = () => ["white", "white", "flat", "beige", "flat", "white"][Math.floor(CR() * 6)];
-      const midBlock = (x, z, w, d, hMin, hMax) => { const k = midKind(), h = Math.round((hMin + CR() * (hMax - hMin)) / 3) * 3;
+      const GP = [], GN = [];   // pitched roofs (their own tiled material)
+      const gtri = (a, b, c) => { GP.push(...a, ...b, ...c); const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+        let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; for (let i = 0; i < 3; i++) GN.push(nx / l, ny / l, nz / l); };
+      const gquad = (a, b, c, d) => { gtri(a, b, c); gtri(a, c, d); };
+      const gable = (x, z, w, d, y, rh) => { const x0 = x - w / 2, x1 = x + w / 2, z0 = z - d / 2, z1 = z + d / 2, t = y + rh;
+        if (w >= d) { gquad([x0, y, z1], [x1, y, z1], [x1, t, z], [x0, t, z]); gquad([x1, y, z0], [x0, y, z0], [x0, t, z], [x1, t, z]); gtri([x1, y, z1], [x1, y, z0], [x1, t, z]); gtri([x0, y, z0], [x0, y, z1], [x0, t, z]); }
+        else { gquad([x1, y, z1], [x1, y, z0], [x, t, z0], [x, t, z1]); gquad([x0, y, z0], [x0, y, z1], [x, t, z1], [x, t, z0]); gtri([x0, y, z1], [x1, y, z1], [x, t, z1]); gtri([x1, y, z0], [x0, y, z0], [x, t, z0]); } };
+      const cyl = (kind, x, z, r, h, y0 = 0) => {   // a round building: the facade wrapped round, a flat roof disc
+        const B = batches[kind], F = B.F, tw = F.bay * F.nb, th = F.fl * F.nf, C = 2 * Math.PI * r, N = 28;
+        const g = new THREE.CylinderGeometry(r, r, h, N, 1, true).toNonIndexed(), p = g.attributes.position.array, n = g.attributes.normal.array, uv = g.attributes.uv.array;
+        for (let i = 0; i < p.length; i += 3) { B.sp.push(p[i] + x, p[i + 1] + y0 + h / 2, p[i + 2] + z); B.sn.push(n[i], n[i + 1], n[i + 2]); }
+        for (let i = 0; i < uv.length; i += 2) B.su.push(uv[i] * C / tw, uv[i + 1] * h / th);
+        g.dispose(); const yt = y0 + h;
+        for (let i = 0; i < N; i++) { const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2;
+          B.rp.push(x, yt, z, x + Math.cos(a0) * r, yt, z - Math.sin(a0) * r, x + Math.cos(a1) * r, yt, z - Math.sin(a1) * r); B.rn.push(0, 1, 0, 0, 1, 0, 0, 1, 0); } };
+      const dome = (kind, x, z, r, y0) => { const B = batches[kind], g = new THREE.SphereGeometry(r, 20, 8, 0, Math.PI * 2, 0, Math.PI / 2).toNonIndexed(), p = g.attributes.position.array, n = g.attributes.normal.array;
+        for (let i = 0; i < p.length; i += 3) { B.rp.push(p[i] + x, p[i + 1] + y0, p[i + 2] + z); B.rn.push(n[i], n[i + 1], n[i + 2]); } g.dispose(); };
+      const midBlock = (x, z, w, d, hMin, hMax) => { const k = midKind(), h = Math.round((hMin + CR() * (hMax - hMin)) / 3) * 3, r = CR();
+        if (h <= 18 && r < 0.38) { box(k, x, z, w, d, h); gable(x, z, w + 0.6, d + 0.6, h, Math.min(w, d) * 0.3); return; }   // low houses and halls: pitched roofs
+        if (r < 0.52 && w > 13 && d > 13) { const rad = Math.min(w, d) * 0.45; cyl(k, x, z, rad, h); if (CR() < 0.55) dome(k, x, z, rad * 0.62, h); else roofKit(x, z, rad, rad, h); return; }   // a round block
+        if (r < 0.64 && w > 16 && d > 16) { const h2 = Math.max(9, Math.round(h * 0.55 / 3) * 3);   // an L-plan
+          box(k, x - w * 0.2, z, w * 0.6, d, h); roofKit(x - w * 0.2, z, w * 0.6, d, h); box(k, x + w * 0.3, z + d * 0.22, w * 0.4, d * 0.56, h2); gable(x + w * 0.3, z + d * 0.22, w * 0.4 + 0.4, d * 0.56 + 0.4, h2, 2.4); return; }
+        if (r < 0.8 && h >= 24) { const a = Math.round(h * 0.5 / 3) * 3, b = Math.round(h * 0.3 / 3) * 3, c = h - a - b;   // stepped tiers
+          box(k, x, z, w, d, a); box(k, x, z, w * 0.8, d * 0.8, b, a); box(k, x, z, w * 0.6, d * 0.6, c, a + b); roofKit(x, z, w * 0.6, d * 0.6, h); return; }
         box(k, x, z, w, d, h); roofKit(x, z, w, d, h);
         if (h > 24 && CR() < 0.5) { const w2 = w * 0.6, d2 = d * 0.6, h2 = 6 + Math.floor(CR() * 3) * 3; box(k, x, z, w2, d2, h2, h); roofKit(x, z, w2, d2, h + h2); } };
       const tower = (x, z, w, d, h) => { const r = CR(), k = r < 0.06 ? "diag" : r < 0.5 ? "glassT" : r < 0.78 ? "glassD" : "glassB";
+        if (k !== "diag" && CR() < 0.3) { const rad = Math.min(w, d) * 0.5; cyl(k, x, z, rad, h); cyl(k, x, z, rad * 0.78, Math.min(8, 96 - h), h); roofKit(x, z, rad, rad, h + Math.min(8, 96 - h)); return; }   // a round glass tower
         box(k, x, z, w, d, h); const w2 = w * (0.72 + CR() * 0.12), d2 = d * (0.72 + CR() * 0.12), h2 = 6 + CR() * 10;   // a set-back crown
         box(k, x, z, w2, d2, Math.min(h2, 96 - h), h); roofKit(x, z, w2, d2, h + Math.min(h2, 96 - h)); };
       // far side: a grid of city blocks behind the tree belt (roads every 72 m across, 62 m deep)
@@ -7263,6 +7305,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         geo.setAttribute("uv", new THREE.Float32BufferAttribute(B.su.concat(new Array(nr * 2).fill(0)), 2));
         geo.addGroup(0, ns, 0); geo.addGroup(ns, nr, 1);
         const mesh = new THREE.Mesh(geo, [B.m, roofM]); world.add(mesh); }
+      if (GP.length) { const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(GP, 3)); g.setAttribute("normal", new THREE.Float32BufferAttribute(GN, 3));
+        world.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x8f6656, side: THREE.DoubleSide }))); }
       // the city's ground: pale paving with its grid of streets drawn on, laid over the far ground behind the trees
       const cityTex = canvasTex(576, 496, (g, W, H) => {   // one tile = one block and half of the streets round it (8 px per metre)
         g.fillStyle = "#d4d3ce"; g.fillRect(0, 0, W, H);
@@ -7310,6 +7354,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 3.2), lam(0x55585c)); arm.position.set(x + s * 2.2, 5.3, z - s * 1.6); world.add(arm);
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 1.0), lam(0x1f2124)); head.position.set(x + s * 2.2, 5.05, z - s * 2.9); world.add(head);
             [0xd8462f, 0xe8b33a, 0x3fae6a].forEach((c, i) => { const l = new THREE.Mesh(new THREE.CircleGeometry(0.1, 16), basic(i === 2 ? c : 0x3a3c40)); l.position.set(x + s * 2.2 + s * 0.175, 5.05, z - s * 2.9 + (i - 1) * 0.3); l.rotation.y = s * Math.PI / 2; world.add(l); }); }); }); }
+      { const wt = canvasTex(256, 256, (g) => { g.fillStyle = "#8a877f"; g.fillRect(0, 0, 256, 256); g.strokeStyle = "#5f5d57"; g.lineWidth = 2;
+          for (let y = 0; y < 256; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); for (let x = (y / 64 % 2) * 64; x < 256; x += 128) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 64); g.stroke(); } } });
+        wt.wrapS = wt.wrapT = THREE.RepeatWrapping; wt.repeat.set(0.9, 5);
+        [-44, 44].forEach((x) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 20), new THREE.MeshLambertMaterial({ map: wt })); p.rotation.x = -Math.PI / 2; p.position.set(x, 0.16, -17.5); world.add(p); }); }   // paved walks through the tree belt
       // spring: cherry petals drifting down across the street
       { const NP = matchMedia("(pointer: coarse)").matches ? 500 : 900, pp = new Float32Array(NP * 3), ph = new Float32Array(NP);
         for (let i = 0; i < NP; i++) { pp.set([(CR() - 0.5) * 60, CR() * 12, (CR() - 0.5) * 40], i * 3); ph[i] = CR() * 6.28; }
@@ -7325,6 +7373,22 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             pc[i * 3] = c.r; pc[i * 3 + 1] = c.g; pc[i * 3 + 2] = c.b; }
           pg.attributes.color.needsUpdate = true; const m = OUT.petals.material; m.map = OUT.petals.userData.tex[SEAS] || petalTex; m.size = SEAS === "autumn" ? 0.24 : 0.16; m.needsUpdate = true; };
         OUT.petals.frustumCulled = false; OUT.petals.visible = false; OUT.petals.userData.ph = ph; world.add(OUT.petals); }
+      // summer: butterflies over the verges and dragonflies hovering above the street
+      { const G = new THREE.Group(); G.visible = false; world.add(G); const list = [];
+        const wingTex = (c1, c2) => canvasTex(64, 64, (g) => { g.clearRect(0, 0, 64, 64); g.fillStyle = c1; g.beginPath(); g.ellipse(34, 22, 26, 17, -0.35, 0, 6.3); g.fill(); g.beginPath(); g.ellipse(26, 46, 16, 13, 0.35, 0, 6.3); g.fill();
+          g.fillStyle = c2; g.beginPath(); g.arc(44, 16, 5, 0, 6.3); g.fill(); g.strokeStyle = c2; g.lineWidth = 3; g.beginPath(); g.ellipse(34, 22, 25, 16, -0.35, 0, 6.3); g.stroke(); });
+        const bfM = [["#f3c348", "#3a2a1a"], ["#fbfbf6", "#6f7f90"], ["#e8743b", "#2b2016"], ["#9fc5ee", "#26384a"]].map(([a, b]) => new THREE.MeshBasicMaterial({ map: wingTex(a, b), transparent: true, side: THREE.DoubleSide, depthWrite: false, alphaTest: 0.3 }));
+        const dfWing = new THREE.MeshBasicMaterial({ color: 0xe8f2f6, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false });
+        const bodyM = lam(0x2a2622), dfBody = [lam(0x2e5aa8), lam(0xc0392b), lam(0x3f7d4a)];
+        const wing = (w, h, m, side) => { const piv = new THREE.Group(), pl = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); pl.rotation.x = -Math.PI / 2; pl.position.x = side * w / 2; if (side < 0) pl.scale.x = -1; piv.add(pl); return piv; };
+        for (let i = 0; i < 26; i++) { const fly = i >= 16, b = new THREE.Group();   // 16 butterflies, 10 dragonflies
+          const body = new THREE.Mesh(new THREE.CylinderGeometry(fly ? 0.008 : 0.01, fly ? 0.006 : 0.008, fly ? 0.16 : 0.06, 5), fly ? dfBody[i % 3] : bodyM); body.rotation.x = Math.PI / 2; b.add(body);
+          const ws = fly ? [wing(0.11, 0.022, dfWing, 1), wing(0.11, 0.022, dfWing, -1), wing(0.1, 0.02, dfWing, 1), wing(0.1, 0.02, dfWing, -1)] : [wing(0.13, 0.14, bfM[i % 4], 1), wing(0.13, 0.14, bfM[i % 4], -1)];
+          if (fly) { ws[0].position.z = ws[1].position.z = 0.025; ws[2].position.z = ws[3].position.z = -0.005; }
+          ws.forEach((w) => b.add(w)); G.add(b);
+          const cx = fly ? -30 + CR() * 70 : -22 + CR() * 70, cz = fly ? -9 + CR() * 20 : (CR() < 0.5 ? -3.2 - CR() * 1.2 : 4 + CR() * 9), cy = fly ? 2 + CR() * 3 : 0.5 + CR() * 1.6;
+          list.push({ b, ws, fly, cx, cy, cz, ph: CR() * 6.28, sp: fly ? 0.5 + CR() * 0.4 : 0.35 + CR() * 0.3, R: fly ? 4 + CR() * 6 : 1.2 + CR() * 2.2 }); }
+        OUT.bugs = { G, list, prev: new THREE.Vector3() }; }
     }
     const main = () => ({ x: -3, z: 12.6, yaw: -0.62, pitch: 0.17 });
     stops.push({ kind: "art", outside: true, data: { year: "", co: "금호 아카이브", title: "아카이브 밖으로", cap: "금호고속과 아테라 아파트 단지",
@@ -7531,6 +7595,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           if (dx * dx + dz * dz < 6 && y < 3.5) { wz += dz >= 0 ? 2.5 : -2.5; }   // never right in front of the lens, where a leaf would fill the screen
           p[o] = wx; p[o + 1] = y; p[o + 2] = wz; }
         a.needsUpdate = true; } }
+    if (OUT.bugs) { const on = seasonNow() === "summer" && !(t.rain > 0) && !(t.snow > 0) && (OUT.sky ? OUT.sky.uDay.value > 0.35 : true); OUT.bugs.G.visible = on;   // summer: butterflies and dragonflies
+      if (on) { const T = W.t, v = OUT.bugs.prev;
+        for (const q of OUT.bugs.list) { const a = T * q.sp + q.ph;
+          const dart = q.fly ? Math.sin(a * 0.7) > 0.6 ? 2.2 : 0.4 : 1;   // dragonflies hover, then dart
+          const x = q.cx + Math.sin(a * dart) * q.R, z = q.cz + Math.sin(a * 1.31 * dart + 1.1) * q.R * 0.6, y = q.cy + Math.sin(a * (q.fly ? 0.9 : 2.3)) * (q.fly ? 0.5 : 0.35);
+          v.copy(q.b.position); q.b.position.set(x, y, z); v.subVectors(q.b.position, v); if (v.lengthSq() > 1e-8) { v.add(q.b.position); q.b.lookAt(v); }   // face the way it flies
+          const f = q.fly ? Math.sin(T * 60 + q.ph) * 0.35 : Math.sin(T * 14 + q.ph) * 0.95;   // wings: a fast shimmer for dragonflies, a slow beat for butterflies
+          q.ws.forEach((w, k) => { w.rotation.z = (k % 2 ? -1 : 1) * (q.fly ? 0.1 + f : 0.25 + f); }); } } }
     // lying snow builds up while it snows and melts away once it stops (a preview change switches it at once)
     W.snowAmt = sT > 0 ? (OUT.snap ? 1 : Math.min(1, W.snowAmt + dt * 0.05)) : (OUT.snap ? 0 : Math.max(0, W.snowAmt - dt * 0.05));
     W.snowCover.visible = seasonNow() === "winter" || W.snowAmt > 0.3;
@@ -9617,6 +9689,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       looked = true; moveTo(focusPose(P.side, P.u, P.cy, P.w, P.h)); return;
     }
     if (o.userData.idx === "outBus") { const si = stops.findIndex((t) => t.outBus); if (si >= 0 && si !== cur) { cur = si; showCard(); } if (OUT.kind === "taxi" && (OUT.st === "idle" || OUT.st === "come")) taxiAsk(); else outBusGo(); return; }
+    if (o.userData.idx === "outBench") { moveTo({ x: 4.6, z: 6.1, yaw: 0, pitch: 0.03, y: 1.22 }); taxiCSS(); taxiToast("벤치에 앉았습니다 · 길 건너 풍경과 오가는 버스를 바라봅니다", 2800); return; }
     if (o.userData.idx === "outGate") { const si = stops.findIndex((t) => t.kind === "door" && t.target && t.target.lobby); if (si >= 0) setStop(si); return; }
     if (o.userData.idx === "outApt") { const si = stops.findIndex((t) => t.outApt); if (si >= 0) setStop(si); return; }
     if (o.userData.idx === "dio") { const si = stops.findIndex((t) => t.dio); if (si >= 0 && (si !== cur || looked)) setStop(si); return; }
