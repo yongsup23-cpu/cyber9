@@ -6818,7 +6818,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     OUT.sun = new THREE.DirectionalLight(0xfff0d8, 1.0); OUT.sun.position.set(30, 60, 40); world.add(OUT.sun);
     // ground: road, kerbs, pavements, grass beyond
     const road = new THREE.Mesh(new THREE.PlaneGeometry(400, 7), lam(0x2c2e31)); road.rotation.x = -Math.PI / 2; world.add(road);
-    const mark = (w, d, x, z, col) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), basic(col)); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.006, z); world.add(m); };
+    const mark = (w, d, x, z, col) => { const mm = basic(col); mm.polygonOffset = true; mm.polygonOffsetFactor = -4; mm.polygonOffsetUnits = -4;   // lifted clear of the asphalt so the lines never flicker as the view moves
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mm); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.02, z); m.renderOrder = 1; world.add(m); };
     mark(400, 0.12, 0, 3.25, 0xe8e6de); mark(400, 0.12, 0, -3.25, 0xe8e6de);              // edge lines
     const paveTex = canvasTex(256, 256, (g) => {   // paving slabs (from the attached design): speckled grey stone in running bond
       g.fillStyle = "#79776f"; g.fillRect(0, 0, 256, 256);
@@ -6828,7 +6829,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       for (let y = 0; y < 256; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); for (let x = (y / 64 % 2) * 64; x < 256; x += 128) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 64); g.stroke(); } } });
     paveTex.wrapS = paveTex.wrapT = THREE.RepeatWrapping; paveTex.anisotropy = ANISO; paveTex.repeat.set(80, 2);
     const pave = (z0, z1) => { const b = new THREE.Mesh(new THREE.BoxGeometry(400, 0.15, z1 - z0), new THREE.MeshLambertMaterial({ map: paveTex })); b.position.set(0, 0.075, (z0 + z1) / 2); world.add(b);
-      const k = new THREE.Mesh(new THREE.BoxGeometry(400, 0.16, 0.22), lam(0xbdb8ad)); k.position.set(0, 0.08, z0 > 0 ? z0 + 0.11 : z1 - 0.11); world.add(k); };
+      const k = new THREE.Mesh(new THREE.BoxGeometry(400, 0.19, 0.22), lam(0xbdb8ad)); k.position.set(0, 0.095, z0 > 0 ? z0 + 0.08 : z1 - 0.08); world.add(k); };   // kerb stands a touch proud of the paving so their faces never fight
     pave(3.5, HZ); pave(-7.5, -3.5);
     const grass = new THREE.Mesh(new THREE.PlaneGeometry(900, 600), lam(0x4a5a3c)); grass.rotation.x = -Math.PI / 2; grass.position.set(0, -0.01, -307.5); world.add(grass);
     { const g2 = new THREE.Mesh(new THREE.PlaneGeometry(900, 600), grass.material); g2.rotation.x = -Math.PI / 2; g2.position.set(0, -0.01, HZ + 299); world.add(g2); }   // ground beside and behind the archive too, so its ends never float over the sky
@@ -7357,7 +7358,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       // on the street: zebra crossings either side of the archive and a pair of signal poles
       { const zebra = canvasTex(256, 64, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "#f1f0ea"; for (let i = 0; i < 8; i++) g.fillRect(i * 32 + 4, 0, 20, H); });
         zebra.wrapS = THREE.RepeatWrapping; zebra.repeat.set(7 / 8, 1);
-        [-44, 44].forEach((x) => { const zb = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.2), new THREE.MeshLambertMaterial({ map: zebra, transparent: true, depthWrite: false })); zb.rotation.x = -Math.PI / 2; zb.rotation.z = Math.PI / 2; zb.position.set(x, 0.008, 0); world.add(zb);
+        [-44, 44].forEach((x) => { const zb = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.2), new THREE.MeshLambertMaterial({ map: zebra, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })); zb.rotation.x = -Math.PI / 2; zb.rotation.z = Math.PI / 2; zb.position.set(x, 0.02, 0); zb.renderOrder = 1; world.add(zb);
           [[3.9, 1], [-4.1, -1]].forEach(([z, s]) => { const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 5.4, 10), lam(0x55585c)); pole.position.set(x + s * 2.2, 2.7, z); world.add(pole);
             const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 3.2), lam(0x55585c)); arm.position.set(x + s * 2.2, 5.3, z - s * 1.6); world.add(arm);
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 1.0), lam(0x1f2124)); head.position.set(x + s * 2.2, 5.05, z - s * 2.9); world.add(head);
