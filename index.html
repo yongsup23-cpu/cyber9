@@ -6478,17 +6478,20 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const mats = []; tree.traverse((o) => { if (o.material) { o.renderOrder = 2; mats.push(o.material); } });
     world.add(tree); tree.updateMatrixWorld(true);
     DOME.tree = { tree, mats, t0: null, args: [Y0, S, zfg, zb] };
-    if (SEASON === "spring" || SEASON === "autumn") {   // petals or leaves drifting down from the crown
+    if (false && (SEASON === "spring" || SEASON === "autumn")) {   // (lobby petals / leaves: removed at the user's request — they belong outside only)
       const bb = new THREE.Box3().setFromObject(tree), N = 520, pp = new Float32Array(N * 3), pc = new Float32Array(N * 3), ph = new Float32Array(N), c = new THREE.Color();
       let sd = 77; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
       const X0 = bb.min.x - 4, X1 = bb.max.x + 4, Z0 = bb.min.z - 4, Z1 = bb.max.z + 4, TOP = bb.max.y * 0.85;
-      for (let i = 0; i < N; i++) { pp.set([X0 + r() * (X1 - X0), r() * TOP, Z0 + r() * (Z1 - Z0)], i * 3); ph[i] = r() * 6.28;
+      const RX = HX + 0.6, RZ0 = Math.min(zfg, zb, -HZ) - 0.6, RZ1 = Math.max(zfg, zb, HZ) + 0.6;   // the lobby itself: nothing falls in here
+      const outside = (x, z) => !(Math.abs(x) < RX && z > RZ0 && z < RZ1);
+      const pick = () => { for (let k = 0; k < 12; k++) { const x = X0 + r() * (X1 - X0), z = Z0 + r() * (Z1 - Z0); if (outside(x, z)) return [x, z]; } return [X0 - 2, Z0 - 2]; };
+      for (let i = 0; i < N; i++) { const [x, z] = pick(); pp.set([x, r() * TOP, z], i * 3); ph[i] = r() * 6.28;
         if (SEASON === "autumn") c.setHSL([0.0, 0.03, 0.07, 0.11, 0.14][i % 5], 0.75, 0.38 + r() * 0.18); else c.setHSL(0.94, 0.55 + r() * 0.3, 0.86 + r() * 0.08); c.toArray(pc, i * 3); }
       const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pp, 3)); g.setAttribute("color", new THREE.BufferAttribute(pc, 3));
       const tex = canvasTex(32, 32, (q) => { q.clearRect(0, 0, 32, 32); q.fillStyle = "#fff"; q.beginPath();
         if (SEASON === "autumn") { for (let k = 0; k <= 10; k++) { const a = k / 10 * Math.PI * 2, rr = k % 2 ? 7 : 14; q.lineTo(16 + Math.cos(a) * rr, 16 + Math.sin(a) * rr); } } else q.ellipse(16, 16, 12, 7, 0.6, 0, Math.PI * 2); q.fill(); });
       const pts = new THREE.Points(g, new THREE.PointsMaterial({ map: tex, vertexColors: true, size: SEASON === "autumn" ? 0.42 : 0.3, transparent: true, depthWrite: false, alphaTest: 0.2 }));
-      pts.frustumCulled = false; pts.renderOrder = 2; world.add(pts); DOME.fall = { pts, ph, X0, X1, Z0, Z1, TOP, slow: SEASON === "autumn" ? 0.8 : 0.55 }; }
+      pts.frustumCulled = false; pts.renderOrder = 2; world.add(pts); DOME.fall = { pts, ph, X0, X1, Z0, Z1, TOP, outside, pick, slow: SEASON === "autumn" ? 0.8 : 0.55 }; }
   }
   /* weather chip: preview another season (the tree is rebuilt and sways once) */
   function setSeasonPreview() {
@@ -6503,7 +6506,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (DOME.fall && dt) { const F = DOME.fall, a = F.pts.geometry.attributes.position, p = a.array, tt = performance.now() / 1000;   // the falling petals / leaves
       for (let i = 0, n = F.ph.length; i < n; i++) { const o = i * 3, f = F.ph[i];
         p[o + 1] -= (F.slow + 0.3 * Math.sin(f * 2.1)) * dt; p[o] += (Math.sin(tt * 1.2 + f) * 0.7 + 0.25) * dt; p[o + 2] += Math.cos(tt * 0.9 + f * 1.7) * 0.5 * dt;
-        if (p[o + 1] < 0 || p[o] > F.X1 + 6) { p[o] = F.X0 + ((f * 997) % 1) * (F.X1 - F.X0); p[o + 1] = F.TOP; p[o + 2] = F.Z0 + ((f * 613) % 1) * (F.Z1 - F.Z0); } }
+        if (p[o + 1] < 0 || p[o] > F.X1 + 6 || !F.outside(p[o], p[o + 2])) { const [x, z] = F.pick(); p[o] = x; p[o + 1] = F.TOP * (0.6 + 0.4 * ((f * 331) % 1)); p[o + 2] = z; } }   // anything drifting toward the glass starts again outside
       a.needsUpdate = true; }
     // light: follows the sky (dim at night, warm at golden hour) and the slight tint of the glass
     const lv = (0.22 + 0.78 * u.uDay.value * (1 - 0.35 * u.uOver.value)) * (1 - u.uDay.value * (1 - u.uLum.value) * 0.8), g = u.uGold.value, tw = u.uTwi.value;
@@ -7375,15 +7378,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         for (let i = 0; i < NP; i++) { pp.set([(CR() - 0.5) * 60, CR() * 12, (CR() - 0.5) * 40], i * 3); ph[i] = CR() * 6.28; }
         const pg = new THREE.BufferGeometry(); pg.setAttribute("position", new THREE.BufferAttribute(pp, 3));
         const petalTex = canvasTex(32, 32, (g) => { g.clearRect(0, 0, 32, 32); g.fillStyle = "#ffd3e0"; g.beginPath(); g.ellipse(16, 16, 12, 7, 0.6, 0, Math.PI * 2); g.fill(); g.fillStyle = "#ffe8ef"; g.beginPath(); g.ellipse(13, 14, 5, 3, 0.6, 0, Math.PI * 2); g.fill(); });
-        const leafTex2 = canvasTex(32, 32, (g) => { g.clearRect(0, 0, 32, 32); g.fillStyle = "#ffffff"; g.beginPath();   // a small lobed leaf, tinted per leaf
-          for (let k = 0; k <= 10; k++) { const a = k / 10 * Math.PI * 2, r = k % 2 ? 7 : 14; g.lineTo(16 + Math.cos(a) * r, 16 + Math.sin(a) * r); } g.fill(); g.fillStyle = "rgba(0,0,0,0.25)"; g.fillRect(15, 6, 2, 20); });
+        const leafTex2 = canvasTex(64, 64, (g) => { g.clearRect(0, 0, 64, 64); g.save(); g.translate(32, 32); g.rotate(-0.7);   // a leaf: pointed oval blade, a midrib and veins, a short stem (tinted per leaf)
+          g.fillStyle = "#ffffff"; g.beginPath(); g.moveTo(0, -26); g.bezierCurveTo(15, -16, 15, 10, 0, 22); g.bezierCurveTo(-15, 10, -15, -16, 0, -26); g.fill();
+          g.strokeStyle = "rgba(0,0,0,0.28)"; g.lineWidth = 1.6; g.beginPath(); g.moveTo(0, -22); g.lineTo(0, 29); g.stroke();
+          g.lineWidth = 1; for (let k = -14; k <= 12; k += 6) { g.beginPath(); g.moveTo(0, k); g.lineTo(8, k - 6); g.moveTo(0, k); g.lineTo(-8, k - 6); g.stroke(); }
+          g.restore(); });
         const pc = new Float32Array(NP * 3); pg.setAttribute("color", new THREE.BufferAttribute(pc, 3));
         OUT.petals = new THREE.Points(pg, new THREE.PointsMaterial({ map: petalTex, size: 0.16, transparent: true, depthWrite: false, opacity: 0.95, alphaTest: 0.2, vertexColors: true }));
         OUT.petals.userData.tex = { spring: petalTex, autumn: leafTex2 };
         OUT.petals.userData.paint = (SEAS) => { const c = new THREE.Color(); for (let i = 0; i < NP; i++) {
             if (SEAS === "autumn") c.setHSL(0.02 + CR() * 0.11, 0.7 + CR() * 0.2, 0.36 + CR() * 0.2); else c.setRGB(1, 1, 1);
             pc[i * 3] = c.r; pc[i * 3 + 1] = c.g; pc[i * 3 + 2] = c.b; }
-          pg.attributes.color.needsUpdate = true; const m = OUT.petals.material; m.map = OUT.petals.userData.tex[SEAS] || petalTex; m.size = SEAS === "autumn" ? 0.24 : 0.16; m.needsUpdate = true; };
+          pg.attributes.color.needsUpdate = true; const m = OUT.petals.material; m.map = OUT.petals.userData.tex[SEAS] || petalTex; m.size = SEAS === "autumn" ? 0.19 : 0.16; m.needsUpdate = true; };
         OUT.petals.frustumCulled = false; OUT.petals.visible = false; OUT.petals.userData.ph = ph; world.add(OUT.petals); }
       // summer: butterflies over the verges and dragonflies hovering above the street
       { const G = new THREE.Group(); G.visible = false; world.add(G); const list = [];
