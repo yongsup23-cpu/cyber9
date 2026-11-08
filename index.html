@@ -4690,7 +4690,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
           for (const k of ["map", "normalMap", "metalnessMap", "roughnessMap", "aoMap", "emissiveMap", "alphaMap"]) { const t = m[k]; if (t && !keep.has(t) && !done.has(t)) { done.add(t); t.dispose(); } }
           if (m.uniforms) {} m.dispose(); } });
       OUT.grow = null; }
-    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.arteraMats = null; OUT.petals = null; OUT.bigTree = null; OUT.bugs = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); { const gb = document.getElementById("taxiGo"); if (gb) gb.hidden = true; } if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
+    scene.fog = null; OUT.bus = null; OUT.sky = null; OUT.aptMats = null; OUT.arteraMats = null; OUT.petals = null; OUT.bigTree = null; OUT.bugs = null; OUT.blobs = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); { const gb = document.getElementById("taxiGo"); if (gb) gb.hidden = true; } if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
@@ -6948,6 +6948,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       branch.instanceMatrix.needsUpdate = true; crown.instanceMatrix.needsUpdate = true; if (crown.instanceColor) crown.instanceColor.needsUpdate = true;
     };
     trunk.frustumCulled = branch.frustumCulled = crown.frustumCulled = false;
+    { const sh = canvasTex(128, 128, (g) => { const gr = g.createRadialGradient(64, 64, 4, 64, 64, 62); gr.addColorStop(0, "rgba(0,0,0,0.55)"); gr.addColorStop(0.55, "rgba(0,0,0,0.32)"); gr.addColorStop(1, "rgba(0,0,0,0)"); g.clearRect(0, 0, 128, 128); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); });
+      const blobs = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: sh, transparent: true, depthWrite: false, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -1 }), trees.length + 1);
+      trees.forEach(([x, z, h, k0], i) => { const r = (2.6 + (i % 4) * 0.16) * k0 * 2.3; M.compose(P.set(x - 0.5, 0.06, z - 0.6), Q.identity(), S.set(r, 1, r * 0.92)); blobs.setMatrixAt(i, M); });   // a soft pool of shade under each crown, nudged away from the sun
+      M.compose(P.set(42.5, 0.17, 10.5), Q.identity(), S.set(19, 1, 17)); blobs.setMatrixAt(trees.length, M);   // and a wide one under the great tree
+      blobs.frustumCulled = false; blobs.renderOrder = 1; world.add(blobs); OUT.blobs = blobs; }
     world.add(trunk); world.add(branch); world.add(crown);
     // snow over the verges, the pavements' edges and the far ground: always in winter, and whenever it is snowing
     const snowCover = new THREE.Group(); world.add(snowCover);
@@ -7358,6 +7363,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           for (let y = 0; y < 256; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); for (let x = (y / 64 % 2) * 64; x < 256; x += 128) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 64); g.stroke(); } } });
         wt.wrapS = wt.wrapT = THREE.RepeatWrapping; wt.repeat.set(0.9, 5);
         [-44, 44].forEach((x) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 20), new THREE.MeshLambertMaterial({ map: wt })); p.rotation.x = -Math.PI / 2; p.position.set(x, 0.16, -17.5); world.add(p); }); }   // paved walks through the tree belt
+      { const pt = canvasTex(256, 256, (g) => { g.fillStyle = "#8f8c84"; g.fillRect(0, 0, 256, 256); let sd = 9; const r = () => (sd = sd * 16807 % 2147483647) / 2147483647;
+          for (let j = 0; j < 6000; j++) { const v = Math.round(110 + r() * 50); g.fillStyle = "rgba(" + v + "," + v + "," + v + ",0.4)"; g.fillRect(r() * 256, r() * 256, 1 + r() * 2, 1); }
+          g.strokeStyle = "#5f5d57"; g.lineWidth = 2; for (let y = 0; y < 256; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); for (let x = (y / 64 % 2) * 64; x < 256; x += 128) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 64); g.stroke(); } } });
+        pt.wrapS = pt.wrapT = THREE.RepeatWrapping;
+        [[-420, -46], [152, 420]].forEach(([a, b]) => { const t = pt.clone(); t.needsUpdate = true; t.repeat.set((b - a) / 5, 16 / 5);
+          const p = new THREE.Mesh(new THREE.PlaneGeometry(b - a, 16), new THREE.MeshLambertMaterial({ map: t })); p.rotation.x = -Math.PI / 2; p.position.set((a + b) / 2, 0.025, -19.5); world.add(p);
+          const kb = new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.14, 0.25), lam(0xbdb8ad)); kb.position.set((a + b) / 2, 0.07, -27.4); world.add(kb); }); }   // with a kerb where the side road begins
       // spring: cherry petals drifting down across the street
       { const NP = matchMedia("(pointer: coarse)").matches ? 500 : 900, pp = new Float32Array(NP * 3), ph = new Float32Array(NP);
         for (let i = 0; i < NP; i++) { pp.set([(CR() - 0.5) * 60, CR() * 12, (CR() - 0.5) * 40], i * 3); ph[i] = CR() * 6.28; }
@@ -7535,7 +7547,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     OUT.hemi.intensity = 0.25 + 0.85 * lv; OUT.sun.intensity = 1.1 * u.uDay.value * (1 - 0.7 * u.uOver.value);
     OUT.sun.position.copy(u.uSun.value).multiplyScalar(80);
     if (OUT.aptMats) { const nt = 0.08 + 0.95 * (1 - u.uDay.value); for (const m of OUT.aptMats) m.emissiveIntensity = nt; }
-    if (OUT.arteraMats && scene.fog) { const clear = scene.fog.far > 420; if (clear !== OUT.arteraClear) { OUT.arteraClear = clear; for (const m of OUT.arteraMats) { m.fog = clear; m.needsUpdate = true; } } }   // bad weather: the Artera still shows
+    // (fog: the Artera fades with everything else; only its ARTERA name stays clear, as before)
     stepWeather(dt, t, u); OUT.snap = false;
     if (!OUT.veh) return;
     const taxi = OUT.kind === "taxi";
