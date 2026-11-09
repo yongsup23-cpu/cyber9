@@ -15,6 +15,7 @@ button{font:inherit;font-size:13px;min-height:40px;padding:8px 14px;background:v
 button:hover{background:#34332c}
 button[aria-pressed=true]{background:var(--gold2);color:#171712;border-color:var(--gold2)}
 button:disabled{opacity:.35;cursor:default}
+#hallNav button.lockd{opacity:.45}#hallNav button.lockd::after{content:" · 준비 중";font-size:11px}
 button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .app{position:fixed;inset:0;display:flex;flex-direction:column}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--bg);z-index:3}
@@ -296,10 +297,10 @@ body.t3on .viewport{position:fixed;inset:0;z-index:12}body.t3on #t3d{background:
   <nav id="hallNav" aria-label="전시관 이동">
    <button type="button" data-k="lobby" aria-pressed="true">로비</button>
    <button type="button" data-k="0" aria-pressed="false">1관 열다</button>
-   <button type="button" data-k="1" aria-pressed="false">2관 펴다</button>
-   <button type="button" data-k="2" aria-pressed="false">3관 뛰다</button>
-   <button type="button" data-k="3" aria-pressed="false">특별관 Ⅰ 짓다</button>
-   <button type="button" data-k="4" aria-pressed="false">특별관 Ⅱ 잇다</button>
+   <button type="button" data-k="1" aria-pressed="false" class="lockd" title="준비 중">2관 펴다</button>
+   <button type="button" data-k="2" aria-pressed="false" class="lockd" title="준비 중">3관 뛰다</button>
+   <button type="button" data-k="3" aria-pressed="false" class="lockd" title="준비 중">특별관 Ⅰ 짓다</button>
+   <button type="button" data-k="4" aria-pressed="false" class="lockd" title="준비 중">특별관 Ⅱ 잇다</button>
   </nav>
  </header>
  <div class="viewport">
@@ -8591,7 +8592,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (target.outside) buildOutside(); else if (target.lobby) buildLobby(); else buildHall(target.hall);
   }
   function walkThrough(target) {
-    if (busy) return;
+    if (busy) return; if (target && target.hall != null && target.hall !== 0) { lockedHall(); return; } 
     const s = stops.find((t) => t.kind === "door" && t.target === target);
     const rec = doorFor(target);
     const si = stops.indexOf(s);
@@ -9482,8 +9483,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
 
   /* ---------- era transition: a year counter rolls to the new hall's era ---------- */
   const yearOf = (h) => { const m = h && h.span && String(h.span).match(/\d{4}/); return m ? +m[0] : null; };
+  // briefing build: only hall 1 can be entered for now; the other halls say they are being prepared
+  function lockedHall() { taxiCSS(); taxiToast("준비 중인 전시관입니다 · 현재는 1관 '열다'만 관람할 수 있습니다", 2800); }
   function eraGo(target) {
-    if (busy) return;
+    if (busy) return; if (target && target.hall != null && target.hall !== 0) { lockedHall(); return; } 
     if (target.lobby || target.outside || reduce || !$("era")) { go(() => enterTarget(target)); return; }
     busy = true;
     const h = DATA[target.hall], el = $("era"), ey = $("eraY");
