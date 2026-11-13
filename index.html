@@ -4706,7 +4706,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const onStair = Math.abs(dx) <= 2.5 && b <= -49.4 && b > -55.4;   // 12 steps of 0.35 m on 0.5 m treads: you stand on the tread, not on a slope through it
     if (onStair) C.push(0.35 * Math.min(12, Math.floor((-49.4 - b) / 0.5) + 1));
     else { if (groundOK(a, b)) C.push(0);
-      if ((r >= 22.9 && r <= 25.8 && b <= -30) || (Math.abs(dx) <= 6.5 && b <= -55.4 && b >= -60)) C.push(4.2); }   // the gallery and the landing at the head of the stair
+      if ((r >= 22.9 && r <= 25.8 && b <= -36 + 0.19 * r) ||   /* the deck ends on a radial line 0.2 rad past the half ring (z = -36 + 0.199 r): no further, or you stood on air */ (Math.abs(dx) <= 6.5 && b <= -55.4 && b >= -60)) C.push(4.2); }   // the gallery and the landing at the head of the stair
     let best = null, bd = 0.75; for (const c of C) { const d = Math.abs(c - cur); if (d <= bd) { bd = d; best = c; } } return best;
   }
   function vehHit(a, b) {   // the Kumho coach (and the taxi) at the archive stop: solid wherever they are right now, so you cannot walk into them
@@ -6912,7 +6912,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     return out;
   }
   function buildOutside() {
-    clearWorld(); mode = "outside"; hallIndex = -1; RT = false; DR = false; WALL_H = 12; HX = 26; HZ = 14; ticker = null; DOME = null;
+    PARK_N++; clearWorld(); mode = "outside"; hallIndex = -1; RT = false; DR = false; WALL_H = 12; HX = 26; HZ = 14; ticker = null; DOME = null;
     if (document.fonts) try { GATES.forEach((G) => { document.fonts.load(`700 100px "Noto Sans KR"`, G.big); document.fonts.load(`700 70px "Noto Sans KR"`, G.sub); }); } catch (e) {}
     const lam = (c) => new THREE.MeshLambertMaterial({ color: c });
     let seed = 2026; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -9404,9 +9404,19 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function go(build) {
     if (busy) return; busy = true;
     const f = $("fade"); f.classList.add("on");
-    setTimeout(() => { build(); requestAnimationFrame(() => { f.classList.remove("on"); busy = false; }); }, reduce ? 0 : 420);
+    setTimeout(() => { build(); requestAnimationFrame(() => { if (window.__parkLeaving) return; f.classList.remove("on"); f.innerHTML = ""; busy = false; }); }, reduce ? 0 : 420);   // (not while the page reloads into the park)
+  }
+  // Going out to the park a second time: rather than build the park again inside a page that still holds the last visit (iPad Safari ran out of
+  // memory on the third trip), the page reloads straight into the park, so every trip starts with clean memory. A few seconds more, no crash.
+  var PARK_N = 0;
+  function parkReload() {
+    window.__parkLeaving = true; busy = true;
+    try { sessionStorage.setItem("kumhoParkGo", JSON.stringify({ ride: !!RIDE.ok, t: Date.now() })); } catch (e) {}
+    const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">금호 공원으로 이동 중…<br><span style="color:#b8ad9a;font-weight:400;font-size:13px">화면을 정리하고 있어요</span></div>'; }
+    setTimeout(() => { const u = new URL(location.href); u.searchParams.set("park", "1"); location.replace(u.toString()); }, 120);
   }
   function enterTarget(target) {
+    if (target.outside && PARK_N >= 1) { parkReload(); return; }
     if (target.outside) buildOutside(); else if (target.lobby) buildLobby(); else buildHall(target.hall);
   }
   function walkThrough(target) {
@@ -11653,7 +11663,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       requestAnimationFrame(step);
     });
   }
-  const start = () => { BOOTED = true; resize(); buildLobby(); requestAnimationFrame(frame); preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); }); };
+  const parkGo = (() => { let g = null; try { g = JSON.parse(sessionStorage.getItem("kumhoParkGo") || "null"); sessionStorage.removeItem("kumhoParkGo"); } catch (e) {}
+    const q = new URLSearchParams(location.search); if (!q.has("park")) return null; try { const u = new URL(location.href); u.searchParams.delete("park"); history.replaceState(null, "", u.toString()); } catch (e) {}
+    return g && Date.now() - g.t < 120000 ? g : { ride: false }; })();   // arrived by parkReload: go straight on into the park
+  const start = () => { BOOTED = true; resize(); buildLobby(); requestAnimationFrame(frame); preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady();
+    if (parkGo) { if (parkGo.ride) RIDE.ok = true; leaveEasel(); go(() => buildOutside()); } }); };
+  if (parkGo) { const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">금호 공원으로 이동 중…</div>'; } }
   let started = false;
   const go1 = () => { if (!started) { started = true; start(); } };
   (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(go1, go1);
