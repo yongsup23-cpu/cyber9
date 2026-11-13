@@ -4771,7 +4771,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const done = new Set(); world.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
         for (const m of ms) for (const k of ["map", "emissiveMap", "alphaMap"]) { const t = m[k]; if (!t || done.has(t)) continue; done.add(t);
           if (t.__fab) { const F = t.__fab, i = F.clones.indexOf(t); if (i >= 0) F.clones.splice(i, 1); t.dispose(); }
-          else if (!t.__keep && typeof HTMLCanvasElement !== "undefined" && t.image instanceof HTMLCanvasElement) t.dispose(); } }); }
+          else if (!t.__keep && typeof HTMLCanvasElement !== "undefined" && t.image instanceof HTMLCanvasElement) t.dispose(); } });
+      if (mode === "lobby" && taxiDecoded) for (const t of [taxiDecoded.texture, taxiDecoded.surface, taxiDecoded.normal]) if (t) t.dispose(); }   // the lobby taxi's three maps leave the graphics card too (sent again when you come back)
     renderer.shadowMap.enabled = false; scene.fog = null; OUT.artAnim = null; OUT.artZones = null; OUT.artQ = null; OUT.artGlow = null; OUT.artFloorGlow = null; OUT.sunPrev = null; OUT.bus = null; OUT.dog = null; OUT.pets = null; OUT.parkGlow = null; OUT.nightSign = null; OUT.fount = null; OUT.fWater = null; OUT.cars = null; OUT.cityLit = null; OUT.shopAt = null; OUT.sky = null; OUT.aptMats = null; OUT.arteraMats = null; OUT.petals = null; OUT.bigTree = null; OUT.bugs = null; OUT.blobs = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.mazeHit = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); { const gb = document.getElementById("taxiGo"); if (gb) gb.hidden = true; } if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
@@ -8494,7 +8495,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
   });
 
-  const TAXI_PARTS = [6183462, 4122308, 3091731, 22703088, 3176804, 2595183, 2720949];
+  const TAXI_PARTS = [1181832,  787888,  590916,  3405408,  3176804,  249509,  220042];   // lightened: 284k triangles (was 1.89M), surface and normal maps 1024 — about 7 MB to download instead of 31
   let taxiDecoded = null;
   async function decodeTaxi() {
     if (taxiDecoded) return taxiDecoded;
