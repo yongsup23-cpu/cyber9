@@ -3,6 +3,11 @@
 <head><meta charset="utf-8">
 <title>금호 아카이브</title>
 <script>document.documentElement.classList.add("easel")</script>
+<script>/* arriving from the other page (lobby ⇄ park): no start screen, only a "moving" card until the scene is ready */
+(function () { var g = null; try { g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); } catch (e) {}
+  var park = window.KUMHO_PAGE === "park", fresh = g && Date.now() - g.t < 120000;
+  if (park || (fresh && !g.park)) { var d = document.documentElement; d.classList.add("arriving"); d.style.setProperty("--go", park ? '"금호 공원으로 이동 중…"' : '"금호 아카이브로 이동 중…"'); } })();</script>
+<style>html.arriving #intro{display:none!important}html.arriving body::after{content:var(--go);position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#141414;color:#e8c98c;font:600 16px/1.6 "Noto Sans KR",sans-serif;letter-spacing:.04em}html.arriving.arrived body::after{opacity:0;pointer-events:none;transition:opacity .5s}</style>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script id="naverjs" async src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=n9cdl9yr3r&submodules=geocoder" onload="window.__naverLoaded=1;window.__onNaver&&window.__onNaver(true)" onerror="window.__naverError=1;window.__onNaver&&window.__onNaver(false)"></script>
@@ -9573,10 +9578,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     })));
   }
   function withFallback(img, it) { img.onerror = () => { img.onerror = null; atlasCrop(it).then((u) => { if (u) img.src = u; }); }; return img; }
+  const HIRES = new Set(["founding_000.jpg", "founding_002.jpg", "founding_003.jpg", "founding_004.jpg", "founding_005.jpg", "founding_006.jpg", "founding_009.jpg", "founding_010.jpg", "founding_012.jpg", "founding_015.jpg", "founding_016.jpg", "founding_019.jpg", "founding_021.jpg", "founding_022.jpg", "founding_023.jpg", "founding_024.jpg", "founding_026.jpg", "founding_027.jpg", "founding_028.jpg", "founding_029.jpg", "founding_031.jpg", "founding_032.jpg", "founding_033.jpg", "founding_034.jpg", "founding_035.jpg", "founding_036.jpg", "founding_037.jpg", "founding_039.jpg", "founding_040.jpg", "founding_041.jpg", "founding_042.jpg", "founding_043.jpg", "founding_044.jpg", "founding_045.jpg", "founding_046.jpg", "founding_047.jpg", "founding_048.jpg", "founding_049.jpg", "founding_050.jpg", "founding_051.jpg", "founding_052.jpg", "founding_053.jpg", "founding_055.jpg", "founding_056.jpg", "founding_057.jpg", "founding_058.jpg"]);   // 1관: old photos sharpened and enlarged (AI upscale), only for the large view
   function openLB(s) {
     const it = s.data;
     const lbi = $("lbImg"); lbi.removeAttribute("src"); lbi.alt = it.title; lbi.dataset.want = it.file;
     withFallback(lbi, it); photoSrc(it.file).then((src) => { if (lbi.dataset.want === it.file) lbi.src = src; });
+    { const b = it.file && it.file.split("/").pop(); if (b && HIRES.has(b)) { const hi = new Image(); hi.onload = () => { if (lbi.dataset.want === it.file) lbi.src = hi.src; }; hi.src = R("hires/" + b); } }   // the large view swaps in the sharpened copy once it has arrived
     $("lbYear").textContent = `${it.year}${it.co === "" ? "" : `  ·  ${it.co || "그룹"}`}`; $("lbTitle").textContent = it.title; if (s.kind === "photo") $("lbTitle").insertAdjacentHTML("afterbegin", NB(s.idx + 1));
     $("lbCap").textContent = it.cap; $("lbDetail").textContent = it.detail || "";
     const ls = $("lbSrc"); ls.textContent = "";
@@ -10330,49 +10337,85 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     s.connect(f); f.connect(g); g.connect(SND.dry); if (wet) g.connect(SND.rev);
     s.start(t, Math.random()); s.stop(t + dur + 0.05);
   }
-  // ===== the park's own music: a bright, bouncy tune composed here and rendered in the browser (no recording, no outside music: nothing to license) =====
-  // 120 bpm, C major, I–V–vi–IV with a turnaround; ukulele-like strums, a bass, a glockenspiel melody, hand claps and a shaker. 16 bars (32 s), looped.
-  function makeParkSong() {
+  // ===== the park's own music, composed here and rendered in the browser (no recording, no outside music: nothing to license) =====
+  const PARK_STYLE = "citypop";   // citypop | bossa | house | acoustic
+  function makeParkSong(style) {
+    style = style || PARK_STYLE;
     const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext; if (!OAC) return Promise.reject(new Error("no audio"));
-    const SR = 22050, BPM = 120, BEAT = 60 / BPM, BAR = BEAT * 4, BARS = 16, LEN = BAR * BARS, ac = new OAC(2, Math.ceil(SR * LEN), SR);
-    const mix = ac.createGain(); mix.gain.value = 0.8; mix.connect(ac.destination);
-    const N = (n) => 440 * Math.pow(2, (n - 69) / 12);   // MIDI note → Hz
-    const CH = { C: [60, 64, 67], G: [55, 59, 62, 67], Am: [57, 60, 64], F: [53, 57, 60, 65], Dm: [57, 62, 65], Em: [55, 59, 64] };
-    const PROG = ["C", "G", "Am", "F", "C", "G", "F", "G", "Am", "Em", "F", "C", "Dm", "G", "C", "G"], ROOT = { C: 36, G: 43, Am: 45, F: 41, Dm: 38, Em: 40 };
-    const pan = (p) => { const s = ac.createStereoPanner ? ac.createStereoPanner() : null; if (s) { s.pan.value = p; s.connect(mix); return s; } return mix; };
-    const pluck = (f, t, d, v, out) => { const o = ac.createOscillator(), o2 = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter();
-      o.type = "triangle"; o2.type = "square"; o.frequency.value = f; o2.frequency.value = f * 1.003; const g2 = ac.createGain(); g2.gain.value = 0.18;
-      lp.type = "lowpass"; lp.frequency.setValueAtTime(3800, t); lp.frequency.exponentialRampToValueAtTime(900, t + d);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      o.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(g); g.connect(out); o.start(t); o2.start(t); o.stop(t + d + 0.02); o2.stop(t + d + 0.02); };
-    const glock = (f, t, d, v, out) => { [1, 2.76, 5.4].forEach((m, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.value = f * m;
-      const a = v * [1, 0.32, 0.12][i]; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + d * [1, 0.5, 0.25][i]);
-      o.connect(g); g.connect(out); o.start(t); o.stop(t + d + 0.05); }); };
-    const bass = (f, t, d, v) => { const o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter(); o.type = "triangle"; o.frequency.value = f; lp.type = "lowpass"; lp.frequency.value = 700;
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.01); g.gain.setValueAtTime(v, t + d * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      o.connect(lp); lp.connect(g); g.connect(mix); o.start(t); o.stop(t + d + 0.02); };
+    const P = { citypop: { bpm: 104, bars: 16 }, bossa: { bpm: 132, bars: 16 }, house: { bpm: 120, bars: 16 }, acoustic: { bpm: 96, bars: 16 } }[style] || { bpm: 104, bars: 16 };
+    const SR = 22050, BEAT = 60 / P.bpm, BAR = BEAT * 4, LEN = BAR * P.bars, ac = new OAC(2, Math.ceil(SR * LEN), SR);
+    const mix = ac.createGain(); mix.gain.value = 0.75; mix.connect(ac.destination);
+    // a short room reverb shared by everything
+    const ir = ac.createBuffer(2, SR * 1.6, SR); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let q = 9 + c; for (let i = 0; i < d.length; i++) { q = (q * 16807) % 2147483647; d[i] = (q / 1073741823.5 - 1) * Math.pow(1 - i / d.length, 3); } }
+    const verb = ac.createConvolver(); verb.buffer = ir; const vg = ac.createGain(); vg.gain.value = 0.22; verb.connect(vg); vg.connect(mix);
+    const bus = (p, wet) => { const s = ac.createStereoPanner ? ac.createStereoPanner() : ac.createGain(); if (s.pan) s.pan.value = p; s.connect(mix); if (wet) { const w = ac.createGain(); w.gain.value = wet; s.connect(w); w.connect(verb); } return s; };
+    const N = (n) => 440 * Math.pow(2, (n - 69) / 12);
+    const env = (g, t, a, v, d, sus) => { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + a); if (sus) { g.gain.setValueAtTime(v, t + d * 0.7); } g.gain.exponentialRampToValueAtTime(0.0001, t + d); };
+    const osc = (type, f, t, d, out, v, a = 0.005, det = 0) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.value = f; o.detune.value = det; env(g, t, a, v, d); o.connect(g); g.connect(out); o.start(t); o.stop(t + d + 0.05); return o; };
+    // instruments
+    const ep = (n, t, d, v, out) => { const f = N(n); osc("sine", f, t, d, out, v, 0.006); osc("sine", f * 2, t, d * 0.5, out, v * 0.22, 0.004); osc("triangle", f * 4, t, 0.12, out, v * 0.06, 0.002); };   // electric piano
+    const piano = (n, t, d, v, out) => { const f = N(n); osc("triangle", f, t, d, out, v, 0.004); osc("sine", f * 2, t, d * 0.6, out, v * 0.35, 0.003); osc("sine", f * 3, t, d * 0.3, out, v * 0.12, 0.002); };
+    const guitar = (n, t, d, v, out) => { const f = N(n), o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter(); o.type = "sawtooth"; o.frequency.value = f;
+      lp.type = "lowpass"; lp.frequency.setValueAtTime(2600, t); lp.frequency.exponentialRampToValueAtTime(500, t + d * 0.7); env(g, t, 0.003, v, d); o.connect(lp); lp.connect(g); g.connect(out); o.start(t); o.stop(t + d + 0.05); };
+    const pad = (ns, t, d, v, out) => ns.forEach((n) => [-7, 7].forEach((dt) => { const o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter(); o.type = "sawtooth"; o.frequency.value = N(n); o.detune.value = dt;
+      lp.type = "lowpass"; lp.frequency.value = 1100; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + d * 0.3); g.gain.linearRampToValueAtTime(0.0001, t + d); o.connect(lp); lp.connect(g); g.connect(out); o.start(t); o.stop(t + d + 0.05); }));
+    const bass = (n, t, d, v, type = "triangle") => { const o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter(); o.type = type; o.frequency.value = N(n); lp.type = "lowpass"; lp.frequency.value = type === "sawtooth" ? 500 : 900;
+      env(g, t, 0.008, v, d, true); o.connect(lp); lp.connect(g); g.connect(mix); o.start(t); o.stop(t + d + 0.05); };
     const nb = ac.createBuffer(1, SR, SR), nd = nb.getChannelData(0); let q = 7; for (let i = 0; i < nd.length; i++) { q = (q * 16807) % 2147483647; nd[i] = q / 1073741823.5 - 1; }
-    const hit = (t, d, f, v, type, out) => { const s = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = nb; fl.type = type; fl.frequency.value = f; fl.Q.value = 1.2;
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + d); s.connect(fl); fl.connect(g); g.connect(out || mix); s.start(t, (t * 0.37) % 0.5); s.stop(t + d + 0.02); };
-    const kick = (t) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.12);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22); o.connect(g); g.connect(mix); o.start(t); o.stop(t + 0.25); };
-    const ukeL = pan(-0.25), glkR = pan(0.3), shk = pan(0.45);
-    // melody: two 8-bar phrases (scale degrees in C major as MIDI notes, null = rest), eighth notes
-    const MEL = [[72, null, 76, 79, 79, null, 76, 74], [74, null, 71, 74, 79, null, 77, 76], [76, null, 72, 76, 81, 79, 76, null], [77, null, 76, 74, 72, null, 74, null],
-                 [72, 74, 76, 79, 84, null, 79, 76], [74, null, 79, null, 83, 81, 79, null], [81, null, 79, 77, 76, null, 74, 72], [74, 76, 74, 71, 74, null, null, null],
-                 [76, null, 72, 76, 81, null, 79, 76], [79, null, 76, 79, 83, null, 79, 76], [77, 76, 77, 81, 84, null, 81, 77], [79, null, 76, 72, 76, null, 79, null],
-                 [77, null, 74, 77, 81, null, 77, 74], [79, 81, 83, 84, 86, null, 83, 79], [84, null, 79, 76, 79, null, 76, 74], [72, null, 74, 76, 79, null, null, null]];
-    for (let b = 0; b < BARS; b++) { const t0 = b * BAR, ch = CH[PROG[b]], r = ROOT[PROG[b]];
-      // ukulele: down, down-up, up-down-up (D . D U . U D U)
-      [[0, 1], [1, 1], [1.5, -1], [2.5, -1], [3, 1], [3.5, -1]].forEach(([bt, dir]) => { const notes = dir > 0 ? ch : [...ch].reverse(); notes.forEach((n, i) => pluck(N(n + 12), t0 + bt * BEAT + i * 0.012, 0.42, bt % 1 ? 0.07 : 0.1, ukeL)); });
-      // bass: root on 1 and 3, fifth / octave pickups
-      bass(N(r), t0, BEAT * 0.9, 0.42); bass(N(r + 7), t0 + BEAT * 1.5, BEAT * 0.45, 0.28); bass(N(r), t0 + BEAT * 2, BEAT * 0.9, 0.4); bass(N(r + 12), t0 + BEAT * 3.5, BEAT * 0.45, 0.26);
-      // melody (rest on the very first bar's lead-in is left as written)
-      MEL[b].forEach((n, i) => { if (n != null) glock(N(n), t0 + i * BEAT / 2, 0.9, 0.16, glkR); });
-      // drums: soft kick on 1 & 3, claps on 2 & 4, shaker on every eighth
-      kick(t0); kick(t0 + BEAT * 2); if (b % 4 === 3) kick(t0 + BEAT * 3.5);
-      [1, 3].forEach((bt) => { for (let k = 0; k < 3; k++) hit(t0 + bt * BEAT + k * 0.011, 0.12, 1500, 0.22, "bandpass"); });
-      for (let e = 0; e < 8; e++) hit(t0 + e * BEAT / 2, 0.05, 7500, e % 2 ? 0.08 : 0.04, "highpass", shk); }
+    const noise = (t, d, f, v, type, out, Q = 1) => { const s = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = nb; fl.type = type; fl.frequency.value = f; fl.Q.value = Q; env(g, t, 0.002, v, d); s.connect(fl); fl.connect(g); g.connect(out || mix); s.start(t, (t * 0.37) % 0.5); s.stop(t + d + 0.05); };
+    const kick = (t, v = 0.6) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.14); env(g, t, 0.004, v, 0.3); o.connect(g); g.connect(mix); o.start(t); o.stop(t + 0.35); };
+    const snare = (t, v = 0.25, out) => { noise(t, 0.18, 1800, v, "bandpass", out, 0.8); osc("triangle", 190, t, 0.08, mix, v * 0.5); };
+    const hat = (t, v = 0.06, d = 0.04, out) => noise(t, d, 8000, v, "highpass", out);
+    const L = bus(-0.3, 0.6), Rr = bus(0.3, 0.6), C = bus(0, 0.35), HH = bus(0.4, 0);
+    const chord = (root, kind) => ({ maj7: [0, 4, 7, 11], m7: [0, 3, 7, 10], dom7: [0, 4, 7, 10], maj9: [0, 4, 7, 11, 14], m9: [0, 3, 7, 10, 14], sus: [0, 5, 7, 10], maj: [0, 4, 7], min: [0, 3, 7] }[kind]).map((i) => root + i);
+    let PROG, MEL;
+    if (style === "citypop") {   // Fmaj7–Em7–Dm7–Cmaj7 … in a bright 80s city-pop groove: electric piano, funky bass, crisp drums
+      PROG = [[53, "maj7"], [52, "m7"], [50, "m7"], [48, "maj7"], [53, "maj7"], [52, "m7"], [57, "m7"], [55, "dom7"], [53, "maj7"], [52, "m7"], [50, "m7"], [48, "maj7"], [46, "maj7"], [45, "m7"], [50, "m7"], [55, "dom7"]];
+      MEL = [[76, 79, null, 77, 76, null, 74, 72], [74, null, 72, 71, 72, null, null, 67], [69, 72, 74, 76, 77, null, 76, 74], [76, null, null, null, 72, 74, 76, 79],
+             [81, null, 79, 77, 76, null, 77, 79], [79, null, 76, null, 74, 72, 74, 76], [72, null, 74, 76, 79, null, 77, 76], [74, null, null, 71, 74, 77, 79, null],
+             [76, 79, null, 77, 76, null, 74, 72], [74, null, 72, 71, 72, null, null, 67], [69, 72, 74, 76, 77, 79, 81, 79], [79, null, null, 76, 72, null, null, null],
+             [74, 76, 77, null, 81, null, 79, 77], [76, null, 72, null, 74, 76, 72, 69], [72, null, 74, null, 77, 76, 74, 72], [74, null, 77, null, 79, null, null, null]];
+      for (let b = 0; b < P.bars; b++) { const t0 = b * BAR, [r, k] = PROG[b], ch = chord(r + 12, k);
+        [[0, 0.9], [1.5, 0.4], [2.5, 0.9], [3.5, 0.4]].forEach(([bt, d]) => ch.forEach((n) => ep(n, t0 + bt * BEAT, BEAT * d * 1.6, 0.05, L)));
+        [[0, r - 12, 0.6], [0.75, r, 0.2], [1.5, r - 12, 0.4], [2, r - 5, 0.4], [2.75, r, 0.2], [3.25, r - 12, 0.3], [3.5, r + 2 - 12, 0.4]].forEach(([bt, n, d]) => bass(n, t0 + bt * BEAT, BEAT * d * 1.6, 0.36, "sawtooth"));
+        MEL[b].forEach((n, i) => { if (n != null) ep(n, t0 + i * BEAT / 2, BEAT * 1.1, 0.11, Rr); });
+        kick(t0); kick(t0 + BEAT * 2.5, 0.45); snare(t0 + BEAT, 0.22, C); snare(t0 + BEAT * 3, 0.22, C);
+        for (let e = 0; e < 16; e++) hat(t0 + e * BEAT / 4, e % 4 === 2 ? 0.06 : 0.03, 0.03, HH); }
+    } else if (style === "bossa") {   // a relaxed bossa nova: nylon-guitar comping, upright bass on 1 and 3, brushes, a soft piano tune
+      PROG = [[50, "m9"], [55, "dom7"], [48, "maj9"], [48, "maj7"], [50, "m7"], [55, "dom7"], [52, "m7"], [57, "dom7"], [50, "m9"], [55, "dom7"], [48, "maj9"], [57, "m7"], [53, "maj7"], [55, "dom7"], [48, "maj9"], [55, "dom7"]];
+      MEL = [[77, null, 76, null, 74, 72, null, 74], [76, null, null, 71, 72, null, 74, null], [76, null, 79, null, 76, null, 74, 72], [71, null, null, null, 72, null, 74, 76],
+             [77, null, 76, 74, null, 72, 74, null], [71, null, 74, null, 77, null, 76, null], [74, null, 72, 71, null, 69, 71, null], [73, null, null, null, 76, null, 79, null],
+             [77, null, 76, null, 74, 72, null, 74], [76, null, null, 71, 72, null, 74, null], [76, null, 79, null, 81, null, 79, 76], [77, null, null, null, 76, null, 72, null],
+             [76, null, 77, 76, 74, null, 72, null], [74, null, 71, null, 77, null, 76, 74], [72, null, null, null, 76, null, 74, null], [71, null, 74, null, 79, null, null, null]];
+      for (let b = 0; b < P.bars; b++) { const t0 = b * BAR, [r, k] = PROG[b], ch = chord(r + 12, k);
+        [0, 1.5, 2.5, 3, 3.75].forEach((bt, i) => ch.forEach((n, j) => guitar(n, t0 + bt * BEAT + j * 0.008, BEAT * 0.9, i === 0 ? 0.06 : 0.045, L)));
+        bass(r - 12, t0, BEAT * 1.4, 0.4); bass(r - 5, t0 + BEAT * 1.5, BEAT * 0.5, 0.3); bass(r - 12 + 7, t0 + BEAT * 2, BEAT * 1.4, 0.38); bass(r - 12, t0 + BEAT * 3.5, BEAT * 0.5, 0.3);
+        MEL[b].forEach((n, i) => { if (n != null) piano(n, t0 + i * BEAT / 2, BEAT * 1.6, 0.12, Rr); });
+        kick(t0, 0.35); kick(t0 + BEAT * 2, 0.3); [0.75, 1.5, 2.75, 3.5].forEach((bt) => noise(t0 + bt * BEAT, 0.09, 3000, 0.07, "bandpass", C));
+        for (let e = 0; e < 8; e++) noise(t0 + e * BEAT / 2, 0.16, 5200, 0.025, "highpass", HH); }
+    } else if (style === "house") {   // a sunny, mellow house: four-on-the-floor, warm pads, offbeat hats, piano stabs
+      PROG = [[57, "m7"], [53, "maj7"], [48, "maj7"], [55, "sus"], [57, "m7"], [53, "maj7"], [48, "maj7"], [55, "dom7"]].concat([[57, "m9"], [53, "maj9"], [48, "maj9"], [55, "sus"], [57, "m7"], [53, "maj7"], [50, "m7"], [55, "dom7"]]);
+      MEL = [[null, 76, null, 76, null, 72, 74, null], [null, 77, null, 76, null, 72, null, null], [null, 76, null, 79, null, 76, 74, null], [null, 74, null, 72, null, 74, null, null]];
+      for (let b = 0; b < P.bars; b++) { const t0 = b * BAR, [r, k] = PROG[b], ch = chord(r + 12, k);
+        pad(ch, t0, BAR * 1.05, 0.02, L);
+        [0.5, 1.5, 2.5, 3.25].forEach((bt) => ch.forEach((n) => piano(n + 12, t0 + bt * BEAT, BEAT * 0.45, 0.04, Rr)));
+        [0, 1, 2, 3].forEach((bt) => kick(t0 + bt * BEAT, 0.55)); [1, 3].forEach((bt) => noise(t0 + bt * BEAT, 0.14, 1600, 0.16, "bandpass", C));
+        for (let e = 0; e < 4; e++) hat(t0 + (e + 0.5) * BEAT, 0.09, 0.06, HH);
+        [[0, 0.4], [0.75, 0.2], [1.5, 0.4], [2.5, 0.4], [3.25, 0.2], [3.5, 0.4]].forEach(([bt, d]) => bass(r - 12, t0 + bt * BEAT, BEAT * d * 1.5, 0.34));
+        if (b >= 8) MEL[b % 4].forEach((n, i) => { if (n != null) ep(n, t0 + i * BEAT / 2, BEAT * 0.8, 0.09, Rr); }); }
+    } else {   // acoustic: a warm indie-folk strum, a picked bass, a simple piano melody, soft shaker and kick
+      PROG = [[48, "maj"], [55, "maj"], [57, "min"], [53, "maj"], [48, "maj"], [55, "maj"], [53, "maj"], [55, "maj"], [57, "min"], [53, "maj"], [48, "maj"], [55, "maj"], [57, "min"], [53, "maj"], [55, "sus"], [55, "maj"]];
+      MEL = [[67, null, 72, null, 74, null, 76, null], [74, null, 71, null, 67, null, null, null], [69, null, 72, null, 76, null, 74, 72], [72, null, null, null, 69, null, null, null],
+             [67, null, 72, null, 74, null, 76, 79], [79, null, 74, null, 71, null, 74, null], [72, null, 69, null, 72, 74, 76, null], [74, null, null, null, null, null, null, null],
+             [76, null, 76, 77, 79, null, 76, null], [77, null, 76, null, 72, null, 69, null], [72, null, 74, null, 76, null, 79, null], [79, null, 77, null, 74, null, null, null],
+             [76, null, 72, null, 69, null, 72, null], [72, null, 74, null, 77, null, 76, 74], [74, null, null, null, 72, null, 71, null], [74, null, null, null, null, null, null, null]];
+      for (let b = 0; b < P.bars; b++) { const t0 = b * BAR, [r, k] = PROG[b], ch = chord(r + 12, k).concat([r + 24]);
+        [[0, 1], [1, 1], [1.5, -1], [2.5, -1], [3, 1], [3.5, -1]].forEach(([bt, dir]) => (dir > 0 ? ch : [...ch].reverse()).forEach((n, j) => guitar(n, t0 + bt * BEAT + j * 0.014, BEAT * 1.1, bt % 1 ? 0.03 : 0.045, L)));
+        bass(r - 12, t0, BEAT * 1.6, 0.36); bass(r - 5, t0 + BEAT * 2, BEAT * 1.6, 0.3);
+        MEL[b].forEach((n, i) => { if (n != null) piano(n, t0 + i * BEAT / 2, BEAT * 1.8, 0.13, Rr); });
+        kick(t0, 0.4); kick(t0 + BEAT * 2.5, 0.3); [1, 3].forEach((bt) => noise(t0 + bt * BEAT, 0.12, 2000, 0.09, "bandpass", C));
+        for (let e = 0; e < 8; e++) noise(t0 + e * BEAT / 2, 0.06, 6500, e % 2 ? 0.05 : 0.03, "highpass", HH); }
+    }
     return ac.startRendering();
   }
   function startBgm() {
@@ -11006,7 +11049,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   // ===== photo puzzle on the park floor: 4 x 4 sliding tiles (one gap), eight pictures of Kumho; finishing all eight unlocks the mini bus =====
   var PZ = null;   // the game in play: { pose }
-  const PZB = { g: null, x: 44, z: -42, tiles: [], last: null, mat: null, lv: 0, pos: [], gap: 8, ry: 0.45, moves: 0, solved: false, tex: null, label: null, labelC: null };
+  const PZB = { g: null, x: 37, z: -28, tiles: [], last: null, mat: null, lv: 0, pos: [], gap: 8, ry: 0, moves: 0, solved: false, tex: null, label: null, labelC: null };
   const PZ_SET = ["img/founding_001.jpg", "img/growth_023.jpg", "special/bus_04.jpg|0.9", "special/term_us1.jpg", "special/revival_k02.jpg", "img/revival_104.jpg", "mark", "special/revival_k09.jpg"];
   function pzInfo(i) {
     const [f, cx] = PZ_SET[i].split("|"); if (f === "mark") return { mark: true, year: "2024", title: "아테라 심볼 마크", hall: "금호건설", detail: "금호건설의 새 주거 브랜드 아테라(ARTERA)의 정식 심볼 마크입니다. 아테라는 예술(ART), 대지(TERRA), 시대(ERA)를 합친 이름으로 '금호건설이 지은 대지 위의 예술'을 뜻합니다." };
@@ -11019,20 +11062,24 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const pzSlot = (s) => [PZB.x + ((PN - 1) / 2 - Math.floor(s / PN)) * TS, PZB.z + ((s % PN) - (PN - 1) / 2) * TS];   // played from the west (clear of trees): the picture's top row lies furthest east, its left column to the north
   function pzBuild() {   // the puzzle stands as an easel sign on the street side of the fountain (nothing in front of it): its picture and a label; tap it to play on screen
     if (!fountainAt()) return false; const g = new THREE.Group(); g.position.set(PZB.x, 0, PZB.z); world.add(g); PZB.g = g; PZB.tiles = [];
-    const brz = gml(0xb59c7a), dark = gml(0x2a2b2e);
+    const brz = gml(0xb59c7a), brzD = gml(0x7d6646), dark = gml(0x2a2b2e), stone = gml(0x8e8a84);
     PZB.mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const W = 2.2, H = 2.2, Y = 1.75;
-    for (const dx of [-1.0, 1.0]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.1, Y + H / 2, 0.1), brz); leg.position.set(dx, (Y + H / 2) / 2, -0.06); leg.castShadow = true; g.add(leg); }
-    const back = new THREE.Mesh(new THREE.BoxGeometry(W + 0.24, H + 0.24, 0.08), dark); back.position.set(0, Y, 0); back.castShadow = true; g.add(back);
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(W + 0.14, H + 0.14, 0.1), brz); frame.position.set(0, Y, 0.02); g.add(frame);
-    const pic = new THREE.Mesh(new THREE.PlaneGeometry(W, H), PZB.mat); pic.position.set(0, Y, 0.075); g.add(pic);
-    PZB.labelC = document.createElement("canvas"); PZB.labelC.width = 1024; PZB.labelC.height = 128; PZB.label = new THREE.CanvasTexture(PZB.labelC); PZB.label.encoding = THREE.sRGBEncoding;
-    const lb = new THREE.Mesh(new THREE.PlaneGeometry(W + 0.24, (W + 0.24) / 8), new THREE.MeshBasicMaterial({ map: PZB.label, transparent: true })); lb.position.set(0, Y - H / 2 - 0.32, 0.075); g.add(lb);
-    const pick = new THREE.Mesh(new THREE.BoxGeometry(W + 0.6, H + 1.2, 0.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pick.position.set(0, Y - 0.3, 0.1); pick.userData.idx = "pz"; pick.userData.k = -1; g.add(pick); pickables.push(pick);
+    const W = 2.2, H = 2.2, Y = 2.05, TL = -0.08, add = (geo, m, x, y, z, p = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; p.add(o); return o; };
+    add(new THREE.BoxGeometry(3.4, 0.3, 1.3), stone, 0, 0.15, 0); add(new THREE.BoxGeometry(3.1, 0.12, 1.0), brzD, 0, 0.36, 0);   // a stone plinth with a bronze cap
+    for (const dx of [-1.25, 1.25]) { add(new THREE.BoxGeometry(0.16, Y + H / 2 + 0.5, 0.16), brz, dx, (Y + H / 2 + 0.5) / 2 + 0.3, -0.05); add(new THREE.SphereGeometry(0.13, 12, 8), brz, dx, Y + H / 2 + 0.85, -0.05); }   // two posts with ball finials
+    const board = new THREE.Group(); board.position.set(0, Y, 0.05); board.rotation.x = TL; g.add(board);   // the board, tipped back a little
+    add(new THREE.BoxGeometry(W + 0.5, H + 0.5, 0.16), dark, 0, 0, -0.05, board);   // the backing
+    for (const [w, h, x, y] of [[W + 0.36, 0.16, 0, H / 2 + 0.1], [W + 0.36, 0.16, 0, -H / 2 - 0.1], [0.16, H + 0.36, -W / 2 - 0.1, 0], [0.16, H + 0.36, W / 2 + 0.1, 0]]) add(new THREE.BoxGeometry(w, h, 0.16), brz, x, y, 0.06, board);   // a raised bronze frame
+    add(new THREE.PlaneGeometry(W, H), PZB.mat, 0, 0, 0.035, board).castShadow = false;
+    PZB.labelC = document.createElement("canvas"); PZB.labelC.width = 1024; PZB.labelC.height = 200; PZB.label = new THREE.CanvasTexture(PZB.labelC); PZB.label.encoding = THREE.sRGBEncoding;
+    const hd = new THREE.Group(); hd.position.set(0, Y + H / 2 + 0.62, 0); g.add(hd);   // the header board: 금호 퍼즐 도전
+    add(new THREE.BoxGeometry(W + 0.7, 0.62, 0.2), dark, 0, 0, -0.02, hd); add(new THREE.BoxGeometry(W + 0.84, 0.08, 0.24), brz, 0, 0.33, -0.02, hd); add(new THREE.BoxGeometry(W + 0.84, 0.08, 0.24), brz, 0, -0.33, -0.02, hd);
+    add(new THREE.PlaneGeometry(W + 0.6, (W + 0.6) * 200 / 1024), new THREE.MeshBasicMaterial({ map: PZB.label, transparent: true }), 0, 0, 0.085, hd).castShadow = false;
+    const pick = new THREE.Mesh(new THREE.BoxGeometry(W + 1.2, H + 2.4, 1.4), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pick.position.set(0, Y, 0.1); pick.userData.idx = "pz"; pick.userData.k = -1; g.add(pick); pickables.push(pick);
     g.rotation.y = PZB.ry;
     pzLoad(PZB.lv, false); OUT.colDirty = true; return true;
   }
-  function pzLabel(txt) { const c = PZB.labelC.getContext("2d"); c.clearRect(0, 0, 1024, 128); c.fillStyle = "rgba(29,29,26,0.82)"; c.fillRect(0, 8, 1024, 112); c.fillStyle = "#e8c98c"; c.font = `700 46px ${FONT}`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(txt, 512, 66); PZB.label.needsUpdate = true; }
+  function pzLabel() { const c = PZB.labelC.getContext("2d"); c.clearRect(0, 0, 1024, 200); c.fillStyle = "#e8c98c"; c.font = `800 120px ${FONT}`; c.textAlign = "center"; c.textBaseline = "middle"; if ("letterSpacing" in c) c.letterSpacing = "10px"; c.fillText("금호 퍼즐 도전", 512, 104); PZB.label.needsUpdate = true; }   // the header only: 금호 퍼즐 도전
   function pzPlace(instant) { pzBoard(); if (!PZB.tiles.length) return; for (let k = 0; k < NT; k++) { const t = PZB.tiles[k], s = k === GAP ? GAP : PZB.pos[k], [x, z] = pzSlot(s); t.userData.tx = x; t.userData.tz = z; if (instant) t.position.set(x, 0.1, z); } PZB.tiles[GAP].visible = PZB.solved; }
   function pzLoad(i, shuffle) {
     PZB.lv = (i + PZ_SET.length) % PZ_SET.length; const info = pzInfo(PZB.lv), done = pzDone();
@@ -11871,6 +11918,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       if (IS_PARK) { leaveEasel(); buildOutside(); requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }
+      setTimeout(() => document.documentElement.classList.add("arrived"), 350);   // the scene is up: the moving card fades
       if (arrive.sound === false) setSound(false);
       else { const kick = () => { if (SND.on && SND.ctx && SND.ctx.state !== "running") SND.ctx.resume(); }; ["pointerdown", "keydown", "touchstart"].forEach((e) => window.addEventListener(e, kick, { passive: true })); } });   // a phone may hold the sound until the first touch
   };
