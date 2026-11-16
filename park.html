@@ -8,7 +8,7 @@
 (function () { var g = null; try { g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); } catch (e) {}
   var park = window.KUMHO_PAGE === "park", fresh = g && Date.now() - g.t < 120000;
   if (park || (fresh && !g.park)) { var d = document.documentElement; d.classList.add("arriving"); d.style.setProperty("--go", park ? '"금호 공원으로 이동 중…"' : '"금호 아카이브로 이동 중…"'); } })();</script>
-<style>html.arriving #intro{display:none!important}html.arriving body::after{content:var(--go);position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#141414;color:#e8c98c;font:600 16px/1.6 "Noto Sans KR",sans-serif;letter-spacing:.04em}html.arriving.arrived body::after{opacity:0;pointer-events:none;transition:opacity .5s}</style>
+<style>html.arriving #intro{display:none!important}html.arriving body::before{content:"";position:fixed;left:50%;top:calc(50% + 30px);width:min(320px,70vw);height:4px;transform:translateX(-50%);z-index:100000;border-radius:2px;background:linear-gradient(90deg,#c9a86a var(--pct,3%),#3a3a36 var(--pct,3%));transition:opacity .5s}html.arriving.arrived body::before{opacity:0}html.arriving body::after{content:var(--go);position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#141414;color:#e8c98c;font:600 16px/1.6 "Noto Sans KR",sans-serif;letter-spacing:.04em}html.arriving.arrived body::after{opacity:0;pointer-events:none;transition:opacity .5s}</style>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script id="naverjs" async src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=n9cdl9yr3r&submodules=geocoder" onload="window.__naverLoaded=1;window.__onNaver&&window.__onNaver(true)" onerror="window.__naverError=1;window.__onNaver&&window.__onNaver(false)"></script>
@@ -358,6 +358,7 @@ body.t3on .viewport{position:fixed;inset:0;z-index:12}body.t3on #t3d{background:
 <div id="taxiNotice" hidden style="position:fixed;top:130px;left:50%;transform:translateX(-50%);z-index:101;background:#5b2924;color:white;padding:10px;border-radius:6px;font:14px sans-serif"></div><style>#taxiControls[hidden],#taxiNotice[hidden]{display:none!important}</style>
 <script>
 window.__archiveProgress = function (f) {
+  var de = document.documentElement; if (de.classList.contains("arriving")) { var pc = Math.max(3, Math.min(100, Math.round(f * 100))); de.style.setProperty("--pct", pc + "%"); var base = window.KUMHO_PAGE === "park" ? "금호 공원으로 이동 중…" : "금호 아카이브로 이동 중…"; de.style.setProperty("--go", '"' + base + "  " + pc + '%"'); }
   var b = document.getElementById("introBar"), t = document.getElementById("introPct");
   var pct = Math.max(0, Math.min(100, Math.round(f * 100)));
   if (b) b.style.width = pct + "%";
@@ -7630,7 +7631,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const roofKit = (x, z, w, d, top) => { const n = 1 + Math.floor(CR() * 2);
         for (let i = 0; i < n; i++) roofBox(x + (CR() - 0.5) * w * 0.4, z + (CR() - 0.5) * d * 0.4, w * (0.18 + CR() * 0.2), d * (0.18 + CR() * 0.2), 1.4 + CR() * 2, top); };
       // keep-out zones: the archive and its forecourt, the street and tree belt, the park and the Artera complex, the stadium
-      const KEEP = [[-34, 34, -14, 44], [-1e3, 1e3, -13, 15.5], [-46, 152, -246, -13], [-252, -150, -156, -64], [-212, -36, -240, -160], [160, 322, -184, -84], [182, 317, -238, -150], [156, 180, -246, -10], [-362, -225, -240, -158], [170, 310, -112, -12]];   // the last two: houses and a round block where U-square first stood, and U-square itself
+      const KEEP = [[-34, 34, -14, 44], [-1e3, 1e3, -13, 15.5], [-46, 152, -246, -13], [-118, -52, -142, -84], [-212, -36, -240, -160], [160, 322, -184, -84], [182, 317, -238, -150], [156, 180, -246, -10], [-362, -225, -240, -158], [170, 310, -112, -12]];   // the last two: houses and a round block where U-square first stood, and U-square itself
       const free = (x0, x1, z0, z1) => !KEEP.some(([a, b, c, d]) => x0 < b && x1 > a && z0 < d && z1 > c);
       const midKind = () => ["white", "white", "flat", "beige", "flat", "white"][Math.floor(CR() * 6)];
       const GP = [], GN = [];   // pitched roofs (their own tiled material)
@@ -8091,7 +8092,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.04, 16), tabM); tb.position.set(px, 0.72, pz); world.add(tb);
             [[0.75, 0], [-0.75, 0], [0, 0.75]].forEach(([a, b]) => { const c = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.45, 0.42), chM); c.position.set(px + a, 0.225, pz + b); world.add(c); }); }); } }
       // the stadium: an oval bowl of pale concrete ribs under a white roof ring, a green pitch and a red track inside
-      { const S = new THREE.Group(); S.position.set(-201, 0, -110); world.add(S); const A = 40, Bz = 31;
+      { const S = new THREE.Group(); S.position.set(-86, 0, -113); world.add(S); const A = 23, Bz = 18;   // within one block, next to the park
         const ribTex = canvasTex(1024, 128, (g, W, H) => { g.fillStyle = "#c9c8c3"; g.fillRect(0, 0, W, H); g.fillStyle = "#6f747b"; for (let i = 0; i < 64; i++) { g.fillRect(i * 16 + 3, H * 0.18, 10, H * 0.28); g.fillRect(i * 16 + 3, H * 0.56, 10, H * 0.28); }
           g.fillStyle = "#efeeea"; for (let i = 0; i < 64; i++) g.fillRect(i * 16, 0, 3, H); });
         ribTex.wrapS = THREE.RepeatWrapping; ribTex.repeat.set(4, 1);
@@ -8101,7 +8102,20 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const track = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshLambertMaterial({ color: 0xb46a5c })); track.rotation.x = -Math.PI / 2; track.scale.set(A * 0.62, Bz * 0.62, 1); track.position.y = 0.9; S.add(track);
         const pitch = new THREE.Mesh(new THREE.PlaneGeometry(A * 0.84, Bz * 0.8), new THREE.MeshLambertMaterial({ color: 0x5f9a4f })); pitch.rotation.x = -Math.PI / 2; pitch.position.y = 0.95; S.add(pitch);
         const deck = new THREE.Mesh(new THREE.CylinderGeometry(1.16, 1.18, 1.2, 96), lam(0xd7d6d1)); deck.scale.set(A, 1, Bz); deck.position.y = 0.6; S.add(deck);   // the concourse it stands on
-        [[0, 1], [0.5, 1], [1, 1], [1.5, 1]].forEach(([k]) => { const a = k * Math.PI; const ramp = new THREE.Mesh(new THREE.BoxGeometry(14, 0.5, 5), lam(0xdcdbd6)); ramp.position.set(Math.cos(a) * A * 1.3, 0.6, Math.sin(a) * Bz * 1.3); ramp.rotation.y = -a; ramp.rotation.z = 0.06; S.add(ramp); }); }
+        [[0, 1], [0.5, 1], [1, 1], [1.5, 1]].forEach(([k]) => { const a = k * Math.PI; const ramp = new THREE.Mesh(new THREE.BoxGeometry(14, 0.5, 5), lam(0xdcdbd6)); ramp.position.set(Math.cos(a) * A * 1.16, 0.6, Math.sin(a) * Bz * 1.16); ramp.rotation.y = -a; ramp.rotation.z = 0.06; S.add(ramp); }); }
+        { // the entrance on the park side: a glazed door under a canopy, and the sign 금호 도서관; tap it to go in (to the archive)
+          const ex = -86 + 23 * 1.02, ez = -113, E = new THREE.Group(); E.position.set(ex, 0, ez); E.rotation.y = Math.PI / 2; world.add(E);
+          const mk = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; E.add(o); return o; };
+          const frameM = lam(0x3b3e43), glass = new THREE.MeshLambertMaterial({ color: 0x9fb8c6, emissive: 0x2a3540, emissiveIntensity: 0.4 });
+          mk(new THREE.BoxGeometry(7.6, 5.6, 1.6), lam(0xe9e7e2), 0, 2.8, -0.3);   // the porch block
+          mk(new THREE.BoxGeometry(5.2, 3.6, 0.2), frameM, 0, 1.8, 0.55); mk(new THREE.BoxGeometry(2.3, 3.3, 0.06), glass, -1.25, 1.75, 0.68); mk(new THREE.BoxGeometry(2.3, 3.3, 0.06), glass, 1.25, 1.75, 0.68);
+          mk(new THREE.BoxGeometry(0.08, 0.9, 0.1), lam(0xc9a86a), -0.2, 1.7, 0.74); mk(new THREE.BoxGeometry(0.08, 0.9, 0.1), lam(0xc9a86a), 0.2, 1.7, 0.74);   // brass handles
+          mk(new THREE.BoxGeometry(8.4, 0.3, 3.2), lam(0x2f3134), 0, 4.1, 1.2);   // the canopy
+          const sg = canvasTex(1024, 220, (g, W, H) => { g.fillStyle = "#1f3b2c"; g.fillRect(0, 0, W, H); g.strokeStyle = "#c9a86a"; g.lineWidth = 8; g.strokeRect(10, 10, W - 20, H - 20);
+            g.fillStyle = "#f4eedf"; g.font = `800 112px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; if ("letterSpacing" in g) g.letterSpacing = "14px"; g.fillText("금호 도서관", W / 2, H / 2 - 12);
+            g.font = `600 34px "Helvetica Neue", Arial, ${FONT}`; g.fillStyle = "#c9a86a"; if ("letterSpacing" in g) g.letterSpacing = "8px"; g.fillText("KUMHO LIBRARY", W / 2, H - 38); });
+          const sm = mk(new THREE.BoxGeometry(6.4, 1.38, 0.16), [frameM, frameM, frameM, frameM, new THREE.MeshBasicMaterial({ map: sg }), frameM], 0, 4.95, 0.62);
+          const pb = mk(new THREE.BoxGeometry(8, 6.4, 3), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 3, 0.8); pb.castShadow = false; pb.userData.idx = "library"; pickables.push(pb); }
       // on the street: zebra crossings either side of the archive and a pair of signal poles
       { const zebra = canvasTex(256, 64, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "#f1f0ea"; for (let i = 0; i < 8; i++) g.fillRect(i * 32 + 4, 0, 20, H); });
         zebra.wrapS = THREE.RepeatWrapping; zebra.repeat.set(7 / 8, 1);
@@ -9539,8 +9553,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function pageGo(to) {
     window.__pageLeaving = true; busy = true;
     try { sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({ ride: !!RIDE.ok, sound: !!SND.on, t: Date.now() }, to))); } catch (e) {}
-    const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">${to.park ? "금호 공원으로 이동 중…" : "금호 아카이브로 이동 중…"}</div>`; }
-    setTimeout(() => { location.href = to.park ? "park.html" : "index.html"; }, 160);
+    const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">${to.library ? "금호 도서관으로 이동 중…" : to.park ? "금호 공원으로 이동 중…" : "금호 아카이브로 이동 중…"}</div>`; }
+    setTimeout(() => { location.href = to.library ? "library.html" : to.park ? "park.html" : "index.html"; }, 160);
   }
   function enterTarget(target) {
     if (target.outside && !IS_PARK) { pageGo({ park: true }); return; }
@@ -10759,6 +10773,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "outBus") { const si = stops.findIndex((t) => t.outBus); if (si >= 0 && si !== cur) { cur = si; showCard(); } if (OUT.kind === "taxi" && OUT.st === "come") { OUT.st = "idle"; OUT.x = 0; OUT.veh.position.x = 0; } outBusGo(); return; }   // the founding taxi too just pulls away and drives past (riding it is gone: it crashed on some devices)
     if (o.userData.idx === "outBench") { moveTo({ x: 4.6, z: 6.1, yaw: 0, pitch: 0.03, y: 1.22 }); taxiCSS(); taxiToast("벤치에 앉았습니다 · 길 건너 풍경과 오가는 버스를 바라봅니다", 2800); return; }
     if (o.userData.idx === "hoop") { hoopStart(o.userData.hoop); return; }
+    if (o.userData.idx === "library") { if (!busy) pageGo({ library: true }); return; }   // into the library (library.html)
     if (o.userData.idx === "bigScreen") { if (SCR.at && !anim && Math.hypot(cam.x - SCR.at.x, cam.z - SCR.at.z) < 1.5) screenBig(); else screenFace(); return; }   // first click: walk to face it; again: see it full size
     if (o.userData.idx === "pz") { if (!PZ) pzStart(); else pzBoard(); return; }   // stepped or looked aside: back to the puzzle view
     if (o.userData.idx === "fountain") { coinThrow(); return; }   // the show only follows a thrown wish coin
@@ -11050,7 +11065,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   // ===== photo puzzle on the park floor: 4 x 4 sliding tiles (one gap), eight pictures of Kumho; finishing all eight unlocks the mini bus =====
   var PZ = null;   // the game in play: { pose }
-  const PZB = { g: null, x: 37, z: -28, tiles: [], last: null, mat: null, lv: 0, pos: [], gap: 8, ry: 0, moves: 0, solved: false, tex: null, label: null, labelC: null };
+  const PZB = { g: null, x: 18, z: -27, tiles: [], last: null, mat: null, lv: 0, pos: [], gap: 8, ry: 0, moves: 0, solved: false, tex: null, label: null, labelC: null };
   const PZ_SET = ["img/founding_001.jpg", "img/growth_023.jpg", "special/bus_04.jpg|0.9", "special/term_us1.jpg", "special/revival_k02.jpg", "img/revival_104.jpg", "mark", "special/revival_k09.jpg"];
   function pzInfo(i) {
     const [f, cx] = PZ_SET[i].split("|"); if (f === "mark") return { mark: true, year: "2024", title: "아테라 심볼 마크", hall: "금호건설", detail: "금호건설의 새 주거 브랜드 아테라(ARTERA)의 정식 심볼 마크입니다. 아테라는 예술(ART), 대지(TERRA), 시대(ERA)를 합친 이름으로 '금호건설이 지은 대지 위의 예술'을 뜻합니다." };
@@ -11067,20 +11082,21 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     PZB.mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const W = 2.2, H = 2.2, Y = 2.05, TL = -0.08, add = (geo, m, x, y, z, p = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; p.add(o); return o; };
     add(new THREE.BoxGeometry(3.4, 0.3, 1.3), stone, 0, 0.15, 0); add(new THREE.BoxGeometry(3.1, 0.12, 1.0), brzD, 0, 0.36, 0);   // a stone plinth with a bronze cap
-    for (const dx of [-1.25, 1.25]) { add(new THREE.BoxGeometry(0.16, Y + H / 2 + 0.5, 0.16), brz, dx, (Y + H / 2 + 0.5) / 2 + 0.3, -0.05); add(new THREE.SphereGeometry(0.13, 12, 8), brz, dx, Y + H / 2 + 0.85, -0.05); }   // two posts with ball finials
+    for (const dx of [-1.25, 1.25]) { add(new THREE.BoxGeometry(0.16, Y + H / 2 - 0.05, 0.16), brz, dx, (Y + H / 2 - 0.05) / 2 + 0.3, -0.05); add(new THREE.SphereGeometry(0.13, 12, 8), brz, dx, Y + H / 2 + 0.3, -0.05); }   // two posts with ball finials
     const board = new THREE.Group(); board.position.set(0, Y, 0.05); board.rotation.x = TL; g.add(board);   // the board, tipped back a little
     add(new THREE.BoxGeometry(W + 0.5, H + 0.5, 0.16), dark, 0, 0, -0.05, board);   // the backing
     for (const [w, h, x, y] of [[W + 0.36, 0.16, 0, H / 2 + 0.1], [W + 0.36, 0.16, 0, -H / 2 - 0.1], [0.16, H + 0.36, -W / 2 - 0.1, 0], [0.16, H + 0.36, W / 2 + 0.1, 0]]) add(new THREE.BoxGeometry(w, h, 0.16), brz, x, y, 0.06, board);   // a raised bronze frame
     add(new THREE.PlaneGeometry(W, H), PZB.mat, 0, 0, 0.035, board).castShadow = false;
     PZB.labelC = document.createElement("canvas"); PZB.labelC.width = 1024; PZB.labelC.height = 200; PZB.label = new THREE.CanvasTexture(PZB.labelC); PZB.label.encoding = THREE.sRGBEncoding;
-    const hd = new THREE.Group(); hd.position.set(0, Y + H / 2 + 0.62, 0); g.add(hd);   // the header board: 금호 퍼즐 도전
-    add(new THREE.BoxGeometry(W + 0.7, 0.62, 0.2), dark, 0, 0, -0.02, hd); add(new THREE.BoxGeometry(W + 0.84, 0.08, 0.24), brz, 0, 0.33, -0.02, hd); add(new THREE.BoxGeometry(W + 0.84, 0.08, 0.24), brz, 0, -0.33, -0.02, hd);
-    add(new THREE.PlaneGeometry(W + 0.6, (W + 0.6) * 200 / 1024), new THREE.MeshBasicMaterial({ map: PZB.label, transparent: true }), 0, 0, 0.085, hd).castShadow = false;
+    { const lb = new THREE.Group(); lb.position.set(0, Y - H / 2 - 0.36, 0.04); g.add(lb);   // under the picture: 금호 퍼즐을 풀어보세요 (클릭)
+      add(new THREE.BoxGeometry(W + 0.5, 0.56, 0.14), brz, 0, 0, -0.02, lb);   // a bronze-edged cream plate, like a park sign
+      add(new THREE.PlaneGeometry(W + 0.4, (W + 0.4) * 200 / 1024), new THREE.MeshBasicMaterial({ map: PZB.label, transparent: true }), 0, 0, 0.055, lb).castShadow = false; }
     const pick = new THREE.Mesh(new THREE.BoxGeometry(W + 1.2, H + 2.4, 1.4), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pick.position.set(0, Y, 0.1); pick.userData.idx = "pz"; pick.userData.k = -1; g.add(pick); pickables.push(pick);
-    g.rotation.y = PZB.ry;
+    g.rotation.y = PZB.ry; g.scale.setScalar(0.8);   // 80 %
     pzLoad(PZB.lv, false); OUT.colDirty = true; return true;
   }
-  function pzLabel() { const c = PZB.labelC.getContext("2d"); c.clearRect(0, 0, 1024, 200); c.fillStyle = "#e8c98c"; c.font = `800 120px ${FONT}`; c.textAlign = "center"; c.textBaseline = "middle"; if ("letterSpacing" in c) c.letterSpacing = "10px"; c.fillText("금호 퍼즐 도전", 512, 104); PZB.label.needsUpdate = true; }   // the header only: 금호 퍼즐 도전
+  function pzLabel() { const c = PZB.labelC.getContext("2d"); c.clearRect(0, 0, 1024, 200); c.fillStyle = "#f4eedf"; c.beginPath(); if (c.roundRect) c.roundRect(10, 14, 1004, 172, 30); else c.rect(10, 14, 1004, 172); c.fill(); c.strokeStyle = "#2f5a3a"; c.lineWidth = 6; c.stroke();
+    c.fillStyle = "#2f5a3a"; c.font = `800 70px ${FONT}`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("🧩 금호 퍼즐을 풀어보세요", 512, 102); PZB.label.needsUpdate = true; }   // the header only: 금호 퍼즐 도전
   function pzPlace(instant) { pzBoard(); if (!PZB.tiles.length) return; for (let k = 0; k < NT; k++) { const t = PZB.tiles[k], s = k === GAP ? GAP : PZB.pos[k], [x, z] = pzSlot(s); t.userData.tx = x; t.userData.tz = z; if (instant) t.position.set(x, 0.1, z); } PZB.tiles[GAP].visible = PZB.solved; }
   function pzLoad(i, shuffle) {
     PZB.lv = (i + PZ_SET.length) % PZ_SET.length; const info = pzInfo(PZB.lv), done = pzDone();
@@ -11916,7 +11932,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const start = () => { BOOTED = true; resize(); if (!IS_PARK) buildLobby(); requestAnimationFrame(frame);
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true);   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }
       setTimeout(() => document.documentElement.classList.add("arrived"), 350);   // the scene is up: the moving card fades
