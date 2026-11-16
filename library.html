@@ -25,7 +25,7 @@ html,body{margin:0;height:100%;background:#141414;overflow:hidden;font-family:"N
 <canvas id="stage"></canvas>
 <div id="hud"><h1>금호 도서관</h1><div>KUMHO LIBRARY</div></div>
 <button type="button" id="exitBtn">← 공원으로 나가기</button>
-<div id="hint">드래그로 둘러보기 · 바닥을 누르면 그 자리로 · 방향키로 걷기 · 계단으로 2층에 올라갈 수 있어요</div>
+<div id="hint">드래그로 둘러보기 · 누르면 그쪽으로 · 길게 누르면 달리기 · 방향키로 걷기 · 계단으로 2층에</div>
 <div id="pad"><button class="u" data-k="ArrowUp">▲</button><button class="l" data-k="ArrowLeft">◀</button><button class="d" data-k="ArrowDown">▼</button><button class="r" data-k="ArrowRight">▶</button></div>
 <div id="toast"></div>
 <script>/**
@@ -3979,16 +3979,17 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       g.fillStyle = "#2a1c10"; g.font = `700 150px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("도서관", w / 2, h / 2 - 22); g.font = `600 40px "Helvetica Neue", Arial, ${FONT}`; g.fillText("KUMHO LIBRARY", w / 2, h - 70); });
     const s = add(new THREE.PlaneGeometry(1.0, 0.66), new THREE.MeshBasicMaterial({ map: sg }), X1 - 1.02, 2.5, -1.8); s.rotation.y = -Math.PI / 2;
     box(0.2, 0.05, 0.7, bronzeL, X1 - 1.1, 2.95, -1.8);
-    const glass = new THREE.MeshLambertMaterial({ color: 0xcfe3e6, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
-    const gw = add(new THREE.PlaneGeometry(Z1 + 0.5, HT), glass, X1, HT / 2, (Z1 - 0.5) / 2); gw.rotation.y = -Math.PI / 2;
-    for (let z = -0.5; z <= Z1; z += 2.6) box(0.12, HT, 0.12, bronze, X1, HT / 2, z); box(0.12, 0.14, Z1 + 0.5, bronze, X1, 3.7, (Z1 - 0.5) / 2);
-    for (const z of [2.6, 5.2]) box(0.05, 1.4, 0.05, bronzeL, X1 - 0.12, 1.4, z + (z < 4 ? 1.1 : -1.1));   // long pull handles on the two leaves
-    box(0.12, 0.12, 5.2, bronzeL, X1 - 0.02, 3.5, 3.9);
-    const out = tex(1024, 512, (g, w, h) => { const sky = g.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, "#9cc6e8"); sky.addColorStop(0.55, "#dfeaf0"); sky.addColorStop(0.56, "#6f9a4a"); sky.addColorStop(1, "#5c8a3e"); g.fillStyle = sky; g.fillRect(0, 0, w, h);
-      g.fillStyle = "#cfc6b6"; g.beginPath(); g.moveTo(w * 0.15, h); g.lineTo(w * 0.42, h * 0.56); g.lineTo(w * 0.5, h * 0.56); g.lineTo(w * 0.5, h); g.fill();
-      for (let i = 0; i < 40; i++) { const x = rnd() * w, y = h * (0.3 + rnd() * 0.25), r = 30 + rnd() * 60; g.fillStyle = ["#5e8f3e", "#79a84f", "#4d7a33", "#8fb860"][i % 4]; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.fillStyle = "#5a4430"; g.fillRect(x - 4, y + r * 0.6, 8, h * 0.56 - y - r * 0.4); } });
-    const o = add(new THREE.PlaneGeometry(40, 20), new THREE.MeshBasicMaterial({ map: out }), X1 + 10, 8, 4); o.rotation.y = -Math.PI / 2;
-    const lawn = add(new THREE.PlaneGeometry(10, 30), lam(0x8a8478), X1 + 5, -0.02, 4); lawn.rotation.x = -Math.PI / 2;
+    box(0.4, HT, Z1 + 0.5, wallM(Z1 + 0.5, HT), X1 + 0.2, HT / 2, (Z1 - 0.5) / 2);   /* the door wall in the same stone as the rest of the room, no glass */
+    { const dt = tex(512, 680, (g, w, h) => { g.fillStyle = "#2b221b"; g.fillRect(0, 0, w, h);   /* the archive's door: two dark oak leaves, bronze edges, long bronze pulls at the meeting edge */
+      let sd = 5; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 420; i++) { const x = r() * w; g.strokeStyle = `rgba(${r() < 0.5 ? "70,56,44" : "18,14,11"},${0.3 + r() * 0.4})`; g.lineWidth = 0.6 + r() * 1.6; g.beginPath(); g.moveTo(x, 0); for (let y = 0; y <= h; y += 32) g.lineTo(x + (r() - 0.5) * 2, y); g.stroke(); }
+      const e = Math.round(w * 0.025); g.fillStyle = "#8f6c3a"; [[0, 0, w, e], [0, h - e, w, e], [0, 0, e, h], [w - e, 0, e, h], [w / 2 - e, 0, e * 2, h]].forEach(([x, y, a, b]) => g.fillRect(x, y, a, b));
+      g.fillStyle = "rgba(0,0,0,.45)"; g.fillRect(w / 2 - 1, 0, 2, h);
+      [-1, 1].forEach((s) => { const x = w / 2 + s * w * 0.07; g.fillStyle = "#b48a4e"; g.fillRect(x - w * 0.012, h * 0.3, w * 0.024, h * 0.42); g.fillStyle = "rgba(255,235,190,.5)"; g.fillRect(x - w * 0.004, h * 0.3, w * 0.006, h * 0.42); }); });   /* the same door as the archive's, seen from inside */
+      const d = add(new THREE.PlaneGeometry(2.4, 3.2), new THREE.MeshBasicMaterial({ map: dt, toneMapped: false }), X1 - 0.1, 1.6, 3.9); d.rotation.y = -Math.PI / 2;
+      box(0.1, 3.4, 2.6, bronze, X1 - 0.03, 1.7, 3.9);
+      for (const sg of [-1, 1]) box(0.05, 1.4, 0.05, bronzeL, X1 - 0.2, 1.57, 3.9 + sg * 0.17); }
+    /* no painted view of the park through the glass: the glass is frosted instead */
     const door = box(0.5, 3.6, 5.2, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), X1 - 0.2, 1.8, 3.9); door.userData.idx = "exit"; PICK.push(door); }
   scene.traverse((o) => { if (o.userData && o.userData.idx === "desk") PICK.push(o); });
   prog(0.85);
@@ -4005,7 +4006,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       if (g.animations && g.animations.length) { mixer = new THREE.AnimationMixer(m); mixer.clipAction(g.animations[0]).play(); } }, undefined, () => {}); }
 
   // ---- walking ----
-  const S = window.__lib = { x: 11, z: 6.5, fy: 0, yaw: 0.72, pitch: 0.06, tx: null, tz: null }, keys = {}, EYE = 1.62;
+  const S = window.__lib = { x: 11, z: 6.5, fy: 0, yaw: 0.72, pitch: -0.06, tx: null, tz: null }, keys = {}, EYE = 1.62;
   const floorAt = (x, z, cur) => { const C = [], onStair = x >= SX0 && x <= SX1 && z <= SZ0 && z >= SZ1;
     if (onStair) C.push(Math.min(NS, Math.floor((SZ0 - z) / TR) + 1) * RS); else C.push(0);
     if (z < SZ1 && z > Z0 + 0.4) C.push(MY);
@@ -4013,17 +4014,24 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const free = (x, z, fy) => { if (x < X0 + 0.4 || x > X1 - 0.4 || z < Z0 + 0.4 || z > Z1 - 0.4) return false;
     for (const b of BOX) if (x > b[0] - 0.3 && x < b[1] + 0.3 && z > b[2] - 0.3 && z < b[3] + 0.3 && fy + 1 > b[4] && fy + 0.2 < b[5]) return false; return true; };
   const tryMove = (nx, nz) => { const f = floorAt(nx, nz, S.fy); if (f == null || !free(nx, nz, f)) return false; S.x = nx; S.z = nz; S.fy = f; return true; };
+  // the same handling as the archive's halls: drag and the room follows the pointer, press and hold to run where you point,
+  // a click walks a few metres toward that spot, the arrow keys / pad walk and turn with a gentle start and stop
   addEventListener("keydown", (e) => { keys[e.key] = true; if (/^Arrow/.test(e.key)) e.preventDefault(); }); addEventListener("keyup", (e) => { keys[e.key] = false; });
-  document.querySelectorAll("#pad button").forEach((b) => { const k = b.dataset.k; const on = (e) => { e.preventDefault(); keys[k] = true; }, off = () => { keys[k] = false; };
-    b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointerleave", off); b.addEventListener("pointercancel", off); });
-  let drag = null; const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  canvas.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, yaw: S.yaw, pitch: S.pitch, moved: false }; canvas.setPointerCapture(e.pointerId); });
-  canvas.addEventListener("pointermove", (e) => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.hypot(dx, dy) > 6) drag.moved = true;
-    S.yaw = drag.yaw + dx * 0.0045; S.pitch = Math.max(-1.0, Math.min(1.0, drag.pitch + dy * 0.0035)); });
-  canvas.addEventListener("pointerup", (e) => { const d = drag; drag = null; if (!d || d.moved) return; const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera);
-    const hp = ray.intersectObjects(PICK, false)[0], hf = ray.intersectObjects(FLOORS, false)[0];
+  document.querySelectorAll("#pad button").forEach((b) => { const k = b.dataset.k; const on = (e) => { e.preventDefault(); keys[k] = true; try { b.setPointerCapture(e.pointerId); } catch (x) {} }, off = () => { keys[k] = false; };
+    b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); });
+  let drag = null, hold = null, holdT = 0; const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const aim = (cx, cy) => { const r = canvas.getBoundingClientRect(); ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); return ray; };
+  canvas.addEventListener("pointerdown", (e) => { drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0 }; try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
+    clearTimeout(holdT); holdT = setTimeout(() => { if (drag && drag.moved <= 8) { hold = { x: drag.lx, y: drag.ly, v: 0 }; S.tx = null; } }, 320); });
+  canvas.addEventListener("pointermove", (e) => { if (hold) { hold.x = e.clientX; hold.y = e.clientY; return; } if (!drag) return;
+    const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
+    if (drag.moved > 6) { const k = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight; S.yaw += dx * k; S.pitch = Math.max(-0.5, Math.min(0.7, S.pitch + dy * k)); S.tx = null; }
+    drag.lx = e.clientX; drag.ly = e.clientY; });
+  const endP = (e) => { clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (!d || d.moved > 8) return;
+    const r = aim(e.clientX, e.clientY), hp = r.intersectObjects(PICK, false)[0], hf = r.intersectObjects(FLOORS, false)[0];
     if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { if (hp.object.userData.idx === "exit") return leave(); if (hp.object.userData.idx === "desk") return toast("어서 오세요, 금호 도서관입니다 📚"); }
-    if (hf) { S.tx = hf.point.x; S.tz = hf.point.z; } });
+    if (hf) { const dx = hf.point.x - S.x, dz = hf.point.z - S.z, dd = Math.hypot(dx, dz), L = Math.min(dd, 7); if (dd > 0.3) { S.tx = S.x + dx / dd * L; S.tz = S.z + dz / dd * L; S.v = 0; } } };
+  canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", () => { clearTimeout(holdT); hold = null; drag = null; });
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.fov = Math.max(35, Math.min(75, camera.fov + e.deltaY * 0.03)); camera.updateProjectionMatrix(); }, { passive: false });
   const toast = (t) => { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2200); };
   function leave() { try { const g = JSON.parse(sessionStorage.getItem("kumhoLibCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "library", t: Date.now() }))); } catch (e) {}
@@ -4034,12 +4042,19 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const resize = () => { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }; addEventListener("resize", resize); resize();
   const clock = new THREE.Clock(); let first = true;
   (function frame() { requestAnimationFrame(frame); const dt = Math.min(0.05, clock.getDelta());
+    const move = (hx, hz, d) => { if (!tryMove(S.x + hx * d, S.z + hz * d)) { if (!tryMove(S.x + hx * d, S.z)) tryMove(S.x, S.z + hz * d); return false; } return true; };
     const fw = (keys.ArrowUp || keys.w || keys.W ? 1 : 0) - (keys.ArrowDown || keys.s || keys.S ? 1 : 0), tu = (keys.ArrowLeft || keys.a || keys.A ? 1 : 0) - (keys.ArrowRight || keys.d || keys.D ? 1 : 0);
-    S.yaw += tu * dt * 1.6;
-    if (fw) { S.tx = null; const sp = 3.0 * dt * fw, fx = -Math.sin(S.yaw) * sp, fz = -Math.cos(S.yaw) * sp; if (!tryMove(S.x + fx, S.z + fz)) { tryMove(S.x + fx, S.z) || tryMove(S.x, S.z + fz); } }
-    else if (S.tx != null) { const dx = S.tx - S.x, dz = S.tz - S.z, d = Math.hypot(dx, dz); if (d < 0.15) S.tx = null; else { const sp = Math.min(d, 3.2 * dt); S.yaw += (((Math.atan2(-dx, -dz) - S.yaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI) * Math.min(1, dt * 5); if (!tryMove(S.x + dx / d * sp, S.z + dz / d * sp)) S.tx = null; } }
+    if (hold) {   // press and hold: run toward the pointer, speeding up
+      const d = aim(hold.x, hold.y).ray.direction, hl = Math.hypot(d.x, d.z); if (hl > 1e-3) { hold.v = Math.min(9.94, hold.v + dt * 15.1); move(d.x / hl, d.z / hl, hold.v * dt); } }
+    else if (fw || tu) {   // keys / pad: turn, and walk with a soft start and stop
+      S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 6.5 - (S.v || 0)) * Math.min(1, dt * 5);
+      if (Math.abs(S.v) > 0.02) move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt); }
+    else if (S.tx != null) {   // a click: glide there, easing in and out
+      const dx = S.tx - S.x, dz = S.tz - S.z, d = Math.hypot(dx, dz);
+      if (d < 0.05) { S.tx = null; S.v = 0; } else { S.v = Math.min((S.v || 0) + dt * 6, 4.5, d * 2.2); if (!move(dx / d, dz / d, Math.min(d, S.v * dt))) { S.tx = null; S.v = 0; } } }
+    else S.v = (S.v || 0) * Math.max(0, 1 - dt * 6), Math.abs(S.v) > 0.05 && move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt);
     S.ey = S.ey == null ? S.fy : S.ey + (S.fy - S.ey) * Math.min(1, dt * 10);
-    camera.position.set(S.x, S.ey + EYE, S.z); camera.rotation.set(0, 0, 0); camera.rotation.order = "YXZ"; camera.rotation.y = S.yaw; camera.rotation.x = -S.pitch;
+    camera.position.set(S.x, S.ey + EYE, S.z); camera.rotation.set(0, 0, 0); camera.rotation.order = "YXZ"; camera.rotation.y = S.yaw; camera.rotation.x = S.pitch;
     if (mixer) mixer.update(dt);
     renderer.render(scene, camera);
     if (first) { first = false; prog(1); setTimeout(() => $("ld").classList.add("off"), 250); } })();
