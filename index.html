@@ -61,6 +61,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .look{position:absolute;right:24px;top:14px;display:flex;align-items:center;gap:8px;font-size:12px;color:#d6c9b3;text-shadow:0 1px 5px #000}.look button{min-height:36px;min-width:40px;padding:4px 10px;background:rgba(23,24,21,.85)}#bearing{min-width:60px;text-align:center}#zoomVal{min-width:58px;font-variant-numeric:tabular-nums}.look .sep{width:10px}
 #autoBar{position:absolute;top:-1px;left:0;height:2px;width:0;background:var(--gold);transition:width .2s linear}#autoBtn{white-space:nowrap}#autoBtn[aria-pressed=true]{background:#3a3326;border-color:var(--gold);color:var(--gold)}
 .hint{display:none;position:absolute;left:24px;bottom:22px;font-size:12px;color:#a79a82;pointer-events:none;text-shadow:0 1px 5px #000;max-width:180px;line-height:1.6}
+html.park #card{display:none!important}
 #fade{position:absolute;inset:0;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .42s}
 #fade.on{opacity:1}
 #loading{position:absolute;top:0;left:0;right:0;height:2px;background:transparent}
@@ -4691,22 +4692,22 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // where you can walk outside: from the convenience-store row on the left to U-square on the right, from the lawn behind the archive to the
   // Artera blocks at the back; buildings and furniture stop you by their own outlines (colBuild). Cut out: the archive building itself,
   // U-square's shop ring, its street wing and the coach yard (all drawn as one merged mesh, so they have no outline of their own).
+  const UZ = 2.5;   // U-square stands 2.5 m further toward the street than it was drawn
   function groundOK(a, b) {
     if (a < -112 || a > 300 || b < -170 || b > 44) return false;
     if (a > -34 && a < 34 && b > HZ - 0.9) return false;   // the archive
-    const dx = a - 240, dz = b + 36, r2 = dx * dx + dz * dz; if (b <= -29 && r2 > 21.3 * 21.3 && r2 < 40 * 40) return false;   // U-square's ring of shops
-    if (a > 283 && a < 297 && b > -37 && b < -7) return false;   // its low wing on the street
-    if (a > 184 && a < 302 && b > -105 && b < -73) return false;   // the coach yard behind it
+    const dx = a - 240, dz = b + 36 - UZ, r2 = dx * dx + dz * dz; if (b <= -29 + UZ && r2 > 21.3 * 21.3 && r2 < 40 * 40) return false;   // U-square's ring of shops
+    if (a > 283 && a < 297 && b > -37 + UZ && b < -7 + UZ) return false;   // its low wing on the street
     return true;
   }
   // U-square's stair (5 m wide, rising 8 m over 12 m toward the back) and the first-floor gallery round the shop fronts at 4.2 m, reached from
   // the stair half way up by a bridge on either side. Returns the floor height at (a, b) nearest to the height you are at, or null.
   function floorAt(a, b, cur) {
-    const dx = a - 240, dz = b + 36, r = Math.hypot(dx, dz), C = [];
-    const onStair = Math.abs(dx) <= 2.5 && b <= -49.4 && b > -55.4;   // 12 steps of 0.35 m on 0.5 m treads: you stand on the tread, not on a slope through it
-    if (onStair) C.push(0.35 * Math.min(12, Math.floor((-49.4 - b) / 0.5) + 1));
+    const dx = a - 240, dz = b + 36 - UZ, r = Math.hypot(dx, dz), C = [], bb = b - UZ;   // bb: in U-square's own frame (it stands UZ further forward)
+    const onStair = Math.abs(dx) <= 2.5 && bb <= -49.4 && bb > -55.4;   // 12 steps of 0.35 m on 0.5 m treads: you stand on the tread, not on a slope through it
+    if (onStair) C.push(0.35 * Math.min(12, Math.floor((-49.4 - bb) / 0.5) + 1));
     else { if (groundOK(a, b)) C.push(0);
-      if ((r >= 22.9 && r <= 25.8 && b <= -36 + 0.19 * r) ||   /* the deck ends on a radial line 0.2 rad past the half ring (z = -36 + 0.199 r): no further, or you stood on air */ (Math.abs(dx) <= 6.5 && b <= -55.4 && b >= -60)) C.push(4.2); }   // the gallery and the landing at the head of the stair
+      if ((r >= 22.9 && r <= 25.8 && bb <= -36 + 0.19 * r) ||   /* the deck ends on a radial line 0.2 rad past the half ring (z = -36 + 0.199 r): no further, or you stood on air */ (Math.abs(dx) <= 6.5 && bb <= -55.4 && bb >= -60)) C.push(4.2); }   // the gallery and the landing at the head of the stair
     let best = null, bd = 0.75; for (const c of C) { const d = Math.abs(c - cur); if (d <= bd) { bd = d; best = c; } } return best;
   }
   function vehHit(a, b) {   // the Kumho coach (and the taxi) at the archive stop: solid wherever they are right now, so you cannot walk into them
@@ -4718,7 +4719,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function clampXZ(x, z, m) {
     if (mode === "outside") {   // across the road and on past the trees; the bus shelter's glass is solid
       const okA = (a, b) => floorAt(a, b, cam.fy || 0) != null;   // walkable at a height within a step of where you stand (ground, U-square stair, its first-floor gallery)
-      if (!okA(x, z) && (cam.fy || 0) > 3 && (cam.fy || 0) < 5.5 && Math.hypot(cam.x - 240, cam.z + 36) > 22.8) { const dx = x - 240, dz = z + 36, r = Math.hypot(dx, dz) || 1, rc = Math.max(22.95, Math.min(25.75, r)), px = 240 + dx / r * rc, pz = -36 + dz / r * rc; if (okA(px, pz)) { x = px; z = pz; } }   // on the curved gallery: slide along it
+      if (!okA(x, z) && (cam.fy || 0) > 3 && (cam.fy || 0) < 5.5 && Math.hypot(cam.x - 240, cam.z + 36 - UZ) > 22.8) { const dx = x - 240, dz = z + 36 - UZ, r = Math.hypot(dx, dz) || 1, rc = Math.max(22.95, Math.min(25.75, r)), px = 240 + dx / r * rc, pz = -36 + UZ + dz / r * rc; if (okA(px, pz)) { x = px; z = pz; } }   // on the curved gallery: slide along it
       if (!okA(x, z)) { if (okA(x, cam.z)) z = cam.z; else if (okA(cam.x, z)) x = cam.x; else if (okA(cam.x, cam.z)) { x = cam.x; z = cam.z; }
         else { let f = null; for (let r = 0.25; r <= 16 && !f; r += 0.25) for (let k = 0; k < 24; k++) { const a = k / 24 * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (okA(px, pz)) { f = [px, pz]; break; } }   // off the walkable ground: step to the nearest walkable spot, never a jump across the map
           if (f) { x = f[0]; z = f[1]; } else { x = Math.max(-58, Math.min(58, x)); z = Math.max(-60, Math.min(HZ - 0.9, z)); } } }
@@ -4760,6 +4761,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   let anim = null, looked = false;
 
   function clearWorld() {
+    document.documentElement.classList.remove("park");
     if (mode === "outside") {   // the street builds its own textures and materials: free them (the cached taxi textures and the shared env map stay)
       const keep = new Set([...(OUT.bigTree ? (() => { const a = []; OUT.bigTree.traverse((o) => { if (o.material && o.material.map) a.push(o.material.map); }); return a; })() : []), taxiEnv, softTex, taxiDecoded && taxiDecoded.texture, taxiDecoded && taxiDecoded.surface, taxiDecoded && taxiDecoded.normal]), done = new Set();
       world.traverse((o) => { const ms = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
@@ -5495,12 +5497,29 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const matCream = basic(0xf1efe9), filletMat = basic(0xc9ced4), linerMat = basic(0x121316);
   const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.38, depthWrite: false });
   const silverMat = basic(0xb9bec4), silverEdge = basic(0x6e737a);
+  // brushed-steel frame moulding from a photograph of a real frame: its profile runs across the band (outer edge at the top), its grain along it
+  const FRAME_BAR = { src: "data:image/jpeg;base64,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", m: null,
+    mat() { if (!this.m) { const t = new THREE.TextureLoader().load(this.src); t.wrapS = THREE.MirroredRepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; t.__keep = true; this.m = new THREE.MeshBasicMaterial({ map: t }); } return this.m; } };
+  const FRAME_GEO = new Map();
+  function frameRingGeo(OW, OH, F) {   // four mitred strips round a rectangle, one mesh; u runs along each strip (0.6 m a tile), v from the inner edge (0) to the outer (1)
+    const key = `${OW.toFixed(3)}x${OH.toFixed(3)}x${F.toFixed(3)}`; if (FRAME_GEO.has(key)) return FRAME_GEO.get(key);
+    const X = OW / 2, Y = OH / 2, pos = [], uv = [], T = 0.6;
+    const quad = (o0, o1, i1, i0, L) => { const p = [o0, o1, i1, i0]; const u = [0, L / T, (L - F) / T, F / T]; const v = [1, 1, 0, 0];
+      for (const k of [0, 2, 1, 0, 3, 2]) { pos.push(p[k][0], p[k][1], 0); uv.push(u[k], v[k]); } };
+    quad([-X, Y], [X, Y], [X - F, Y - F], [-X + F, Y - F], OW);   // top
+    quad([X, -Y], [-X, -Y], [-X + F, -Y + F], [X - F, -Y + F], OW);   // bottom
+    quad([-X, -Y], [-X, Y], [-X + F, Y - F], [-X + F, -Y + F], OH);   // left
+    quad([X, Y], [X, -Y], [X - F, -Y + F], [X - F, Y - F], OH);   // right
+    const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.__shared = true;
+    FRAME_GEO.set(key, g); return g;
+  }
   function fancyFrame(side, c, cy, w, h, idx) {
     const MW = 0.06, F = 0.045, OW = w + 2 * (MW + F), OH = h + 2 * (MW + F);
     const sh = onWall(plane(OW + 0.05, OH + 0.05, shadowMat), side, c, cy - 0.025, 0.003);
     sh.renderOrder = -1;
     const edge = onWall(plane(OW + 0.012, OH + 0.012, silverEdge), side, c, cy, 0.008);
     const frm = onWall(plane(OW, OH, silverMat), side, c, cy, 0.01);
+    onWall(new THREE.Mesh(frameRingGeo(OW, OH, F + 0.004), FRAME_BAR.mat()), side, c, cy, 0.0115);   // the brushed-steel moulding, mitred at the corners
     const mat = onWall(plane(w + 2 * MW, h + 2 * MW, matCream), side, c, cy, 0.013);
     [edge, frm, mat].forEach((m) => { m.userData.idx = idx; pickables.push(m); });
     onWall(plane(w + 0.01, h + 0.01, linerMat), side, c, cy, 0.018);
@@ -6912,7 +6931,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     return out;
   }
   function buildOutside() {
-    PARK_N++; clearWorld(); mode = "outside"; hallIndex = -1; RT = false; DR = false; WALL_H = 12; HX = 26; HZ = 14; ticker = null; DOME = null;
+    PARK_N++; clearWorld(); mode = "outside"; document.documentElement.classList.add("park");   /* the park: no caption card at the foot of the screen */ hallIndex = -1; RT = false; DR = false; WALL_H = 12; HX = 26; HZ = 14; ticker = null; DOME = null;
     if (document.fonts) try { GATES.forEach((G) => { document.fonts.load(`700 100px "Noto Sans KR"`, G.big); document.fonts.load(`700 70px "Noto Sans KR"`, G.sub); }); } catch (e) {}
     const lam = (c) => new THREE.MeshLambertMaterial({ color: c });
     let seed = 2026; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -7043,6 +7062,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const g = Math.floor(rnd() * 9), gx = (g % 2 ? 1 : -1) * (56 + (g * 37) % 150), gz = 28 + (g * 23) % 60;
       const x = gx + (rnd() - 0.5) * 30, z = gz + (rnd() - 0.5) * 24; if (Math.abs(x) < 50 && z < 44) continue;
       trees.push([x, z, 6 + rnd() * 1.8, 0.85]); n++; }
+    { // U-square's trees, drawn as the park's own (they were plain balls on sticks): two at the plaza front, screens down both sides, a row along the back
+      const CX = 240, CZ = -36 + UZ, RO = 38, PZ = CZ - RO - 15;
+      for (const x of [CX - 17, CX + 17]) trees.push([x, CZ + 17, 4.4, 0.6]);
+      for (let z = CZ - 4; z >= -73; z -= 4.6) for (const x of [CX - 56, CX - 49, CX + 47, CX + 54]) trees.push([x + ((Math.round(z) * 7) % 3 - 1) * 0.6, z, 6.2 + rnd() * 0.8, 0.82]);
+      for (let x = CX - 44; x <= CX + 44; x += 5.5) trees.push([x, CZ - RO - 2, 5.8 + rnd() * 0.8, 0.8]); }
     OUT.treeCols = trees.map(([x, z]) => [x - 0.4, x + 0.4, z - 0.4, z + 0.4]); OUT.colDirty = true;   // trunks are solid (the instanced trees are not seen by the collider scan)
     const LOBES = (i) => i < NBELT && Math.abs(trees[i][0]) < 64 ? 60 : 22;   // the street trees in front of the archive in detail, all the rest lighter
     let NL = 0; trees.forEach((t, i) => { NL += LOBES(i); });
@@ -7061,7 +7085,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       if (window.GROUND_TEX) {   // the ground as a photographed lawn for the season, laid in world space so every patch tiles at the same scale; until it decodes the plain colour stands in
         const wuv = () => { if (mode !== "outside") return; world.updateMatrixWorld(true); const v = new THREE.Vector3(), gm = grass.material;
           world.traverse(o => { if (!o.isMesh || o.userData.wuv) return; const m = o.material; if (!(m === gm || (Array.isArray(m) && m.includes(gm)))) return; o.userData.wuv = 1;
-            const p = o.geometry.attributes.position, uv = o.geometry.attributes.uv; for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); uv.setXY(i, v.x / 7, -v.z / 7); } uv.needsUpdate = true; }); };
+            const p = o.geometry.attributes.position, uv = o.geometry.attributes.uv, nr = o.geometry.attributes.normal, n = new THREE.Vector3(); if (!uv) return;
+            for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).applyMatrix4(o.matrixWorld); if (nr) n.fromBufferAttribute(nr, i).transformDirection(o.matrixWorld); else n.set(0, 1, 0);
+              if (Math.abs(n.y) > 0.5) uv.setXY(i, v.x / 7, -v.z / 7); else uv.setXY(i, (Math.abs(n.x) > Math.abs(n.z) ? v.z : v.x) / 7, v.y / 7); }   // the sides of a hedge: the grass runs along it
+            uv.needsUpdate = true; }); };
         wuv(); setTimeout(wuv, 0);   // again once the build has finished: the park lawn and the complex's garden are laid after the first call
         const k = window.GROUND_TEX[SEAS] ? SEAS : "summer", use = (t) => { grass.material.map = t; grass.material.color.setHex(0xf2f2f2); grass.material.needsUpdate = true; };
         OUT.gTex = OUT.gTex || {}; OUT.gSeas = k; let t = OUT.gTex[k];
@@ -7260,13 +7287,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       OUT.wx = W; OUT.snap = true; }
     // Ulsan Sinjeong Artera, drawn as clean straight towers after the photograph (the scanned model warped up close)
     { const A = new THREE.Group(); A.position.set(58, 0, -200); world.add(A); OUT.aptMats = []; OUT.arteraMats = []; OUT.arteraClear = null;
-      const FL = 37, FH = 2.9;
-      const facade = (W, H, cols, base, glass, frame, opt) => {
+      const FL = 37, FH = 2.9; let lowOn = true;   // lowOn: this complex's towers have their lower floors faced in a darker stone (as in the photograph)
+      const facade = (W, H, cols, base, glass, frame, opt) => { const low = opt.low != null ? opt.low : lowOn;
         const tw = 512, th = 2048;
         const rs = opt.sign || opt.band ? 0.5 : 0.35;   // plain side faces need less detail
         const draw = (lit) => canvasTex(Math.round(tw * rs), Math.round(th * rs), (g) => { g.scale(rs, rs);
           g.fillStyle = lit ? "#000" : base; g.fillRect(0, 0, tw, th);
           const rows = opt.rows || FL, rh = th / rows, cw = tw / cols;
+          if (low && !lit) { g.fillStyle = "#8b857e"; g.fillRect(0, th - 4 * rh, tw, 4 * rh); g.fillStyle = "#6f6a64"; g.fillRect(0, th - 4 * rh - 3, tw, 6); }   // the lowest four floors: warm grey stone, a dark line above
           for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
             const x = c * cw + cw * 0.18, y = r * rh + rh * 0.22, w = cw * 0.64, h = rh * 0.56;
             if (lit && opt.band && x + w > opt.bandX * tw && x < (opt.bandX + opt.bandW) * tw) continue;   // the band (and the ARTERA sign on it) stays dark
@@ -7316,30 +7344,126 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       // 101 far left: the same scale as 102, standing apart with open sky between
       tower(-86, -2, 15, 13, H1 - 4, "#eceae5", "#5d626a", "#f6f5f2", facade(15, H1, 5, "#eceae5", "#5d626a", "#f6f5f2", { seed: 13, band: "#27408a", bandX: 0.74, bandW: 0.26, sign: { text: "101", size: 68, x: 0.87, y: 0.05 }, sign2: { text: "101", size: 48, x: 0.87, y: 0.86 } }), facade(13, H1, 4, "#e2e0db", "#5d626a", "#f1f0ec", { seed: 14 }));
       // podium and garden at the foot
-      const pod = new THREE.Mesh(new THREE.BoxGeometry(172, 6, 44), new THREE.MeshLambertMaterial({ color: 0xd9d7d1 })); pod.position.set(-9, 3, 6); A.add(pod); OUT.arteraMats.push(pod.material);
+      lowOn = false;
+      // the podium's street face (as at 문수로 아테라): shop fronts all along, and in the middle the car-park entrance under a dark granite band carrying the ARTERA mark
+      const speck = (g, x, y, w, h, base, n, a, b) => { g.fillStyle = base; g.fillRect(x, y, w, h); let q = 11; const rr = () => (q = (q * 16807) % 2147483647) / 2147483647;
+        for (let k = 0; k < n; k++) { const c = a + rr() * (b - a); g.fillStyle = `rgba(${c},${c - 4},${c - 8},0.55)`; g.fillRect(x + rr() * w, y + rr() * h, 2, 2); } };
+      const shopT = canvasTex(1024, 256, (g, W, H) => {   // 24 m of shop fronts, repeated: granite above, a sign band, glazed fronts with doors
+        speck(g, 0, 0, W, H, "#c9c3b9", 2600, 150, 235);
+        g.fillStyle = "#3b3a3a"; g.fillRect(0, 56, W, 34);
+        const names = ["카페", "편의점", "약국", "베이커리"], cols = ["#f2e6cf", "#d8ecf6", "#e6f2dc", "#f6dfcf"];
+        for (let i = 0; i < 4; i++) { const x = i * 256;
+          g.fillStyle = cols[i]; g.font = `700 22px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(names[i], x + 128, 74);
+          g.fillStyle = "#24303a"; g.fillRect(x + 10, 96, 236, 160); g.fillStyle = "#4a6274"; g.fillRect(x + 14, 100, 228, 152);
+          g.fillStyle = "rgba(255,240,210,0.35)"; g.fillRect(x + 14, 170, 228, 82);
+          g.fillStyle = "#1c2329"; for (let m = 0; m <= 4; m++) g.fillRect(x + 14 + m * 57 - 2, 100, 4, 156); g.fillRect(x + 14, 168, 228, 3);
+          g.fillStyle = "#b9b3aa"; g.fillRect(x, 92, 10, 164); }
+      });
+      shopT.wrapS = THREE.RepeatWrapping; shopT.repeat.set(172 / 24, 1); shopT.anisotropy = ANISO;
+      const podSide = new THREE.MeshLambertMaterial({ color: 0xd9d7d1 }), podFront = new THREE.MeshLambertMaterial({ map: shopT });
+      const pod = new THREE.Mesh(new THREE.BoxGeometry(172, 6, 44), [podSide, podSide, podSide, podSide, podFront, podSide]); pod.position.set(-9, 3, 6); A.add(pod); OUT.arteraMats.push(podSide, podFront);
+      { const EW = 44, EH = 6; let markAt = null; const ent = canvasTex(2048, Math.round(2048 * EH / EW), (g, W, H) => {   // the entrance, 44 m wide
+          const band = Math.round(H * 0.46);
+          speck(g, 0, 0, W, band, "#4b4544", 4200, 60, 120); g.fillStyle = "rgba(0,0,0,0.25)"; for (let x = 0; x < W; x += 92) g.fillRect(x, 0, 2, band);   // dark granite in large slabs
+          speck(g, 0, band, W, H - band, "#bfb9b0", 6000, 140, 230);   // light granite below
+          const oy = band + 10, oh = H - oy, bays = [[300, 560], [900, 560], [1500, 420]];
+          for (const [x, w] of bays) { const gr = g.createLinearGradient(0, oy, 0, H); gr.addColorStop(0, "#0d0e10"); gr.addColorStop(1, "#3a3b3d"); g.fillStyle = gr; g.fillRect(x, oy, w, oh);
+            g.fillStyle = "#e8e6e0"; g.fillRect(x, H - 6, w, 6); g.fillStyle = "#cfd2d6"; for (let k = 0; k < 6; k++) g.fillRect(x + 20 + k * (w - 40) / 5, oy + 6, 22, 3);   // ceiling lights
+            g.fillStyle = "#d9d9d9"; g.fillRect(x + w * 0.2, H - 46, w * 0.55, 5); g.fillStyle = "#c8342c"; for (let k = 0; k < 5; k++) g.fillRect(x + w * 0.2 + k * w * 0.11, H - 46, w * 0.055, 5); }   // barrier arms
+          g.fillStyle = "#f4f2ee"; g.font = `500 22px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("OUT", 930, band - 22); g.fillText("IN", 1420, band - 22);
+          g.font = `600 34px ${FONT}`; g.fillText("PARKING", 1180, band - 22);
+          g.font = `700 40px ${FONT}`; g.textAlign = "right"; g.fillText("문수로 아테라", W - 70, band - 34);
+          markAt = (img) => { const k = (band - 26) / img.height, w = img.width * k, h = img.height * k, c2 = document.createElement("canvas"); c2.width = Math.ceil(w); c2.height = Math.ceil(h);
+            const x2 = c2.getContext("2d"); x2.drawImage(img, 0, 0, w, h); x2.globalCompositeOperation = "source-in"; x2.fillStyle = "#f6f4f0"; x2.fillRect(0, 0, w, h); g.drawImage(c2, 120, 13); };   // the mark and name in white
+        });
+        const im = new Image(); im.onload = () => { if (markAt) { markAt(im); ent.needsUpdate = true; } }; im.src = ARTERA_MARK;
+        const em = new THREE.MeshLambertMaterial({ map: ent }); OUT.arteraMats.push(em);
+        const e = new THREE.Mesh(new THREE.PlaneGeometry(EW, EH), em); e.position.set(-14, EH / 2, 28.03); A.add(e); }   // in front of the centre towers, square to the street
       // Kumho's other Artera homes on either side, drawn the same way. Shared facades keep the memory small.
       const cplx = (x, z, W, D, H, front, side, topCol, y0 = 0) => { const top = new THREE.MeshLambertMaterial({ color: topCol }); OUT.arteraMats.push(top);
         const b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), [side, side, top, top, front, front]); b.position.set(x, y0 + H / 2, z); A.add(b);
         const roof = new THREE.Mesh(new THREE.BoxGeometry(W * 0.4, 2.6, D * 0.5), top); roof.position.set(x + W * 0.1, y0 + H + 1.3, z); A.add(roof); };
-      { // right: 화성동탄2A106BL — nine 20-storey blocks in warm brown brick with white end bays and white crowns, ARTERA on top
-        const FH2 = 2.9, DZ = 66, DX2 = 32, HY = 0, base = "#6e4038", gl = "#3b3f45", fr = "#efe9e1", wh = "#f1eee8";
-        const fA = facade(17, 58, 6, base, gl, fr, { rows: 20, seed: 21, band: wh, bandX: 0.64, bandW: 0.36, cap: wh, capH: 0.075, sign: { text: "ARTERA", size: 62, x: 0.5, y: 0.04 }, signCol: "#2b3240" });
-        const fB = facade(17, 58, 6, base, gl, fr, { rows: 20, seed: 22, band: wh, bandX: 0, bandW: 0.3, cap: wh, capH: 0.075 });
-        const fS = facade(12, 58, 4, wh, gl, "#ffffff", { rows: 20, seed: 23, cap: wh, capH: 0.075 });
-        [[100, 13, 17, 20, fA], [126, 17, 15, 19, fB], [152, 11, 17, 20, fA], [178, 16, 16, 18, fB],
-         [113, -14, 16, 20, fB], [139, -11, 17, 19, fA], [165, -15, 15, 20, fB], [191, -10, 16, 19, fA], [212, 6, 15, 18, fB]].forEach(([x, z, W, fl, f]) => cplx(x + DX2, z + DZ, W, 12, fl * FH2 + 2, f, fS, 0xf1eee8, HY));   // DX2: moved east off the park's outer road, so the road round the park closes into a square
+      { // right: 화성동탄2A106BL (동탄 아테라), after the photographs — 15-storey slabs in grey panels on white joints, a pair of beige pilasters with a column of
+        // light and dark slit windows, the lowest four floors in darker grey stone, a white parapet; at the front, the dark-granite gateway with its ARTERA wall and guard house
+        const FH2 = 2.9, DZ = 58, DX2 = 32, HY = 0, FLD = 15;   // DZ: 8 m further back, clear of U-square
+        const dtFace = (accent, seed) => { const draw = (lit) => canvasTex(512, 768, (g, W, H) => { const rh = H / (FLD + 0.6), top = rh * 0.6, cols = 8, cw = W / cols; let q = seed; const rr = () => (q = (q * 16807) % 2147483647) / 2147483647;
+            g.fillStyle = lit ? "#000" : "#a4a7ab"; g.fillRect(0, 0, W, H);
+            if (!lit) { g.fillStyle = "#8b8e92"; g.fillRect(0, top + rh * (FLD - 4), W, rh * 4); g.fillStyle = "#f2f2f0"; g.fillRect(0, 0, W, top); g.fillStyle = "#dcdcda"; for (let x = 6; x < W; x += 22) g.fillRect(x, 3, 3, top - 6); }
+            for (let r = 0; r < FLD; r++) { const y = top + r * rh, lowF = r >= FLD - 4;
+              if (!lit) { g.fillStyle = "#f4f4f2"; g.fillRect(0, y, W, 2); }
+              for (let c = 0; c < cols; c++) { const x = c * cw; if (accent && (c === 3 || c === 4)) continue; if (lowF && (c + r) % 3 === 0) continue; if (r >= FLD - 2 && c < 2) continue;
+                const wx = x + cw * 0.14, wy = y + rh * 0.18, ww = cw * 0.72, wh = rh * 0.64;
+                if (lit) { if (rr() < 0.55) { g.fillStyle = `rgb(255,${222 + Math.floor(rr() * 25)},${160 + Math.floor(rr() * 50)})`; g.fillRect(wx, wy, ww, wh); } }
+                else { g.fillStyle = "#56656f"; g.fillRect(wx, wy, ww, wh); g.fillStyle = "#2f3337"; g.fillRect(wx, wy + wh * 0.55, ww, 2); g.fillRect(wx, wy + wh * 0.8, ww, 2); g.fillStyle = "#f4f4f2"; g.fillRect(x, y, 2, rh); } } }
+            if (accent && !lit) { const x0 = 3 * cw, h0 = top, h1 = top + rh * (FLD - 4);
+              g.fillStyle = "#c8b48d"; g.fillRect(x0, h0, cw * 0.32, h1 - h0); g.fillRect(x0 + cw * 2 - cw * 0.32, h0, cw * 0.32, h1 - h0);   // the beige pilasters
+              g.fillStyle = "#6c6f73"; g.fillRect(x0 + cw * 0.32, h0, cw * 1.36, h1 - h0);
+              for (let r = 0; r < FLD - 4; r++) { const y = top + r * rh; g.fillStyle = r % 2 ? "#eeeeec" : "#2e3236"; g.fillRect(x0 + cw * 0.55, y + rh * 0.15, cw * 0.36, rh * 0.7); g.fillStyle = r % 2 ? "#2e3236" : "#eeeeec"; g.fillRect(x0 + cw * 1.09, y + rh * 0.15, cw * 0.36, rh * 0.7); } }
+            if (!lit && accent === 2) { g.fillStyle = "#1d2023"; g.fillRect(cw * 0.1, top + rh * (FLD - 2), cw * 1.8, rh * 2); }   // a pilotis opening at the foot
+          });
+          const map = draw(false), em = draw(true); map.anisotropy = ANISO; const m = new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: em, emissiveIntensity: 0.1 }); OUT.aptMats.push(m); OUT.arteraMats.push(m); return m; };
+        const fA = dtFace(1, 21), fB = dtFace(2, 22), fS = dtFace(0, 23);
+        [[104, 36, 22, fA], [196, 36, 22, fB], [96, 13, 22, fB], [130, 13, 22, fA], [164, 13, 22, fB], [198, 13, 22, fA]].forEach(   /* six towers, set inside the block (x 174–306, z −88…−138): none on a street */([x, z, W, f], i) => cplx(x + DX2, z + DZ, W, 13, FLD * FH2 + 1.7 + (i % 3) * 0.01, f, fS, 0xf2f2f0, HY));   // DX2: moved east off the park's outer road, so the road round the park closes into a square
+        { // the gateway (문주), after the photograph: a thin white roof on a white frame, a dark granite wall with the ARTERA mark on the left, the guard house (INFORMATION) on the right
+          const gx = 150 + DX2, gz = DZ + 49,   /* at the block's front edge, facing U-square across the street */ wm = lam(0xdedcd7), dk = lam(0x232528); OUT.arteraMats.push(wm, dk);
+          const granite = (w, h, logo, label) => { let markAt = null; const t = canvasTex(Math.round(64 * w), Math.round(64 * h), (g, W, H) => { g.fillStyle = "#34363a"; g.fillRect(0, 0, W, H);
+              let q = 5; const rr = () => (q = (q * 16807) % 2147483647) / 2147483647; for (let k = 0; k < W * H / 30; k++) { const c = 60 + rr() * 50; g.fillStyle = `rgba(${c},${c},${c + 4},0.5)`; g.fillRect(rr() * W, rr() * H, 2, 2); }
+              g.fillStyle = "rgba(0,0,0,0.35)"; for (let y = 0; y < H; y += 38) g.fillRect(0, y, W, 2); for (let x = 0; x < W; x += 76) g.fillRect(x, 0, 2, H);
+              if (label) { g.fillStyle = "#f2f2f0"; g.font = `600 ${Math.round(H * 0.07)}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; if ("letterSpacing" in g) g.letterSpacing = "3px"; g.fillText(label, W / 2, H * 0.2); }
+              if (logo) markAt = (img) => { const k = (W * 0.72) / img.width, w2 = img.width * k, h2 = img.height * k, c2 = document.createElement("canvas"); c2.width = Math.ceil(w2); c2.height = Math.ceil(h2); const x2 = c2.getContext("2d");
+                x2.drawImage(img, 0, 0, w2, h2); x2.globalCompositeOperation = "source-in"; x2.fillStyle = "#f6f4f0"; x2.fillRect(0, 0, w2, h2); g.drawImage(c2, (W - w2) / 2, H * 0.22); }; });
+            if (logo) { const im = new Image(); im.onload = () => { if (markAt) { markAt(im); t.needsUpdate = true; } }; im.src = ARTERA_MARK; }
+            const m = new THREE.MeshLambertMaterial({ map: t }); OUT.arteraMats.push(m); return m; };
+          const add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; A.add(o); return o; };
+          add(new THREE.BoxGeometry(31, 1.3, 10), wm, gx, 7.05, gz);   // the roof
+          add(new THREE.BoxGeometry(29.6, 0.12, 9), dk, gx, 6.36, gz);   // its dark soffit, slatted
+          for (let i = 0; i < 14; i++) add(new THREE.BoxGeometry(29.4, 0.08, 0.1), lam(0x45484d), gx, 6.28, gz - 4.2 + i * 0.65);
+          add(new THREE.BoxGeometry(0.9, 6.4, 10), wm, gx - 15.05, 3.2, gz); add(new THREE.BoxGeometry(0.9, 6.4, 1.2), wm, gx + 15.05, 3.2, gz + 4.4);   // the white frame down to the ground
+          const gw = granite(5.6, 6.3, true, null); add(new THREE.BoxGeometry(5.6, 6.3, 4), [gw, gw, dk, dk, gw, gw], gx - 11.6, 3.15, gz + 1.5);   // the ARTERA wall
+          const gh = granite(9, 3.8, false, "INFORMATION"); add(new THREE.BoxGeometry(9, 3.8, 5.5), [gh, gh, dk, dk, gh, gh], gx + 9.5, 1.9, gz + 0.5);   // the guard house
+          add(new THREE.PlaneGeometry(4.2, 1.3), new THREE.MeshBasicMaterial({ color: 0xd9e3ea }), gx + 9.5, 1.7, gz + 3.27);   // its window
+          const nm = new THREE.Mesh(new THREE.PlaneGeometry(16, 1.6), new THREE.MeshBasicMaterial({ transparent: true, map: canvasTex(1024, 104, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "#f3f2ee"; g.font = `600 64px ${FONT}`; g.textAlign = "left"; g.textBaseline = "middle"; if ("letterSpacing" in g) g.letterSpacing = "6px"; g.fillText("동탄 아테라 파밀리에", 8, H / 2 + 4); }) }));
+          nm.visible = false;   // (the complex's name on the roof: taken off)
+          const rd = new THREE.Mesh(new THREE.PlaneGeometry(14, 34), lam(0x48494d)); rd.rotation.x = -Math.PI / 2; rd.position.set(gx, 0.07, gz - 8); A.add(rd);
+          const zc = new THREE.Mesh(new THREE.PlaneGeometry(14, 4.5), new THREE.MeshBasicMaterial({ transparent: true, map: canvasTex(256, 80, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "rgba(240,240,236,0.9)"; for (let x = 6; x < W; x += 24) g.fillRect(x, 0, 12, H); }) }));
+          zc.rotation.x = -Math.PI / 2; zc.position.set(gx, 0.08, gz + 7.5); A.add(zc); }   // the crossing in front
         // it stands on a hillside terrace (as in the photograph, against the hills), nearer the street so it rises clear of the trees
-        const ter = new THREE.Mesh(new THREE.PlaneGeometry(136, 62), grass.material); ter.rotation.x = -Math.PI / 2; ter.position.set(163 + DX2, 0.05, DZ + 2); A.add(ter);   // the complex's garden, at ground level   // starts just past the park's east walk
+        const ter = new THREE.Mesh(new THREE.PlaneGeometry(128, 48), grass.material); ter.rotation.x = -Math.PI / 2; ter.position.set(150 + DX2, 0.05, DZ + 29); A.add(ter);   // the complex's garden, at ground level   // starts just past the park's east walk
       }
-      { // left: 청주테크노폴리스 아테라, the first Artera — a long line of slender grey and white towers with blue-grey crowns
-        const gl = "#4a5058", cap = "#8ea2be";
-        const fG = facade(15, 95, 5, "#c9ccd1", gl, "#e6e7ea", { rows: 32, seed: 31, band: "#f3f3f1", bandX: 0.68, bandW: 0.32, cap, capH: 0.05 });
-        const fW = facade(15, 95, 5, "#eeeeec", gl, "#ffffff", { rows: 32, seed: 32, band: "#9aa0a8", bandX: 0, bandW: 0.22, cap, capH: 0.05 });
-        const fD = facade(15, 95, 5, "#8f949c", gl, "#b6bac0", { rows: 32, seed: 33, band: "#f3f3f1", bandX: 0, bandW: 0.3, cap, capH: 0.05 });
-        const fA = facade(15, 95, 5, "#eeeeec", gl, "#ffffff", { rows: 32, seed: 34, band: "#f7f7f5", bandX: 0, bandW: 0.34, cap, capH: 0.05, sign: { text: "ARTERA", size: 110, vertical: true, x: 0.17, y: 0.2 }, signCol: "#3a4a6a" });
-        const fS = facade(12, 95, 4, "#dcdee1", gl, "#eeeff1", { rows: 32, seed: 35, cap, capH: 0.05 });
-        [[-112, 12, 14, 78, fW], [-128, 4, 14, 92, fG], [-144, 14, 15, 86, fA], [-160, 2, 14, 100, fD], [-176, 12, 15, 82, fW], [-192, 0, 14, 96, fG],
-         [-208, 10, 15, 104, fD], [-224, -2, 14, 88, fW], [-240, 9, 15, 98, fA], [-256, -4, 14, 84, fG], [-150, -22, 14, 90, fG], [-200, -24, 14, 94, fW]].forEach(([x, z, W, H, f]) => cplx(x, z, W, 12, H, f, fS, 0x8ea2be));
+      { // left: 청주테크노폴리스 아테라, after its rendering — seven towers (701–707): white faces with navy bands and navy crowns, the lowest floors in dark stone;
+        // 706 at the front shows a navy end wall with ARTERA in white, 704 at the far right a white end wall with ARTERA in navy; a white gateway (문주) in the middle
+        const gl = "#3f4652", NV = "#2b3a6e", FHc = 2.9;
+        const win = (cols, seed, num, bandX, bandW) => facade(15, 95, cols, "#f1f2f3", gl, "#ffffff", { rows: 30, seed, low: true, cap: NV, capH: 0.045, band: "#d4d8de", bandX, bandW, band2: NV, band2X: bandX + bandW, band2W: 0.07,
+          sign: { text: num, size: 40, x: bandX + bandW / 2, y: 0.07 }, sign2: { text: num, size: 34, x: bandX + bandW / 2, y: 0.83 }, signCol: "#5a6274" });
+        const sideF = facade(13, 95, 4, "#e4e6ea", gl, "#f4f5f7", { rows: 30, seed: 41, low: true, cap: NV, capH: 0.045, band: NV, bandX: 0.82, bandW: 0.18 });
+        const sideW = facade(13, 95, 4, "#eef0f2", gl, "#f8f9fa", { rows: 30, seed: 42, low: true });   // the white end-wall towers: plain white sides, no navy edge
+        const wall = (bg, ink, joint, word, num, edge) => { const m = new THREE.MeshLambertMaterial({ map: canvasTex(256, 1024, (g, W, H) => {   // a windowless end wall in panels, with ARTERA reading down it
+            g.fillStyle = bg; g.fillRect(0, 0, W, H); g.fillStyle = joint; for (let y = 0; y < H; y += 34) g.fillRect(0, y, W, 2); for (let x = 0; x < W; x += 64) g.fillRect(x, 0, 2, H);
+            if (edge) { g.fillStyle = edge; g.fillRect(0, 0, 26, H); g.fillRect(W - 26, 0, 26, H); }
+            g.fillStyle = "#3b3f46"; g.fillRect(0, H * 0.9, W, H * 0.1);   // dark stone at the foot
+            g.save(); g.translate(W * 0.74, H * 0.24); g.rotate(Math.PI / 2);   /* the name stands to the right of the wall, as built */ g.fillStyle = ink; g.font = `700 64px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; if ("letterSpacing" in g) g.letterSpacing = "10px"; if (word) g.fillText(word, 0, 0); g.restore();
+            g.fillStyle = ink; g.font = `600 26px ${FONT}`; g.textAlign = "center"; g.fillText(num, W * 0.74, H * 0.86); }) }); m.__white = bg !== NV; OUT.arteraMats.push(m); return m; };
+        const T = [   // x, z (front at +z), width, floors, front, depth
+          [-252, 12, 20, 25, win(6, 51, "707", 0.6, 0.3), 14], [-229, -14, 15, 33, win(5, 52, "701", 0.62, 0.3), 13],
+          [-207, 14, 14, 23, wall(NV, "#ffffff", "rgba(255,255,255,0.10)", "ARTERA", "706"), 15], [-182, -12, 16, 36, win(5, 53, "702", 0.6, 0.3), 13],
+          [-156, -18, 15, 33, win(5, 54, "703", 0.6, 0.3), 13], [-152, 12, 15, 26, wall("#f4f5f6", "#5a6274", "rgba(0,0,0,0.07)", "", "705"), 15],
+          [-125, 8, 15, 24, wall("#f4f5f6", NV, "rgba(0,0,0,0.07)", "ARTERA", "704"), 15]];   // white end walls: no navy edging
+        T.forEach(([x, z, W, FLn, front, D]) => { const H = FLn * FHc, endWall = !!(front.map && front.map.image && front.map.image.width === 256), white = endWall && front.__white;
+          cplx(x, z, W, D, H, front, white ? sideW : sideF, white ? 0xdfe2e6 : 0x2b3a6e);   // an end wall (706, 705, 704): its way in is round the right-hand side
+          const lb = new THREE.Mesh(new THREE.BoxGeometry(endWall ? 2.2 : 5, 0.3, endWall ? 5 : 2.2), lam(0xe9e7e2)), dr = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.8), new THREE.MeshBasicMaterial({ color: 0xffe2b0 }));
+          if (endWall) { lb.position.set(x + W / 2 + 1.1, 3.1, z + 1); dr.position.set(x + W / 2 + 0.03, 1.4, z + 1); dr.rotation.y = Math.PI / 2; }
+          else { lb.position.set(x, 3.1, z + D / 2 + 1.1); dr.position.set(x, 1.4, z + D / 2 + 0.03); }
+          A.add(lb); A.add(dr); });   // the lobby canopy and its lit glass doors
+        { // the gateway (문주): a white frame over the way in, its underside dark, ARTERA on the lintel; a paved drive runs through it
+          const gx = -178, gz = 26, wm = lam(0xf3f2ee), dk = lam(0x2a2c30); OUT.arteraMats.push(wm, dk);
+          [[-9.5], [9.5]].forEach(([dx]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(2.2, 6.6, 3), wm); p.position.set(gx + dx, 3.3, gz); A.add(p); });
+          const lt = new THREE.Mesh(new THREE.BoxGeometry(21.2, 1.5, 3), wm); lt.position.set(gx, 7.35, gz); A.add(lt);
+          const ud = new THREE.Mesh(new THREE.BoxGeometry(16.8, 0.2, 2.6), dk); ud.position.set(gx, 6.5, gz); A.add(ud);
+          const sg = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.1), new THREE.MeshBasicMaterial({ map: canvasTex(512, 64, (g, W, H) => { g.fillStyle = "#f3f2ee"; g.fillRect(0, 0, W, H); g.fillStyle = "#2b3a6e"; g.font = `700 40px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; if ("letterSpacing" in g) g.letterSpacing = "12px"; g.fillText("ARTERA", W / 2, H / 2 + 2); }) }));
+          sg.position.set(gx, 7.35, gz + 1.52); sg.visible = false;   // (the name on the lintel: taken off, the gateway stays plain white)
+          const drv = new THREE.Mesh(new THREE.PlaneGeometry(14, 30), lam(0x4b4d52)); drv.rotation.x = -Math.PI / 2; drv.position.set(gx, 0.06, gz - 8); A.add(drv);
+          const cm = new THREE.Mesh(new THREE.BoxGeometry(16, 5, 7), new THREE.MeshLambertMaterial({ color: 0xf1efe9, emissive: 0x6b5a3a, emissiveIntensity: 0.25 })); cm.position.set(-226, 2.5, 22); A.add(cm);   // the low community hall, lit
+          OUT.arteraMats.push(cm.material); }
         { // the complex stands on its own site, paved and planted, so the city's streets run round it and not under the towers
           const sw = 166, sd = 58, scx = -184, scz = -5;
           const st = canvasTex(664, 232, (g, W, H) => { g.fillStyle = "#d9d6cf"; g.fillRect(0, 0, W, H); g.fillStyle = "rgba(0,0,0,0.06)"; for (let x = 0; x < W; x += 8) g.fillRect(x, 0, 1, H); for (let y = 0; y < H; y += 8) g.fillRect(0, y, W, 1);
@@ -7987,8 +8111,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       { // U-square (유·스퀘어, Gwangju), far down the street: a broad curved two-tier terminal wrapped round a plaza that opens to the road, an oval sign drum on its roof
         // (U·square 유·스퀘어), glazed shop fronts under deep grey roofs, a colonnade, rooftop plant, a low wing along the street, the teal bus canopy and the coach yard to the side.
         // Plain boxes, a few small canvases: no model file.
-        OUT.mergeU = () => { OUT.mergeU = null; U.updateMatrixWorld(true); const B = new Map(), kill = [];   // every static box of U-square merged into one mesh per material: a handful of draw calls instead of several hundred
-          U.traverse((m) => { if (!m.isMesh || m.isInstancedMesh) return; const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone(); g.applyMatrix4(m.matrixWorld);
+        OUT.mergeU = () => { OUT.mergeU = null; U.updateMatrixWorld(true); const B = new Map(), kill = [], inv = U.matrixWorld.clone().invert();   // every static box of U-square merged into one mesh per material: a handful of draw calls instead of several hundred
+          U.traverse((m) => { if (!m.isMesh || m.isInstancedMesh) return; const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone(); g.applyMatrix4(m.matrixWorld).applyMatrix4(inv);
             const mats = Array.isArray(m.material) ? m.material : [m.material], groups = g.groups.length ? g.groups : [{ start: 0, count: g.attributes.position.count, materialIndex: 0 }];
             const P = g.attributes.position.array, N = g.attributes.normal.array, T = g.attributes.uv ? g.attributes.uv.array : null;
             for (const gr of groups) { const mt = mats[gr.materialIndex] || mats[0]; if (!B.has(mt)) B.set(mt, { p: [], n: [], u: [] }); const b = B.get(mt);
@@ -7997,10 +8121,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           kill.forEach((m) => { m.parent.remove(m); m.geometry.dispose(); });
           B.forEach((b, mt) => { const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(b.p, 3)); g.setAttribute("normal", new THREE.Float32BufferAttribute(b.n, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(b.u, 2));
             const m = new THREE.Mesh(g, mt); m.castShadow = !mt.transparent; m.receiveShadow = true; if (mt.userData.noCol) m.userData.noCol = true; U.add(m); }); };   // a material marked noCol (the stair) stays walkable once merged
-        const U = new THREE.Group(); world.add(U); OUT.uGroup = U; const CX = 240, CZ = -36, RI = 26, RO = 38;   // two city blocks joined into one site (the cross street between them closed)   // just past the right-hand Artera, inside the ring of hills round the scene
+        const U = new THREE.Group(); U.position.z = UZ; world.add(U); OUT.uGroup = U; const CX = 240, CZ = -36, RI = 26, RO = 38;   // two city blocks joined into one site (the cross street between them closed)   // just past the right-hand Artera, inside the ring of hills round the scene
         const pv = canvasTex(256, 256, (g) => { g.fillStyle = "#c9c4b9"; g.fillRect(0, 0, 256, 256); g.fillStyle = "#bdb7ab"; for (let y = 0; y < 256; y += 32) for (let x = (y / 32) % 2 ? 16 : 0; x < 256; x += 32) g.fillRect(x, y, 16, 16); g.strokeStyle = "rgba(0,0,0,0.10)"; g.lineWidth = 2; for (let i = 0; i <= 256; i += 32) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 256); g.moveTo(0, i); g.lineTo(256, i); g.stroke(); } });
         pv.wrapS = pv.wrapT = THREE.RepeatWrapping; pv.repeat.set(16, 12); pv.anisotropy = ANISO;
-        const kerbM = lam(0xbdb8ad), base = new THREE.Mesh(new THREE.BoxGeometry(132, 0.2, 96), [kerbM, kerbM, new THREE.MeshLambertMaterial({ map: pv }), kerbM, kerbM, kerbM]); base.position.set(240, 0.1, -60); base.receiveShadow = true; U.add(base);
+        const kerbM = lam(0xbdb8ad), base = new THREE.Mesh(new THREE.BoxGeometry(132, 0.2, 66.5), [kerbM, kerbM, new THREE.MeshLambertMaterial({ map: pv }), kerbM, kerbM, kerbM]); base.position.set(240, 0.1, -45.25);   /* ends before the street behind it (nothing stands on the road) */ base.receiveShadow = true; U.add(base);
         const ub = (w, h, d, x, y, z, m, ry = 0) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.rotation.y = ry; b.castShadow = true; b.receiveShadow = true; U.add(b); return b; };
         const conc = lam(0xe6e4df), roofM = lam(0xa3a8ae), roofE = lam(0x8c9198), white = lam(0xf3f2ef), glassM = new THREE.MeshLambertMaterial({ color: 0x6d8594 });
         // shop fronts in several looks: each segment of the ring gets one, so the arcade reads as many different shops
@@ -8098,25 +8222,23 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const tg = new THREE.SphereGeometry(1, 9, 7), tl = [lam(0x5a8c45), lam(0xd9a03a), lam(0xc8552e), lam(0x6f9a4a)];
         const tree = (x, z, s) => { ub(0.3, 2.6 * s, 0.3, x, 1.3 * s, z, lam(0x6a5038)); const t = new THREE.Mesh(tg, tl[Math.floor(Math.abs(x * 7 + z * 3)) % 4]); t.scale.set(1.7 * s, 2.0 * s, 1.7 * s); t.position.set(x, 3.8 * s, z); t.castShadow = true; U.add(t); };
          
-        for (const [x, z] of [[CX - 17, CZ + 17], [CX + 17, CZ + 17]]) tree(x, z, 0.9);
+        // (its trees are planted with the park's, above)
         // the teal bus canopy and the red-and-white (and a few gold) coaches in the yard
         const busW = new THREE.MeshLambertMaterial({ color: 0xf4f4f2 }), busR = new THREE.MeshLambertMaterial({ color: 0xd8342c }), busG = new THREE.MeshLambertMaterial({ color: 0xc8a646 }), win = lam(0x2b3036);
         { const PZ = CZ - RO - 15;
-          for (let z = CZ - 4; z >= PZ + 2; z -= 4.6) for (const x of [CX - 56, CX - 49, CX + 47, CX + 54]) tree(x + ((Math.round(z) * 7) % 3 - 1) * 0.6, z, 1.45);   // a screen of trees down both sides, so the coach park is out of sight from the street and the plaza
-          for (let x = CX - 44; x <= CX + 44; x += 5.5) tree(x, CZ - RO - 2, 1.3);   // and a row along the back of the terminal
-          { const hm = lam(0x4f7a3e), L = (CZ - 2) - (PZ + 2); for (const x of [CX - 52.5, CX + 50.5]) ub(1.4, 2.6, L, x, 1.3, (CZ - 2 + PZ + 2) / 2, hm); }   // a clipped hedge under the trees, so no coach shows between the trunks
-          const lot = new THREE.Mesh(new THREE.PlaneGeometry(112, 26), lam(0x55585c)); lot.rotation.x = -Math.PI / 2; lot.position.set(CX + 4, 0.21, PZ); U.add(lot);   // the coach park behind the terminal
-          const lineM = basic(0xeeeeea); for (let x = CX - 50; x <= CX + 58; x += 4.2) for (const dz of [-6.5, 6.5]) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 11), lineM); l.rotation.x = -Math.PI / 2; l.position.set(x, 0.23, PZ + dz); U.add(l); }
-          for (let i = 0; i < 26; i++) { const x = CX - 47.9 + i * 4.2, dz = i % 2 ? -6.5 : 6.5, m = i % 6 === 5 ? busG : busR; if (i % 9 === 4) continue;
-            for (const z of [PZ - 6.5, PZ + 6.5]) { if ((i * 7 + (z > PZ ? 3 : 0)) % 5 === 0) continue; ub(2.5, 3.2, 11, x, 1.8, z, [m, m, busW, busW, busW, busW]); ub(2.52, 1.0, 11.02, x, 2.4, z, win); ub(2.52, 0.5, 11.02, x, 0.9, z, m); } } }
+          // (the screens of trees down both sides: planted with the park's)   // a screen of trees down both sides, so the coach park is out of sight from the street and the plaza
+          // (and the row along the back: planted with the park's)
+          { const hm = grass.material, L = (CZ - 2) - (-75.5);   /* the clipped hedges: the lawn's own grass texture */ for (const x of [CX - 52.5, CX + 50.5]) ub(1.4, 2.6, L, x, 1.3, (CZ - 2 - 75.5) / 2, hm); }   // a clipped hedge under the trees, so no coach shows between the trunks
+          // (the coach park behind: gone; the street runs there)   // the coach park behind the terminal
+          }   // behind the terminal: an empty lot now (the parked coaches and their bays taken away, so U-square stands clear of the 동탄 complex)
       }
       if (OUT.mergeU) OUT.mergeU();
       { // low clipped hedges, plain green, wherever the walk stops: down the park's right-hand edge, along the city side past the park (open at the side streets and U-square's plaza),
         // along the archive side of the street, and across the far end of the walk
-        const hm = lam(0x355f2a), H = 1.0, Wd = 0.9;
+        const hm = grass.material, H = 1.0, Wd = 0.9;   // in the lawn's grass texture, like the ground they rise from
         const run = (x0, z0, x1, z1) => { const L = Math.hypot(x1 - x0, z1 - z0), h = new THREE.Mesh(new THREE.BoxGeometry(x0 === x1 ? Wd : L + Wd, H, x0 === x1 ? L + Wd : Wd), hm); h.position.set((x0 + x1) / 2, H / 2, (z0 + z1) / 2); h.castShadow = true; h.receiveShadow = true; world.add(h); };
         run(152.2, -15.5, 152.2, -161.5);
-        run(152.8, -12.8, 161, -12.8); run(175, -12.8, 205.5, -12.8); run(274.5, -12.8, 300.5, -12.8);
+        run(152.8, -12.8, 161, -12.8); run(175, -12.8 + UZ, 205.5, -12.8 + UZ); run(274.5, -12.8 + UZ, 300.5, -12.8 + UZ);
         run(59, 9.7, 300.5, 9.7); run(300.5, -12.8, 300.5, 9.7); }
       { // the street along the park's left side runs on through the tree belt and meets the main road
         const sr = new THREE.Mesh(new THREE.BoxGeometry(8, 0.21, 9.2), asphM()); sr.position.set(-50, 0.105, -8.1); world.add(sr);
@@ -9105,7 +9227,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             });
           const scrM = new THREE.MeshBasicMaterial({ map: scr }), bezM = new THREE.MeshBasicMaterial({ color: 0x0c0d0f }), edgeM = new THREE.MeshBasicMaterial({ color: 0x3a4152 });
           for (let i = 0; i < NS; i++) { const sw = SW / NS, u = U0 - SW / 2 + sw * (i + 0.5);   // in strips, so the screen follows the curve of the wall
-            { const sm = onWall(new THREE.Mesh(uvPlane(sw + 0.03, SH, i / NS, 0, 1 / NS, 1), scrM), 4, u, Y0, sag + 0.05); sm.userData.screen = true; pickables.push(sm); }
+            { const sm = onWall(new THREE.Mesh(uvPlane(sw + 0.03, SH, i / NS - 0.015 / SW, 0, 1 / NS + 0.03 / SW, 1), scrM), 4, u, Y0, sag + 0.05);   /* the strips overlap 3 cm: their picture overlaps by the same amount, so letters no longer break at the joins */ sm.userData.screen = true; pickables.push(sm); }
             onWall(plane(sw + (i === 0 || i === NS - 1 ? 0.2 : 0.04), SH + 0.2, bezM), 4, u + (i === 0 ? -0.08 : i === NS - 1 ? 0.08 : 0), Y0, sag + 0.035); }
           // the photos, as many as there are, set edge to edge in one rectangle under the title (each cropped to its tile; the last row stretched to close the rectangle)
           const items = h.items, N = items.length, GW = SW - 0.29, GH = SH - 0.56, gyTop = Y0 + SH / 2 - 0.45;
@@ -10548,7 +10670,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "outBench") { moveTo({ x: 4.6, z: 6.1, yaw: 0, pitch: 0.03, y: 1.22 }); taxiCSS(); taxiToast("벤치에 앉았습니다 · 길 건너 풍경과 오가는 버스를 바라봅니다", 2800); return; }
     if (o.userData.idx === "hoop") { hoopStart(o.userData.hoop); return; }
     if (o.userData.idx === "bigScreen") { screenFace(); return; }
-    if (o.userData.idx === "pz") { if (!PZ) pzStart(); else { const P = PZ.pose; if (!anim && (Math.hypot(cam.x - P.x, cam.z - P.z) > 0.3 || Math.abs(cam.pitch - P.pitch) > 0.08 || Math.abs(wrapAngle(cam.yaw - P.yaw)) > 0.08)) moveTo(P); pzTap(o.userData.k); } return; }   // stepped or looked aside: back to the puzzle view
+    if (o.userData.idx === "pz") { if (!PZ) pzStart(); else pzBoard(); return; }   // stepped or looked aside: back to the puzzle view
     if (o.userData.idx === "fountain") { coinThrow(); return; }   // the show only follows a thrown wish coin
     if (o.userData.idx === "coin") { coinTake(o.userData.coin); return; }
     if (o.userData.idx === "miniBus") { rideAsk(); return; }
@@ -10709,8 +10831,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     else m = toyBus();
     const g = new THREE.Group(), sc = Array.isArray(scale) ? scale : [scale, scale, scale]; m.scale.multiply(new THREE.Vector3(sc[0], sc[1], sc[2])); g.add(m); g.userData.glb = !!OUT.busProto;
     if (cut) {   // the real Kumho coach shrunk to a ride-on toy with its roof taken off (cut by a level plane), so a child can sit inside
-      renderer.localClippingEnabled = true; if (!busModel.cut) busModel.cut = [new THREE.Plane(new THREE.Vector3(0, -1, 0), 0.61)];
-      m.traverse((o) => { if (!o.isMesh) return; const mm = (Array.isArray(o.material) ? o.material : [o.material]).map((q) => { const c = q.clone(); c.clippingPlanes = busModel.cut; c.clipShadows = true; c.side = THREE.DoubleSide; return c; }); o.material = Array.isArray(o.material) ? mm : mm[0]; });
+      // the sides stay whole; only the roof's white panels are left open (its red Kumho stripes stay), so 쿠모 sits inside under an open roof
+      if (!busModel.cutU) busModel.cutU = { value: 0.5 };
+      m.traverse((o) => { if (!o.isMesh) return; o.castShadow = false; const mm = (Array.isArray(o.material) ? o.material : [o.material]).map((q) => { const c = q.clone(); c.side = THREE.DoubleSide;
+        c.onBeforeCompile = (sh) => { sh.uniforms.uCutY = busModel.cutU;
+          sh.vertexShader = "varying float vWY;\nvarying float vNY;\n" + sh.vertexShader.replace("#include <project_vertex>", "#include <project_vertex>\n  vWY = (modelMatrix * vec4(transformed, 1.0)).y;\n  vNY = normalize((modelMatrix * vec4(objectNormal, 0.0)).xyz).y;");
+          sh.fragmentShader = "uniform float uCutY;\nvarying float vWY;\nvarying float vNY;\n" + sh.fragmentShader.replace("#include <map_fragment>", "#include <map_fragment>\n  if (vWY > uCutY && vNY > 0.55 && diffuseColor.r - max(diffuseColor.g, diffuseColor.b) < 0.16) discard;"); };   // an upward face up on the roof, and not red: open
+        c.customProgramCacheKey = () => "busRoofOpen"; return c; }); o.material = Array.isArray(o.material) ? mm : mm[0]; });
       const fl = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.06, 0.66), gml(0x3c3f44)); fl.position.y = 0.2; g.add(fl);   // the floor inside
       const seat = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.16, 0.6), gml(0xc8342c)); seat.position.set(-0.05, 0.3, 0); g.add(seat);   // a red seat towards the back (the nose is -x)
       const rim = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.035, 0.82), gml(0xf4f2ee)); rim.position.y = 0.44; rim.scale.set(1, 1, 1); const hole = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.05, 0.7), gml(0x3c3f44)); hole.position.y = 0.445; g.add(rim); g.add(hole); hole.visible = false; rim.visible = false; }
@@ -10762,18 +10889,21 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const bronze = new THREE.MeshLambertMaterial({ color: 0xb59c7a }), steel = gml(0xb9bab6), conc = gml(0xcfccc4), W = 12, H = 4.6, Y = 5.0;
     const box = (w, h, d, x, y, zz, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, zz); o.castShadow = true; g.add(o); return o; };
     box(1.7, Y, 1.7, 0, Y / 2, 0, steel); box(3.4, 0.5, 3.4, 0, 0.25, 0, conc); box(2.6, 0.3, 2.6, 0, Y - 0.15, 0, bronze);   // one thick column on a concrete footing
-    { const pb = new THREE.Mesh(new THREE.BoxGeometry(W + 0.6, H + 0.6, W + 0.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.set(0, Y + H / 2, 0); pb.userData.idx = "bigScreen"; g.add(pb); pickables.push(pb); SCR.top = (Y + H / 2) * g.scale.y; SCR.half = (W / 2) * g.scale.x; }   // a click on it: stand square in front of the nearest face
-    box(W, H, W, 0, Y + H / 2, 0, bronze); box(W + 0.4, 0.35, W + 0.4, 0, Y + H + 0.17, 0, bronze); box(W + 0.4, 0.35, W + 0.4, 0, Y - 0.17, 0, bronze);   // the cabinet with top and bottom rims
+    { const pb = new THREE.Mesh(new THREE.BoxGeometry(W + 3.6, H + 0.6, W + 3.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.set(0, Y + H / 2, 0); pb.userData.idx = "bigScreen"; g.add(pb); pickables.push(pb); SCR.top = (Y + H / 2) * g.scale.y; SCR.half = (W / 2) * g.scale.x; }   // a click on it: stand square in front of the nearest face
+    const TL = 0.32, WT = W + 2 * H * Math.tan(TL), SLH = H / Math.cos(TL);   // the cabinet itself flares out toward the top: every side leans ~18°, so its screen looks down at the people below
+    { const cab = new THREE.Mesh(new THREE.CylinderGeometry(WT / Math.SQRT2, W / Math.SQRT2, H, 4, 1), bronze); cab.rotation.y = Math.PI / 4; cab.position.y = Y + H / 2; cab.castShadow = true; g.add(cab); }
+    box(WT + 0.4, 0.35, WT + 0.4, 0, Y + H + 0.17, 0, bronze); box(W + 0.4, 0.35, W + 0.4, 0, Y - 0.17, 0, bronze);   // top and bottom rims
     // each face shows the same picture as a hall's large view: the photo on the left, its year, title and story on the right (one canvas shared by all four faces)
-    SCR.faceC = document.createElement("canvas"); SCR.faceC.width = 2048; SCR.faceC.height = Math.round(2048 * (H - 0.6) / (W - 0.6));
+    SCR.faceC = document.createElement("canvas"); SCR.faceC.width = 2048; SCR.faceC.height = Math.round(2048 * (SLH - 0.7) / (W - 0.4));
     SCR.faceT = new THREE.CanvasTexture(SCR.faceC); SCR.faceT.encoding = THREE.sRGBEncoding; SCR.faceT.anisotropy = ANISO;
     SCR.faceM = new THREE.MeshBasicMaterial({ map: SCR.faceT, color: 0x000000 }); const d = W / 2 + 0.01;
     for (let k = 0; k < 4; k++) {   // front, right, back, left
       const f = new THREE.Group(); f.rotation.y = k * Math.PI / 2; g.add(f);
-      const face = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.6, H - 0.6), SCR.faceM); face.position.set(0, Y + H / 2, d); f.add(face);
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.4, SLH - 0.7), SCR.faceM);   // set into the sloping side, flush
+      face.position.set(0, Y + H / 2, (W + WT) / 4 + 0.03); face.rotation.x = TL; f.add(face);
     }
     { // on the roof, lying flat: the official ARTERA symbol mark, read from the air (top of the mark toward the back, as the aerial view first looks)
-      const RY = Y + H + 0.36, RW = W + 0.2, sc = document.createElement("canvas"); sc.width = sc.height = 1024;
+      const RY = Y + H + 0.36, RW = WT + 0.2, sc = document.createElement("canvas"); sc.width = sc.height = 1024;
       const st = new THREE.CanvasTexture(sc); st.encoding = THREE.sRGBEncoding; st.anisotropy = ANISO;
       const c = sc.getContext("2d"); c.fillStyle = "#f7f4ee"; c.fillRect(0, 0, 1024, 1024); c.strokeStyle = "#b59c7a"; c.lineWidth = 18; c.strokeRect(9, 9, 1006, 1006);
       const im = new Image(); im.onload = () => { const k = Math.min(840 / im.width, 700 / im.height), w = im.width * k, h = im.height * k; c.drawImage(im, (1024 - w) / 2, (1024 - h) / 2, w, h); st.needsUpdate = true; }; im.src = ARTERA_MARK;
@@ -10822,7 +10952,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   // ===== photo puzzle on the park floor: 4 x 4 sliding tiles (one gap), eight pictures of Kumho; finishing all eight unlocks the mini bus =====
   var PZ = null;   // the game in play: { pose }
-  const PZB = { g: null, x: 56, z: -44, tiles: [], last: null, mat: null, lv: 0, pos: [], gap: 15, moves: 0, solved: false, tex: null, label: null, labelC: null };
+  const PZB = { g: null, x: 56, z: -44, tiles: [], last: null, mat: null, lv: 0, pos: [], gap: 8, moves: 0, solved: false, tex: null, label: null, labelC: null };
   const PZ_SET = ["img/founding_001.jpg", "img/growth_023.jpg", "special/bus_04.jpg|0.9", "special/term_us1.jpg", "special/revival_k02.jpg", "img/revival_104.jpg", "mark", "special/revival_k09.jpg"];
   function pzInfo(i) {
     const [f, cx] = PZ_SET[i].split("|"); if (f === "mark") return { mark: true, year: "2024", title: "아테라 심볼 마크", hall: "금호건설", detail: "금호건설의 새 주거 브랜드 아테라(ARTERA)의 정식 심볼 마크입니다. 아테라는 예술(ART), 대지(TERRA), 시대(ERA)를 합친 이름으로 '금호건설이 지은 대지 위의 예술'을 뜻합니다." };
@@ -10831,16 +10961,17 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function pzDone() { try { return JSON.parse(localStorage.getItem("kumhoPz") || "[]"); } catch (e) { return []; } }
   function pzMark(i) { const d = pzDone(); if (!d.includes(i)) d.push(i); try { localStorage.setItem("kumhoPz", JSON.stringify(d)); } catch (e) {} return d; }
-  const pzSlot = (s) => [PZB.x + (1.5 - Math.floor(s / 4)) * 1.02, PZB.z + ((s % 4) - 1.5) * 1.02];   // played from the west (clear of trees): the picture's top row lies furthest east, its left column to the north
+  const PN = 3, NT = PN * PN, GAP = NT - 1, TS = 1.4;   // 3 x 3 (eight tiles and a gap)
+  const pzSlot = (s) => [PZB.x + ((PN - 1) / 2 - Math.floor(s / PN)) * TS, PZB.z + ((s % PN) - (PN - 1) / 2) * TS];   // played from the west (clear of trees): the picture's top row lies furthest east, its left column to the north
   function pzBuild() {
     if (!fountainAt()) return false; const g = new THREE.Group(); world.add(g); PZB.g = g; PZB.tiles = [];
     const stone = gml(0x55585e), brz = gml(0xb59c7a);
     const base = new THREE.Mesh(new THREE.BoxGeometry(4.9, 0.06, 4.9), stone); base.position.set(PZB.x, 0.03, PZB.z); base.receiveShadow = true; base.userData.idx = "pz"; base.userData.k = -1; g.add(base); pickables.push(base);
     for (const [w, d, dx, dz] of [[4.9, 0.14, 0, -2.38], [4.9, 0.14, 0, 2.38], [0.14, 4.9, -2.38, 0], [0.14, 4.9, 2.38, 0]]) { const b = new THREE.Mesh(new THREE.BoxGeometry(w, 0.12, d), brz); b.position.set(PZB.x + dx, 0.06, PZB.z + dz); g.add(b); }
     PZB.mat = new THREE.MeshBasicMaterial({ color: 0xffffff }); const side = gml(0xe8e2d6);
-    for (let k = 0; k < 16; k++) {   // tile k shows part k of the picture (row k/4 from the top, toward the far side); tile 15 only appears once it is solved
-      const geo = new THREE.BoxGeometry(0.98, 0.08, 0.98), uv = geo.attributes.uv, p = geo.attributes.position, r = Math.floor(k / 4), c = k % 4;
-      for (let v = 8; v < 12; v++) { const u0 = p.getX(v) / 0.98 + 0.5, w0 = p.getZ(v) / 0.98 + 0.5; uv.setXY(v, (c + u0) / 4, 1 - (r + w0) / 4); }
+    for (let k = 0; k < NT; k++) {   // tile k shows part k of the picture (row k/PN from the top); the last tile only appears once it is solved
+      const geo = new THREE.BoxGeometry(TS - 0.04, 0.08, TS - 0.04), uv = geo.attributes.uv, p = geo.attributes.position, r = Math.floor(k / PN), c = k % PN;
+      for (let v = 8; v < 12; v++) { const u0 = p.getX(v) / (TS - 0.04) + 0.5, w0 = p.getZ(v) / (TS - 0.04) + 0.5; uv.setXY(v, (c + u0) / PN, 1 - (r + w0) / PN); }
       const t = new THREE.Mesh(geo, [side, side, PZB.mat, side, side, side]); t.rotation.y = -Math.PI / 2; t.castShadow = true; t.userData.idx = "pz"; t.userData.k = k; g.add(t); pickables.push(t); PZB.tiles.push(t);
     }
     PZB.labelC = document.createElement("canvas"); PZB.labelC.width = 1024; PZB.labelC.height = 128; PZB.label = new THREE.CanvasTexture(PZB.labelC); PZB.label.encoding = THREE.sRGBEncoding;
@@ -10848,16 +10979,16 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     pzLoad(PZB.lv, false); OUT.colDirty = true; return true;
   }
   function pzLabel(txt) { const c = PZB.labelC.getContext("2d"); c.clearRect(0, 0, 1024, 128); c.fillStyle = "rgba(29,29,26,0.82)"; c.fillRect(0, 8, 1024, 112); c.fillStyle = "#e8c98c"; c.font = `700 46px ${FONT}`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(txt, 512, 66); PZB.label.needsUpdate = true; }
-  function pzPlace(instant) { for (let k = 0; k < 16; k++) { const t = PZB.tiles[k], s = k === 15 ? 15 : PZB.pos[k], [x, z] = pzSlot(s); t.userData.tx = x; t.userData.tz = z; if (instant) t.position.set(x, 0.1, z); } PZB.tiles[15].visible = PZB.solved; }
+  function pzPlace(instant) { pzBoard(); for (let k = 0; k < NT; k++) { const t = PZB.tiles[k], s = k === GAP ? GAP : PZB.pos[k], [x, z] = pzSlot(s); t.userData.tx = x; t.userData.tz = z; if (instant) t.position.set(x, 0.1, z); } PZB.tiles[GAP].visible = PZB.solved; }
   function pzLoad(i, shuffle) {
     PZB.lv = (i + PZ_SET.length) % PZ_SET.length; const info = pzInfo(PZB.lv), done = pzDone();
-    PZB.pos = [...Array(15).keys()]; PZB.gap = 15; PZB.moves = 0; PZB.solved = !shuffle; if (shuffle) pzShuffle(); pzPlace(true);
+    PZB.pos = [...Array(GAP).keys()]; PZB.gap = GAP; PZB.moves = 0; PZB.solved = !shuffle; if (shuffle) pzShuffle(); pzPlace(true);
     pzLabel(`사진 퍼즐 ${PZB.lv + 1} / ${PZ_SET.length}${done.includes(PZB.lv) ? " ✓" : ""}${PZ ? " · 빈칸 옆 조각을 누르세요" : " · 눌러서 시작"}`);
     const draw = (img) => { const C = document.createElement("canvas"); C.width = C.height = 1024; const c = C.getContext("2d");
       c.fillStyle = "#f6f2ea"; c.fillRect(0, 0, 1024, 1024);
       if (info.mark) { const k = Math.min(860 / img.width, 600 / img.height); c.drawImage(img, (1024 - img.width * k) / 2, (1024 - img.height * k) / 2, img.width * k, img.height * k); }
       else { const s = Math.min(img.width, img.height), cx = info.cx == null ? 0.5 : info.cx; c.drawImage(img, (img.width - s) * cx, (img.height - s) / 2, s, s, 0, 0, 1024, 1024); }   // a square from the picture (cx: where across it, 0.5 the middle)
-      try { const P = document.createElement("canvas"); P.width = P.height = 240; P.getContext("2d").drawImage(C, 0, 0, 240, 240); PZB.preview = P.toDataURL("image/jpeg", 0.8); } catch (e) { PZB.preview = null; } pzUI();   // the whole picture, shown beside the controls
+      try { const P = document.createElement("canvas"); P.width = P.height = 240; P.getContext("2d").drawImage(C, 0, 0, 240, 240); PZB.preview = P.toDataURL("image/jpeg", 0.8); const Q = document.createElement("canvas"); Q.width = Q.height = 720; Q.getContext("2d").drawImage(C, 0, 0, 720, 720); PZB.full = Q.toDataURL("image/jpeg", 0.85); } catch (e) { PZB.preview = null; PZB.full = null; } pzUI(); pzBoard();   // the whole picture, shown beside the controls
       const t = new THREE.CanvasTexture(C); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; const old = PZB.tex; PZB.tex = t; PZB.mat.map = t; PZB.mat.needsUpdate = true; if (old) old.dispose(); };
     const img = new Image(), want = PZB.lv, mat = PZB.mat; img.onload = () => { if (PZB.lv === want && PZB.mat === mat && mat) draw(img); };   // not if the park was left meanwhile
     if (info.mark) img.src = ARTERA_MARK; else photoSrc(info.file).then((src) => { img.src = src; }).catch(() => {});
@@ -10867,34 +10998,36 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     let prev = -1; for (let n = 0; n < 220; n++) { const nb = pzNb(PZB.gap).filter((s) => s !== prev); const s = nb[Math.floor(Math.random() * nb.length)]; const k = PZB.pos.indexOf(s); prev = PZB.gap; PZB.pos[k] = PZB.gap; PZB.gap = s; }
     if (PZB.pos.every((s, k) => s === k)) pzShuffle();
   }
-  function pzNb(s) { const r = Math.floor(s / 4), c = s % 4, o = []; if (r > 0) o.push(s - 4); if (r < 3) o.push(s + 4); if (c > 0) o.push(s - 1); if (c < 3) o.push(s + 1); return o; }
+  function pzNb(s) { const r = Math.floor(s / PN), c = s % PN, o = []; if (r > 0) o.push(s - PN); if (r < PN - 1) o.push(s + PN); if (c > 0) o.push(s - 1); if (c < PN - 1) o.push(s + 1); return o; }
   function pzStart() {
     if (mode !== "outside" || busy || (AIR && (AIR.on || AIR.out)) || RIDE.on) return;
     if (HOOP) hoopEnd(); if (auto.on) setAuto(false); TP.sit = null;
-    PZ = { pose: { x: PZB.x - 4.6, z: PZB.z, yaw: -Math.PI / 2, pitch: -0.84, y: 5.2 } }; moveTo(PZ.pose);   // standing back and above, looking down on the whole board
+    PZ = { pose: { x: cam.x, z: cam.z, yaw: cam.yaw, pitch: cam.pitch } };   // played face-on, on the screen: the camera stays where it is   // standing back and above, looking down on the whole board
     if (PZB.solved || !PZB.moves) pzLoad(PZB.lv, true); pzUI();
   }
-  function pzEnd(back) { if (!PZ) return; const P = PZ.pose; PZ = null; pzInfoBox(null); pzUI(); if (back) moveTo({ x: P.x - 1.2, z: P.z, yaw: P.yaw, pitch: 0, y: EYE }); }
+  function pzEnd(back) { if (!PZ) return; const P = PZ.pose; PZ = null; pzInfoBox(null); pzUI(); pzBoard(); }
   function pzTap(k) {
-    if (!PZ || PZB.solved || k < 0 || k > 14) return; const s = PZB.pos[k];
-    if (!pzNb(PZB.gap).includes(s)) { const r = Math.floor(s / 4), c = s % 4, gr = Math.floor(PZB.gap / 4), gc = PZB.gap % 4;   // same row or column: slide the whole line toward the gap
-      if (r !== gr && c !== gc) return; const step = r === gr ? Math.sign(c - gc) : 4 * Math.sign(r - gr); while (PZB.gap !== s) { const n = PZB.gap + step, kk = PZB.pos.indexOf(n); PZB.pos[kk] = PZB.gap; PZB.gap = n; PZB.moves++; } }
+    if (!PZ || PZB.solved || k < 0 || k >= GAP) return; const s = PZB.pos[k];
+    if (!pzNb(PZB.gap).includes(s)) { const r = Math.floor(s / PN), c = s % PN, gr = Math.floor(PZB.gap / PN), gc = PZB.gap % PN;   // same row or column: slide the whole line toward the gap
+      if (r !== gr && c !== gc) return; const step = r === gr ? Math.sign(c - gc) : PN * Math.sign(r - gr); while (PZB.gap !== s) { const n = PZB.gap + step, kk = PZB.pos.indexOf(n); PZB.pos[kk] = PZB.gap; PZB.gap = n; PZB.moves++; } }
     else { PZB.pos[k] = PZB.gap; PZB.gap = s; PZB.moves++; }
     if (typeof sfxClick === "function") sfxClick(); pzPlace(false); pzUI();
-    if (PZB.pos.every((q, i) => q === i)) { PZB.solved = true; setTimeout(() => { pzPlace(false); pzWin(); }, 260); }
+    if (PZB.pos.every((q, i) => q === i)) { PZB.solved = true; setTimeout(() => { pzPlace(false); pzWin(); setTimeout(() => { const b = $("pzBoard"); if (b) b.hidden = true; }, 1600); }, 260); }
   }
   function pzKey(key) {   // the arrow keys push the tile beside the gap into it
-    const g = PZB.gap, r = Math.floor(g / 4), c = g % 4, s = key === "ArrowUp" ? (r < 3 ? g + 4 : -1) : key === "ArrowDown" ? (r > 0 ? g - 4 : -1) : key === "ArrowLeft" ? (c < 3 ? g + 1 : -1) : (c > 0 ? g - 1 : -1);
+    const g = PZB.gap, r = Math.floor(g / PN), c = g % PN, s = key === "ArrowUp" ? (r < PN - 1 ? g + PN : -1) : key === "ArrowDown" ? (r > 0 ? g - PN : -1) : key === "ArrowLeft" ? (c < PN - 1 ? g + 1 : -1) : (c > 0 ? g - 1 : -1);
     if (s >= 0) pzTap(PZB.pos.indexOf(s));
   }
+
   function pzWin() {
     const d = pzMark(PZB.lv), info = pzInfo(PZB.lv); pzLabel(`사진 퍼즐 ${PZB.lv + 1} / ${PZ_SET.length} ✓ 완성! · ${PZB.moves}번 이동`); pzInfoBox(info, d.length); pzUI();
     if (d.length >= 3) setTimeout(() => busUnlock(`사진 퍼즐 ${d.length}개 완성`), 900);   // three pictures earn the mini bus
   }
   function pzCSS() {
     if ($("pzCSS")) return; const st = document.createElement("style"); st.id = "pzCSS";
-    st.textContent = "#pzUI{position:fixed;left:50%;top:78px;transform:translateX(-50%);z-index:60;background:rgba(23,24,21,.88);border:1px solid rgba(201,168,106,.45);border-radius:14px;padding:12px 16px;color:#e8dfcf;font:13px/1.4 inherit;font-family:inherit;width:min(520px,calc(100vw - 32px));box-sizing:border-box}"
+    st.textContent = "#pzUI{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:60;background:rgba(23,24,21,.88);border:1px solid rgba(201,168,106,.45);border-radius:14px;padding:12px 16px;color:#e8dfcf;font:13px/1.4 inherit;font-family:inherit;width:min(520px,calc(100vw - 32px));box-sizing:border-box}"
       + "#pzUI .pzw{display:flex;gap:12px;align-items:flex-start}#pzUI .pv0{width:96px;height:96px;border-radius:8px;border:1px solid rgba(201,168,106,.6);object-fit:cover;flex:none}#pzUI .pzt{flex:1;min-width:0}#pzUI .tt{font-weight:700;color:#e8c98c;margin-bottom:4px}#pzUI .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}#pzUI button{font:12px/1 inherit;font-family:inherit;color:#d6c9b3;background:transparent;border:1px solid rgba(201,168,106,.45);border-radius:999px;padding:7px 11px;cursor:pointer}#pzUI button.go{background:#c9a86a;color:#1d1d1a;font-weight:700;border-color:#c9a86a}"
+      + "#pzBoard{position:fixed;left:50%;top:calc(50% - 40px);transform:translate(-50%,-50%);width:min(58vh,86vw);aspect-ratio:1;z-index:59;background:#1d1d1a;border:6px solid #b59c7a;border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:manipulation}#pzBoard .t{position:absolute;box-sizing:border-box;border:2px solid #1d1d1a;border-radius:6px;cursor:pointer;transition:left .16s,top .16s}"
       + "#pzInfo{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:62;background:rgba(23,24,21,.94);border:1px solid rgba(201,168,106,.6);border-radius:16px;padding:20px 22px;color:#e8dfcf;width:min(460px,calc(100vw - 32px));box-sizing:border-box;font-family:inherit;box-shadow:0 12px 40px rgba(0,0,0,.45)}"
       + "#pzInfo .ok{color:#ffd36a;font-weight:800;font-size:18px;margin-bottom:8px}#pzInfo .yr{color:#c9a86a;font-size:13px}#pzInfo .ti{font-size:20px;font-weight:700;margin:2px 0 8px}#pzInfo .de{font-size:13.5px;line-height:1.65;color:#d8cfbf;max-height:40vh;overflow:auto}#pzInfo .row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}#pzInfo button{font-family:inherit;font-size:13px;color:#d6c9b3;background:transparent;border:1px solid rgba(201,168,106,.45);border-radius:999px;padding:8px 14px;cursor:pointer}#pzInfo button.go{background:#c9a86a;color:#1d1d1a;font-weight:700;border-color:#c9a86a}";
     document.head.appendChild(st);
@@ -10911,6 +11044,15 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     el.querySelector(".tt").textContent = `사진 퍼즐 ${PZB.lv + 1} / ${PZ_SET.length} · 완성 ${d.length}개`;
     el.querySelector(".sc").textContent = PZB.solved ? `완성! ${PZB.moves}번 만에 맞췄어요` : `빈칸 옆 조각을 누르면 밀려 들어가요 (방향키도 돼요) · 이동 ${PZB.moves}번` + (d.length < 3 ? ` · 3개를 맞추면 미니버스를 탈 수 있어요` : "");
   }
+  function pzBoard() {   // the puzzle face-on, in the middle of the screen: 3 x 3 cells cut from the picture, tap a tile beside the gap to slide it
+    let el = $("pzBoard"); if (!PZ) { if (el) el.hidden = true; return; } pzCSS();
+    if (!el) { el = document.createElement("div"); el.id = "pzBoard"; document.body.appendChild(el); ["pointerdown", "pointerup", "click", "touchstart"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation(), { passive: true }));
+      el.addEventListener("click", (e) => { const t = e.target.closest("[data-k]"); if (t) pzTap(+t.dataset.k); }); }
+    el.hidden = false; const src = PZB.full || "", cells = [];
+    for (let k = 0; k < NT; k++) { const sl = k === GAP ? GAP : PZB.pos[k]; if (k === GAP && !PZB.solved) continue; const r = Math.floor(k / PN), c = k % PN, sr = Math.floor(sl / PN), sc = sl % PN;
+      cells.push(`<div class="t" data-k="${k}" style="left:${sc * 100 / PN}%;top:${sr * 100 / PN}%;width:${100 / PN}%;height:${100 / PN}%;background-image:url(${src});background-size:${PN * 100}% ${PN * 100}%;background-position:${c * 100 / (PN - 1)}% ${r * 100 / (PN - 1)}%"></div>`); }
+    el.innerHTML = cells.join("") + (PZB.solved ? "" : "");
+  }
   function pzInfoBox(info, n) {
     pzCSS(); let el = $("pzInfo"); if (!info) { if (el) el.hidden = true; return; }
     if (!el) { el = document.createElement("div"); el.id = "pzInfo"; document.body.appendChild(el); ["pointerdown", "pointerup", "click"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation())); }
@@ -10923,7 +11065,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (mode !== "outside") { if (PZ) pzEnd(false); return; }
     if (!PZB.g || PZB.g.parent !== world) { PZB.g = null; if (!pzBuild()) return; }
     for (const t of PZB.tiles) { const u = t.userData; if (u.tx == null) continue; t.position.x += (u.tx - t.position.x) * Math.min(1, dt * 16); t.position.z += (u.tz - t.position.z) * Math.min(1, dt * 16); t.position.y = 0.1; }
-    if (PZ && !anim && Math.hypot(cam.x - PZ.pose.x, cam.z - PZ.pose.z) > 2.5) pzEnd(false);   // walked away: the game ends
+    if (PZ && !anim && Math.hypot(cam.x - PZ.pose.x, cam.z - PZ.pose.z) > 6) pzEnd(false);   // walked away: the game ends
   }
   function busCallStep(dt) {
     const show = mode === "outside" && busUnlocked() && !RIDE.on && !AIR.on && !THUMB.on; if (show || $("busCall")) { const b = busCallBtn(); if (b.hidden === show) b.hidden = !show; }
@@ -10945,7 +11087,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function rideRider() {   // the bus under 쿠모, and 쿠모 in its seat
     const o = TP.obj, B = RIDE.bus; if (!o || !B) return; const gy = TP.gy || 0, ry = TP.face + Math.PI / 2;
-    B.position.set(cam.x, gy + 0.02, cam.z); B.rotation.y = ry; const th = TP.face; o.rotation.y = th; if (busModel.cut) busModel.cut[0].constant = B.position.y + 0.61;   // the roof cut rides with the bus (on the raised plaza or the gallery the walls were cut away)
+    B.position.set(cam.x, gy + 0.02, cam.z); B.rotation.y = ry; const th = TP.face; o.rotation.y = th; if (busModel.cutU) busModel.cutU.value = B.position.y + 0.5;   // the roof cut rides with the bus (on the raised plaza or the gallery the walls were cut away)
     o.position.set(B.position.x + Math.sin(th) * 0.26 - Math.cos(th) * 0.1 - Math.cos(ry) * 0.05, B.position.y + 0.04, B.position.z + Math.cos(th) * 0.26 + Math.sin(th) * 0.1 + Math.sin(ry) * 0.05);   // 25 cm further toward the front than before
     TP.blob.position.set(cam.x, gy + 0.03, cam.z); TP.blob.scale.setScalar(2.2);
   }
@@ -11044,7 +11186,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const C = []; for (const e of L) if (x >= e[1] && x <= e[2] && z >= e[3] && z <= e[4]) C.push(e[0]); const h = R.intersectObjects(C, false); return h.length ? Math.max(0, Math.min(0.45, h[0].point.y)) : 0;
   }
   function tpStep(dt) {
-    const show = (TP.on || RIDE.on) && mode === "outside" && !AIR.on && !AIR.out && !THUMB.on && !T3.on && !SWING && !HOOP && !PZ;   // the swing, the hoop game and the puzzle stay first-person
+    const show = (TP.on || RIDE.on) && mode === "outside" && !AIR.on && !AIR.out && !THUMB.on && !T3.on && !SWING && !HOOP;   // the swing and the hoop game stay first-person
     if (RIDE.on && (!show || mode !== "outside")) rideEnd();
     if (show && !TP.obj) tpLoad();
     TP.k += ((show && TP.obj ? 1 : 0) - TP.k) * Math.min(1, dt * 5); if (TP.k < 0.002) TP.k = 0;
@@ -11096,7 +11238,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!el) { const st = document.createElement("style");
       st.textContent = "#kumoCard{position:fixed;inset:0;z-index:58;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3)}#kumoCard[hidden]{display:none}#kumoCard .bx{position:relative;width:min(340px,calc(100vw - 32px));background:rgba(20,22,26,.96);border:1px solid rgba(201,168,106,.55);border-radius:16px;padding:20px 22px 18px;color:#e9e1d0;font-family:inherit;box-shadow:0 12px 40px rgba(0,0,0,.5)}#kumoCard h3{margin:0;font-size:24px;color:#ffd36a;letter-spacing:.02em}#kumoCard .en{font-size:12px;color:#c9a86a;margin:2px 0 12px;letter-spacing:.12em}#kumoCard dl{display:grid;grid-template-columns:78px 1fr;gap:7px 10px;margin:0;font-size:13.5px;line-height:1.45}#kumoCard dt{color:#a99c84}#kumoCard dd{margin:0}#kumoCard .age{display:flex;align-items:baseline;gap:8px;margin:0 0 12px;font-size:13.5px;color:#a99c84}#kumoCard .age b{font-size:30px;line-height:1;color:#ffd36a;font-weight:800;margin-right:14px;font-variant-numeric:tabular-nums}#kumoCard .x{position:absolute;right:10px;top:8px;background:none;border:0;color:#bfb39b;font-size:20px;cursor:pointer}";
       document.head.appendChild(st); el = document.createElement("div"); el.id = "kumoCard"; el.setAttribute("role", "dialog");
-      el.innerHTML = '<div class="bx"><button type="button" class="x" aria-label="닫기">×</button><h3>쿠모</h3><div class="en">KU-MHO</div><div class="age"><span>나이</span><b>8</b><span>혈액형</span><b>O</b></div><dl><dt>사는 곳</dt><dd>아테라 타운</dd><dt>좋아하는 것</dt><dd>여행 갈 때 메는 금호고속 버스 가방, 아빠가 준 아테라 티셔츠, 농구</dd><dt>MBTI</dt><dd>ESFP</dd><dt>성격</dt><dd>호기심이 가득하고 새로운 도전을 좋아해요</dd></dl></div>';
+      el.innerHTML = '<div class="bx"><button type="button" class="x" aria-label="닫기">×</button><h3>쿠모</h3><div class="en">KU-MHO</div><div class="age"><span>나이</span><b>8</b><span>혈액형</span><b>O</b></div><dl><dt>사는 곳</dt><dd>아테라 타운</dd><dt>좋아하는 것</dt><dd>여행 갈 때 매는 금호고속 버스 가방, 아빠가 준 아테라 티셔츠, 농구</dd><dt>MBTI</dt><dd>ESFP</dd><dt>성격</dt><dd>호기심이 가득하고 새로운 도전을 좋아해요</dd></dl></div>';
       document.body.appendChild(el); ["pointerdown", "pointerup"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation()));
       el.addEventListener("click", (e) => { e.stopPropagation(); if (e.target === el || e.target.classList.contains("x")) el.hidden = true; }); }
     el.hidden = false;
