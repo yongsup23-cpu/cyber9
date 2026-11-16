@@ -3932,7 +3932,6 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const bal = tex(512, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = "#b8925a"; for (let x = 4; x < w; x += 32) g.fillRect(x, 0, 5, h); g.fillRect(0, h - 10, w, 10); g.fillRect(0, 0, w, 6); }, (X1 - X0) / 2.2, 1);
     const bm = new THREE.MeshLambertMaterial({ map: bal, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, emissive: 0x2a1a08 });
     add(new THREE.PlaneGeometry(X1 - X0 - 2.4, 1.05), bm, 1.2, MY + 0.52, MZ + 0.05); box(X1 - X0 - 2.4, 0.07, 0.1, bronzeL, 1.2, MY + 1.08, MZ + 0.05);
-    box(0.4, 0.1, 0.4, bronzeL, 8, MY + 1.2, -11.5); add(new THREE.SphereGeometry(0.42, 20, 14), lam(0x6a7f8a), 8, MY + 1.65, -11.5);   // a globe up there
     block(8 - 0.5, 8 + 0.5, -12, -11, MY, MY + 2); }
   // ---- the stair up the left wall: 16 lit timber treads, bronze rails ----
   const SX0 = -15.6, SX1 = -13.6, SZ0 = 2, SZ1 = MZ, NS = 16, RS = MY / NS, TR = (SZ0 - SZ1) / NS;
@@ -4005,6 +4004,16 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     L.load("assets/librarian.glb", (g) => { const m = g.scene; const bb = new THREE.Box3().setFromObject(m), h = bb.max.y - bb.min.y || 1; m.scale.setScalar(1.62 / h); m.position.set(DX + 0.4, 0, DZ - 1.2); scene.add(m);
       if (g.animations && g.animations.length) { mixer = new THREE.AnimationMixer(m); mixer.clipAction(g.animations[0]).play(); } }, undefined, () => {}); }
 
+  // ---- 쿠모 (assets/character.glb, as in the park): walks the library in third person, the camera behind him ----
+  const TP = { obj: null, mixer: null, act: {}, face: null, px: null, pz: null, spd: 0, rw: 0, iw: 1, d: 3.4, started: false };
+  if (THREE.GLTFLoader) { const L2 = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L2.setMeshoptDecoder) L2.setMeshoptDecoder(window.MeshoptDecoder);
+    L2.load("assets/character.glb", (g) => { const o = g.scene; o.scale.setScalar(0.96);
+      o.traverse((m) => { if (m.isMesh) { const mp = m.material && m.material.map; m.material = new THREE.MeshLambertMaterial({ map: mp, skinning: true }); m.frustumCulled = false; } });
+      const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.5)"); gr.addColorStop(0.6, "rgba(0,0,0,0.22)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+      TP.blob = new THREE.Mesh(new THREE.CircleGeometry(0.42, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); TP.blob.rotation.x = -Math.PI / 2; scene.add(TP.blob);
+      TP.obj = o; scene.add(o); TP.mixer = new THREE.AnimationMixer(o); g.animations.forEach((c) => { TP.act[c.name] = TP.mixer.clipAction(c); }); }, undefined, () => {}); }
+  const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+
   // ---- walking ----
   const S = window.__lib = { x: 11, z: 6.5, fy: 0, yaw: 0.72, pitch: -0.06, tx: null, tz: null }, keys = {}, EYE = 1.62;
   const floorAt = (x, z, cur) => { const C = [], onStair = x >= SX0 && x <= SX1 && z <= SZ0 && z >= SZ1;
@@ -4055,6 +4064,22 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     else S.v = (S.v || 0) * Math.max(0, 1 - dt * 6), Math.abs(S.v) > 0.05 && move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt);
     S.ey = S.ey == null ? S.fy : S.ey + (S.fy - S.ey) * Math.min(1, dt * 10);
     camera.position.set(S.x, S.ey + EYE, S.z); camera.rotation.set(0, 0, 0); camera.rotation.order = "YXZ"; camera.rotation.y = S.yaw; camera.rotation.x = S.pitch;
+    if (TP.obj) {   // 쿠모 on the spot, facing the way he goes; the camera pulled back behind and a little above him, shortened before it would enter a wall or a bookcase
+      if (TP.px == null) { TP.px = S.x; TP.pz = S.z; TP.face = S.yaw + Math.PI; }
+      const dx = S.x - TP.px, dz = S.z - TP.pz; let mv = Math.hypot(dx, dz) / Math.max(dt, 1e-3); if (mv > 30) mv = 0; TP.px = S.x; TP.pz = S.z; TP.spd += (mv - TP.spd) * Math.min(1, dt * 7);
+      if (mv > 0.6) TP.face += wrapA(Math.atan2(dx, dz) - TP.face) * Math.min(1, dt * 10); else if (TP.ly != null && Math.abs(wrapA(S.yaw - TP.ly)) > 1e-4) TP.face += wrapA(S.yaw + Math.PI - TP.face) * Math.min(1, dt * 10);
+      TP.ly = S.yaw; TP.face = wrapA(TP.face);
+      TP.obj.position.set(S.x, S.ey + 0.012, S.z); TP.obj.rotation.y = TP.face; TP.blob.position.set(S.x, S.ey + 0.02, S.z);
+      let d = 1.2; for (const t of [3.4, 2.8, 2.2, 1.6, 1.2]) { let ok = true; for (let k = 0.6; k <= t; k += 0.3) { const bx = S.x + Math.sin(S.yaw) * k, bz = S.z + Math.cos(S.yaw) * k; if (bx < X0 + 0.25 || bx > X1 - 0.25 || bz < Z0 + 0.25 || bz > Z1 - 0.25) { ok = false; break; }
+          for (const b of BOX) if (bx > b[0] - 0.15 && bx < b[1] + 0.15 && bz > b[2] - 0.15 && bz < b[3] + 0.15 && S.ey + 1.9 > b[4] && S.ey + 1.9 < b[5]) { ok = false; break; } if (!ok) break; } if (ok) { d = t; break; } }
+      TP.d += (d - TP.d) * Math.min(1, dt * 8);
+      camera.position.x += Math.sin(S.yaw) * TP.d; camera.position.z += Math.cos(S.yaw) * TP.d; camera.position.y += 0.3; camera.rotation.x -= 0.1;
+      const W = TP.act.Walking, R = TP.act.Running, I = TP.act.Idle;
+      if (W && R) { if (!TP.started) { TP.started = true; W.play(); R.play(); if (I) I.play(); }
+        const moving = TP.spd > 0.3; TP.iw += ((moving || !I ? 0 : 1) - TP.iw) * Math.min(1, dt * 8); TP.rw += ((TP.spd > 4.2 ? 1 : 0) - TP.rw) * Math.min(1, dt * 6);
+        W.setEffectiveWeight((1 - TP.rw) * (1 - TP.iw)); R.setEffectiveWeight(TP.rw * (1 - TP.iw)); if (I) I.setEffectiveWeight(TP.iw);
+        W.timeScale = moving ? Math.max(0.7, Math.min(1.9, TP.spd / 1.5)) : 0.3; R.timeScale = Math.max(0.8, Math.min(1.6, TP.spd / 5)); }
+      TP.mixer.update(dt); }
     if (mixer) mixer.update(dt);
     renderer.render(scene, camera);
     if (first) { first = false; prog(1); setTimeout(() => $("ld").classList.add("off"), 250); } })();
