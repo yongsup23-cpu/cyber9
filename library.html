@@ -25,7 +25,7 @@ html,body{margin:0;height:100%;background:#141414;overflow:hidden;font-family:"N
 <canvas id="stage"></canvas>
 <div id="hud"><h1>금호 도서관</h1><div>KUMHO LIBRARY</div></div>
 <button type="button" id="exitBtn">← 공원으로 나가기</button>
-<div id="hint">드래그로 둘러보기 · 누르면 그쪽으로 · 길게 누르면 달리기 · 방향키로 걷기 · 계단으로 2층에</div>
+<div id="hint">드래그로 둘러보기 · 쿠모를 끌면 제자리에서 돌아요 · 누르면 그쪽으로 · 길게 누르면 달리기 · 두 손가락이나 휠로 확대</div>
 <div id="pad"><button class="u" data-k="ArrowUp">▲</button><button class="l" data-k="ArrowLeft">◀</button><button class="d" data-k="ArrowDown">▼</button><button class="r" data-k="ArrowRight">▶</button></div>
 <div id="toast"></div>
 <script>/**
@@ -4030,17 +4030,29 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); });
   let drag = null, hold = null, holdT = 0; const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   const aim = (cx, cy) => { const r = canvas.getBoundingClientRect(); ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); return ray; };
-  canvas.addEventListener("pointerdown", (e) => { drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0 }; try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
-    clearTimeout(holdT); holdT = setTimeout(() => { if (drag && drag.moved <= 8) { hold = { x: drag.lx, y: drag.ly, v: 0 }; S.tx = null; } }, 320); });
-  canvas.addEventListener("pointermove", (e) => { if (hold) { hold.x = e.clientX; hold.y = e.clientY; return; } if (!drag) return;
+  const PT = new Map(); let pinch = null;
+  const pdist = () => { const [a, b] = [...PT.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+  const onKumo = (px, py) => { if (!TP.obj) return false; const r = canvas.getBoundingClientRect(), v = new THREE.Vector3();
+    const sc = (y) => { v.set(S.x, S.ey + y, S.z).project(camera); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height, v.z]; };
+    const f = sc(0), h = sc(1.4); if (f[2] > 1 || h[2] > 1) return false; const ht = f[1] - h[1], hw = ht * 0.34; return px > f[0] - hw && px < f[0] + hw && py > h[1] - ht * 0.08 && py < f[1] + ht * 0.05; };
+  canvas.addEventListener("pointerdown", (e) => { PT.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
+    if (PT.size === 2) { clearTimeout(holdT); hold = null; drag = null; S.tx = null; pinch = { d0: pdist(), f0: camera.fov }; return; } if (PT.size > 2) return;
+    drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0, tp: onKumo(e.clientX, e.clientY) };
+    clearTimeout(holdT); if (!drag.tp) holdT = setTimeout(() => { if (drag && drag.moved <= 8 && !pinch) { hold = { x: drag.lx, y: drag.ly, v: 0 }; S.tx = null; } }, 320); });
+  canvas.addEventListener("pointermove", (e) => { if (PT.has(e.pointerId)) PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch) { if (PT.size >= 2) { const d = pdist(); if (d > 10) { camera.fov = Math.max(35, Math.min(75, pinch.f0 * pinch.d0 / d)); camera.updateProjectionMatrix(); } } return; }
+    if (!drag && TP.obj && e.pointerType === "mouse") canvas.style.cursor = onKumo(e.clientX, e.clientY) ? "grab" : "";
+    if (hold) { hold.x = e.clientX; hold.y = e.clientY; return; } if (!drag) return;
+    if (drag.tp) { const dx = e.clientX - drag.lx; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0)); if (drag.moved > 3) { TP.face += dx * 0.012; TP.dragging = true; canvas.style.cursor = "grabbing"; } drag.lx = e.clientX; drag.ly = e.clientY; return; }
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
     if (drag.moved > 6) { const k = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight; S.yaw += dx * k; S.pitch = Math.max(-0.5, Math.min(0.7, S.pitch + dy * k)); S.tx = null; }
     drag.lx = e.clientX; drag.ly = e.clientY; });
-  const endP = (e) => { clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (!d || d.moved > 8) return;
+  const endP = (e) => { PT.delete(e.pointerId); if (pinch) { if (PT.size < 2) { pinch = null; drag = null; } return; }
+    clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (d && d.tp) { TP.dragging = false; canvas.style.cursor = ""; if (d.moved <= 4) toast("안녕! 나는 쿠모야 👋 끌어서 돌려 봐"); return; } if (!d || d.moved > 8) return;
     const r = aim(e.clientX, e.clientY), hp = r.intersectObjects(PICK, false)[0], hf = r.intersectObjects(FLOORS, false)[0];
     if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { if (hp.object.userData.idx === "exit") return leave(); if (hp.object.userData.idx === "desk") return toast("어서 오세요, 금호 도서관입니다 📚"); }
     if (hf) { const dx = hf.point.x - S.x, dz = hf.point.z - S.z, dd = Math.hypot(dx, dz), L = Math.min(dd, 7); if (dd > 0.3) { S.tx = S.x + dx / dd * L; S.tz = S.z + dz / dd * L; S.v = 0; } } };
-  canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", () => { clearTimeout(holdT); hold = null; drag = null; });
+  canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", (e) => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; clearTimeout(holdT); hold = null; drag = null; TP.dragging = false; });
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.fov = Math.max(35, Math.min(75, camera.fov + e.deltaY * 0.03)); camera.updateProjectionMatrix(); }, { passive: false });
   const toast = (t) => { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2200); };
   function leave() { try { const g = JSON.parse(sessionStorage.getItem("kumhoLibCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "library", t: Date.now() }))); } catch (e) {}
@@ -4067,7 +4079,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     if (TP.obj) {   // 쿠모 on the spot, facing the way he goes; the camera pulled back behind and a little above him, shortened before it would enter a wall or a bookcase
       if (TP.px == null) { TP.px = S.x; TP.pz = S.z; TP.face = S.yaw + Math.PI; }
       const dx = S.x - TP.px, dz = S.z - TP.pz; let mv = Math.hypot(dx, dz) / Math.max(dt, 1e-3); if (mv > 30) mv = 0; TP.px = S.x; TP.pz = S.z; TP.spd += (mv - TP.spd) * Math.min(1, dt * 7);
-      if (mv > 0.6) TP.face += wrapA(Math.atan2(dx, dz) - TP.face) * Math.min(1, dt * 10); else if (TP.ly != null && Math.abs(wrapA(S.yaw - TP.ly)) > 1e-4) TP.face += wrapA(S.yaw + Math.PI - TP.face) * Math.min(1, dt * 10);
+      if (mv > 0.6) TP.face += wrapA(Math.atan2(dx, dz) - TP.face) * Math.min(1, dt * 10); else if (!TP.dragging && TP.ly != null && Math.abs(wrapA(S.yaw - TP.ly)) > 1e-4) TP.face += wrapA(S.yaw + Math.PI - TP.face) * Math.min(1, dt * 10);
       TP.ly = S.yaw; TP.face = wrapA(TP.face);
       TP.obj.position.set(S.x, S.ey + 0.012, S.z); TP.obj.rotation.y = TP.face; TP.blob.position.set(S.x, S.ey + 0.02, S.z);
       let d = 1.2; for (const t of [3.4, 2.8, 2.2, 1.6, 1.2]) { let ok = true; for (let k = 0.6; k <= t; k += 0.3) { const bx = S.x + Math.sin(S.yaw) * k, bz = S.z + Math.cos(S.yaw) * k; if (bx < X0 + 0.25 || bx > X1 - 0.25 || bz < Z0 + 0.25 || bz > Z1 - 0.25) { ok = false; break; }
