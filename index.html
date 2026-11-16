@@ -7688,13 +7688,15 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         if (k !== "diag" && CR() < 0.3) { const rad = Math.min(w, d) * 0.5; cyl(k, x, z, rad, h); cyl(k, x, z, rad * 0.78, Math.min(8, 96 - h), h); roofKit(x, z, rad, rad, h + Math.min(8, 96 - h)); return; }   // a round glass tower
         box(k, x, z, w, d, h); const w2 = w * (0.72 + CR() * 0.12), d2 = d * (0.72 + CR() * 0.12), h2 = 6 + CR() * 10;   // a set-back crown
         box(k, x, z, w2, d2, Math.min(h2, 96 - h), h); roofKit(x, z, w2, d2, h + Math.min(h2, 96 - h)); };
-      const AWN = []; OUT.shop1 = false; OUT.shopAt = null; OUT.bldRects = [];   // just one row of shops is left, nearest the archive   // awnings: [x, z, width, colour]
+      const AWN = []; OUT.shop1 = false; OUT.shopAt = null; OUT.hallAt = null; OUT.bldRects = [];   // just one row of shops is left, nearest the archive   // awnings: [x, z, width, colour]
       const shopBlock = (x, z, w, d) => {   // a low street building: shops on the ground floor, one or two floors of flats or offices above
         box("shop", x, z, w, d, 4.5);
         const up = 3 * (1 + Math.floor(CR() * 2)), k = midKind(); box(k, x, z, w - 0.6, d - 0.6, up, 4.5);
         if (CR() < 0.45) gable(x, z, w, d, 4.5 + up, Math.min(w, d) * 0.22); else roofKit(x, z, w - 0.6, d - 0.6, 4.5 + up);
         AWN.push([x, z + d / 2 + 0.7, w * 0.92, ["#c8433a", "#2f5f9e", "#2f8a5e", "#e0a93a", "#efeae0"][Math.floor(CR() * 5)]]); };
       const PP = [], PN = [], PC = [], DP = [], DN = [], _c = new THREE.Color();   // props in their own colours; dark slate roofs for the houses
+      const ghost = (fn) => { const arrs = [GP, GN, PP, PN, PC, DP, DN, AWN, OUT.bldRects]; for (const k in batches) for (const f in batches[k]) if (Array.isArray(batches[k][f])) arrs.push(batches[k][f]);   // run a builder for its random draws only, then throw its geometry away,
+        const L = arrs.map((a) => a.length); fn(); arrs.forEach((a, i) => { a.length = L[i]; }); };   // so everything after it in the city stays exactly where it was
       const ptri = (a, b, c, col, P = PP, N = PN) => { P.push(...a, ...b, ...c); const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
         let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; for (let i = 0; i < 3; i++) N.push(nx / l, ny / l, nz / l);
         if (col) { _c.set(col); for (let i = 0; i < 3; i++) PC.push(_c.r, _c.g, _c.b); } };
@@ -7753,11 +7755,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           const m = 3 + CR() * 2, x0 = bx0 + i * lw + m, x1 = bx0 + (i + 1) * lw - m, z0 = bz0 + j * ld + m, z1 = bz0 + (j + 1) * ld - m;
           if (!free(x0, x1, z0, z1)) continue;
           if (lowFront) { const q = CR(), X = (x0 + x1) / 2, Z = (z0 + z1) / 2;
-            if (zc === -20 && j === nz - 1) { if (!OUT.shop1 && cx > -100 && cx < 0) { OUT.shop1 = true; OUT.shopAt = [X, Z, x1 - x0, z1 - z0]; shopBlock(X, Z, x1 - x0, z1 - z0); } else if (q < 0.55) office(X, Z, x1 - x0, z1 - z0); else houses(x0, x1, z0, z1); }
+            if (zc === -20 && j === nz - 1) { if (!OUT.shop1 && cx > -100 && cx < 0) { OUT.shop1 = true; OUT.shopAt = [X, Z, x1 - x0, z1 - z0]; shopBlock(X, Z, x1 - x0, z1 - z0); }
+              else if (OUT.shop1 && !OUT.hallAt && cx > -100 && cx < 0) { OUT.hallAt = [X, Z, x1 - x0, z1 - z0]; ghost(() => (q < 0.55 ? office(X, Z, x1 - x0, z1 - z0) : houses(x0, x1, z0, z1))); }   // the lot beside the convenience store: the 금호 가치체계 전시관 stands here
+              else if (q < 0.55) office(X, Z, x1 - x0, z1 - z0); else houses(x0, x1, z0, z1); }
             else if (q < 0.55) houses(x0, x1, z0, z1); else if (q < 0.88) office(X, Z, x1 - x0, z1 - z0); else midBlock(X, Z, x1 - x0, z1 - z0, 6, 13); }
           else midBlock((x0 + x1) / 2, (z0 + z1) / 2, x1 - x0, z1 - z0, 12, behindArtera ? 30 : (CR() < 0.2 ? 60 : 40)); } }
       // where U-square first stood: a row of small houses at the street, and the round white block beside them (moved here from the next block, which U-square now takes)
          // inside the block (the cross street runs at x 240)
+      office(-156, -113, 26, 20);   // the office that stood beside the convenience store, moved to the block west of the library (it changed places with the 가치체계 전시관); drawn last so no other random draw shifts
       // build one mesh per facade kind (sides carry the facade, roofs a plain material)
       for (const k in batches) { const B = batches[k]; if (!B.sp.length && !B.rp.length) continue;
         const geo = new THREE.BufferGeometry(), ns = B.sp.length / 3, nr = B.rp.length / 3;
@@ -8170,9 +8175,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           const pw = new THREE.Mesh(new THREE.PlaneGeometry(8.6, 4.2), PAVE_M); pw.rotation.x = -Math.PI / 2; pw.position.set(-58.3, 0.045, -113); world.add(pw); }   /* a block-paved walk from its door to the street */
         { // 금호 가치체계 전시관: the ARTERA mark laid flat as the building's plan, so from the sky the roof reads as the mark — apex to the north, the inverted-V notch open to the south.
           // The two feet of the mark each take an archive-style door on their south face; the notch between them is a paved forecourt ; the name plaque hangs over the right-hand door.
-          const VW = 36, VL = VW * 168 / 228, VH = 8, nb = VW * 0.193, na = VL * 0.31, sh = VL * 0.429;   // plan width and length, wall height; notch half-base and depth; shoulder line
-          const G = new THREE.Group(); G.position.set(-156, 0, -113 + VL / 2); world.add(G);   // local z=0 is the mark's base (south); the apex lies at z=-VL
-          { const lg = new THREE.Mesh(new THREE.PlaneGeometry(60, 50), grass.material); lg.rotation.x = -Math.PI / 2; lg.position.set(-156, 0.03, -113); lg.receiveShadow = true; world.add(lg); }   // its block laid with the park's lawn
+          const VW = 24, VL = VW * 168 / 228, VH = 8, nb = VW * 0.193, na = VL * 0.31, sh = VL * 0.429;   // plan width and length, wall height; notch half-base and depth; shoulder line
+          const HA = OUT.hallAt || [-69, -38.5, 24, 21], HZ0 = HA[1] + HA[3] / 2 + 1.5;   // on the lot beside the convenience store, its front to the street
+          const G = new THREE.Group(); G.position.set(HA[0], 0, HZ0); world.add(G); OUT.hallDoor = [HA[0] + (nb + VW / 2) / 2, HZ0 + 3.2];   // local z=0 is the mark's base (south); the apex lies at z=-VL
+          { const lg = new THREE.Mesh(new THREE.PlaneGeometry(VW + 5, VL + 2), grass.material); lg.rotation.x = -Math.PI / 2; lg.position.set(HA[0], 0.03, HZ0 - VL / 2 + 0.5); lg.receiveShadow = true; world.add(lg); }   // a lawn round it
           const mk = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; G.add(o); return o; };
           const navy = new THREE.MeshLambertMaterial({ color: 0x0c1838 });   /* the mark's own navy, plain */
           const S = new THREE.Shape(); S.moveTo(-VW / 2, 0); S.lineTo(-nb, 0); S.lineTo(0, na); S.lineTo(nb, 0); S.lineTo(VW / 2, 0); S.lineTo(VW / 2, sh); S.lineTo(0, VL); S.lineTo(-VW / 2, sh); S.closePath();
@@ -8189,8 +8195,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           slab(offP(0.55), null, VH - 0.4, 0.42, [navy, new THREE.MeshLambertMaterial({ color: 0x0a1430 })]);   // the navy roof slab, overhanging — from the sky it is the mark
           { const fc = new THREE.Shape(); fc.moveTo(-nb - 1, 0); fc.lineTo(0, na); fc.lineTo(nb + 1, 0); fc.closePath();
             const fp = mk(new THREE.ShapeGeometry(fc), PAVE_M, 0, 0.05, 0); fp.rotation.x = -Math.PI / 2; fp.castShadow = false;   // the notch paved as a forecourt
-            const ap = mk(new THREE.PlaneGeometry(VW + 4, 5), PAVE_M, 0, 0.048, 2.5); ap.rotation.x = -Math.PI / 2; ap.castShadow = false;   // an apron along the south front, past both doors
-            const wk = mk(new THREE.PlaneGeometry(4, 9), PAVE_M, 0, 0.047, 9); wk.rotation.x = -Math.PI / 2; wk.castShadow = false; }   // a walk out to the street
+            const ap = mk(new THREE.PlaneGeometry(VW + 4, 3.4), PAVE_M, 0, 0.048, 1.7); ap.rotation.x = -Math.PI / 2; ap.castShadow = false;   // an apron along the south front, past both doors
+            }
           // the doors: the same as the archive's — a travertine surround, a warm lit reveal, dark oak leaves with bronze edges and long bronze pulls — one on each foot
           for (const dx of [-(nb + VW / 2) / 2, (nb + VW / 2) / 2]){ const DW = 2.0, DH = 2.85, FW = 0.42, D = 0.42, zf = 0.02; const SD = new THREE.Group(); SD.position.set(dx, 0.32, 0.02); G.add(SD);
             const mk = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; SD.add(o); return o; };   // built in the side wall's own frame
@@ -12117,7 +12123,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const start = () => { BOOTED = true; resize(); if (!IS_PARK) buildLobby(); requestAnimationFrame(frame);
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "valueHall") moveTo({ x: -143.5, z: -95.5, yaw: Math.PI, pitch: 0.02 }, true);   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "valueHall" && OUT.hallDoor) moveTo({ x: OUT.hallDoor[0], z: OUT.hallDoor[1], yaw: Math.PI, pitch: 0.02 }, true);   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }
       setTimeout(() => document.documentElement.classList.add("arrived"), 350);   // the scene is up: the moving card fades
