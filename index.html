@@ -7779,8 +7779,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         g.fillStyle = "#eeeeea"; for (let i = 0; i < 6; i++) { g.fillRect(52, 6 + i * 7, 26, 4); g.fillRect(W - 78, 6 + i * 7, 26, 4); g.fillRect(52, H - 10 - i * 7, 26, 4); g.fillRect(W - 78, H - 10 - i * 7, 26, 4); }   // zebra crossings at the corners
       });
       cityTex.wrapS = cityTex.wrapT = THREE.RepeatWrapping; cityTex.anisotropy = ANISO; cityTex.repeat.set(840 / 72, 408 / 62); cityTex.offset.set((372 / 72) % 1 ? 1 - (372 / 72) % 1 : 0, 1 - (8 / 62));
-      const cg = new THREE.Mesh(new THREE.PlaneGeometry(840, 408), new THREE.MeshLambertMaterial({ map: cityTex, alphaTest: 0.5, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); cg.rotation.x = -Math.PI / 2; cg.position.set(0, 0.012, -12 - 204); world.add(cg);
-      const cs = new THREE.Mesh(new THREE.PlaneGeometry(840, 408), SLAB_M); cs.rotation.x = -Math.PI / 2; cs.position.set(0, 0.01, -12 - 204); cs.receiveShadow = true; world.add(cs);
+      const cgM = new THREE.MeshLambertMaterial({ map: cityTex });   /* one surface: the streets from the canvas, the granite slabs (world-laid, 2.4 m a tile) wherever the canvas is clear, so nothing stacks and flickers */
+      cgM.onBeforeCompile = (sh) => { sh.uniforms.slabMap = { value: SLAB_M.map };
+        sh.vertexShader = "varying vec2 vWxz;\n" + sh.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\n vWxz = (modelMatrix * vec4(transformed, 1.0)).xz;");
+        sh.fragmentShader = "uniform sampler2D slabMap; varying vec2 vWxz;\n" + sh.fragmentShader.replace("#include <map_fragment>",
+          "vec4 cT = texture2D(map, vUv); vec4 sT = texture2D(slabMap, vec2(vWxz.x, -vWxz.y) / 2.4); vec4 texelColor = mapTexelToLinear(vec4(mix(sT.rgb * 0.94, cT.rgb, cT.a), 1.0)); diffuseColor *= texelColor;"); };
+      const cg = new THREE.Mesh(new THREE.PlaneGeometry(840, 408), cgM); cg.rotation.x = -Math.PI / 2; cg.position.set(0, 0.012, -12 - 204); world.add(cg);
       // mountains on the horizon all round, two ridgelines softened by the haze (gone in fog, as real hills are)
       [[470, 0x6f8778, 1.0, 0.3], [430, 0x5d7566, 0.7, 2.1]].forEach(([Rr, colr, hk, ph]) => { const N = 256, pos = [], idx = [];
         for (let i = 0; i <= N; i++) { const a = i / N * Math.PI * 2, hh = (38 + 30 * Math.sin(a * 3 + ph) + 22 * Math.sin(a * 7 + ph * 2.3) + 12 * Math.sin(a * 17 + ph) + 6 * Math.sin(a * 41)) * hk + 24;
