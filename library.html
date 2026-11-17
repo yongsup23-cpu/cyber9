@@ -3997,19 +3997,19 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const lf = lam(0x4f7a3e); for (let i = 0; i < 26; i++) { const a = rnd() * 7, r = rnd() * 0.55, y = 1.4 + rnd() * 1.4; const s = add(new THREE.SphereGeometry(0.22 + rnd() * 0.15, 8, 6), lf, -12.5 + Math.cos(a) * r, y, 2.4 + Math.sin(a) * r); s.scale.y = 0.6; }
     box(0.05, 1.6, 0.05, woodD, -12.5, 1.8, 2.4); block(-13.1, -11.9, 1.8, 3.0); }
   // ---- the reception desk: walnut with bronze fluting, a stone top on a bronze band, a glowing bronze plinth ----
-  const DX = 1.2, DZ = 1.2, DW = 6, DD = 1.0, DH = 0.9, RL = 3.0, LX = -DW / 2 + DD / 2, LZ = DD / 2 - RL / 2;   // an L-shaped desk, low enough for 쿠모 and the librarian to talk across: the long counter, and a return going back on the left
+  const DX = 1.2, DZ = 1.2, DW = 6, DD = 1.0, DH = 0.63, RL = 3.0, LX = -DW / 2 + DD / 2, LZ = DD / 2 - RL / 2;   // an L-shaped desk, low enough for 쿠모 and the librarian to talk across: the long counter, and a return going back on the left
   { const front = tex(1024, 256, (g, w, h) => { g.fillStyle = "#3b2618"; g.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(${90 + rnd() * 40},${55 + rnd() * 25},${30 + rnd() * 15},0.25)`; g.fillRect(0, rnd() * h, w, 1 + rnd() * 2); }
       for (let x = 10; x < w * 0.3; x += 22) { g.fillStyle = "#c9a46a"; g.fillRect(x, 0, 5, h); g.fillStyle = "rgba(0,0,0,0.3)"; g.fillRect(x + 5, 0, 3, h); }
       g.fillStyle = "rgba(0,0,0,0.35)"; for (let x = w * 0.3; x < w; x += w * 0.233) g.fillRect(x, 0, 3, h); });
     const fm = lam(0xffffff, { map: front }), wm = lam(0x3b2618), D = new THREE.Group(); D.position.set(DX, 0, DZ); scene.add(D);
     box(DW, DH, DD, [wm, wm, wm, wm, fm, wm], 0, DH / 2, 0, D);
     add(new THREE.CylinderGeometry(DD / 2, DD / 2, DH, 24, 1, false, 0, Math.PI), wm, DW / 2, DH / 2, 0, D);   // the round end on the right
-    box(DD, DH, RL, [wm, fm, wm, wm, wm, wm], LX, DH / 2, LZ, D); add(new THREE.CylinderGeometry(DD / 2, DD / 2, DH, 24, 1, false, Math.PI / 2, Math.PI), wm, LX, DH / 2, DD / 2 - RL, D);   // the return, its fluted side to the room
+    box(DD, DH, RL - DD, [wm, fm, wm, wm, wm, wm], LX, DH / 2, -RL / 2, D);   /* starts behind the counter: no faces lying on top of each other, so nothing flickers */ add(new THREE.CylinderGeometry(DD / 2, DD / 2, DH, 24, 1, false, Math.PI / 2, Math.PI), wm, LX, DH / 2, DD / 2 - RL, D);   // the return, its fluted side to the room
     const topM = lam(0xb8b0a2); box(DW + DD / 2 + 0.16, 0.05, DD + 0.16, topM, DD / 4, DH + 0.05, 0, D); box(DW + DD / 2 + 0.18, 0.05, DD + 0.18, bronzeL, DD / 4, DH, 0, D);
-    box(DD + 0.16, 0.05, RL + DD / 2, topM, LX, DH + 0.05, DD / 2 - (RL + DD / 2) / 2 - 0.08, D); box(DD + 0.18, 0.05, RL + DD / 2, bronzeL, LX, DH, DD / 2 - (RL + DD / 2) / 2 - 0.08, D);
-    const glowM = new THREE.MeshBasicMaterial({ color: 0xd9b06c }); box(DW + DD / 2 + 0.1, 0.12, DD + 0.08, glowM, DD / 4, 0.06, 0, D); box(DD + 0.08, 0.12, RL + DD / 2, glowM, LX, 0.06, DD / 2 - (RL + DD / 2) / 2, D);
+    box(DD + 0.16, 0.05, RL - DD / 2, topM, LX, DH + 0.05, -DD / 2 - 0.08 - (RL - DD / 2) / 2, D); box(DD + 0.18, 0.05, RL - DD / 2, bronzeL, LX, DH, -DD / 2 - 0.09 - (RL - DD / 2) / 2, D);
+    const glowM = new THREE.MeshBasicMaterial({ color: 0xd9b06c }); box(DW + DD / 2 + 0.1, 0.12, DD + 0.08, glowM, DD / 4, 0.06, 0, D); box(DD + 0.08, 0.12, RL - DD / 2, glowM, LX, 0.06, -DD / 2 - 0.04 - (RL - DD / 2) / 2, D);
     box(0.62, 0.38, 0.04, lam(0x15171a), 0.6, DH + 0.42, -0.25, D); box(0.06, 0.2, 0.06, lam(0x2a2c30), 0.6, DH + 0.18, -0.25, D); box(0.6, 0.34, 0.01, new THREE.MeshBasicMaterial({ color: 0x1d3a52 }), 0.6, DH + 0.42, -0.226, D);
-    [[-1.7, 3], [-1.25, 2]].forEach(([x, n]) => { for (let i = 0; i < n; i++) box(0.5, 0.07, 0.34, lam([0x8a3a2a, 0xd8cfb8, 0x2f4a6b][i % 3]), x, DH + 0.11 + i * 0.075, 0.05, D); });
+    [[-0.6, 3], [-1.4, 2]].forEach(([z, n]) => { for (let i = 0; i < n; i++) box(0.34, 0.07, 0.5, lam([0x8a3a2a, 0xd8cfb8, 0x2f4a6b][i % 3]), LX, DH + 0.11 + i * 0.075, z, D); });   // the book piles on the return, out of the way of the librarian
     add(new THREE.CylinderGeometry(0.02, 0.02, 0.45, 8), bronzeL, 2.2, DH + 0.3, -0.1, D); add(new THREE.SphereGeometry(0.2, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), bronzeL, 2.2, DH + 0.5, -0.1, D);
     add(new THREE.CylinderGeometry(0.1, 0.08, 0.32, 16), new THREE.MeshLambertMaterial({ color: 0xcfe0e0, transparent: true, opacity: 0.55 }), 1.6, DH + 0.2, 0.15, D);
     for (let i = 0; i < 12; i++) { const a = rnd() * 7; const s = add(new THREE.SphereGeometry(0.07, 6, 5), lam(0x6f9a4a), 1.6 + Math.cos(a) * 0.14, DH + 0.45 + rnd() * 0.25, 0.15 + Math.sin(a) * 0.14, D); s.scale.y = 1.6; }
