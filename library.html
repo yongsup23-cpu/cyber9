@@ -2,7 +2,8 @@
 <html lang="ko">
 <head><meta charset="utf-8">
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
-(function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); if (!(Date.now() - h < 120000)) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
+(function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
+  if (reload || !(inSite || Date.now() - h < 120000)) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
   window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); } catch (e) {} }; })();</script>
 <title>금호 도서관</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -14,9 +15,7 @@ html,body{margin:0;height:100%;background:#141414;overflow:hidden;font-family:"N
 #hud h1{margin:0;font-size:26px;font-weight:700;color:#fbf6ee;text-shadow:0 2px 10px rgba(0,0,0,.6)}#hud div{font-size:12px;letter-spacing:.14em;color:#c9a86a;margin-top:2px}
 #exitBtn{position:fixed;right:16px;top:16px;z-index:6;background:rgba(23,24,21,.85);color:#e8dfcf;border:1px solid rgba(201,168,106,.6);border-radius:999px;padding:9px 16px;font:600 14px inherit;font-family:inherit;cursor:pointer}
 #hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;font-size:12px;color:#d8cfbf;background:rgba(20,20,18,.55);padding:6px 12px;border-radius:999px;pointer-events:none;white-space:nowrap}
-#pad{position:fixed;right:16px;bottom:16px;z-index:6;display:grid;grid-template-columns:48px 48px 48px;grid-template-rows:48px 48px;gap:6px}
-#pad button{background:rgba(23,24,21,.6);color:#e8dfcf;border:1px solid rgba(201,168,106,.4);border-radius:10px;font-size:18px;touch-action:none}
-#pad .u{grid-column:2}#pad .l{grid-column:1;grid-row:2}#pad .d{grid-column:2;grid-row:2}#pad .r{grid-column:3;grid-row:2}
+#pad{position:fixed;right:16px;bottom:16px;z-index:6}.joy{position:relative;width:124px;height:124px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));opacity:.8;transition:opacity .2s}.joy.on{opacity:1}.joy svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}.joy i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;pointer-events:none}.joy i svg{inset:0}
 #toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:7;background:rgba(23,24,21,.9);border:1px solid rgba(201,168,106,.5);border-radius:12px;padding:10px 16px;opacity:0;transition:opacity .3s;pointer-events:none}#toast.on{opacity:1}
 #ld{position:fixed;inset:0;z-index:20;background:#141414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s}#ld.off{opacity:0;pointer-events:none}
 #ld .t{color:#e8c98c;font-weight:600;letter-spacing:.04em}#ld .bw{width:min(320px,70vw);height:4px;background:#3a3a36;border-radius:2px;overflow:hidden}#ldBar{height:100%;width:3%;background:#c9a86a;transition:width .2s}
@@ -77,9 +76,9 @@ window.doorFx = (function () { const el = () => document.getElementById("doorFx"
 <script>try { var g0 = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); if (g0 && (g0.library || g0.valueHall)) doorFx.closed(); } catch (e) {}</script>
 <canvas id="stage"></canvas>
 <div id="hud"><h1>금호 도서관</h1><div>KUMHO LIBRARY</div></div>
-<button type="button" id="exitBtn">← 공원으로 나가기</button>
+<button type="button" id="exitBtn">← 아테라 타운으로 나가기</button>
 <div id="hint">드래그로 둘러보기 · 쿠모를 끌면 제자리에서 돌아요 · 누르면 그쪽으로 · 길게 누르면 달리기 · 두 손가락이나 휠로 확대</div>
-<div id="pad"><button class="u" data-k="ArrowUp">▲</button><button class="l" data-k="ArrowLeft">◀</button><button class="d" data-k="ArrowDown">▼</button><button class="r" data-k="ArrowRight">▶</button></div>
+<div id="pad"><div class="joy" aria-label="끌어서 이동"><svg viewBox="0 0 130 130"><circle cx="65" cy="65" r="62" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><g stroke="rgba(255,255,255,.55)" stroke-width="1.5" fill="none" stroke-linecap="round"><path d="M58 12 L65 5 L72 12" transform="rotate(0 65 65)"/><path d="M58 12 L65 5 L72 12" transform="rotate(90 65 65)"/><path d="M58 12 L65 5 L72 12" transform="rotate(180 65 65)"/><path d="M58 12 L65 5 L72 12" transform="rotate(270 65 65)"/></g></svg><i><svg viewBox="0 0 54 54"><polygon points="51.0,36.9 36.9,51.0 17.1,51.0 3.0,36.9 3.0,17.1 17.1,3.0 36.9,3.0 51.0,17.1" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linejoin="round"/><polygon points="42.2,33.3 33.3,42.2 20.7,42.2 11.8,33.3 11.8,20.7 20.7,11.8 33.3,11.8 42.2,20.7" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1"/><circle cx="27" cy="27" r="3" fill="rgba(255,255,255,.85)"/></svg></i></div></div>
 <div id="toast"></div>
 <div id="dlg"><div class="nm">금호 도서관 사서 할아버지</div><div id="dlgTxt"></div><div class="nx">▼ 눌러서 계속</div></div>
 <div id="getItem"><div class="rays"></div><i class="spk" style="left:30%;top:30%;animation-delay:0s"></i><i class="spk" style="left:68%;top:26%;animation-delay:0.4s"></i><i class="spk" style="left:24%;top:62%;animation-delay:0.8s"></i><i class="spk" style="left:74%;top:60%;animation-delay:0.2s"></i><i class="spk" style="left:50%;top:18%;animation-delay:1.0s"></i><i class="spk" style="left:40%;top:74%;animation-delay:0.6s"></i><i class="spk" style="left:62%;top:78%;animation-delay:1.2s"></i><i class="spk" style="left:18%;top:44%;animation-delay:1.4s"></i><i class="spk" style="left:82%;top:42%;animation-delay:0.9s"></i><div class="k">ITEM GET</div><div id="giBook"><div class="cv"><b>KUMHO</b><i>금호<br>헤리티지북</i><em>1946 — 2026</em></div><div class="pg"></div></div><div class="t">금호 헤리티지북을 받았어요!</div><div class="s">책을 누르면 펼쳐져요</div></div>
@@ -3928,7 +3927,7 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
 
 window.MeshoptDecoder=MeshoptDecoder;</script>
 <script>
-/* 금호 도서관 — the library inside the round building in 금호 공원 (three.js r128). Walk with the arrow keys / pad, drag to look, tap the floor to go there. */
+/* 금호 도서관 — the library inside the round building in 아테라 타운 (three.js r128). Walk with the arrow keys / pad, drag to look, tap the floor to go there. */
 (function () {
   const $ = (id) => document.getElementById(id), FONT = '"Noto Sans KR", "Apple SD Gothic Neo", sans-serif';
   const prog = (f) => { const b = $("ldBar"), t = $("ldPct"); if (b) b.style.width = Math.round(f * 100) + "%"; if (t) t.textContent = Math.round(f * 100) + "%"; };
@@ -4074,6 +4073,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     L.load("assets/librarian.glb", (g) => { const m = g.scene, k = 1.95 / 1.7;   // the rigged model stands 1.7 m tall in its own units
       m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = false; } }); m.scale.setScalar(k);
       const g2 = new THREE.Group(); g2.add(m); g2.position.set(LIB.x, 0, LIB.z); scene.add(g2); LIB.obj = g2;
+      { const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.5, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.set(LIB.x, 0.02, LIB.z); scene.add(bl); }   // a soft shadow under him, as under 쿠모
       const clip = g.animations.find((c) => /talk/i.test(c.name)) || g.animations[0];
       if (clip) { mixer = new THREE.AnimationMixer(m); LIB.aT = mixer.clipAction(clip); LIB.aI = mixer.clipAction(clip.clone());   // talking with open hands; at rest, its first frame (arms down) held still
         LIB.aI.play(); LIB.aI.timeScale = 0; LIB.aI.time = 0; LIB.aT.play(); LIB.aT.setEffectiveWeight(0); LIB.aI.setEffectiveWeight(1); LIB.w = 0; }
@@ -4088,7 +4089,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     show(); }
   dlg.el.addEventListener("click", (e) => { e.stopPropagation(); if (dlg.next) dlg.next(); });
   const GI = { kind: "hb" };
-  function setGI(kind) { GI.kind = kind; const easy = kind === "easy", cv = document.querySelector("#giBook .cv");
+  function setGI(kind) { GI.kind = kind; GI.at = Date.now(); const easy = kind === "easy", cv = document.querySelector("#giBook .cv");
     cv.innerHTML = easy ? "<b>KUMHO</b><i>쉽게 보는<br>금호 80년</i><em>그림으로 읽는 이야기</em>" : "<b>KUMHO</b><i>금호<br>헤리티지북</i><em>1946 — 2026</em>";
     cv.style.background = easy ? "linear-gradient(135deg,#1f4a44,#2f6b62 45%,#173a35)" : ""; document.querySelector("#getItem .t").textContent = easy ? "쉽게 보는 금호 80년을 찾았어요!" : "금호 헤리티지북을 받았어요!"; }
   function openGI() { $("getItem").classList.remove("on"); if (GI.kind === "easy") { try { sessionStorage.setItem("kumhoEasyGot", "1"); } catch (e) {} $("easyBtn").hidden = false; openEasy(); } else openEbook(0); }
@@ -4098,7 +4099,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       $("easyClose").addEventListener("click", (e) => { e.stopPropagation(); el.classList.remove("on"); }); }
     el.classList.add("on"); }
   function giveBook() { setGI("hb"); const gi = $("getItem"); gi.classList.add("on"); LIB.given = true; try { sessionStorage.setItem("kumhoHeritageGot", "1"); } catch (e) {} $("bookBtn").hidden = false; }
-  $("getItem").addEventListener("click", (e) => { e.stopPropagation(); if (e.target.closest("#giBook")) openGI(); else $("getItem").classList.remove("on"); });
+  $("getItem").addEventListener("click", (e) => { e.stopPropagation(); if (Date.now() - (GI.at || 0) < 700) return;   // iPad: the tap that found the book also lands here as a click a moment later — it must not close the screen at once
+    if (e.target.closest("#giBook")) openGI(); else $("getItem").classList.remove("on"); });
   function openEbook(i) { HB.i = i || 0; $("ebook").classList.add("on"); ebShow(); }
   function ebShow() { const img = $("ebImg"); img.classList.add("ld"); const u = HB.dir + String(HB.i + 1).padStart(2, "0") + ".jpg", pre = new Image(); img.dataset.want = u;
     pre.onload = () => { if (img.dataset.want === u) { img.src = u; img.classList.remove("ld"); } }; pre.src = u;
@@ -4164,6 +4166,15 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     if (dlg.el.classList.contains("on") && (k === "Enter" || k === " ")) { if (dlg.next) dlg.next(); e.preventDefault(); return; }
     keys[k] = true; if (/^Arrow/.test(k)) e.preventDefault(); }, true); document.addEventListener("keyup", (e) => { keys[kName(e)] = false; }, true);
   addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
+  function joystick(el, set) {   // a virtual stick: drag the knob any way, diagonals included; set(x, y) with x right, y down, each −1…1 (0, 0 on release)
+    const k = el.querySelector("i"), R = 44; let id = null;
+    const mv = (e) => { const r = el.getBoundingClientRect(); let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2); const d = Math.hypot(dx, dy); if (d > R) { dx *= R / d; dy *= R / d; }
+      k.style.transform = `translate(${dx}px,${dy}px)`; set(dx / R, dy / R); };
+    el.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); id = e.pointerId; try { el.setPointerCapture(id); } catch (x) {} el.classList.add("on"); mv(e); });
+    el.addEventListener("pointermove", (e) => { if (e.pointerId === id) { e.preventDefault(); mv(e); } });
+    const up = (e) => { if (e.pointerId !== id) return; id = null; el.classList.remove("on"); k.style.transform = ""; set(0, 0); };
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach((t) => el.addEventListener(t, up)); el.addEventListener("contextmenu", (e) => e.preventDefault()); }
+  const JOY = { x: 0, y: 0 }; joystick(document.querySelector("#pad .joy"), (x, y) => { JOY.x = x; JOY.y = y; });
   document.querySelectorAll("#pad button").forEach((b) => { const k = b.dataset.k; const on = (e) => { e.preventDefault(); keys[k] = true; try { b.setPointerCapture(e.pointerId); } catch (x) {} }, off = () => { keys[k] = false; };
     b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); });
   let drag = null, hold = null, holdT = 0; const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -4219,6 +4230,10 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const fw = (keys.ArrowUp || keys.w || keys.W ? 1 : 0) - (keys.ArrowDown || keys.s || keys.S ? 1 : 0), tu = (keys.ArrowLeft || keys.a || keys.A ? 1 : 0) - (keys.ArrowRight || keys.d || keys.D ? 1 : 0);
     if (hold) {   // press and hold: run toward the pointer, speeding up
       const d = aim(hold.x, hold.y).ray.direction, hl = Math.hypot(d.x, d.z); if (hl > 1e-3) { hold.v = Math.min(9.94, hold.v + dt * 15.1); move(d.x / hl, d.z / hl, hold.v * dt); } }
+    else if (Math.hypot(JOY.x, JOY.y) > 0.12) {   // the stick: walk the way it points, any angle; a sideways push turns the view a little too
+      S.tx = null; const f = -JOY.y, sd = JOY.x, m = Math.min(1, Math.hypot(f, sd)), L = Math.hypot(f, sd); S.yaw -= sd * 1.1 * dt * (f > -0.3 ? 1 : 0);
+      S.v = (S.v || 0) + (6.5 * m - (S.v || 0)) * Math.min(1, dt * 5); const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw);
+      move((hx * f + rx * sd) / L, (hz * f + rz * sd) / L, S.v * dt); }
     else if (fw || tu) {   // keys / pad: turn, and walk with a soft start and stop
       S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 6.5 - (S.v || 0)) * Math.min(1, dt * 5);
       if (Math.abs(S.v) > 0.02) move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt); }
