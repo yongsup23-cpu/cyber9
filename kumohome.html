@@ -3984,7 +3984,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   F(178, 168, 192, 222, 0, 0.42, lam(0xe8e2d6)); F(186, 168, 192, 222, 0.42, 0.85, lam(0xe8e2d6), false); F(166, 212, 192, 224, 0, 0.42, lam(0xe8e2d6));
   F(122, 172, 168, 216, 0.003, 0.012, lam(0xd9d0c0), false); F(138, 184, 158, 204, 0.3, 0.36, lam(0x3b3b3e));
   // master bedroom: the bed's head against the west wall, a TV on the east, the dressing room's shelves
-  F(20, 152, 64, 188, 0, 0.5, lam(0xf2efe9)); F(18, 150, 21, 190, 0, 1.15, lam(0x3e4a3c), false); F(40, 152, 64, 188, 0.5, 0.52, lam(0x8a8d82), false);
+  F(18, 148, 20, 192, 0.2, 1.5, lam(0x3e4a3c), false);   /* a green panel behind the bed's head */
   F(20, 62, 30, 124, 0, 2.2, oakM); F(50, 62, 58, 124, 0, 2.2, white);
   // bathrooms: the shower and basin and WC in the master's (욕실2), the bath, WC and basin in the common one (욕실1)
   F(62, 82, 76, 100, 0.002, 2.0, glassM, false); F(84, 110, 98, 126, 0, 0.42, porcelain); F(62, 112, 76, 126, 0, 0.82, porcelain);
@@ -3994,7 +3994,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   for (const y of [0.5, 1.0, 1.5]) F(214, 58, 230, 98, y, y + 0.03, white, false); F(214, 58, 230, 98, 0, 1.6, lam(0x2f3134), false); block(px(214), px(230), pz(58), pz(98));
   F(190, 102, 212, 112, 0, 0.9, white); F(190, 102, 212, 112, 0.9, 0.93, stone, false); F(190, 101, 212, 103, 1.4, 2.2, white, false);
   F(266, 94, 277, 128, 0, 2.3, lam(0xd3cbbf)); F(234, 94, 245, 120, 0, 2.3, lam(0x9b9286));
-  // bedrooms 2 and 3 are left empty
+  // the beds (assets/bed.glb, headboard at the model's −z): a big one in the master bedroom, a smaller one in 쿠모's room — both with the head to the west wall
+  { const beds = [[px(17) + 0.16, pz(170), 2.1 * HK], [px(258) + 0.12, pz(193), 1.55 * HK]];   // [west wall, centre, length in m]
+    beds.forEach(([wx, cz, len]) => { const k = len / 0.955, W = 0.734 * k; block(wx, wx + len, cz - W / 2, cz + W / 2, 0, 0.7); });
+    if (THREE.GLTFLoader) new THREE.GLTFLoader().load("assets/bed.glb", (g) => { beds.forEach(([wx, cz, len]) => { const k = len / 0.955, m = g.scene.clone(true); m.scale.setScalar(k); m.rotation.y = Math.PI / 2;
+      m.position.set(wx + len / 2, 0.1667 * k, cz); m.traverse((o) => { if (o.isMesh) { o.material = new THREE.MeshLambertMaterial({ map: o.material.map }); } }); scene.add(m); }); }, undefined, () => {}); }
   // 쿠모's nameplate by his door
   { const t = tex(256, 96, (g, w, h) => { g.fillStyle = "#1d2a5a"; g.fillRect(0, 0, w, h); g.fillStyle = "#f26a1f"; g.fillRect(0, h - 8, w, 8); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 44px ${FONT}`; g.fillText("쿠모 방", w / 2, 44); });
     const p = add(new THREE.PlaneGeometry(0.34, 0.13), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }), px(283), 1.45, pz(155) - 0.06); p.rotation.y = Math.PI; }

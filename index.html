@@ -7354,7 +7354,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const mats = [side, side, top, top, front, side];
         const b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mats); b.position.set(x, H / 2, z); A.add(b);
         const roof = new THREE.Mesh(new THREE.BoxGeometry(W * 0.5, 3.2, D * 0.6), top); roof.position.set(x - W * 0.15, H + 1.6, z); A.add(roof);
-        const pb = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.copy(b.position); pb.userData.idx = "outApt"; A.add(pb);   /* not clickable any more: the towers stand behind trees and shops, and a click meant for the ground sent the visitor back to the archive */
+        const pb = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.copy(b.position); pb.userData.idx = "outApt"; A.add(pb); pickables.push(pb);   /* not clickable any more: the towers stand behind trees and shops, and a click meant for the ground sent the visitor back to the archive */
       };
       const H1 = FL * FH;
       { // 쿠모네 집: a lobby door at the foot of the left tower (world x 22, its front face z −187), glass under a canopy, a sign above — tap to go up to the 84A flat
@@ -11103,7 +11103,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "outBench") { if (TP.on && TP.obj && TP.act.Sit) { seatSit({ x: 4.6, z: 6.08, top: 0.66, fx: 0, fz: -1 }); return; } moveTo({ x: 4.6, z: 6.1, yaw: 0, pitch: 0.03, y: 1.22 }); taxiCSS(); taxiToast("벤치에 앉았습니다 · 길 건너 풍경과 오가는 버스를 바라봅니다", 2800); return; }   /* third person: 쿠모 sits down on the bus-stop bench, like the park benches */
     if (o.userData.idx === "hoop") { hoopStart(o.userData.hoop); return; }
     if (o.userData.idx === "valueHall") { if (!busy) pageGo({ valueHall: true }); return; }
-    if (o.userData.idx === "kumoHome") { if (!busy) pageGo({ home: true }); return; }   // 쿠모네 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
+    if (o.userData.idx === "kumoHome") { goHomeAsk(); return; }   // 쿠모네 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { if (!busy) pageGo({ library: true }); return; }
     if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }   // 도서관 할아버지 on his walk
     if (o.userData.idx === "brand") { const B = OUT.brandPos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 };   // first tap: stand square in front of that post (on whichever side 쿠모 is)
@@ -11120,7 +11120,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "swing") { swingSit(o.userData.seat); return; }
     if (o.userData.idx === "outGate") { const si = stops.findIndex((t) => t.kind === "door" && t.target && t.target.lobby); if (si >= 0) setStop(si); return; }
     if (o.userData.idx === "artsisSign") { moveTo(o.userData.pose); return; }   // a sign in the ARTSIS park: come round to stand square in front of it
-    if (o.userData.idx === "outApt") { const si = stops.findIndex((t) => t.outApt); if (si >= 0) setStop(si); return; }
+    if (o.userData.idx === "outApt") { if (mode === "outside") { goHomeAsk(); return; } const si = stops.findIndex((t) => t.outApt); if (si >= 0) setStop(si); return; }   // the ARTERA towers behind the park: 쿠모's home
     if (o.userData.idx === "dio") { const si = stops.findIndex((t) => t.dio); if (si >= 0 && (si !== cur || looked)) setStop(si); return; }
     if (o.userData.idx === "dioItem") { const si = stops.findIndex((t) => t.dioItem === o.userData.item); if (si < 0) return; if (si !== cur || looked) setStop(si); else showCard(); return; }
     if (o.userData.door) { walkThrough(o.userData.door); return; }
@@ -11425,6 +11425,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function hbShow() { const v = $("hbView"); v.querySelector("img").src = R("assets/heritage/p" + String(HBV.i + 1).padStart(2, "0") + ".jpg"); v.querySelector(".pg").textContent = `${HBV.i + 1} / ${HBV.n}`;
     const b = v.querySelectorAll(".nav button"); b[0].disabled = HBV.i <= 0; b[1].disabled = HBV.i >= HBV.n - 1; }
   function bookBtns() { bookUI(); const h = HAVE(), out = mode === "outside"; $("hbBtn").hidden = !(out && h.hb); $("ezBtn").hidden = !(out && h.easy); }
+  function goHomeAsk() { if (busy) return; let el = $("homeAsk");   // "이제 집으로 갈까?" — yes goes up to 쿠모네 집
+    if (!el) { const st = document.createElement("style"); st.textContent = "#homeAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100400;width:min(560px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#homeAsk[hidden]{display:none}#homeAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#homeAsk button{margin:0 6px;padding:9px 22px;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#homeAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
+      document.head.appendChild(st); el = document.createElement("div"); el.id = "homeAsk"; el.hidden = true; el.innerHTML = '<div class="q">🏠 이제 집으로 갈까?</div><button type="button" class="y">응, 집에 갈래</button><button type="button" class="n">조금 더 놀래</button>'; document.body.appendChild(el);
+      ["pointerdown", "pointerup"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation()));
+      el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; el.hidden = true; if (b.classList.contains("y")) pageGo({ home: true }); }); }
+    el.hidden = false; }
   const RIDE = { on: false, bus: null, ok: false };
   function busUnlocked() { return !!RIDE.ok; }   // earned anew on each visit (no longer remembered by the browser)
   try { localStorage.removeItem("kumhoBusOK"); } catch (e) {}
