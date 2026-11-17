@@ -7358,6 +7358,15 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const pb = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.copy(b.position); pb.userData.idx = "outApt"; A.add(pb);   /* not clickable any more: the towers stand behind trees and shops, and a click meant for the ground sent the visitor back to the archive */
       };
       const H1 = FL * FH;
+      { // 쿠모네 집: a lobby door at the foot of the left tower (world x 22, its front face z −187), glass under a canopy, a sign above — tap to go up to the 84A flat
+        const E = new THREE.Group(); E.position.set(-36, 0, 6 + 7.02); A.add(E);
+        const gl = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.6), new THREE.MeshBasicMaterial({ color: 0xffe2a8 })); gl.position.set(0, 1.3, 0.02); E.add(gl);
+        const fr = new THREE.MeshLambertMaterial({ color: 0x2b2e33 }); [[-1.65, 1.35, 0.12, 2.7], [1.65, 1.35, 0.12, 2.7], [0, 2.66, 3.42, 0.12], [0, 1.3, 0.06, 2.6]].forEach(([x, y, w, h]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.14), fr); b.position.set(x, y, 0.08); E.add(b); });
+        const cn = new THREE.Mesh(new THREE.BoxGeometry(5, 0.18, 2.2), new THREE.MeshLambertMaterial({ color: 0x1d2a5a })); cn.position.set(0, 3.1, 1.1); E.add(cn);
+        const sg = canvasTex(1024, 256, (g, W, H) => { g.fillStyle = "#1d2a5a"; g.fillRect(0, 0, W, H); g.fillStyle = "#f26a1f"; g.fillRect(0, H - 14, W, 14); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 104px ${FONT}`; g.fillText("쿠모네 집", W / 2, 104); g.fillStyle = "#c9d2ea"; g.font = `600 40px ${FONT}`; g.fillText("84A · 눌러서 들어가기", W / 2, 192); });
+        const sp = new THREE.Mesh(new THREE.PlaneGeometry(4, 1), new THREE.MeshBasicMaterial({ map: sg, toneMapped: false })); sp.position.set(0, 3.75, 0.08); E.add(sp);
+        const st = new THREE.Mesh(new THREE.BoxGeometry(5, 0.12, 3), new THREE.MeshLambertMaterial({ color: 0xcfc9bd })); st.position.set(0, 0.06, 1.5); E.add(st);
+        const pk = new THREE.Mesh(new THREE.BoxGeometry(5, 4.4, 1.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(0, 2.2, 0.6); pk.userData.idx = "kumoHome"; E.add(pk); pickables.push(pk); }
       // left: tall greige tower with the lit ARTERA sign
       tower(-36, 6, 17, 14, H1 + 6, "#eceae5", "#5d626a", "#f6f5f2",
         facade(17, H1, 6, "#eceae5", "#5d626a", "#f7f6f3", { seed: 1, band: "#5d534c", bandX: 0, bandW: 0.32, sign: { text: "ARTERA", size: 150, vertical: true, x: 0.16, y: 0.14 } }),
@@ -8212,7 +8221,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           BR.forEach((b, i) => { const x = X0 + i * DX, G = new THREE.Group(); G.position.set(x, 0, BZ); world.add(G); const last = i === 5, h = last ? 3.7 : 3.2;
             const face = new THREE.MeshBasicMaterial({ map: bTex(i), toneMapped: false });
             const post = new THREE.Mesh(new THREE.BoxGeometry(2.1, h, 0.5), [stone, stone, stone, stone, stone, stone]); post.position.y = h / 2; post.castShadow = true; G.add(post);
-            const pan = new THREE.Mesh(new THREE.PlaneGeometry(1.84, 2.3), face); pan.position.set(0, h - 1.35, 0.26); G.add(pan);
+            const pan = new THREE.Mesh(new THREE.PlaneGeometry(1.84, 2.3), face); pan.position.set(0, h - 1.35, 0.26); (OUT.brandPos = OUT.brandPos || [])[i] = [x, BZ];
+            const pan2 = new THREE.Mesh(new THREE.PlaneGeometry(1.84, 2.3), face); pan2.position.set(0, h - 1.35, -0.26); pan2.rotation.y = Math.PI; G.add(pan2);   // the same on the back, for the lawn side G.add(pan);
             const cap = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 0.6), last ? navy : new THREE.MeshLambertMaterial({ color: 0xa88c5c })); cap.position.y = h + 0.04; G.add(cap);
             const dot = new THREE.Mesh(new THREE.CylinderGeometry(last ? 0.42 : 0.3, last ? 0.42 : 0.3, 0.05, 28), navy); dot.position.set(0, 0.07, 0.8); G.add(dot);
             if (!last) { const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.06, 24), new THREE.MeshBasicMaterial({ color: 0xffffff })); ring.position.set(0, 0.075, 0.8); G.add(ring); }
@@ -8222,7 +8232,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const tt = canvasTex(1024, 360, (g, W, H) => { g.fillStyle = "#1d2a5a"; g.fillRect(0, 0, W, H); g.fillStyle = "#c9a86a"; g.fillRect(0, 0, W, 10); g.textAlign = "center";
               g.fillStyle = "#fff"; g.font = `800 78px ${FONT}`; g.fillText("금호건설 주거 브랜드 변천사", W / 2, 175);
               g.fillStyle = "#cfd5e6"; g.font = `500 40px ${FONT}`; g.fillText("1988 — 2024   ·   기둥을 누르면 크게 보여요", W / 2, 270); });
-            const m = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1.62, 0.4), [stone, stone, stone, stone, new THREE.MeshBasicMaterial({ map: tt, toneMapped: false }), stone]); m.position.y = 0.95; m.castShadow = true; st.add(m);
+            const m = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1.62, 0.4), [stone, stone, stone, stone, new THREE.MeshBasicMaterial({ map: tt, toneMapped: false }), new THREE.MeshBasicMaterial({ map: tt, toneMapped: false })]); m.position.y = 0.95; m.castShadow = true; st.add(m);
             OUT.bldRects && OUT.bldRects.push([X0 - 11.4, X0 - 6.6, BZ - 0.3, BZ + 0.3]); }
         }
         { // the archive kiosk on the lawn west of the playground: a big screen on a stand, the halls listed down the left (1관 … 특별관 Ⅱ),
@@ -9816,7 +9826,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function pageGo(to) {
     window.__pageLeaving = true; busy = true;
     try { sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({ ride: !!RIDE.ok, sound: !!SND.on, t: Date.now() }, to))); } catch (e) {}
-    if ((to.library || to.valueHall) && window.doorFx) { doorFx.close(() => { freeGL(); kumhoHop(); location.replace(to.library ? "library.html" : "valuehall.html"); }); return; }   // through the doors: they swing shut, then the room
+    if ((to.library || to.valueHall || to.home) && window.doorFx) { doorFx.close(() => { freeGL(); kumhoHop(); location.replace(to.library ? "library.html" : to.home ? "kumohome.html" : "valuehall.html"); }); return; }   // through the doors: they swing shut, then the room
     const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">${to.library ? "금호 도서관으로 이동 중…" : to.valueHall ? "금호 가치체계 전시관으로 이동 중…" : to.park ? "아테라 타운으로 이동 중…" : "금호 아카이브로 이동 중…"}</div>`; }
     setTimeout(() => { freeGL(); kumhoHop(); location.href = to.library ? "library.html" : to.valueHall ? "valuehall.html" : to.park ? "park.html" : "index.html"; }, 160);
   }
@@ -11093,14 +11103,17 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "outBus") { const si = stops.findIndex((t) => t.outBus); if (si >= 0 && si !== cur) { cur = si; showCard(); } if (OUT.kind === "taxi" && OUT.st === "come") { OUT.st = "idle"; OUT.x = 0; OUT.veh.position.x = 0; } outBusGo(); return; }   // the founding taxi too just pulls away and drives past (riding it is gone: it crashed on some devices)
     if (o.userData.idx === "outBench") { if (TP.on && TP.obj && TP.act.Sit) { seatSit({ x: 4.6, z: 6.08, top: 0.66, fx: 0, fz: -1 }); return; } moveTo({ x: 4.6, z: 6.1, yaw: 0, pitch: 0.03, y: 1.22 }); taxiCSS(); taxiToast("벤치에 앉았습니다 · 길 건너 풍경과 오가는 버스를 바라봅니다", 2800); return; }   /* third person: 쿠모 sits down on the bus-stop bench, like the park benches */
     if (o.userData.idx === "hoop") { hoopStart(o.userData.hoop); return; }
-    if (o.userData.idx === "valueHall") { if (!busy) pageGo({ valueHall: true }); return; }   // into the hall (valuehall.html)
+    if (o.userData.idx === "valueHall") { if (!busy) pageGo({ valueHall: true }); return; }
+    if (o.userData.idx === "kumoHome") { if (!busy) pageGo({ home: true }); return; }   // 쿠모네 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { if (!busy) pageGo({ library: true }); return; }
     if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }   // 도서관 할아버지 on his walk
-    if (o.userData.idx === "brand") { brandShow(o.userData.i); return; }   // a residential-brand post: that brand, large
+    if (o.userData.idx === "brand") { const B = OUT.brandPos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 };   // first tap: stand square in front of that post (on whichever side 쿠모 is)
+      if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - FP.yaw)) > 0.25) { moveTo(FP); return; } brandShow(o.userData.i); return; }   // a residential-brand post: that brand, large
     if (o.userData.idx === "kiosk2") { const KP = { x: -31, z: -33 + 7.2, yaw: 0, pitch: 0.06 };   // first tap: come round to stand square in front of the screen
       if (Math.hypot(cam.x - KP.x, cam.z - KP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - KP.yaw)) > 0.25) { moveTo(KP); return; } if (OUT.kiosk) OUT.kiosk.tap(hitUV); return; }   // the park kiosk: a hall, a page, or a photo large   // into the library (library.html)
     if (o.userData.idx === "bigScreen") { if (SCR.at && !anim && Math.hypot(cam.x - SCR.at.x, cam.z - SCR.at.z) < 1.5) screenBig(); else screenFace(); return; }   // first click: walk to face it; again: see it full size
-    if (o.userData.idx === "pz") { if (!PZ) pzStart(); else pzBoard(); return; }   // stepped or looked aside: back to the puzzle view
+    if (o.userData.idx === "pz") { const FP = { x: PZB.x + Math.sin(PZB.ry) * 5, z: PZB.z + Math.cos(PZB.ry) * 5, yaw: PZB.ry, pitch: 0.04 };   // first tap: stand square in front of the easel
+      if (!PZ && (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - FP.yaw)) > 0.25)) { moveTo(FP); return; } if (!PZ) pzStart(); else pzBoard(); return; }   // stepped or looked aside: back to the puzzle view
     if (o.userData.idx === "fountain") { coinThrow(); return; }   // the show only follows a thrown wish coin
     if (o.userData.idx === "coin") { coinTake(o.userData.coin); return; }
     if (o.userData.idx === "miniBus") { rideAsk(); return; }
@@ -12405,8 +12418,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const start = () => { BOOTED = true; resize(); if (!IS_PARK) buildLobby(); requestAnimationFrame(frame);
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
-        if ((arrive.from === "library" || arrive.from === "valueHall") && window.doorFx) { doorFx.closed(); setTimeout(() => doorFx.open(), 700); }   /* out through the doors: they open on the park */   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
+        if ((arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home") && window.doorFx) { doorFx.closed(); setTimeout(() => doorFx.open(), 700); }   /* out through the doors: they open on the park */   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }
       setTimeout(() => document.documentElement.classList.add("arrived"), 350);   // the scene is up: the moving card fades
