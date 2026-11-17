@@ -8225,10 +8225,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             page.forEach((it, j) => { const x = GX + (j % COLS) * cw, y = GY + Math.floor(j / COLS) * ch, idx = K.p * PP + j; K.hit.push([x, y, cw, ch, "i", idx]);
               const W2 = cw - 14, H2 = ch - 54; g.fillStyle = "#23262c"; g.fillRect(x + 7, y + 7, W2, H2);
               const at = it.wa && K.atl[it.wa[0]], own = K.img[it.file];
-              if (at && at !== "x") { const [, u, v, w, hh] = it.wa; cover(at, u * at.width, v * at.height, w * at.width, hh * at.height, x + 7, y + 7, W2, H2); }
+              if (at && at !== "x") { const [, u, v, w, hh] = it.wa, A = at.naturalWidth || at.width; cover(at, u * A, (1 - v - hh) * A, w * A, hh * A, x + 7, y + 7, W2, H2); }   // atlas v runs up from the bottom, as the halls read it
               else if (own && own.width) cover(own, 0, 0, own.width, own.height, x + 7, y + 7, W2, H2);
-              g.fillStyle = "#c9a86a"; g.font = `700 20px ${FONT}`; g.fillText(String(it.year || ""), x + 9, y + ch - 26); g.fillStyle = "#e6dfd2"; g.font = `500 20px ${FONT}`;
-              let t = it.title || ""; while (t.length > 1 && g.measureText(t).width > W2 - 70) t = t.slice(0, -1); if (t !== (it.title || "")) t += "…"; g.fillText(t, x + 70, y + ch - 26); });
+              g.fillStyle = "#c9a86a"; g.font = `700 20px ${FONT}`; const yr = String(it.year || ""); g.fillText(yr, x + 9, y + ch - 26); const tx = x + 9 + (yr ? g.measureText(yr).width + 12 : 0);   // the title starts after the year, however long the date
+              g.fillStyle = "#e6dfd2"; g.font = `500 20px ${FONT}`; let t = it.title || ""; const room = x + 7 + W2 - tx; while (t.length > 1 && g.measureText(t + "…").width > room) t = t.slice(0, -1); if (t !== (it.title || "")) t += "…"; if (room > 30) g.fillText(t, tx, y + ch - 26); });
             tex.needsUpdate = true; return page; };
           const fill = () => { const page = draw(), want = K.h * 1000 + K.p;   // then the thumbnails arrive: atlas first, the photo itself where there is no atlas
             page.forEach((it) => { const k = it.wa && it.wa[0];
@@ -9759,7 +9759,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   // ---- the kiosk's large view: the archive's own photo view (photo, year, title, caption, story), with ◀ ▶ through the hall and on into the next ----
   const KLB = { on: false, h: 0, i: 0 };
   function kioskLB(h, i) { KLB.on = true; KLB.h = h; KLB.i = i; const it = DATA[h].items[i]; openLB({ data: it, kind: "kioskPhoto" });
-    let nav = $("klbNav"); if (!nav) { const st = document.createElement("style"); st.textContent = "#klbNav{position:fixed;left:0;right:0;top:50%;display:flex;justify-content:space-between;padding:0 10px;pointer-events:none;z-index:100600}#klbNav button{pointer-events:auto;width:52px;height:52px;border-radius:50%;background:rgba(20,20,22,.8);color:#f2e7d2;border:1px solid rgba(201,168,106,.6);font-size:20px;cursor:pointer}#klbNav[hidden]{display:none}";
+    let nav = $("klbNav"); if (!nav) { const st = document.createElement("style"); st.textContent = "#klbNav{position:fixed;left:0;right:0;bottom:18px;display:flex;justify-content:center;gap:28px;padding:0 10px;pointer-events:none;z-index:100600}#klbNav button{pointer-events:auto;width:52px;height:52px;border-radius:50%;background:rgba(20,20,22,.8);color:#f2e7d2;border:1px solid rgba(201,168,106,.6);font-size:20px;cursor:pointer}#klbNav[hidden]{display:none}";
       document.head.appendChild(st); nav = document.createElement("div"); nav.id = "klbNav"; nav.innerHTML = '<button type="button" data-d="-1">◀</button><button type="button" data-d="1">▶</button>'; document.body.appendChild(nav);
       ["pointerdown", "pointerup"].forEach((ev) => nav.addEventListener(ev, (e) => e.stopPropagation())); nav.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { e.stopPropagation(); kioskStep(+b.dataset.d); } });
       document.addEventListener("keydown", (e) => { if (!KLB.on || $("lb").hidden) return; if (e.key === "ArrowRight" || e.key === "ArrowLeft") { kioskStep(e.key === "ArrowRight" ? 1 : -1); e.preventDefault(); e.stopImmediatePropagation(); } }, true);
@@ -11050,7 +11050,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "hoop") { hoopStart(o.userData.hoop); return; }
     if (o.userData.idx === "valueHall") { if (!busy) pageGo({ valueHall: true }); return; }   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { if (!busy) pageGo({ library: true }); return; }
-    if (o.userData.idx === "kiosk2") { if (OUT.kiosk) OUT.kiosk.tap(hitUV); return; }   // the park kiosk: a hall, a page, or a photo large   // into the library (library.html)
+    if (o.userData.idx === "kiosk2") { const KP = { x: -31, z: -33 + 7.2, yaw: 0, pitch: 0.06 };   // first tap: come round to stand square in front of the screen
+      if (Math.hypot(cam.x - KP.x, cam.z - KP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - KP.yaw)) > 0.25) { moveTo(KP); return; } if (OUT.kiosk) OUT.kiosk.tap(hitUV); return; }   // the park kiosk: a hall, a page, or a photo large   // into the library (library.html)
     if (o.userData.idx === "bigScreen") { if (SCR.at && !anim && Math.hypot(cam.x - SCR.at.x, cam.z - SCR.at.z) < 1.5) screenBig(); else screenFace(); return; }   // first click: walk to face it; again: see it full size
     if (o.userData.idx === "pz") { if (!PZ) pzStart(); else pzBoard(); return; }   // stepped or looked aside: back to the puzzle view
     if (o.userData.idx === "fountain") { coinThrow(); return; }   // the show only follows a thrown wish coin
