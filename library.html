@@ -47,6 +47,7 @@ html,body{margin:0;height:100%;background:#141414;overflow:hidden;font-family:"N
 #ebImg{max-width:100%;max-height:100%;box-shadow:0 10px 40px rgba(0,0,0,.6);background:#fff;transition:opacity .2s}#ebImg.ld{opacity:.35}
 #ebook .nav{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px;color:#e8dfcf;font-size:14px}
 #easyBook{position:fixed;inset:0;z-index:13;background:#182b29;display:none}#easyBook.on{display:block}#easyBook iframe{width:100%;height:100%;border:0}#easyBook #easyClose{position:absolute;top:12px;right:12px;z-index:2;background:rgba(20,30,28,.9);color:#f2e7d2;border:1px solid rgba(201,168,106,.7);border-radius:999px;padding:8px 16px;font:600 14px inherit;font-family:inherit;cursor:pointer}
+#easyBtn{position:fixed;right:16px;top:152px;z-index:6;background:rgba(31,74,68,.94);color:#f0e6cc;border:1px solid rgba(201,168,106,.7);border-radius:999px;padding:7px 14px;font:600 13px inherit;font-family:inherit;cursor:pointer}
 #bookBtn{position:fixed;right:16px;top:108px;z-index:6;background:rgba(90,59,34,.92);color:#f6ead2;border:1px solid rgba(201,168,106,.7);border-radius:999px;padding:7px 14px;font:600 13px inherit;font-family:inherit;cursor:pointer}
 @media (max-width:700px){#hint{display:none}#hud h1{font-size:20px}}
 </style>
@@ -81,6 +82,7 @@ window.doorFx = (function () { const el = () => document.getElementById("doorFx"
 <div id="getItem"><div class="rays"></div><i class="spk" style="left:30%;top:30%;animation-delay:0s"></i><i class="spk" style="left:68%;top:26%;animation-delay:0.4s"></i><i class="spk" style="left:24%;top:62%;animation-delay:0.8s"></i><i class="spk" style="left:74%;top:60%;animation-delay:0.2s"></i><i class="spk" style="left:50%;top:18%;animation-delay:1.0s"></i><i class="spk" style="left:40%;top:74%;animation-delay:0.6s"></i><i class="spk" style="left:62%;top:78%;animation-delay:1.2s"></i><i class="spk" style="left:18%;top:44%;animation-delay:1.4s"></i><i class="spk" style="left:82%;top:42%;animation-delay:0.9s"></i><div class="k">ITEM GET</div><div id="giBook"><div class="cv"><b>KUMHO</b><i>금호<br>헤리티지북</i><em>1946 — 2026</em></div><div class="pg"></div></div><div class="t">금호 헤리티지북을 받았어요!</div><div class="s">책을 누르면 펼쳐져요</div></div>
 <div id="ebook"><div class="bar"><div><b>금호 헤리티지북</b><span id="ebPg"></span></div><button type="button" id="ebClose">닫기 ✕</button></div><div id="ebStage"><img id="ebImg" alt="금호 헤리티지북 페이지"></div><div class="nav"><button type="button" id="ebPrev">◀ 이전</button><button type="button" id="ebNext">다음 ▶</button></div></div>
 <button type="button" id="bookBtn" hidden>📖 헤리티지북</button>
+<button type="button" id="easyBtn" hidden>📗 쉽게 보는 금호 80년</button>
 <button type="button" id="sndBtn" aria-pressed="true">♪ 음악 켬</button>
 <script>/**
  * @license
@@ -4085,7 +4087,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function setGI(kind) { GI.kind = kind; const easy = kind === "easy", cv = document.querySelector("#giBook .cv");
     cv.innerHTML = easy ? "<b>KUMHO</b><i>쉽게 보는<br>금호 80년</i><em>그림으로 읽는 이야기</em>" : "<b>KUMHO</b><i>금호<br>헤리티지북</i><em>1946 — 2026</em>";
     cv.style.background = easy ? "linear-gradient(135deg,#1f4a44,#2f6b62 45%,#173a35)" : ""; document.querySelector("#getItem .t").textContent = easy ? "쉽게 보는 금호 80년을 찾았어요!" : "금호 헤리티지북을 받았어요!"; }
-  function openGI() { $("getItem").classList.remove("on"); if (GI.kind === "easy") openEasy(); else openEbook(0); }
+  function openGI() { $("getItem").classList.remove("on"); if (GI.kind === "easy") { try { localStorage.setItem("kumhoEasyGot", "1"); } catch (e) {} $("easyBtn").hidden = false; openEasy(); } else openEbook(0); }
+  try { if (localStorage.getItem("kumhoEasyGot") === "1") $("easyBtn").hidden = false; } catch (e) {}   // found once: a button to open it any time
+  $("easyBtn").addEventListener("click", (e) => { e.stopPropagation(); openEasy(); });
   function openEasy() { let el = $("easyBook"); if (!el) { el = document.createElement("div"); el.id = "easyBook"; el.innerHTML = '<button type="button" id="easyClose">닫기 ✕</button><iframe title="쉽게 보는 금호 80년" src="assets/easybook.html"></iframe>'; document.body.appendChild(el);
       $("easyClose").addEventListener("click", (e) => { e.stopPropagation(); el.classList.remove("on"); }); }
     el.classList.add("on"); }
@@ -4104,16 +4108,18 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   $("bookBtn").hidden = !LIB.given; $("bookBtn").addEventListener("click", (e) => { e.stopPropagation(); openEbook(HB.i); });
   // ---- 2층 오른쪽 끝 책장: 쉽게 보는 금호 80년, a teal book standing out from the shelf, glowing and twinkling ----
   const EASY = { hint: false, t: 0, sp: [] };
-  { const ex = 14.3, ey = MY + 1.25, ez = Z0 + 0.32, G = new THREE.Group(); G.position.set(ex, ey, ez); scene.add(G); EASY.G = G;
+  { const ex = 13.6, ez = Z0 + 1.7, TH = 0.82, ey = MY + TH + 0.44, G = new THREE.Group();   // on a small oak display table in front of the shelf end
+    { const oakT = lam(0x7a5236), legM = lam(0x3a2a20); box(1.3, 0.06, 0.8, oakT, ex, MY + TH - 0.03, ez); [[-0.58, -0.33], [0.58, -0.33], [-0.58, 0.33], [0.58, 0.33]].forEach(([dx, dz]) => box(0.05, TH - 0.06, 0.05, legM, ex + dx, MY + (TH - 0.06) / 2, ez + dz));
+      box(0.5, 0.03, 0.26, lam(0xb48a4e), ex, MY + TH + 0.015, ez + 0.05); const st = box(0.04, 0.5, 0.04, lam(0xb48a4e), ex, MY + TH + 0.25, ez - 0.07); st.rotation.x = -0.25; block(ex - 0.7, ex + 0.7, ez - 0.45, ez + 0.45, MY, MY + 1.2); } G.position.set(ex, ey, ez); scene.add(G); EASY.G = G;
     const ct = tex(256, 340, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, "#1f4a44"); gr.addColorStop(1, "#173a35"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
       g.strokeStyle = "#d8b878"; g.lineWidth = 6; g.strokeRect(16, 16, w - 32, h - 32); g.fillStyle = "#f0d9a6"; g.textAlign = "center"; g.font = `800 34px ${FONT}`; g.fillText("쉽게 보는", w / 2, 140); g.fillText("금호 80년", w / 2, 186); g.font = `600 18px ${FONT}`; g.fillText("KUMHO", w / 2, 92); });
     const side = new THREE.MeshBasicMaterial({ color: 0x24564f }), pages = new THREE.MeshBasicMaterial({ color: 0xf3ead6 }), cover = new THREE.MeshBasicMaterial({ map: ct, toneMapped: false });
-    const bk = box(0.62, 0.82, 0.14, [pages, side, side, side, cover, side], 0, 0, 0.12, G); bk.rotation.y = -0.35;   // standing face-out at the shelf's end
+    const bk = box(0.62, 0.82, 0.08, [pages, side, side, side, cover, side], 0, 0, 0, G); bk.rotation.x = -0.25;   // propped on a little bronze stand, leaning back
     const halo = tex(128, 128, (g, w, h) => { const r = g.createRadialGradient(64, 64, 4, 64, 64, 64); r.addColorStop(0, "rgba(255,226,150,.9)"); r.addColorStop(0.45, "rgba(255,206,110,.35)"); r.addColorStop(1, "rgba(255,206,110,0)"); g.fillStyle = r; g.fillRect(0, 0, w, h); });
     EASY.glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); EASY.glow.scale.set(1.9, 1.9, 1); EASY.glow.position.set(0, 0, 0.3); G.add(EASY.glow);
     for (let i = 0; i < 7; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); sp.userData.ph = i * 0.9; sp.userData.p = [(rnd() - 0.5) * 1.1, (rnd() - 0.5) * 1.1, 0.35 + rnd() * 0.2]; G.add(sp); EASY.sp.push(sp); }
     const pk = box(1.2, 1.4, 0.8, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 0, 0.3, G); pk.userData.idx = "easyBook"; PICK.push(pk); }
-  function takeEasy() { if (S.fy < MY - 0.5) { toast("2층 오른쪽 끝 책장에 있어요. 계단으로 올라가 보세요 ✨"); return; } setGI("easy"); $("getItem").classList.add("on"); }
+  function takeEasy() { if (S.fy < MY - 0.5) { toast("2층 오른쪽 끝 책장에 있어요. 계단으로 올라가 보세요 ✨"); return; } setGI("easy"); $("getItem").classList.add("on"); try { localStorage.setItem("kumhoEasyGot", "1"); } catch (e) {} $("easyBtn").hidden = false; }
   window.__libT = { LIB, easy: () => takeEasy(), ask: () => askLibrarian(), open: (i) => openEbook(i) };
   const uiOpen = () => $("ebook").classList.contains("on") || $("getItem").classList.contains("on") || dlg.el.classList.contains("on");
   function meetLibrarian() { LIB.pend = false; S.tx = null; S.yaw = Math.atan2(-(LIB.x - S.x), -(LIB.z - S.z)); S.pitch = -0.02;
