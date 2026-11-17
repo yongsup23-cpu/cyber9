@@ -2,6 +2,9 @@
 <html lang="ko">
 <head><meta charset="utf-8">
 <script>window.KUMHO_PAGE = "park";</script>
+<script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
+(function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); if (!(Date.now() - h < 120000)) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
+  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); } catch (e) {} }; })();</script>
 <title>금호 아카이브</title>
 <script>document.documentElement.classList.add("easel")</script>
 <script>/* arriving from the other page (lobby ⇄ park): no start screen, only a "moving" card until the scene is ready */
@@ -9812,9 +9815,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function pageGo(to) {
     window.__pageLeaving = true; busy = true;
     try { sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({ ride: !!RIDE.ok, sound: !!SND.on, t: Date.now() }, to))); } catch (e) {}
-    if ((to.library || to.valueHall) && window.doorFx) { doorFx.close(() => { freeGL(); location.replace(to.library ? "library.html" : "valuehall.html"); }); return; }   // through the doors: they swing shut, then the room
+    if ((to.library || to.valueHall) && window.doorFx) { doorFx.close(() => { freeGL(); kumhoHop(); location.replace(to.library ? "library.html" : "valuehall.html"); }); return; }   // through the doors: they swing shut, then the room
     const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">${to.library ? "금호 도서관으로 이동 중…" : to.valueHall ? "금호 가치체계 전시관으로 이동 중…" : to.park ? "금호 공원으로 이동 중…" : "금호 아카이브로 이동 중…"}</div>`; }
-    setTimeout(() => { freeGL(); location.href = to.library ? "library.html" : to.valueHall ? "valuehall.html" : to.park ? "park.html" : "index.html"; }, 160);
+    setTimeout(() => { freeGL(); kumhoHop(); location.href = to.library ? "library.html" : to.valueHall ? "valuehall.html" : to.park ? "park.html" : "index.html"; }, 160);
   }
   function enterTarget(target) {
     if (target.outside && !IS_PARK) { pageGo({ park: true }); return; }

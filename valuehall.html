@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="ko">
 <head><meta charset="utf-8">
+<script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
+(function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); if (!(Date.now() - h < 120000)) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
+  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); } catch (e) {} }; })();</script>
 <title>금호 가치체계 전시관</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap">
@@ -4064,7 +4067,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.fov = Math.max(35, Math.min(75, camera.fov + e.deltaY * 0.03)); camera.updateProjectionMatrix(); }, { passive: false });
   const toast = (t) => { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2400); };
   function leave() { try { const g = JSON.parse(sessionStorage.getItem("kumhoVhCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "valueHall", t: Date.now() }))); } catch (e) {}
-    doorFx.close(() => { freeGL(); location.replace("park.html"); }); }   // the doors swing shut behind, then the park
+    doorFx.close(() => { freeGL(); kumhoHop(); location.replace("park.html"); }); }   // the doors swing shut behind, then the park
   $("exitBtn").addEventListener("click", leave);
   try { const g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); if (g && g.valueHall) { sessionStorage.removeItem("kumhoPageGo"); sessionStorage.setItem("kumhoVhCarry", JSON.stringify({ ride: g.ride, sound: g.sound })); } } catch (e) {}
 
