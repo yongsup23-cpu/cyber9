@@ -11285,7 +11285,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   // ===== 도서관 할아버지, out for a walk on the park's front lawn across the street from the archive: talk to him for the 아테라 타운 지도 =====
   const NPC = { g: null, world: null, loading: false, mix: null, aW: null, aT: null, aI: null, ww: 0, tw: 0, tx: 0, tz: -24.5, wait: 1, talk: false, t: 0 };
   const NPC_AREA = [-10, 12, -27.5, -23];
-  let mapGot = false; try { mapGot = localStorage.getItem("kumhoMapGot") === "1"; } catch (e) {}
+  try { localStorage.removeItem("kumhoMapGot"); } catch (e) {}   // found items now last one visit (this tab) only: a new visit starts from the beginning
+  let mapGot = false; try { mapGot = sessionStorage.getItem("kumhoMapGot") === "1"; } catch (e) {}
   function npcLoad() { NPC.loading = true;
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
     if (!gltfLoader) return;
@@ -11325,7 +11326,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (d > 3.5) { const ux = (cam.x - G.position.x) / d, uz = (cam.z - G.position.z) / d, sx = G.position.x + ux * 2.3, sz = G.position.z + uz * 2.3;   // walk up to him first
       moveTo({ x: sx, z: sz, yaw: Math.atan2(-(G.position.x - sx), -(G.position.z - sz)), pitch: 0.06 }); setTimeout(go, 1300); } else go(); }
   // the map as a found item: rays and sparkles, then the map itself
-  function mapGive() { mapGot = true; try { localStorage.setItem("kumhoMapGot", "1"); } catch (e) {} mapBtn().hidden = false;
+  function mapGive() { mapGot = true; try { sessionStorage.setItem("kumhoMapGot", "1"); } catch (e) {} mapBtn().hidden = false;
     let el = $("mapGet"); if (!el) { const st = document.createElement("style"); st.textContent = `#mapGet{position:fixed;inset:0;z-index:100450;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(circle at 50% 46%,rgba(60,40,18,.55),rgba(8,6,4,.88) 70%);overflow:hidden;cursor:pointer}#mapGet[hidden]{display:none}
 #mapGet .rays{position:absolute;left:50%;top:46%;width:180vmax;height:180vmax;margin:-90vmax 0 0 -90vmax;background:repeating-conic-gradient(rgba(255,214,140,.16) 0 7deg,rgba(255,214,140,0) 7deg 20deg);animation:mgspin 16s linear infinite;-webkit-mask:radial-gradient(circle,#000 8%,transparent 45%);mask:radial-gradient(circle,#000 8%,transparent 45%)}@keyframes mgspin{to{transform:rotate(360deg)}}
 #mapGet .k{position:relative;color:#ffd98c;font-size:13px;letter-spacing:.3em;font-weight:700}#mapGet .t{position:relative;color:#fff8ea;font-size:24px;font-weight:800}#mapGet .s{position:relative;color:#e7d3ae;font-size:14px}

@@ -4064,8 +4064,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const sun = new THREE.DirectionalLight(0xfff2da, 0.75); sun.position.set(30, 18, 8); scene.add(sun);
   [[0, 6, 2], [-9, 6, 2], [9, 6, 2], [0, 3.8, -11.5], [-10, 3.8, -11.5], [10, 3.8, -11.5]].forEach(([x, y, z]) => { const p = new THREE.PointLight(0xffd6a0, 0.55, 16, 2); p.position.set(x, y, z); scene.add(p); });
   // ---- the librarian: assets/librarian.glb (a white-bearded grandfather in a brown waistcoat), standing behind the counter ----
+  try { localStorage.removeItem("kumhoHeritageGot"); localStorage.removeItem("kumhoEasyGot"); } catch (e) {}   // found items now last one visit (this tab) only: a new visit starts from the beginning
   let mixer = null; const LIB = { obj: null, aT: null, aI: null, w: 0, was: 0, talk: 0, t: 0, pend: false, given: false, x: DX - 1.0, z: DZ - DD / 2 - 0.8 };
-  try { LIB.given = localStorage.getItem("kumhoHeritageGot") === "1"; } catch (e) {}
+  try { LIB.given = sessionStorage.getItem("kumhoHeritageGot") === "1"; } catch (e) {}
   if (THREE.GLTFLoader) { const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L.setMeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
     L.load("assets/librarian.glb", (g) => { const m = g.scene, k = 1.95 / 1.7;   // the rigged model stands 1.7 m tall in its own units
       m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = false; } }); m.scale.setScalar(k);
@@ -4087,13 +4088,13 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function setGI(kind) { GI.kind = kind; const easy = kind === "easy", cv = document.querySelector("#giBook .cv");
     cv.innerHTML = easy ? "<b>KUMHO</b><i>쉽게 보는<br>금호 80년</i><em>그림으로 읽는 이야기</em>" : "<b>KUMHO</b><i>금호<br>헤리티지북</i><em>1946 — 2026</em>";
     cv.style.background = easy ? "linear-gradient(135deg,#1f4a44,#2f6b62 45%,#173a35)" : ""; document.querySelector("#getItem .t").textContent = easy ? "쉽게 보는 금호 80년을 찾았어요!" : "금호 헤리티지북을 받았어요!"; }
-  function openGI() { $("getItem").classList.remove("on"); if (GI.kind === "easy") { try { localStorage.setItem("kumhoEasyGot", "1"); } catch (e) {} $("easyBtn").hidden = false; openEasy(); } else openEbook(0); }
-  try { if (localStorage.getItem("kumhoEasyGot") === "1") $("easyBtn").hidden = false; } catch (e) {}   // found once: a button to open it any time
+  function openGI() { $("getItem").classList.remove("on"); if (GI.kind === "easy") { try { sessionStorage.setItem("kumhoEasyGot", "1"); } catch (e) {} $("easyBtn").hidden = false; openEasy(); } else openEbook(0); }
+  try { if (sessionStorage.getItem("kumhoEasyGot") === "1") $("easyBtn").hidden = false; } catch (e) {}   // found once: a button to open it any time
   $("easyBtn").addEventListener("click", (e) => { e.stopPropagation(); openEasy(); });
   function openEasy() { let el = $("easyBook"); if (!el) { el = document.createElement("div"); el.id = "easyBook"; el.innerHTML = '<button type="button" id="easyClose">닫기 ✕</button><iframe title="쉽게 보는 금호 80년" src="assets/easybook.html"></iframe>'; document.body.appendChild(el);
       $("easyClose").addEventListener("click", (e) => { e.stopPropagation(); el.classList.remove("on"); }); }
     el.classList.add("on"); }
-  function giveBook() { setGI("hb"); const gi = $("getItem"); gi.classList.add("on"); LIB.given = true; try { localStorage.setItem("kumhoHeritageGot", "1"); } catch (e) {} $("bookBtn").hidden = false; }
+  function giveBook() { setGI("hb"); const gi = $("getItem"); gi.classList.add("on"); LIB.given = true; try { sessionStorage.setItem("kumhoHeritageGot", "1"); } catch (e) {} $("bookBtn").hidden = false; }
   $("getItem").addEventListener("click", (e) => { e.stopPropagation(); if (e.target.closest("#giBook")) openGI(); else $("getItem").classList.remove("on"); });
   function openEbook(i) { HB.i = i || 0; $("ebook").classList.add("on"); ebShow(); }
   function ebShow() { const img = $("ebImg"); img.classList.add("ld"); const u = HB.dir + String(HB.i + 1).padStart(2, "0") + ".jpg", pre = new Image(); img.dataset.want = u;
@@ -4119,11 +4120,13 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     EASY.glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); EASY.glow.scale.set(1.9, 1.9, 1); EASY.glow.position.set(0, 0, 0.3); G.add(EASY.glow);
     for (let i = 0; i < 7; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); sp.userData.ph = i * 0.9; sp.userData.p = [(rnd() - 0.5) * 1.1, (rnd() - 0.5) * 1.1, 0.35 + rnd() * 0.2]; G.add(sp); EASY.sp.push(sp); }
     const pk = box(1.2, 1.4, 0.8, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 0, 0.3, G); pk.userData.idx = "easyBook"; PICK.push(pk); }
-  function takeEasy() { if (S.fy < MY - 0.5) { toast("2층 오른쪽 끝 책장에 있어요. 계단으로 올라가 보세요 ✨"); return; } setGI("easy"); $("getItem").classList.add("on"); try { localStorage.setItem("kumhoEasyGot", "1"); } catch (e) {} $("easyBtn").hidden = false; }
+  function takeEasy() { if (!LIB.given) { toast("먼저 1층 안내데스크의 할아버지에게 말을 걸어 보세요 📚"); return; }   // the Heritage Book comes first
+    if (S.fy < MY - 0.5) { toast("2층 오른쪽 끝 책장에 있어요. 계단으로 올라가 보세요 ✨"); return; } setGI("easy"); $("getItem").classList.add("on"); try { sessionStorage.setItem("kumhoEasyGot", "1"); } catch (e) {} $("easyBtn").hidden = false; }
   window.__libT = { LIB, easy: () => takeEasy(), ask: () => askLibrarian(), open: (i) => openEbook(i) };
   const uiOpen = () => $("ebook").classList.contains("on") || $("getItem").classList.contains("on") || dlg.el.classList.contains("on");
   function meetLibrarian() { LIB.pend = false; S.tx = null; S.yaw = Math.atan2(-(LIB.x - S.x), -(LIB.z - S.z)); S.pitch = -0.02;
     if (!LIB.given) say(["금호 도서관에 잘 왔어.", "네게 줄 금호 헤리티지북이 있어."], giveBook);
+    else if (!$("easyBtn").hidden) say(["쉽게 보는 금호 80년도 찾았구나! 잘했다, 쿠모.", "이제 밖으로 나가 공원을 둘러보렴. 그네도 타고, 소원 동전도 줍고, 농구도 하고, 미니버스도 탈 수 있단다.", "공원에서 나도 산책하고 있을 테니 만나면 인사하렴. 즐거운 시간 보내거라!"]);   // both books found: off to enjoy the park
     else say(["또 왔구나! 금호 헤리티지북은 잘 보고 있니?", "2층 책장 끝에 가 보렴. 좀 더 쉽게 풀어 쓴 헤리티지북이 꽂혀 있단다.", "관심 있으면 한번 찾아보렴. 반짝이고 있을 거야!"], () => { EASY.hint = true; toast("2층 오른쪽 끝 책장에서 반짝이는 책을 찾아보세요 ✨"); }); }
   function askLibrarian() { const dx = LIB.x - S.x, dz = (DZ + DD / 2 + 1.0) - S.z;
     if (Math.abs(S.x - LIB.x) < 2.2 && S.z > DZ && S.z - DZ < 3.4) return meetLibrarian();   // close enough, across the counter
