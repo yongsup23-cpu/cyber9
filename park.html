@@ -7798,11 +7798,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         sh.fragmentShader = "uniform sampler2D slabMap; varying vec2 vWxz;\n" + sh.fragmentShader.replace("#include <map_fragment>",
           "vec4 cT = texture2D(map, vUv); vec4 sT = texture2D(slabMap, vec2(vWxz.x, -vWxz.y) / 2.4); vec4 texelColor = mapTexelToLinear(vec4(mix(sT.rgb * 0.94, cT.rgb, cT.a), 1.0)); diffuseColor *= texelColor;"); };
       const cg = new THREE.Mesh(new THREE.PlaneGeometry(840, 408), cgM); cg.rotation.x = -Math.PI / 2; cg.position.set(0, 0.012, -12 - 204); world.add(cg);
-      { // the street down the park's west side: the park's own path covers its far 4 m, so the painted centre line (x −48) sat off to one side —
-        // paint it over and draw the line down the middle of the 2 lanes left open (x −50)
-        const asp = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 232), new THREE.MeshLambertMaterial({ color: new THREE.Color(0x5a5d62).convertSRGBToLinear() })); asp.rotation.x = -Math.PI / 2; asp.position.set(-48, 0.02, -130); world.add(asp);
-        const dm = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xf2f2ee).convertSRGBToLinear() }), dg = new THREE.PlaneGeometry(0.25, 2.5);
-        for (const [z0, z1] of [[-76, -26], [-138, -88], [-200, -150], [-246, -212]]) for (let z = z1 - 3; z > z0 + 2; z -= 5) { const d = new THREE.Mesh(dg, dm); d.rotation.x = -Math.PI / 2; d.position.set(-50, 0.022, z); world.add(d); } }
+      { // the street down the park's west side: the park's own path covers its far 4 m, so the painted centre line (x −48) sat off to one side — painted out, block by block (the crossings left as they are)
+        const asp = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x5a5d62).convertSRGBToLinear(), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+        for (const [z0, z1] of [[-75.9, -26.1], [-137.9, -88.1], [-199.9, -150.1], [-246, -212.1]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.6, z1 - z0), asp); m.rotation.x = -Math.PI / 2; m.position.set(-48, 0.016, (z0 + z1) / 2); world.add(m); } }
       // mountains on the horizon all round, two ridgelines softened by the haze (gone in fog, as real hills are)
       [[470, 0x6f8778, 1.0, 0.3], [430, 0x5d7566, 0.7, 2.1]].forEach(([Rr, colr, hk, ph]) => { const N = 256, pos = [], idx = [];
         for (let i = 0; i <= N; i++) { const a = i / N * Math.PI * 2, hh = (38 + 30 * Math.sin(a * 3 + ph) + 22 * Math.sin(a * 7 + ph * 2.3) + 12 * Math.sin(a * 17 + ph) + 6 * Math.sin(a * 41)) * hk + 24;
@@ -8134,54 +8132,32 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const can = new THREE.Mesh(new THREE.ConeGeometry(1.35, 0.55, 8, 1, true), canM); can.position.set(px, 2.45, pz); world.add(can);
             const tb = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.04, 16), tabM); tb.position.set(px, 0.72, pz); world.add(tb);
             [[0.75, 0], [-0.75, 0], [0, 0.75]].forEach(([a, b]) => { const c = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.45, 0.42), chM); c.position.set(px + a, 0.225, pz + b); world.add(c); }); }); } }
-      // the library building: a Kumho Express coach blown up to a building — its long side to the street (what you see coming out of the archive),
-      // its nose to the park with the library door set in the middle of it; white body, the red-and-orange Kumho sweep, a dark window band, big wheels
-      { const L = 46, H = 15, W = 13, Y0 = 1.1, XF = -62.6, XR = XF - L, ZC = -113, S = new THREE.Group(); S.position.set((XF + XR) / 2, 0, ZC); world.add(S);
-        const sideT = (flip) => canvasTex(2048, Math.round(2048 * H / L), (g, Wc, Hc) => { const k = Wc / L; g.save(); if (flip) { g.translate(Wc, 0); g.scale(-1, 1); }   // drawn with the nose at the right
-          const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
-          g.clearRect(0, 0, Wc, Hc); rr(0, 0, Wc, Hc, 1.6 * k); g.fillStyle = "#f6f5f1"; g.fill(); g.save(); rr(0, 0, Wc, Hc, 1.6 * k); g.clip();
-          const wy0 = Hc * 0.13, wy1 = Hc * 0.5; const wg = g.createLinearGradient(0, wy0, 0, wy1); wg.addColorStop(0, "#2c3a46"); wg.addColorStop(0.5, "#1a232c"); wg.addColorStop(1, "#11171d"); g.fillStyle = wg; rr(Wc * 0.03, wy0, Wc * 0.94, wy1 - wy0, 0.9 * k); g.fill();   // the window band
-          g.fillStyle = "rgba(255,255,255,.10)"; for (let i = 0; i < 9; i++) { const x = Wc * (0.06 + i * 0.1); g.beginPath(); g.moveTo(x, wy0); g.lineTo(x + Wc * 0.05, wy0); g.lineTo(x + Wc * 0.02, wy1); g.lineTo(x - Wc * 0.03, wy1); g.fill(); }
-          g.fillStyle = "#0c1015"; for (let i = 1; i < 9; i++) g.fillRect(Wc * (0.03 + i * 0.94 / 9) - 4, wy0, 8, wy1 - wy0);   // pillars between the panes
-          const sw = (c, a, b, t) => { g.fillStyle = c; g.beginPath(); g.moveTo(0, Hc * a); g.bezierCurveTo(Wc * 0.35, Hc * a, Wc * 0.55, Hc * b, Wc, Hc * b); g.lineTo(Wc, Hc * (b + t)); g.bezierCurveTo(Wc * 0.55, Hc * (b + t), Wc * 0.35, Hc * (a + t), 0, Hc * (a + t)); g.fill(); };
-          sw("#f26a1f", 0.56, 0.74, 0.07); sw("#d7262e", 0.64, 0.82, 0.06);   // the sweep, rising toward the back
-          g.fillStyle = "#d7262e"; g.font = `italic 900 ${Math.round(Hc * 0.1)}px "Helvetica Neue", Arial, sans-serif`; g.textAlign = "left"; g.textBaseline = "alphabetic";
-          if (flip) { g.save(); g.translate(Wc, 0); g.scale(-1, 1); g.fillText("KUMHO EXPRESS", Wc * 0.42, Hc * 0.66); g.restore(); } else g.fillText("KUMHO EXPRESS", Wc * 0.08, Hc * 0.66);
-          if (!flip) { g.fillStyle = "#1a232c"; rr(Wc * 0.84, Hc * 0.13, Wc * 0.07, Hc * 0.75, 0.4 * k); g.fill(); g.strokeStyle = "#9aa3ab"; g.lineWidth = 6; g.strokeRect(Wc * 0.875, Hc * 0.15, 2, Hc * 0.7); }   // the coach door, behind the front wheel
-          g.fillStyle = "#1b1d20"; [0.14, 0.7, 0.8].forEach((u) => { g.beginPath(); g.arc(Wc * (1 - u), Hc, Hc * 0.2, Math.PI, 0); g.fill(); });   // wheel arches
-          g.fillStyle = "#c9cbcd"; g.fillRect(0, Hc * 0.95, Wc, Hc * 0.05); g.restore(); g.restore(); });
-        const frontT = canvasTex(1024, Math.round(1024 * H / W), (g, Wc, Hc) => { const k = Wc / W;
-          const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
-          g.clearRect(0, 0, Wc, Hc); rr(0, 0, Wc, Hc, 1.6 * k); g.fillStyle = "#f6f5f1"; g.fill();
-          g.fillStyle = "#101418"; rr(Wc * 0.08, Hc * 0.035, Wc * 0.84, Hc * 0.075, 0.3 * k); g.fill(); g.fillStyle = "#ff9a2e"; g.font = `800 ${Math.round(Hc * 0.05)}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("금호도서관  KUMHO LIBRARY", Wc / 2, Hc * 0.073);   // the destination board
-          const wg = g.createLinearGradient(0, Hc * 0.13, 0, Hc * 0.5); wg.addColorStop(0, "#3a4b5a"); wg.addColorStop(1, "#141b22"); g.fillStyle = wg; rr(Wc * 0.05, Hc * 0.13, Wc * 0.9, Hc * 0.37, 1.0 * k); g.fill();   // the windscreen
-          g.fillStyle = "rgba(255,255,255,.12)"; g.beginPath(); g.moveTo(Wc * 0.12, Hc * 0.13); g.lineTo(Wc * 0.3, Hc * 0.13); g.lineTo(Wc * 0.18, Hc * 0.5); g.lineTo(Wc * 0.05, Hc * 0.5); g.fill();
-          g.strokeStyle = "#0b0e11"; g.lineWidth = 10; g.beginPath(); g.moveTo(Wc * 0.5, Hc * 0.13); g.lineTo(Wc * 0.5, Hc * 0.5); g.stroke();
-          g.lineWidth = 6; g.beginPath(); g.moveTo(Wc * 0.2, Hc * 0.49); g.lineTo(Wc * 0.44, Hc * 0.4); g.moveTo(Wc * 0.62, Hc * 0.49); g.lineTo(Wc * 0.86, Hc * 0.4); g.stroke();   // wipers
-          g.fillStyle = "#d7262e"; g.fillRect(0, Hc * 0.52, Wc, Hc * 0.035); g.fillStyle = "#f26a1f"; g.fillRect(0, Hc * 0.555, Wc, Hc * 0.02);
-          g.fillStyle = "#d7262e"; g.font = `italic 900 ${Math.round(Hc * 0.045)}px "Helvetica Neue", Arial, sans-serif`; g.fillText("KUMHO EXPRESS", Wc / 2, Hc * 0.61);
-          [[0.06, 0.25], [0.69, 0.25]].forEach(([x, w]) => { g.fillStyle = "#2a2f35"; rr(Wc * x, Hc * 0.64, Wc * w, Hc * 0.06, 0.3 * k); g.fill(); g.fillStyle = "#fff6dc"; rr(Wc * (x + 0.02), Hc * 0.65, Wc * (w * 0.45), Hc * 0.04, 0.2 * k); g.fill(); g.fillStyle = "#f2a640"; g.fillRect(Wc * (x + w * 0.62), Hc * 0.655, Wc * w * 0.3, Hc * 0.03); });   // headlamps
-          g.fillStyle = "#2b2f34"; g.fillRect(Wc * 0.1, Hc * 0.73, Wc * 0.8, Hc * 0.06); g.fillStyle = "#c9cbcd"; g.fillRect(0, Hc * 0.92, Wc, Hc * 0.08); });   // grille band, bumper
-        const rearT = canvasTex(1024, Math.round(1024 * H / W), (g, Wc, Hc) => { const k = Wc / W;
-          const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
-          g.clearRect(0, 0, Wc, Hc); rr(0, 0, Wc, Hc, 1.6 * k); g.fillStyle = "#f6f5f1"; g.fill(); g.fillStyle = "#1a232c"; rr(Wc * 0.1, Hc * 0.13, Wc * 0.8, Hc * 0.25, 0.8 * k); g.fill();
-          g.fillStyle = "#d7262e"; g.fillRect(0, Hc * 0.5, Wc, Hc * 0.05); g.fillStyle = "#f26a1f"; g.fillRect(0, Hc * 0.56, Wc, Hc * 0.03);
-          g.fillStyle = "#d7262e"; g.font = `italic 900 ${Math.round(Hc * 0.06)}px "Helvetica Neue", Arial, sans-serif`; g.textAlign = "center"; g.fillText("KUMHO", Wc / 2, Hc * 0.47);
-          [0.06, 0.8].forEach((x) => { g.fillStyle = "#b8141c"; rr(Wc * x, Hc * 0.62, Wc * 0.14, Hc * 0.16, 0.3 * k); g.fill(); }); g.fillStyle = "#c9cbcd"; g.fillRect(0, Hc * 0.92, Wc, Hc * 0.08); });
-        const body = new THREE.MeshLambertMaterial({ color: 0xf2f1ed });
-        { const sh = new THREE.Shape(), r = 1.6; sh.moveTo(-L / 2 + r, 0); sh.lineTo(L / 2 - r, 0); sh.quadraticCurveTo(L / 2, 0, L / 2, r); sh.lineTo(L / 2, H - r); sh.quadraticCurveTo(L / 2, H, L / 2 - r, H); sh.lineTo(-L / 2 + r, H); sh.quadraticCurveTo(-L / 2, H, -L / 2, H - r); sh.lineTo(-L / 2, r); sh.quadraticCurveTo(-L / 2, 0, -L / 2 + r, 0);
-          const b = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: W - 0.6, bevelEnabled: true, bevelThickness: 0.3, bevelSize: 0.3, bevelSegments: 3, curveSegments: 6 }), body); b.position.set(0, Y0, -(W - 0.6) / 2); b.castShadow = true; b.receiveShadow = true; S.add(b); }
-        const face = (t, w, h, x, y, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshLambertMaterial({ map: t, transparent: true, alphaTest: 0.5 })); m.position.set(x, y, z); m.rotation.y = ry; S.add(m); return m; };
-        face(sideT(false), L + 0.6, H + 0.6, 0, Y0 + H / 2, W / 2 + 0.03, 0); face(sideT(true), L + 0.6, H + 0.6, 0, Y0 + H / 2, -W / 2 - 0.03, Math.PI);
-        face(frontT, W + 0.6, H + 0.6, L / 2 + 0.33, Y0 + H / 2, 0, Math.PI / 2); face(rearT, W + 0.6, H + 0.6, -L / 2 - 0.33, Y0 + H / 2, 0, -Math.PI / 2);
-        const tyre = new THREE.MeshLambertMaterial({ color: 0x1c1d1f }), hub = new THREE.MeshLambertMaterial({ color: 0xc8cbce });
-        [0.36, -0.2, -0.3].forEach((u) => [1, -1].forEach((sd) => { const x = u * L, z = sd * (W / 2 - 0.9);   // wheels: front axle and the rear pair
-          const t = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 1.8, 28), tyre); t.rotation.x = Math.PI / 2; t.position.set(x, 2.6, z); S.add(t);
-          const h = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 1.84, 20), hub); h.rotation.x = Math.PI / 2; h.position.set(x, 2.6, z); S.add(h); }));
-        const ac = new THREE.Mesh(new THREE.BoxGeometry(14, 0.9, 6), new THREE.MeshLambertMaterial({ color: 0xe4e3df })); ac.position.set(-4, Y0 + H + 0.45, 0); S.add(ac);   // the air-conditioning pod on the roof
-        [-1, 1].forEach((sd) => { const mr = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.4, 0.3), new THREE.MeshLambertMaterial({ color: 0x1b1d20 })); mr.position.set(L / 2 + 0.9, Y0 + H * 0.62, sd * (W / 2 + 0.4)); S.add(mr);
-          const arm = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.2, 0.2), mr.material); arm.position.set(L / 2 + 0.4, Y0 + H * 0.7, sd * (W / 2 + 0.3)); S.add(arm); });   // the "rabbit ear" mirrors
-      }
+      // the library building: a plain rectangular block in the colours of the archive's own Kumho coach model —
+      // red roof edge, a black window band, white body, red below, and on the long sides the coach's diagonal: white at the front, a grey slash, red behind
+      { const L = 44, H = 14, W = 26, XF = -62.6, XR = XF - L, ZC = -113, S = new THREE.Group(); S.position.set((XF + XR) / 2, 0, ZC); world.add(S);
+        const RED = "#df1f1f", WHT = "#f7f6f3", GRY = "#a9aaac", BLK = "#15181b";
+        const glass = (g, Wc, Hc, y0, y1, k) => { const wg = g.createLinearGradient(0, Hc * y0, 0, Hc * y1); wg.addColorStop(0, "#23292f"); wg.addColorStop(1, BLK); g.fillStyle = wg; g.fillRect(0, Hc * y0, Wc, Hc * (y1 - y0));
+          g.fillStyle = "rgba(255,255,255,.07)"; for (let x = 0; x < Wc; x += 5.5 * k) { g.beginPath(); g.moveTo(x, Hc * y0); g.lineTo(x + 2 * k, Hc * y0); g.lineTo(x + 0.8 * k, Hc * y1); g.lineTo(x - 1.2 * k, Hc * y1); g.fill(); }
+          g.fillStyle = "#0b0d0f"; for (let x = 0; x < Wc; x += 2.2 * k) g.fillRect(x, Hc * y0, Math.max(2, 0.1 * k), Hc * (y1 - y0)); };
+        const sideT = (frontRight) => canvasTex(2048, Math.round(2048 * H / L), (g, Wc, Hc) => { const k = Wc / L; g.save(); if (frontRight) { g.translate(Wc, 0); g.scale(-1, 1); }   // drawn with the front at the left, as in the coach photo
+          g.fillStyle = WHT; g.fillRect(0, 0, Wc, Hc);
+          g.fillStyle = RED; g.beginPath(); g.moveTo(Wc * 0.5, Hc); g.lineTo(Wc * 0.72, Hc * 0.1); g.lineTo(Wc, Hc * 0.1); g.lineTo(Wc, Hc); g.fill();   // red behind the diagonal, up to the roof
+          g.fillStyle = GRY; g.beginPath(); g.moveTo(Wc * 0.36, Hc); g.lineTo(Wc * 0.5, Hc * 0.48); g.lineTo(Wc * 0.58, Hc * 0.48); g.lineTo(Wc * 0.44, Hc); g.fill();   // the grey slash ahead of it
+          g.fillStyle = RED; g.fillRect(0, Hc * 0.72, Wc * 0.4, Hc * 0.28); g.fillRect(0, 0, Wc, Hc * 0.08);   // red skirt at the front and the red roof edge
+          glass(g, Wc, Hc, 0.14, 0.42, k); g.fillStyle = BLK; g.fillRect(0, Hc * 0.08, Wc, Hc * 0.06);   // the black window band
+          g.fillStyle = "#c9cacc"; g.fillRect(0, Hc * 0.975, Wc, Hc * 0.025); g.restore(); });
+        const frontT = canvasTex(1024, Math.round(1024 * H / W), (g, Wc, Hc) => { const k = Wc / W;   // the nose: red cap, black windscreen, white band, red below
+          g.fillStyle = WHT; g.fillRect(0, 0, Wc, Hc); g.fillStyle = RED; g.fillRect(0, 0, Wc, Hc * 0.08); glass(g, Wc, Hc, 0.08, 0.42, k);
+          g.fillStyle = RED; g.fillRect(0, Hc * 0.62, Wc, Hc * 0.38); g.fillStyle = "#c9cacc"; g.fillRect(0, Hc * 0.975, Wc, Hc * 0.025); });
+        const rearT = canvasTex(1024, Math.round(1024 * H / W), (g, Wc, Hc) => { const k = Wc / W;   // the back: red all over, a black window band
+          g.fillStyle = RED; g.fillRect(0, 0, Wc, Hc); glass(g, Wc, Hc, 0.14, 0.42, k); g.fillStyle = "#c9cacc"; g.fillRect(0, Hc * 0.975, Wc, Hc * 0.025); });
+        const face = (t, len, x, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(len, H), new THREE.MeshLambertMaterial({ map: t })); m.position.set(x, H / 2, z); m.rotation.y = ry; m.receiveShadow = true; S.add(m); };
+        face(frontT, W, L / 2, 0, Math.PI / 2); face(rearT, W, -L / 2, 0, -Math.PI / 2);
+        face(sideT(true), L, 0, W / 2, 0); face(sideT(false), L, 0, -W / 2, Math.PI);   // south (to the street) and north: the front (east) end at the right and at the left as you face them
+        const roof = new THREE.Mesh(new THREE.BoxGeometry(L, 0.2, W), new THREE.MeshLambertMaterial({ color: 0xe9e8e4 })); roof.position.y = H - 0.1; S.add(roof);
+        const par = new THREE.MeshLambertMaterial({ color: 0xd8302c }); [W / 2, -W / 2].forEach((z) => { const p = new THREE.Mesh(new THREE.BoxGeometry(L + 0.4, 0.8, 0.4), par); p.position.set(0, H + 0.4, z); S.add(p); });
+        [L / 2, -L / 2].forEach((x) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.8, W), par); p.position.set(x, H + 0.4, 0); S.add(p); });   // a red parapet, as the coach's red roof edge
+        const core = new THREE.Mesh(new THREE.BoxGeometry(L - 0.2, H - 0.2, W - 0.2), new THREE.MeshLambertMaterial({ color: 0xdedcd6 })); core.position.y = H / 2; core.castShadow = true; S.add(core); }
         { // the entrance on the park side: a glazed door under a canopy, and the sign 금호 도서관; tap it to go in (to the archive)
           const ex = -62.6 + 0.35, ez = -113, E = new THREE.Group(); E.position.set(ex, 0, ez); E.rotation.y = Math.PI / 2; world.add(E);
           const mk = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; E.add(o); return o; };
@@ -8238,7 +8214,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           slab(offP(0.55), null, VH - 0.4, 0.42, [navy, new THREE.MeshLambertMaterial({ color: 0x0a1430 })]);   // the navy roof slab, overhanging — from the sky it is the mark
           { const fc = new THREE.Shape(); fc.moveTo(-nb - 1, 0); fc.lineTo(0, na); fc.lineTo(nb + 1, 0); fc.closePath();
             const fp = mk(new THREE.ShapeGeometry(fc), PAVE_M, 0, 0.05, 0); fp.rotation.x = -Math.PI / 2; fp.castShadow = false;   // the notch paved as a forecourt
-            const ap = mk(new THREE.PlaneGeometry(VW + 4, 3.4), PAVE_M, 0, 0.048, 1.7); ap.rotation.x = -Math.PI / 2; ap.castShadow = false;   // an apron along the south front, past both doors
+            const ap = mk(new THREE.PlaneGeometry(VW + 4, 2.1), PAVE_M, 0, 0.048, 1.05);   // up to the pavement edge, not over it ap.rotation.x = -Math.PI / 2; ap.castShadow = false;   // an apron along the south front, past both doors
             }
           // the doors: the same as the archive's — a travertine surround, a warm lit reveal, dark oak leaves with bronze edges and long bronze pulls — one on each foot
           for (const dx of [-(nb + VW / 2) / 2, (nb + VW / 2) / 2]){ const DW = 2.0, DH = 2.85, FW = 0.42, D = 0.42, zf = 0.02; const SD = new THREE.Group(); SD.position.set(dx, 0.32, 0.02); G.add(SD);
@@ -8258,7 +8234,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const pullM = new THREE.MeshBasicMaterial({ color: 0xb48a4e }); [-1, 1].forEach((sg) => { mk(new THREE.CylinderGeometry(0.022, 0.022, 1.3, 12), pullM, sg * DW * 0.07, DH * 0.49, zf + D * 0.55 + 0.11).castShadow = false;
               [-0.6, 0.6].forEach((dy) => { const st = mk(new THREE.CylinderGeometry(0.012, 0.012, 0.08, 8), pullM, sg * DW * 0.07, DH * 0.49 + dy, zf + D * 0.55 + 0.07); st.rotation.x = Math.PI / 2; }); });
             const pk = mk(new THREE.BoxGeometry(DW + 1.2, DH + 0.8, 1.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, (DH + 0.8) / 2, 0.6); pk.castShadow = false; pk.userData.idx = "valueHall"; pickables.push(pk);
-            const sp = new THREE.Mesh(new THREE.PlaneGeometry(4, 3.4), PAVE_M); sp.rotation.x = -Math.PI / 2; sp.position.set(0, 0.05 - SD.position.y, 1.7); SD.add(sp); }   // at ground level, not on the raised door sill
+            }   // no separate door step: the apron already paves it (two pavings on top of each other flickered)
           { // real glass: dark tinted panes that reflect the sky, in slim charcoal mullions — a curtain wall on the long sides, in the notch and either side of each door; slit windows on the sloping faces
             const env = canvasTex(512, 256, (g, W, H) => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, "#6f9cc4"); gr.addColorStop(0.42, "#cfe0ea"); gr.addColorStop(0.5, "#8c9298"); gr.addColorStop(1, "#4a4d50"); g.fillStyle = gr; g.fillRect(0, 0, W, H);
               let sd = 9; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647; for (let x = 0; x < W; x += 6 + r() * 18) { const h = 14 + r() * 50; g.fillStyle = `rgba(${90 + r() * 60},${100 + r() * 50},${110 + r() * 40},.85)`; g.fillRect(x, H * 0.5 - h, 4 + r() * 16, h); }
@@ -9727,12 +9703,16 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   // The archive is two pages: index.html (lobby and halls) and park.html (the park outside). Going between them loads the other page in the
   // same window, so each starts with clean memory; what must carry over (the mini-bus pass, the music on or off) goes in sessionStorage.
+  function freeGL() { if (freeGL.done) return; freeGL.done = true;   // leaving the page: hand back every texture, buffer and the GL context itself, so the next page (on an iPad above all) starts with the memory free
+    try { if (SND.bgmEl) SND.bgmEl.pause(); if (SND.ctx && SND.ctx.close) SND.ctx.close(); scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { for (const k in m) { const v = m[k]; if (v && v.isTexture) v.dispose(); } m.dispose(); }); });
+      renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} }
+  addEventListener("pagehide", freeGL); addEventListener("pageshow", (e) => { if (e.persisted) location.reload(); });   // never come back to a page whose GL was handed back
   function pageGo(to) {
     window.__pageLeaving = true; busy = true;
     try { sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({ ride: !!RIDE.ok, sound: !!SND.on, t: Date.now() }, to))); } catch (e) {}
-    if ((to.library || to.valueHall) && window.doorFx) { doorFx.close(() => { location.href = to.library ? "library.html" : "valuehall.html"; }); return; }   // through the doors: they swing shut, then the room
+    if ((to.library || to.valueHall) && window.doorFx) { doorFx.close(() => { freeGL(); location.replace(to.library ? "library.html" : "valuehall.html"); }); return; }   // through the doors: they swing shut, then the room
     const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">${to.library ? "금호 도서관으로 이동 중…" : to.valueHall ? "금호 가치체계 전시관으로 이동 중…" : to.park ? "금호 공원으로 이동 중…" : "금호 아카이브로 이동 중…"}</div>`; }
-    setTimeout(() => { location.href = to.library ? "library.html" : to.valueHall ? "valuehall.html" : to.park ? "park.html" : "index.html"; }, 160);
+    setTimeout(() => { freeGL(); location.href = to.library ? "library.html" : to.valueHall ? "valuehall.html" : to.park ? "park.html" : "index.html"; }, 160);
   }
   function enterTarget(target) {
     if (target.outside && !IS_PARK) { pageGo({ park: true }); return; }
@@ -12042,6 +12022,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   camera.rotation.order = "YXZ";
   function frame(now) {
+    if (freeGL.done) return;
     const dt = Math.min(0.05, lastNow ? (now - lastNow) / 1000 : 0.016); lastNow = now;
     stepHold(dt); stepTilt(dt); stepVK(dt); stepAir(dt); stepHoop(dt); stepSwing(dt); stepThumbs(dt); stepCoins(dt); busCallStep(dt); screenStep(dt); pzStep(dt); tpStep(dt); placeVK();
     const taxiControls = document.getElementById("taxiControls");
@@ -12170,7 +12151,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const start = () => { BOOTED = true; resize(); if (!IS_PARK) buildLobby(); requestAnimationFrame(frame);
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "valueHall" && OUT.hallDoor) moveTo({ x: OUT.hallDoor[0], z: OUT.hallDoor[1], yaw: Math.PI, pitch: 0.02 }, true);
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
         if ((arrive.from === "library" || arrive.from === "valueHall") && window.doorFx) { doorFx.closed(); setTimeout(() => doorFx.open(), 700); }   /* out through the doors: they open on the park */   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }

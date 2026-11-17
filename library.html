@@ -4161,12 +4161,12 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.fov = Math.max(35, Math.min(75, camera.fov + e.deltaY * 0.03)); camera.updateProjectionMatrix(); }, { passive: false });
   const toast = (t) => { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2200); };
   function leave() { try { const g = JSON.parse(sessionStorage.getItem("kumhoLibCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "library", t: Date.now() }))); } catch (e) {}
-    doorFx.close(() => { location.href = "park.html"; }); }   // the doors swing shut behind, then the park
+    doorFx.close(() => { freeGL(); location.replace("park.html"); }); }   // the doors swing shut behind, then the park
   $("exitBtn").addEventListener("click", leave);
   try { const g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); if (g && g.library) { sessionStorage.removeItem("kumhoPageGo"); sessionStorage.setItem("kumhoLibCarry", JSON.stringify({ ride: g.ride, sound: g.sound })); } } catch (e) {}
 
   // ---- music: the park's own tune (assets/park-bgm.mp3, composed for the site — nothing to license), on from the first moment unless it was switched off ----
-  { const au = new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", "");
+  { const au = window.__bgmAu = new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", "");
     let on = true; try { const c = JSON.parse(sessionStorage.getItem("kumhoLibCarry") || "{}"); if (c.sound === false) on = false; } catch (e) {}
     const btn = $("sndBtn"), show = () => { btn.textContent = on ? "♪ 음악 켬" : "♪ 음악 끔"; btn.setAttribute("aria-pressed", String(on)); };
     const play = () => { if (on && au.paused) { const p = au.play(); if (p && p.catch) p.catch(() => {}); } };
@@ -4175,9 +4175,13 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     btn.addEventListener("click", (e) => { e.stopPropagation(); on = !on; if (on) play(); else au.pause(); show();
       try { const c = JSON.parse(sessionStorage.getItem("kumhoLibCarry") || "{}"); c.sound = on; sessionStorage.setItem("kumhoLibCarry", JSON.stringify(c)); } catch (x) {} });
     show(); play(); }
+  function freeGL() { if (freeGL.done) return; freeGL.done = true;   // leaving the page: hand back every texture, buffer and the GL context itself, so the next page (on an iPad above all) starts with the memory free
+    try { if (window.__bgmAu) { window.__bgmAu.pause(); window.__bgmAu.removeAttribute("src"); } scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { for (const k in m) { const v = m[k]; if (v && v.isTexture) v.dispose(); } m.dispose(); }); });
+      renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} }
+  addEventListener("pagehide", freeGL); addEventListener("pageshow", (e) => { if (e.persisted) location.reload(); });   // never come back to a page whose GL was handed back
   const resize = () => { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }; addEventListener("resize", resize); resize();
   const clock = new THREE.Clock(); let first = true;
-  (function frame() { requestAnimationFrame(frame); const dt = Math.min(0.05, clock.getDelta());
+  (function frame() { if (freeGL.done) return; requestAnimationFrame(frame); const dt = Math.min(0.05, clock.getDelta());
     const move = (hx, hz, d) => { if (!tryMove(S.x + hx * d, S.z + hz * d)) { if (!tryMove(S.x + hx * d, S.z)) tryMove(S.x, S.z + hz * d); return false; } return true; };
     const fw = (keys.ArrowUp || keys.w || keys.W ? 1 : 0) - (keys.ArrowDown || keys.s || keys.S ? 1 : 0), tu = (keys.ArrowLeft || keys.a || keys.A ? 1 : 0) - (keys.ArrowRight || keys.d || keys.D ? 1 : 0);
     if (hold) {   // press and hold: run toward the pointer, speeding up
