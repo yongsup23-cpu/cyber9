@@ -3905,8 +3905,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const prog = (f) => { const b = $("ldBar"), t = $("ldPct"); if (b) b.style.width = Math.round(f * 100) + "%"; if (t) t.textContent = Math.round(f * 100) + "%"; };
   prog(0.15);
   const canvas = $("stage"), renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6)); renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xe9e6df);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6)); renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.6;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0xb9b5ad);
   const camera = new THREE.PerspectiveCamera(62, 1, 0.05, 200), ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   const tex = (w, h, draw, rx = 1, ry = 1) => { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t; };
   let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -3917,9 +3917,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
 
   // ---- the room: 30 m wide (x −15…15), 22 m deep (z −11…11), 7 m to the ceiling ----
   const X0 = -15, X1 = 15, Z0 = -11, Z1 = 11, HT = 7;
-  const plaster = tex(512, 512, (g, w, h) => { g.fillStyle = "#f2efe8"; g.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { const c = 225 + rnd() * 25; g.fillStyle = `rgba(${c},${c - 3},${c - 8},.25)`; g.beginPath(); g.arc(rnd() * w, rnd() * h, 2 + rnd() * 18, 0, 7); g.fill(); } });
+  const plaster = tex(512, 512, (g, w, h) => { g.fillStyle = "#e4e0d8"; g.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { const c = 225 + rnd() * 25; g.fillStyle = `rgba(${c},${c - 3},${c - 8},.25)`; g.beginPath(); g.arc(rnd() * w, rnd() * h, 2 + rnd() * 18, 0, 7); g.fill(); } });
   const wallM = (w, h) => { const t = plaster.clone(); t.needsUpdate = true; t.repeat.set(w / 4, h / 4); return lam(0xffffff, { map: t }); };
-  const floorT = tex(1024, 1024, (g, w, h) => { g.fillStyle = "#cfc9be"; g.fillRect(0, 0, w, h); for (let i = 0; i < 1600; i++) { const c = 185 + rnd() * 40; g.fillStyle = `rgba(${c},${c - 4},${c - 10},.12)`; g.beginPath(); g.arc(rnd() * w, rnd() * h, 2 + rnd() * 26, 0, 7); g.fill(); }
+  const floorT = tex(1024, 1024, (g, w, h) => { g.fillStyle = "#bdb7ac"; g.fillRect(0, 0, w, h); for (let i = 0; i < 1600; i++) { const c = 185 + rnd() * 40; g.fillStyle = `rgba(${c},${c - 4},${c - 10},.12)`; g.beginPath(); g.arc(rnd() * w, rnd() * h, 2 + rnd() * 26, 0, 7); g.fill(); }
     g.fillStyle = "rgba(150,142,130,.8)"; for (let y = 0; y <= h; y += 512) g.fillRect(0, y - 1, w, 2); for (let x = 0; x <= w; x += 256) g.fillRect(x - 1, 0, 2, h); }, (X1 - X0) / 4, (Z1 - Z0) / 4);
   const floorM = new THREE.MeshStandardMaterial({ map: floorT, roughness: 0.28, metalness: 0.04 });
   const FLOORS = [];
@@ -3974,7 +3974,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // ---- by the door: the ARTERA mark as a small navy model on a stone plinth, slowly turning ----
   let spin = null, spinBus = null;
   { const VW = 1.2, VL = VW * 168 / 228, nb = VW * 0.193, na = VL * 0.31, sh = VL * 0.429, S = new THREE.Shape(); S.moveTo(-VW / 2, 0); S.lineTo(-nb, 0); S.lineTo(0, na); S.lineTo(nb, 0); S.lineTo(VW / 2, 0); S.lineTo(VW / 2, sh); S.lineTo(VW * 0.098, VL); S.lineTo(-VW * 0.098, VL); S.lineTo(-VW / 2, sh); S.closePath();
-    const plM = lam(0x2b2e34); for (const px of [-4, 4]) { box(1.1, 1.05, 1.1, plM, px, 0.525, 6.5); box(1.14, 0.04, 1.14, orange, px, 1.06, 6.5); box(1.16, 0.08, 1.16, lam(0x1c1e22), px, 0.04, 6.5); }   // charcoal plinths with an orange cap, one for the mark and one for the coach
+    const plM = lam(0x2b2e34); for (const px of [-4, 4]) { add(new THREE.CylinderGeometry(0.6, 0.6, 1.05, 48), plM, px, 0.525, 6.5); add(new THREE.CylinderGeometry(0.63, 0.63, 0.04, 48), orange, px, 1.06, 6.5); add(new THREE.CylinderGeometry(0.66, 0.66, 0.08, 48), lam(0x1c1e22), px, 0.04, 6.5); }   // round plinths   // charcoal plinths with an orange cap, one for the mark and one for the coach
     spin = new THREE.Group(); spin.position.set(-4, 1.1, 6.5); scene.add(spin); const m = add(new THREE.ExtrudeGeometry(S, { depth: 0.22, bevelEnabled: false }), navy, 0, 0, -0.11, spin); m.position.x = 0;
     block(-4.6, -3.4, 5.9, 7.1); block(3.4, 4.6, 5.9, 7.1);
     // on the right-hand plinth: the Kumho Express coach (assets/outside-bus.glb, as at the park's bus stop) in miniature, turning too
@@ -4011,9 +4011,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   prog(0.85);
   scene.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) { if (m.__lin) continue; m.__lin = true; if (m.color && !m.map) m.color.convertSRGBToLinear(); if (m.emissive) m.emissive.convertSRGBToLinear(); } });
   // ---- light: bright and even, as a gallery ----
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d2c6, 0.85)); scene.add(new THREE.AmbientLight(0xfff6ea, 0.3));
-  const sun = new THREE.DirectionalLight(0xfff6ea, 0.45); sun.position.set(10, 18, 14); scene.add(sun);
-  [[0, 6, -6], [-9, 6, 0], [9, 6, 0], [0, 6, 6]].forEach(([x, y, z]) => { const p = new THREE.PointLight(0xfff0dc, 0.35, 18, 2); p.position.set(x, y, z); scene.add(p); });
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d2c6, 0.62)); scene.add(new THREE.AmbientLight(0xfff6ea, 0.18));   // a little dimmer than daylight, as a gallery
+  const sun = new THREE.DirectionalLight(0xfff6ea, 0.3); sun.position.set(10, 18, 14); scene.add(sun);
+  [[0, 6, -6], [-9, 6, 0], [9, 6, 0], [0, 6, 6]].forEach(([x, y, z]) => { const p = new THREE.PointLight(0xfff0dc, 0.18, 18, 2); p.position.set(x, y, z); scene.add(p); });
 
   // ---- 쿠모 (assets/character.glb, as in the park): walks the hall in third person, the camera behind him ----
   const TP = { obj: null, mixer: null, act: {}, face: null, px: null, pz: null, spd: 0, rw: 0, iw: 1, d: 3.4, started: false };

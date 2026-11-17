@@ -46,6 +46,7 @@ html,body{margin:0;height:100%;background:#141414;overflow:hidden;font-family:"N
 #ebStage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:0 12px;touch-action:pan-y}
 #ebImg{max-width:100%;max-height:100%;box-shadow:0 10px 40px rgba(0,0,0,.6);background:#fff;transition:opacity .2s}#ebImg.ld{opacity:.35}
 #ebook .nav{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px;color:#e8dfcf;font-size:14px}
+#easyBook{position:fixed;inset:0;z-index:13;background:#182b29;display:none}#easyBook.on{display:block}#easyBook iframe{width:100%;height:100%;border:0}#easyBook #easyClose{position:absolute;top:12px;right:12px;z-index:2;background:rgba(20,30,28,.9);color:#f2e7d2;border:1px solid rgba(201,168,106,.7);border-radius:999px;padding:8px 16px;font:600 14px inherit;font-family:inherit;cursor:pointer}
 #bookBtn{position:fixed;right:16px;top:108px;z-index:6;background:rgba(90,59,34,.92);color:#f6ead2;border:1px solid rgba(201,168,106,.7);border-radius:999px;padding:7px 14px;font:600 13px inherit;font-family:inherit;cursor:pointer}
 @media (max-width:700px){#hint{display:none}#hud h1{font-size:20px}}
 </style>
@@ -4080,8 +4081,16 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     dlg.next = () => { if (dlg.timer) { clearInterval(dlg.timer); dlg.timer = 0; dlg.txt.textContent = lines[li]; return; } li++; if (li < lines.length) show(); else { el.classList.remove("on"); LIB.talk = 0; dlg.next = null; if (done) done(); } };
     show(); }
   dlg.el.addEventListener("click", (e) => { e.stopPropagation(); if (dlg.next) dlg.next(); });
-  function giveBook() { const gi = $("getItem"); gi.classList.add("on"); LIB.given = true; try { localStorage.setItem("kumhoHeritageGot", "1"); } catch (e) {} $("bookBtn").hidden = false; }
-  $("getItem").addEventListener("click", (e) => { e.stopPropagation(); if (e.target.closest("#giBook")) { $("getItem").classList.remove("on"); openEbook(0); } else $("getItem").classList.remove("on"); });
+  const GI = { kind: "hb" };
+  function setGI(kind) { GI.kind = kind; const easy = kind === "easy", cv = document.querySelector("#giBook .cv");
+    cv.innerHTML = easy ? "<b>KUMHO</b><i>쉽게 보는<br>금호 80년</i><em>그림으로 읽는 이야기</em>" : "<b>KUMHO</b><i>금호<br>헤리티지북</i><em>1946 — 2026</em>";
+    cv.style.background = easy ? "linear-gradient(135deg,#1f4a44,#2f6b62 45%,#173a35)" : ""; document.querySelector("#getItem .t").textContent = easy ? "쉽게 보는 금호 80년을 찾았어요!" : "금호 헤리티지북을 받았어요!"; }
+  function openGI() { $("getItem").classList.remove("on"); if (GI.kind === "easy") openEasy(); else openEbook(0); }
+  function openEasy() { let el = $("easyBook"); if (!el) { el = document.createElement("div"); el.id = "easyBook"; el.innerHTML = '<button type="button" id="easyClose">닫기 ✕</button><iframe title="쉽게 보는 금호 80년" src="assets/easybook.html"></iframe>'; document.body.appendChild(el);
+      $("easyClose").addEventListener("click", (e) => { e.stopPropagation(); el.classList.remove("on"); }); }
+    el.classList.add("on"); }
+  function giveBook() { setGI("hb"); const gi = $("getItem"); gi.classList.add("on"); LIB.given = true; try { localStorage.setItem("kumhoHeritageGot", "1"); } catch (e) {} $("bookBtn").hidden = false; }
+  $("getItem").addEventListener("click", (e) => { e.stopPropagation(); if (e.target.closest("#giBook")) openGI(); else $("getItem").classList.remove("on"); });
   function openEbook(i) { HB.i = i || 0; $("ebook").classList.add("on"); ebShow(); }
   function ebShow() { const img = $("ebImg"); img.classList.add("ld"); const u = HB.dir + String(HB.i + 1).padStart(2, "0") + ".jpg", pre = new Image(); img.dataset.want = u;
     pre.onload = () => { if (img.dataset.want === u) { img.src = u; img.classList.remove("ld"); } }; pre.src = u;
@@ -4093,11 +4102,23 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   { let sx = null; const st = $("ebStage"); st.addEventListener("pointerdown", (e) => { sx = e.clientX; }); st.addEventListener("pointerup", (e) => { if (sx == null) return; const dx = e.clientX - sx; sx = null;
       if (Math.abs(dx) > 40) ebGo(dx < 0 ? 1 : -1); else { const r = st.getBoundingClientRect(); ebGo(e.clientX > r.left + r.width / 2 ? 1 : -1); } }); }
   $("bookBtn").hidden = !LIB.given; $("bookBtn").addEventListener("click", (e) => { e.stopPropagation(); openEbook(HB.i); });
-  window.__libT = { LIB, ask: () => askLibrarian(), open: (i) => openEbook(i) };
+  // ---- 2층 오른쪽 끝 책장: 쉽게 보는 금호 80년, a teal book standing out from the shelf, glowing and twinkling ----
+  const EASY = { hint: false, t: 0, sp: [] };
+  { const ex = 14.3, ey = MY + 1.25, ez = Z0 + 0.32, G = new THREE.Group(); G.position.set(ex, ey, ez); scene.add(G); EASY.G = G;
+    const ct = tex(256, 340, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, "#1f4a44"); gr.addColorStop(1, "#173a35"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      g.strokeStyle = "#d8b878"; g.lineWidth = 6; g.strokeRect(16, 16, w - 32, h - 32); g.fillStyle = "#f0d9a6"; g.textAlign = "center"; g.font = `800 34px ${FONT}`; g.fillText("쉽게 보는", w / 2, 140); g.fillText("금호 80년", w / 2, 186); g.font = `600 18px ${FONT}`; g.fillText("KUMHO", w / 2, 92); });
+    const side = new THREE.MeshBasicMaterial({ color: 0x24564f }), pages = new THREE.MeshBasicMaterial({ color: 0xf3ead6 }), cover = new THREE.MeshBasicMaterial({ map: ct, toneMapped: false });
+    const bk = box(0.62, 0.82, 0.14, [pages, side, side, side, cover, side], 0, 0, 0.12, G); bk.rotation.y = -0.35;   // standing face-out at the shelf's end
+    const halo = tex(128, 128, (g, w, h) => { const r = g.createRadialGradient(64, 64, 4, 64, 64, 64); r.addColorStop(0, "rgba(255,226,150,.9)"); r.addColorStop(0.45, "rgba(255,206,110,.35)"); r.addColorStop(1, "rgba(255,206,110,0)"); g.fillStyle = r; g.fillRect(0, 0, w, h); });
+    EASY.glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); EASY.glow.scale.set(1.9, 1.9, 1); EASY.glow.position.set(0, 0, 0.3); G.add(EASY.glow);
+    for (let i = 0; i < 7; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); sp.userData.ph = i * 0.9; sp.userData.p = [(rnd() - 0.5) * 1.1, (rnd() - 0.5) * 1.1, 0.35 + rnd() * 0.2]; G.add(sp); EASY.sp.push(sp); }
+    const pk = box(1.2, 1.4, 0.8, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 0, 0.3, G); pk.userData.idx = "easyBook"; PICK.push(pk); }
+  function takeEasy() { if (S.fy < MY - 0.5) { toast("2층 오른쪽 끝 책장에 있어요. 계단으로 올라가 보세요 ✨"); return; } setGI("easy"); $("getItem").classList.add("on"); }
+  window.__libT = { LIB, easy: () => takeEasy(), ask: () => askLibrarian(), open: (i) => openEbook(i) };
   const uiOpen = () => $("ebook").classList.contains("on") || $("getItem").classList.contains("on") || dlg.el.classList.contains("on");
   function meetLibrarian() { LIB.pend = false; S.tx = null; S.yaw = Math.atan2(-(LIB.x - S.x), -(LIB.z - S.z)); S.pitch = -0.02;
     if (!LIB.given) say(["금호 도서관에 잘 왔어.", "네게 줄 금호 헤리티지북이 있어."], giveBook);
-    else say(["또 왔구나! 금호 헤리티지북은 잘 보고 있니?", "다시 펼쳐 줄게."], () => openEbook(HB.i)); }
+    else say(["또 왔구나! 금호 헤리티지북은 잘 보고 있니?", "2층 책장 끝에 가 보렴. 좀 더 쉽게 풀어 쓴 헤리티지북이 꽂혀 있단다.", "관심 있으면 한번 찾아보렴. 반짝이고 있을 거야!"], () => { EASY.hint = true; toast("2층 오른쪽 끝 책장에서 반짝이는 책을 찾아보세요 ✨"); }); }
   function askLibrarian() { const dx = LIB.x - S.x, dz = (DZ + DD / 2 + 1.0) - S.z;
     if (Math.abs(S.x - LIB.x) < 2.2 && S.z > DZ && S.z - DZ < 3.4) return meetLibrarian();   // close enough, across the counter
     LIB.pend = true; S.tx = LIB.x; S.tz = DZ + DD / 2 + 1.0; S.v = 0; }   // walk up to the counter first
@@ -4127,7 +4148,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const kName = (e) => (/^Arrow/.test(e.key) ? e.key : /^Arrow/.test(e.code) ? e.code : e.key);   /* a Korean IME can report the arrows oddly: fall back to the physical key */
   document.addEventListener("keydown", (e) => { const k = kName(e);
     if ($("ebook").classList.contains("on")) { if (k === "ArrowRight" || k === " ") ebGo(1); else if (k === "ArrowLeft") ebGo(-1); else if (k === "Escape") $("ebook").classList.remove("on"); e.preventDefault(); return; }   // the e-book takes the arrow keys while it is open
-    if ($("getItem").classList.contains("on")) { if (k === "Enter" || k === " ") { $("getItem").classList.remove("on"); openEbook(0); } else if (k === "Escape") $("getItem").classList.remove("on"); e.preventDefault(); return; }
+    if ($("getItem").classList.contains("on")) { if (k === "Enter" || k === " ") openGI(); else if (k === "Escape") $("getItem").classList.remove("on"); e.preventDefault(); return; }
     if (dlg.el.classList.contains("on") && (k === "Enter" || k === " ")) { if (dlg.next) dlg.next(); e.preventDefault(); return; }
     keys[k] = true; if (/^Arrow/.test(k)) e.preventDefault(); }, true); document.addEventListener("keyup", (e) => { keys[kName(e)] = false; }, true);
   addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
@@ -4155,7 +4176,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const endP = (e) => { PT.delete(e.pointerId); if (pinch) { if (PT.size < 2) { pinch = null; drag = null; } return; }
     clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (d && d.tp) { TP.dragging = false; canvas.style.cursor = ""; if (d.moved <= 4) toast("안녕! 나는 쿠모야 👋 끌어서 돌려 봐"); return; } if (!d || d.moved > 8) return;
     const r = aim(e.clientX, e.clientY), hp = r.intersectObjects(PICK, false)[0], hf = r.intersectObjects(FLOORS, false)[0];
-    if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { if (hp.object.userData.idx === "exit") return leave(); if (hp.object.userData.idx === "desk" || hp.object.userData.idx === "librarian") return askLibrarian(); }
+    if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { if (hp.object.userData.idx === "exit") return leave(); if (hp.object.userData.idx === "desk" || hp.object.userData.idx === "librarian") return askLibrarian(); if (hp.object.userData.idx === "easyBook") return takeEasy(); }
     if (hf) { const dx = hf.point.x - S.x, dz = hf.point.z - S.z, dd = Math.hypot(dx, dz), L = Math.min(dd, 7); if (dd > 0.3) { S.tx = S.x + dx / dd * L; S.tz = S.z + dz / dd * L; S.v = 0; } } };
   canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", (e) => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; clearTimeout(holdT); hold = null; drag = null; TP.dragging = false; });
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.fov = Math.max(35, Math.min(75, camera.fov + e.deltaY * 0.03)); camera.updateProjectionMatrix(); }, { passive: false });
@@ -4212,6 +4233,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
         W.timeScale = moving ? Math.max(0.7, Math.min(1.9, TP.spd / 1.5)) : 0.3; R.timeScale = Math.max(0.8, Math.min(1.6, TP.spd / 5)); }
       TP.mixer.update(dt); }
     if (mixer) mixer.update(dt);
+    if (EASY.G) { EASY.t += dt; const k = EASY.hint ? 1.25 : 1; EASY.glow.material.opacity = (0.55 + 0.3 * Math.sin(EASY.t * 2.4)) * Math.min(1, k); EASY.glow.scale.setScalar(1.7 * k + 0.2 * Math.sin(EASY.t * 2.4));
+      EASY.sp.forEach((sp) => { const a = (Math.sin(EASY.t * 2.2 + sp.userData.ph) + 1) / 2, p = sp.userData.p; sp.material.opacity = a * a; sp.scale.setScalar(0.12 + 0.22 * a); sp.position.set(p[0], p[1] + 0.06 * Math.sin(EASY.t + sp.userData.ph), p[2]); }); }
     if (LIB.pend && S.tx == null) { if (Math.hypot(S.x - LIB.x, S.z - LIB.z) < 3.6) meetLibrarian(); else LIB.pend = false; }   // walked up to the counter: now he speaks
     if (LIB.obj) { LIB.t += dt; const t = LIB.t, wa = (v, to, k) => v + (to - v) * Math.min(1, dt * k);   // talking: the rig's Talk_with_Hands_Open; at rest: still, breathing
       if (LIB.aT) { if (LIB.talk && !LIB.was) LIB.aT.time = 0; LIB.was = LIB.talk; LIB.w = wa(LIB.w, LIB.talk ? 1 : 0, 4); LIB.aT.setEffectiveWeight(LIB.w); LIB.aI.setEffectiveWeight(1 - LIB.w); }
