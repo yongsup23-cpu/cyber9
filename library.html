@@ -18,6 +18,35 @@ html,body{margin:0;height:100%;background:#141414;overflow:hidden;font-family:"N
 #ld{position:fixed;inset:0;z-index:20;background:#141414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s}#ld.off{opacity:0;pointer-events:none}
 #ld .t{color:#e8c98c;font-weight:600;letter-spacing:.04em}#ld .bw{width:min(320px,70vw);height:4px;background:#3a3a36;border-radius:2px;overflow:hidden}#ldBar{height:100%;width:3%;background:#c9a86a;transition:width .2s}
 #sndBtn{position:fixed;right:16px;top:62px;z-index:6;background:rgba(23,24,21,.85);color:#e8dfcf;border:1px solid rgba(201,168,106,.6);border-radius:999px;padding:7px 14px;font:600 13px inherit;font-family:inherit;cursor:pointer}
+#dlg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);width:min(720px,calc(100vw - 32px));z-index:9;background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:26px 24px 20px;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;cursor:pointer;box-sizing:border-box}
+#dlg.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
+#dlg .nm{position:absolute;left:18px;top:-15px;background:#5a3b22;color:#f6ead2;font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px;letter-spacing:.04em}
+#dlgTxt{font-size:19px;font-weight:600;line-height:1.6;min-height:1.6em}
+#dlg .nx{position:absolute;right:16px;bottom:8px;font-size:12px;color:#9a7a4e;animation:nxb 1s infinite}@keyframes nxb{50%{transform:translateY(3px)}}
+#getItem{position:fixed;inset:0;z-index:11;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(circle at 50% 46%,rgba(60,40,18,.55),rgba(8,6,4,.88) 70%);opacity:0;pointer-events:none;transition:opacity .35s;overflow:hidden}
+#getItem.on{opacity:1;pointer-events:auto}
+#getItem .rays{position:absolute;left:50%;top:46%;width:180vmax;height:180vmax;margin:-90vmax 0 0 -90vmax;background:repeating-conic-gradient(rgba(255,214,140,.16) 0 7deg,rgba(255,214,140,0) 7deg 20deg);animation:spin 16s linear infinite;-webkit-mask:radial-gradient(circle,#000 8%,transparent 45%);mask:radial-gradient(circle,#000 8%,transparent 45%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+#getItem .k{position:relative;color:#ffd98c;font-size:13px;letter-spacing:.3em;font-weight:700}
+#getItem .t{position:relative;color:#fff8ea;font-size:24px;font-weight:800;text-shadow:0 2px 12px rgba(0,0,0,.5);text-align:center}
+#getItem .s{position:relative;color:#e7d3ae;font-size:14px}
+#giBook{position:relative;width:min(230px,46vw);aspect-ratio:3/4;cursor:pointer;transform:scale(.3) rotate(-14deg);transition:transform .7s cubic-bezier(.2,1.6,.4,1);perspective:900px}
+#getItem.on #giBook{transform:scale(1) rotate(-4deg);animation:float 2.6s ease-in-out .8s infinite}
+@keyframes float{50%{transform:scale(1.03) rotate(-2deg) translateY(-8px)}}
+#giBook .cv{position:absolute;inset:0;border-radius:4px 12px 12px 4px;background:linear-gradient(135deg,#7a3f1d,#a85a2a 45%,#6b3416);box-shadow:inset 10px 0 0 rgba(0,0,0,.25),inset 13px 0 0 rgba(255,220,160,.25),0 0 40px rgba(255,200,110,.75),0 18px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#f8e7c4;text-align:center;padding:16px;box-sizing:border-box}
+#giBook .cv::before{content:"";position:absolute;inset:12px 12px 12px 22px;border:2px solid rgba(240,200,130,.8);border-radius:4px}
+#giBook .cv b{font-size:12px;letter-spacing:.28em;color:#f0c982}#giBook .cv i{font-style:normal;font-size:26px;font-weight:800;line-height:1.25}#giBook .cv em{font-style:normal;font-size:11px;letter-spacing:.2em;opacity:.85}
+#giBook .pg{position:absolute;right:-7px;top:6px;bottom:6px;width:9px;background:repeating-linear-gradient(#fbf5e8 0 2px,#e2d6bd 2px 3px);border-radius:0 3px 3px 0}
+.spk{position:absolute;width:8px;height:8px;background:#fff6d8;border-radius:50%;box-shadow:0 0 12px 4px rgba(255,220,140,.9);animation:tw 1.6s ease-in-out infinite;opacity:0}
+@keyframes tw{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.2)}}
+#ebook{position:fixed;inset:0;z-index:12;background:rgba(14,12,10,.96);display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s}
+#ebook.on{opacity:1;pointer-events:auto}
+#ebook .bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;color:#e8dfcf}#ebook .bar b{font-size:15px}#ebook .bar span{font-size:13px;color:#c9a86a;margin-left:10px}
+#ebook button{background:rgba(40,36,30,.9);color:#f2e7d2;border:1px solid rgba(201,168,106,.6);border-radius:999px;padding:8px 16px;font:600 14px inherit;font-family:inherit;cursor:pointer}#ebook button:disabled{opacity:.3}
+#ebStage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:0 12px;touch-action:pan-y}
+#ebImg{max-width:100%;max-height:100%;box-shadow:0 10px 40px rgba(0,0,0,.6);background:#fff;transition:opacity .2s}#ebImg.ld{opacity:.35}
+#ebook .nav{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px;color:#e8dfcf;font-size:14px}
+#bookBtn{position:fixed;right:16px;top:108px;z-index:6;background:rgba(90,59,34,.92);color:#f6ead2;border:1px solid rgba(201,168,106,.7);border-radius:999px;padding:7px 14px;font:600 13px inherit;font-family:inherit;cursor:pointer}
 @media (max-width:700px){#hint{display:none}#hud h1{font-size:20px}}
 </style>
 </head>
@@ -29,6 +58,10 @@ html,body{margin:0;height:100%;background:#141414;overflow:hidden;font-family:"N
 <div id="hint">드래그로 둘러보기 · 쿠모를 끌면 제자리에서 돌아요 · 누르면 그쪽으로 · 길게 누르면 달리기 · 두 손가락이나 휠로 확대</div>
 <div id="pad"><button class="u" data-k="ArrowUp">▲</button><button class="l" data-k="ArrowLeft">◀</button><button class="d" data-k="ArrowDown">▼</button><button class="r" data-k="ArrowRight">▶</button></div>
 <div id="toast"></div>
+<div id="dlg"><div class="nm">금호 도서관 사서 할아버지</div><div id="dlgTxt"></div><div class="nx">▼ 눌러서 계속</div></div>
+<div id="getItem"><div class="rays"></div><i class="spk" style="left:30%;top:30%;animation-delay:0s"></i><i class="spk" style="left:68%;top:26%;animation-delay:0.4s"></i><i class="spk" style="left:24%;top:62%;animation-delay:0.8s"></i><i class="spk" style="left:74%;top:60%;animation-delay:0.2s"></i><i class="spk" style="left:50%;top:18%;animation-delay:1.0s"></i><i class="spk" style="left:40%;top:74%;animation-delay:0.6s"></i><i class="spk" style="left:62%;top:78%;animation-delay:1.2s"></i><i class="spk" style="left:18%;top:44%;animation-delay:1.4s"></i><i class="spk" style="left:82%;top:42%;animation-delay:0.9s"></i><div class="k">ITEM GET</div><div id="giBook"><div class="cv"><b>KUMHO</b><i>금호<br>헤리티지북</i><em>1946 — 2026</em></div><div class="pg"></div></div><div class="t">금호 헤리티지북을 받았어요!</div><div class="s">책을 누르면 펼쳐져요</div></div>
+<div id="ebook"><div class="bar"><div><b>금호 헤리티지북</b><span id="ebPg"></span></div><button type="button" id="ebClose">닫기 ✕</button></div><div id="ebStage"><img id="ebImg" alt="금호 헤리티지북 페이지"></div><div class="nav"><button type="button" id="ebPrev">◀ 이전</button><button type="button" id="ebNext">다음 ▶</button></div></div>
+<button type="button" id="bookBtn" hidden>📖 헤리티지북</button>
 <button type="button" id="sndBtn" aria-pressed="true">♪ 음악 켬</button>
 <script>/**
  * @license
@@ -3964,22 +3997,24 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const lf = lam(0x4f7a3e); for (let i = 0; i < 26; i++) { const a = rnd() * 7, r = rnd() * 0.55, y = 1.4 + rnd() * 1.4; const s = add(new THREE.SphereGeometry(0.22 + rnd() * 0.15, 8, 6), lf, -12.5 + Math.cos(a) * r, y, 2.4 + Math.sin(a) * r); s.scale.y = 0.6; }
     box(0.05, 1.6, 0.05, woodD, -12.5, 1.8, 2.4); block(-13.1, -11.9, 1.8, 3.0); }
   // ---- the reception desk: walnut with bronze fluting, a stone top on a bronze band, a glowing bronze plinth ----
-  const DX = 1.2, DZ = 1.2, DW = 6, DD = 1.2, DH = 1.08;
+  const DX = 1.2, DZ = 1.2, DW = 6, DD = 1.0, DH = 0.9, RL = 3.0, LX = -DW / 2 + DD / 2, LZ = DD / 2 - RL / 2;   // an L-shaped desk, low enough for 쿠모 and the librarian to talk across: the long counter, and a return going back on the left
   { const front = tex(1024, 256, (g, w, h) => { g.fillStyle = "#3b2618"; g.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(${90 + rnd() * 40},${55 + rnd() * 25},${30 + rnd() * 15},0.25)`; g.fillRect(0, rnd() * h, w, 1 + rnd() * 2); }
       for (let x = 10; x < w * 0.3; x += 22) { g.fillStyle = "#c9a46a"; g.fillRect(x, 0, 5, h); g.fillStyle = "rgba(0,0,0,0.3)"; g.fillRect(x + 5, 0, 3, h); }
       g.fillStyle = "rgba(0,0,0,0.35)"; for (let x = w * 0.3; x < w; x += w * 0.233) g.fillRect(x, 0, 3, h); });
     const fm = lam(0xffffff, { map: front }), wm = lam(0x3b2618), D = new THREE.Group(); D.position.set(DX, 0, DZ); scene.add(D);
     box(DW, DH, DD, [wm, wm, wm, wm, fm, wm], 0, DH / 2, 0, D);
-    for (const s of [-1, 1]) add(new THREE.CylinderGeometry(DD / 2, DD / 2, DH, 24, 1, false, s > 0 ? 0 : Math.PI, Math.PI), wm, s * DW / 2, DH / 2, 0, D);
-    box(DW + 1.3, 0.05, DD + 0.16, lam(0xb8b0a2), 0, DH + 0.05, 0, D); box(DW + 1.32, 0.05, DD + 0.18, bronzeL, 0, DH, 0, D);
-    box(DW + 1.2, 0.12, DD + 0.08, new THREE.MeshBasicMaterial({ color: 0xd9b06c }), 0, 0.06, 0, D);
+    add(new THREE.CylinderGeometry(DD / 2, DD / 2, DH, 24, 1, false, 0, Math.PI), wm, DW / 2, DH / 2, 0, D);   // the round end on the right
+    box(DD, DH, RL, [wm, fm, wm, wm, wm, wm], LX, DH / 2, LZ, D); add(new THREE.CylinderGeometry(DD / 2, DD / 2, DH, 24, 1, false, Math.PI / 2, Math.PI), wm, LX, DH / 2, DD / 2 - RL, D);   // the return, its fluted side to the room
+    const topM = lam(0xb8b0a2); box(DW + DD / 2 + 0.16, 0.05, DD + 0.16, topM, DD / 4, DH + 0.05, 0, D); box(DW + DD / 2 + 0.18, 0.05, DD + 0.18, bronzeL, DD / 4, DH, 0, D);
+    box(DD + 0.16, 0.05, RL + DD / 2, topM, LX, DH + 0.05, DD / 2 - (RL + DD / 2) / 2 - 0.08, D); box(DD + 0.18, 0.05, RL + DD / 2, bronzeL, LX, DH, DD / 2 - (RL + DD / 2) / 2 - 0.08, D);
+    const glowM = new THREE.MeshBasicMaterial({ color: 0xd9b06c }); box(DW + DD / 2 + 0.1, 0.12, DD + 0.08, glowM, DD / 4, 0.06, 0, D); box(DD + 0.08, 0.12, RL + DD / 2, glowM, LX, 0.06, DD / 2 - (RL + DD / 2) / 2, D);
     box(0.62, 0.38, 0.04, lam(0x15171a), 0.6, DH + 0.42, -0.25, D); box(0.06, 0.2, 0.06, lam(0x2a2c30), 0.6, DH + 0.18, -0.25, D); box(0.6, 0.34, 0.01, new THREE.MeshBasicMaterial({ color: 0x1d3a52 }), 0.6, DH + 0.42, -0.226, D);
     [[-1.7, 3], [-1.25, 2]].forEach(([x, n]) => { for (let i = 0; i < n; i++) box(0.5, 0.07, 0.34, lam([0x8a3a2a, 0xd8cfb8, 0x2f4a6b][i % 3]), x, DH + 0.11 + i * 0.075, 0.05, D); });
     add(new THREE.CylinderGeometry(0.02, 0.02, 0.45, 8), bronzeL, 2.2, DH + 0.3, -0.1, D); add(new THREE.SphereGeometry(0.2, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), bronzeL, 2.2, DH + 0.5, -0.1, D);
     add(new THREE.CylinderGeometry(0.1, 0.08, 0.32, 16), new THREE.MeshLambertMaterial({ color: 0xcfe0e0, transparent: true, opacity: 0.55 }), 1.6, DH + 0.2, 0.15, D);
     for (let i = 0; i < 12; i++) { const a = rnd() * 7; const s = add(new THREE.SphereGeometry(0.07, 6, 5), lam(0x6f9a4a), 1.6 + Math.cos(a) * 0.14, DH + 0.45 + rnd() * 0.25, 0.15 + Math.sin(a) * 0.14, D); s.scale.y = 1.6; }
-    block(DX - DW / 2 - 0.7, DX + DW / 2 + 0.7, DZ - DD / 2 - 0.1, DZ + DD / 2 + 0.1);
-    const pick = box(DW + 1.4, 2.2, DD + 0.4, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 1.1, 0, D); pick.userData.idx = "desk"; }
+    block(DX - DW / 2, DX + DW / 2 + DD / 2, DZ - DD / 2 - 0.1, DZ + DD / 2 + 0.1); block(DX + LX - DD / 2 - 0.1, DX + LX + DD / 2 + 0.1, DZ + DD / 2 - RL - DD / 2, DZ + DD / 2, 0, 3);
+    const pick = box(DW + 1.4, DH + 0.25, DD + 0.4, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, (DH + 0.25) / 2, 0, D); pick.userData.idx = "desk"; }
   // ---- the entrance: a stone pillar with the bronze 도서관 plate, then the glass wall and doors onto the park ----
   const PICK = [];
   { box(1.0, HT, 2.6, wallM(2.6, HT), X1 - 0.5, HT / 2, -1.8); block(X1 - 1.1, X1, -3.2, -0.4, 0, 9);
@@ -4007,11 +4042,48 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   scene.add(new THREE.HemisphereLight(0xfff0dc, 0x5a4a3a, 0.75)); scene.add(new THREE.AmbientLight(0xffe8c8, 0.25));
   const sun = new THREE.DirectionalLight(0xfff2da, 0.75); sun.position.set(30, 18, 8); scene.add(sun);
   [[0, 6, 2], [-9, 6, 2], [9, 6, 2], [0, 3.8, -11.5], [-10, 3.8, -11.5], [10, 3.8, -11.5]].forEach(([x, y, z]) => { const p = new THREE.PointLight(0xffd6a0, 0.55, 16, 2); p.position.set(x, y, z); scene.add(p); });
-  // ---- the librarian: assets/librarian.glb when it is there (made separately), standing behind the desk ----
-  let mixer = null;
+  // ---- the librarian: assets/librarian.glb (a white-bearded grandfather in a brown waistcoat), standing behind the counter ----
+  let mixer = null; const LIB = { obj: null, aT: null, aI: null, w: 0, was: 0, talk: 0, t: 0, pend: false, given: false, x: DX - 1.0, z: DZ - DD / 2 - 0.8 };
+  try { LIB.given = localStorage.getItem("kumhoHeritageGot") === "1"; } catch (e) {}
   if (THREE.GLTFLoader) { const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L.setMeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
-    L.load("assets/librarian.glb", (g) => { const m = g.scene; const bb = new THREE.Box3().setFromObject(m), h = bb.max.y - bb.min.y || 1; m.scale.setScalar(1.62 / h); m.position.set(DX + 0.4, 0, DZ - 1.2); scene.add(m);
-      if (g.animations && g.animations.length) { mixer = new THREE.AnimationMixer(m); mixer.clipAction(g.animations[0]).play(); } }, undefined, () => {}); }
+    L.load("assets/librarian.glb", (g) => { const m = g.scene, k = 1.95 / 1.7;   // the rigged model stands 1.7 m tall in its own units
+      m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = false; } }); m.scale.setScalar(k);
+      const g2 = new THREE.Group(); g2.add(m); g2.position.set(LIB.x, 0, LIB.z); scene.add(g2); LIB.obj = g2;
+      const clip = g.animations.find((c) => /talk/i.test(c.name)) || g.animations[0];
+      if (clip) { mixer = new THREE.AnimationMixer(m); LIB.aT = mixer.clipAction(clip); LIB.aI = mixer.clipAction(clip.clone());   // talking with open hands; at rest, its first frame (arms down) held still
+        LIB.aI.play(); LIB.aI.timeScale = 0; LIB.aI.time = 0; LIB.aT.play(); LIB.aT.setEffectiveWeight(0); LIB.aI.setEffectiveWeight(1); LIB.w = 0; }
+      const pk = box(0.9, 1.9, 0.7, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), LIB.x, 0.95, LIB.z); pk.userData.idx = "librarian"; PICK.push(pk); }, undefined, () => {}); }
+  // talking: a speech box over the bottom of the screen, typed out; then the Heritage Book comes up as a found item, and opens as an e-book
+  const HB = { n: 54, dir: "assets/heritage/p", i: 0 };
+  const dlg = { el: $("dlg"), txt: $("dlgTxt"), timer: 0, next: null };
+  function say(lines, done) { const el = dlg.el; let li = 0; el.classList.add("on"); LIB.talk = 1;
+    const show = () => { const t = lines[li]; let c = 0; clearInterval(dlg.timer); dlg.txt.textContent = "";
+      dlg.timer = setInterval(() => { c++; dlg.txt.textContent = t.slice(0, c); if (c >= t.length) { clearInterval(dlg.timer); dlg.timer = 0; } }, 45); };
+    dlg.next = () => { if (dlg.timer) { clearInterval(dlg.timer); dlg.timer = 0; dlg.txt.textContent = lines[li]; return; } li++; if (li < lines.length) show(); else { el.classList.remove("on"); LIB.talk = 0; dlg.next = null; if (done) done(); } };
+    show(); }
+  dlg.el.addEventListener("click", (e) => { e.stopPropagation(); if (dlg.next) dlg.next(); });
+  function giveBook() { const gi = $("getItem"); gi.classList.add("on"); LIB.given = true; try { localStorage.setItem("kumhoHeritageGot", "1"); } catch (e) {} $("bookBtn").hidden = false; }
+  $("getItem").addEventListener("click", (e) => { e.stopPropagation(); if (e.target.closest("#giBook")) { $("getItem").classList.remove("on"); openEbook(0); } else $("getItem").classList.remove("on"); });
+  function openEbook(i) { HB.i = i || 0; $("ebook").classList.add("on"); ebShow(); }
+  function ebShow() { const img = $("ebImg"); img.classList.add("ld"); const u = HB.dir + String(HB.i + 1).padStart(2, "0") + ".jpg", pre = new Image(); img.dataset.want = u;
+    pre.onload = () => { if (img.dataset.want === u) { img.src = u; img.classList.remove("ld"); } }; pre.src = u;
+    [HB.i - 1, HB.i + 1].forEach((j) => { if (j >= 0 && j < HB.n) new Image().src = HB.dir + String(j + 1).padStart(2, "0") + ".jpg"; });
+    $("ebPg").textContent = `${HB.i + 1} / ${HB.n}`; $("ebPrev").disabled = HB.i <= 0; $("ebNext").disabled = HB.i >= HB.n - 1; }
+  const ebGo = (d) => { const j = Math.max(0, Math.min(HB.n - 1, HB.i + d)); if (j !== HB.i) { HB.i = j; ebShow(); } };
+  $("ebPrev").addEventListener("click", (e) => { e.stopPropagation(); ebGo(-1); }); $("ebNext").addEventListener("click", (e) => { e.stopPropagation(); ebGo(1); });
+  $("ebClose").addEventListener("click", (e) => { e.stopPropagation(); $("ebook").classList.remove("on"); });
+  { let sx = null; const st = $("ebStage"); st.addEventListener("pointerdown", (e) => { sx = e.clientX; }); st.addEventListener("pointerup", (e) => { if (sx == null) return; const dx = e.clientX - sx; sx = null;
+      if (Math.abs(dx) > 40) ebGo(dx < 0 ? 1 : -1); else { const r = st.getBoundingClientRect(); ebGo(e.clientX > r.left + r.width / 2 ? 1 : -1); } }); }
+  $("bookBtn").hidden = !LIB.given; $("bookBtn").addEventListener("click", (e) => { e.stopPropagation(); openEbook(HB.i); });
+  window.__libT = { LIB, ask: () => askLibrarian(), open: (i) => openEbook(i) };
+  const uiOpen = () => $("ebook").classList.contains("on") || $("getItem").classList.contains("on") || dlg.el.classList.contains("on");
+  function meetLibrarian() { LIB.pend = false; S.tx = null; S.yaw = Math.atan2(-(LIB.x - S.x), -(LIB.z - S.z)); S.pitch = -0.02;
+    if (!LIB.given) say(["금호 도서관에 잘 왔어.", "네게 줄 금호 헤리티지북이 있어."], giveBook);
+    else say(["또 왔구나! 금호 헤리티지북은 잘 보고 있니?", "다시 펼쳐 줄게."], () => openEbook(HB.i)); }
+  function askLibrarian() { const dx = LIB.x - S.x, dz = (DZ + DD / 2 + 1.0) - S.z;
+    if (Math.abs(S.x - LIB.x) < 2.2 && S.z > DZ && S.z - DZ < 3.4) return meetLibrarian();   // close enough, across the counter
+    LIB.pend = true; S.tx = LIB.x; S.tz = DZ + DD / 2 + 1.0; S.v = 0; }   // walk up to the counter first
+
 
   // ---- 쿠모 (assets/character.glb, as in the park): walks the library in third person, the camera behind him ----
   const TP = { obj: null, mixer: null, act: {}, face: null, px: null, pz: null, spd: 0, rw: 0, iw: 1, d: 3.4, started: false };
@@ -4035,7 +4107,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // the same handling as the archive's halls: drag and the room follows the pointer, press and hold to run where you point,
   // a click walks a few metres toward that spot, the arrow keys / pad walk and turn with a gentle start and stop
   const kName = (e) => (/^Arrow/.test(e.key) ? e.key : /^Arrow/.test(e.code) ? e.code : e.key);   /* a Korean IME can report the arrows oddly: fall back to the physical key */
-  document.addEventListener("keydown", (e) => { const k = kName(e); keys[k] = true; if (/^Arrow/.test(k)) e.preventDefault(); }, true); document.addEventListener("keyup", (e) => { keys[kName(e)] = false; }, true);
+  document.addEventListener("keydown", (e) => { const k = kName(e);
+    if ($("ebook").classList.contains("on")) { if (k === "ArrowRight" || k === " ") ebGo(1); else if (k === "ArrowLeft") ebGo(-1); else if (k === "Escape") $("ebook").classList.remove("on"); e.preventDefault(); return; }   // the e-book takes the arrow keys while it is open
+    if ($("getItem").classList.contains("on")) { if (k === "Enter" || k === " ") { $("getItem").classList.remove("on"); openEbook(0); } else if (k === "Escape") $("getItem").classList.remove("on"); e.preventDefault(); return; }
+    if (dlg.el.classList.contains("on") && (k === "Enter" || k === " ")) { if (dlg.next) dlg.next(); e.preventDefault(); return; }
+    keys[k] = true; if (/^Arrow/.test(k)) e.preventDefault(); }, true); document.addEventListener("keyup", (e) => { keys[kName(e)] = false; }, true);
   addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
   document.querySelectorAll("#pad button").forEach((b) => { const k = b.dataset.k; const on = (e) => { e.preventDefault(); keys[k] = true; try { b.setPointerCapture(e.pointerId); } catch (x) {} }, off = () => { keys[k] = false; };
     b.addEventListener("pointerdown", on); b.addEventListener("pointerup", off); b.addEventListener("pointercancel", off); });
@@ -4061,7 +4137,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const endP = (e) => { PT.delete(e.pointerId); if (pinch) { if (PT.size < 2) { pinch = null; drag = null; } return; }
     clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (d && d.tp) { TP.dragging = false; canvas.style.cursor = ""; if (d.moved <= 4) toast("안녕! 나는 쿠모야 👋 끌어서 돌려 봐"); return; } if (!d || d.moved > 8) return;
     const r = aim(e.clientX, e.clientY), hp = r.intersectObjects(PICK, false)[0], hf = r.intersectObjects(FLOORS, false)[0];
-    if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { if (hp.object.userData.idx === "exit") return leave(); if (hp.object.userData.idx === "desk") return toast("어서 오세요, 금호 도서관입니다 📚"); }
+    if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { if (hp.object.userData.idx === "exit") return leave(); if (hp.object.userData.idx === "desk" || hp.object.userData.idx === "librarian") return askLibrarian(); }
     if (hf) { const dx = hf.point.x - S.x, dz = hf.point.z - S.z, dd = Math.hypot(dx, dz), L = Math.min(dd, 7); if (dd > 0.3) { S.tx = S.x + dx / dd * L; S.tz = S.z + dz / dd * L; S.v = 0; } } };
   canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", (e) => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; clearTimeout(holdT); hold = null; drag = null; TP.dragging = false; });
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.fov = Math.max(35, Math.min(75, camera.fov + e.deltaY * 0.03)); camera.updateProjectionMatrix(); }, { passive: false });
@@ -4114,6 +4190,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
         W.timeScale = moving ? Math.max(0.7, Math.min(1.9, TP.spd / 1.5)) : 0.3; R.timeScale = Math.max(0.8, Math.min(1.6, TP.spd / 5)); }
       TP.mixer.update(dt); }
     if (mixer) mixer.update(dt);
+    if (LIB.pend && S.tx == null) { if (Math.hypot(S.x - LIB.x, S.z - LIB.z) < 3.6) meetLibrarian(); else LIB.pend = false; }   // walked up to the counter: now he speaks
+    if (LIB.obj) { LIB.t += dt; const t = LIB.t, wa = (v, to, k) => v + (to - v) * Math.min(1, dt * k);   // talking: the rig's Talk_with_Hands_Open; at rest: still, breathing
+      if (LIB.aT) { if (LIB.talk && !LIB.was) LIB.aT.time = 0; LIB.was = LIB.talk; LIB.w = wa(LIB.w, LIB.talk ? 1 : 0, 4); LIB.aT.setEffectiveWeight(LIB.w); LIB.aI.setEffectiveWeight(1 - LIB.w); }
+      LIB.obj.scale.y = 1 + 0.006 * Math.sin(t * 1.8);
+      const want = Math.hypot(S.x - LIB.x, S.z - LIB.z) < 7 ? Math.max(-0.7, Math.min(0.7, Math.atan2(S.x - LIB.x, S.z - LIB.z))) : 0; LIB.obj.rotation.y = wa(LIB.obj.rotation.y, want, 3); }   // he turns to 쿠모 when 쿠모 is near
     renderer.render(scene, camera);
     if (first) { first = false; prog(1); setTimeout(() => $("ld").classList.add("off"), 250); } })();
 })();
