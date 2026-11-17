@@ -11375,7 +11375,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     el.innerHTML = `<div class="hd"><div><b>🗺 금호공원 안내도</b><span>장소를 누르면 설명이 나와요</span></div><button type="button" data-a="x">닫기 ✕</button></div><div class="bd"><div class="sv">${mapSVG(false)}</div></div><div class="info"><p>궁금한 곳을 눌러 보세요. 주황 점이 지금 쿠모가 있는 곳이에요.</p></div>`;
     el.hidden = false; const me = () => { const g = $("mapMe"); if (!g) return; const [u, v] = mapXY(cam.x, cam.z); g.style.left = (u / MAP_W * 100) + "%"; g.style.top = (v / MAP_H * 100) + "%"; }; me(); clearInterval(mapTimer); mapTimer = setInterval(me, 400); }
   function mapPick(k) { const el = $("atMap"), p = MAP_SPOTS().find((q) => q.k === k); if (!el || !p) return; el.querySelectorAll(".mk").forEach((m) => m.classList.toggle("on", m.dataset.k === k));
-    el.querySelector(".info").innerHTML = `<b>${p.n}</b><p>${p.d}</p>`;   // a description only: no jumping there, 쿠모 walks }
+    el.querySelector(".info").innerHTML = `<b>${p.n}</b><p>${p.d}</p>`; }   // a description only: no jumping there, 쿠모 walks
   function mapClose() { const el = $("atMap"); if (el) el.hidden = true; clearInterval(mapTimer); }
   setTimeout(() => { if (mapGot) mapBtn().hidden = mode !== "outside"; }, 0);
   window.__npc = { NPC, talk: () => npcTalk(), map: () => mapOpen(), pick: (k) => mapPick(k) };
