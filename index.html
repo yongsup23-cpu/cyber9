@@ -8190,36 +8190,55 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           const pb = mk(new THREE.BoxGeometry(8, 6.4, 3), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 3, 0.8); pb.castShadow = false; pb.userData.idx = "library"; pickables.push(pb); }
         { const lg = new THREE.Mesh(new THREE.PlaneGeometry(60, 50), grass.material); lg.rotation.x = -Math.PI / 2; lg.position.set(-84, 0.03, -113); lg.receiveShadow = true; world.add(lg);   /* the library's block laid with the park's lawn, not the pale city paving */
           const pw = new THREE.Mesh(new THREE.PlaneGeometry(8.6, 4.2), PAVE_M); pw.rotation.x = -Math.PI / 2; pw.position.set(-58.3, 0.045, -113); world.add(pw); }   /* a block-paved walk from its door to the street */
-        { // the round screen on the lawn west of the playground: the archive's photographs, hall by hall as each hall's "한눈에 보기",
-          // round the inside of a 300° ring with a round bench in the middle; a tap opens that photo large, and the viewer runs on through every hall in order.
-          // Memory: one 4096×384 picture at a time, drawn from the halls' existing thumbnail atlases (no photo is loaded until it is opened large).
-          const RX = -31, RZ = -31, RR = 5.6, SY = 0.85, SH = 2.6, T0 = Math.PI / 6, TL = Math.PI * 5 / 3, G = new THREE.Group(); G.position.set(RX, 0, RZ); world.add(G);
-          const scrM = new THREE.MeshBasicMaterial({ color: 0x111317, side: THREE.BackSide, toneMapped: false });
-          const scr = new THREE.Mesh(new THREE.CylinderGeometry(RR, RR, SH, 96, 1, true, T0, TL), scrM); scr.position.y = SY + SH / 2; scr.userData.idx = "ring"; scr.userData.noCol = true; G.add(scr); pickables.push(scr);
-          const shell = new THREE.Mesh(new THREE.CylinderGeometry(RR + 0.12, RR + 0.12, SH + 0.5, 96, 1, true, T0, TL), new THREE.MeshLambertMaterial({ color: 0x2b2e33, side: THREE.DoubleSide })); shell.position.y = SY + SH / 2; shell.userData.noCol = true; G.add(shell);
-          [SY - 0.1, SY + SH + 0.15].forEach((y) => { const rim = new THREE.Mesh(new THREE.CylinderGeometry(RR + 0.16, RR + 0.16, 0.16, 96, 1, true, T0, TL), new THREE.MeshLambertMaterial({ color: 0xf26a1f, side: THREE.DoubleSide })); rim.position.y = y; rim.userData.noCol = true; G.add(rim); });
-          for (let i = 0; i <= 10; i++) { const a = T0 + TL * i / 10, p = new THREE.Mesh(new THREE.BoxGeometry(0.16, SY + SH + 0.3, 0.16), lam(0x2b2e33)); p.position.set((RR + 0.12) * Math.sin(a), (SY + SH + 0.3) / 2, (RR + 0.12) * Math.cos(a)); p.userData.noCol = true; G.add(p); }
-          { const fl = new THREE.Mesh(new THREE.CircleGeometry(RR + 0.6, 64), PAVE_M); fl.rotation.x = -Math.PI / 2; fl.position.y = 0.04; G.add(fl); }   // a paved round floor
-          { const bn = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.45, 0.46, 40), WOOD_M); bn.position.y = 0.23; G.add(bn); const bs = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.3, 0.1, 40), lam(0x2b2e33)); bs.position.y = 0.05; G.add(bs);
-            for (let i = 0; i < 6; i++) { const a = T0 + TL * (i + 0.5) / 6; seatAdd(RX + 1.55 * Math.sin(a), RZ + 1.55 * Math.cos(a), 0.49, Math.sin(a), Math.cos(a)); } }   // a round bench, six places facing out to the screen
-          const HN = ["1관", "2관", "3관", "특별관 Ⅰ", "특별관 Ⅱ"], CW = 4096, CH = 384, GX = 560;
-          const RING = OUT.ring = { h: 0, lay: null, tex: null, scrM, timer: 0 };
-          const cover = (g, im, sx, sy, sw, sh, x, y, w, h) => { const ar = w / h, sar = sw / sh; let cx = sx, cy = sy, cw = sw, ch = sh; if (sar > ar) { cw = sh * ar; cx = sx + (sw - cw) / 2; } else { ch = sw / ar; cy = sy + (sh - ch) / 2; } g.drawImage(im, cx, cy, cw, ch, x, y, w, h); };
-          const draw = (h) => { const H = DATA[h]; if (!H) return; const its = H.items.filter((it) => it.wa), n = its.length, rows = n <= 40 ? 2 : n <= 100 ? 3 : 4, cols = Math.ceil(n / rows), cw = (CW - GX - 16) / cols, chh = (CH - 24) / rows;
-            const ks = [...new Set(its.map((it) => it.wa[0]))], ims = {};
-            Promise.all(ks.map((k) => photoSrc(ATL(k)).then((src) => new Promise((res) => { const im = new Image(); im.onload = () => { ims[k] = im; res(); }; im.onerror = res; im.src = src; })).catch(() => {}))).then(() => {
-              if (RING.h !== h || world !== OUT.ringWorld) return;
-              const c = document.createElement("canvas"); c.width = CW; c.height = CH; const g = c.getContext("2d"); g.fillStyle = "#121418"; g.fillRect(0, 0, CW, CH);
-              g.fillStyle = "#f26a1f"; g.fillRect(28, 40, 10, CH - 80); g.fillStyle = "#c9a86a"; g.font = `700 34px ${FONT}`; g.fillText("한눈에 보는", 64, 92);
-              g.fillStyle = "#ffffff"; g.font = `800 92px ${FONT}`; g.fillText(`${HN[h]} ${H.name}`, 60, 200); g.fillStyle = "#cfc8bb"; g.font = `500 34px ${FONT}`; g.fillText(H.span ? H.span.replace(/\s+/g, " ") : "", 64, 262);
-              g.fillStyle = "#8f8a80"; g.font = `500 28px ${FONT}`; g.fillText(`사진 ${n}장 · 눌러서 크게 보기`, 64, 318);
-              const lay = []; its.forEach((it, i) => { const r = i % rows, q = Math.floor(i / rows), x = GX + q * cw, y = 12 + r * chh, im = ims[it.wa[0]];
-                if (im) { const [, u, v, w, hh] = it.wa; cover(g, im, u * im.width, v * im.height, w * im.width, hh * im.height, x + 2, y + 2, cw - 4, chh - 4); } else { g.fillStyle = "#2a2d33"; g.fillRect(x + 2, y + 2, cw - 4, chh - 4); }
-                lay.push([x, y, cw, chh, H.items.indexOf(it)]); });
-              const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; t.offset.x = 1;   // read from inside the ring, left to right
-              const old = RING.tex; scrM.map = t; scrM.color.set(0xffffff); scrM.needsUpdate = true; RING.tex = t; RING.lay = lay; RING.lh = h; if (old) old.dispose(); }); };   // the old picture is let go at once
-          OUT.ringWorld = world; draw(0);
-          RING.timer = setInterval(() => { if (OUT.ringWorld !== world || !world.parent) { clearInterval(RING.timer); return; } if (ringLB.open) return; RING.h = (RING.h + 1) % Math.min(5, DATA.length); draw(RING.h); }, 25000);
+        { // the archive kiosk on the lawn west of the playground: a big screen on a stand, the halls listed down the left (1관 … 특별관 Ⅱ),
+          // that hall's photographs in a grid on the right, a page at a time; tap a photo for the archive's own large view with its story.
+          // Memory: one 2048×860 canvas, redrawn on each tap; only the 15 thumbnails on the page are drawn (from the halls' thumbnail atlases, or the photo itself when its atlas is missing).
+          const KX = -31, KZ = -33, SW = 9.6, SH = 4.03, SY = 0.9, CW = 2048, CH = 860, G = new THREE.Group(); G.position.set(KX, 0, KZ); world.add(G);
+          const c = document.createElement("canvas"); c.width = CW; c.height = CH; const g = c.getContext("2d");
+          const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = ANISO;
+          const scr = new THREE.Mesh(new THREE.PlaneGeometry(SW, SH), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })); scr.position.set(0, SY + SH / 2, 0.16); scr.userData.idx = "kiosk2"; G.add(scr); pickables.push(scr);
+          const dk = lam(0x22252a), og = new THREE.MeshBasicMaterial({ color: 0xf26a1f });
+          { const b = new THREE.Mesh(new THREE.BoxGeometry(SW + 0.5, SH + 0.5, 0.3), dk); b.position.set(0, SY + SH / 2, 0); G.add(b);
+            const st = new THREE.Mesh(new THREE.BoxGeometry(SW + 0.5, 0.08, 0.32), og); st.position.set(0, SY - 0.21, 0.01); G.add(st);
+            [-SW * 0.32, SW * 0.32].forEach((x) => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.35, SY, 0.5), dk); l.position.set(x, SY / 2, 0); G.add(l); });
+            const fl = new THREE.Mesh(new THREE.PlaneGeometry(SW + 3, 8), PAVE_M); fl.rotation.x = -Math.PI / 2; fl.position.set(0, 0.04, 3.4); G.add(fl);
+            OUT.bldRects && OUT.bldRects.push([KX - SW / 2 - 0.3, KX + SW / 2 + 0.3, KZ - 0.3, KZ + 0.3]); }
+          for (const x of [-2.4, 2.4]) { const z = KZ + 5.2;   // two benches facing the screen
+            for (const k of [-0.2, 0, 0.2]) { const s = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.06, 0.18), WOOD_M); s.position.set(KX + x, 0.46, z + k); world.add(s); }
+            [-0.95, 0.95].forEach((d) => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.44, 0.56), dk); l.position.set(KX + x + d, 0.22, z); world.add(l); });
+            seatAdd(KX + x, z + 0.1, 0.49, 0, -1); }
+          const HN = ["1관", "2관", "3관", "특별관 Ⅰ", "특별관 Ⅱ"], NH = Math.min(5, DATA.length), LW = 520, COLS = 5, ROWS = 3, PP = COLS * ROWS, GX = LW + 30, GY = 110, GW = CW - GX - 30, GH = CH - GY - 40;
+          const K = OUT.kiosk = { h: 0, p: 0, hit: [], atl: {}, img: {} };
+          const cover = (im, sx, sy, sw, sh, x, y, w, h) => { const ar = w / h, sar = sw / sh; let cx = sx, cy = sy, cw = sw, ch = sh; if (sar > ar) { cw = sh * ar; cx = sx + (sw - cw) / 2; } else { ch = sw / ar; cy = sy + (sh - ch) / 2; } g.drawImage(im, cx, cy, cw, ch, x, y, w, h); };
+          const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+          const draw = () => { const H = DATA[K.h], its = H.items, np = Math.max(1, Math.ceil(its.length / PP)); K.p = Math.min(K.p, np - 1); K.hit = [];
+            g.fillStyle = "#101216"; g.fillRect(0, 0, CW, CH); g.fillStyle = "#181b21"; g.fillRect(0, 0, LW, CH); g.fillStyle = "#f26a1f"; g.fillRect(LW - 4, 0, 4, CH);
+            g.fillStyle = "#c9a86a"; g.font = `700 30px ${FONT}`; g.textBaseline = "alphabetic"; g.textAlign = "left"; g.fillText("KUMHO ARCHIVES", 44, 72); g.fillStyle = "#fff"; g.font = `800 46px ${FONT}`; g.fillText("아카이브 키오스크", 44, 130);
+            for (let h = 0; h < NH; h++) { const y = 180 + h * 128, on = h === K.h; rr(36, y, LW - 72, 104, 18); g.fillStyle = on ? "#c9a86a" : "#262a31"; g.fill();
+              g.fillStyle = on ? "#16130f" : "#f1e9da"; g.font = `800 40px ${FONT}`; g.fillText(`${HN[h]}  ${DATA[h].name}`, 66, y + 52); g.font = `500 24px ${FONT}`; g.fillStyle = on ? "#3a3022" : "#9d978c"; g.fillText(`${(DATA[h].span || "").replace(/\s+/g, " ")}  ·  ${DATA[h].items.length}장`, 66, y + 86);
+              K.hit.push([36, y, LW - 72, 104, "h", h]); }
+            g.fillStyle = "#fff"; g.font = `800 44px ${FONT}`; g.fillText(`${HN[K.h]} ${H.name}`, GX, 70); g.fillStyle = "#9d978c"; g.font = `500 26px ${FONT}`; g.fillText("사진을 누르면 크게 볼 수 있어요", GX + 330, 70);
+            g.textAlign = "center"; g.fillStyle = "#e9e1d2"; g.font = `700 30px ${FONT}`; g.fillText(`${K.p + 1} / ${np}`, CW - 180, 70);
+            [["◀", CW - 300, -1], ["▶", CW - 60, 1]].forEach(([t, x, d]) => { rr(x - 34, 32, 68, 56, 14); g.fillStyle = "#262a31"; g.fill(); g.fillStyle = "#f1e9da"; g.fillText(t, x, 72); K.hit.push([x - 34, 32, 68, 56, "p", d]); });
+            g.textAlign = "left";
+            const cw = GW / COLS, ch = GH / ROWS, page = its.slice(K.p * PP, K.p * PP + PP);
+            page.forEach((it, j) => { const x = GX + (j % COLS) * cw, y = GY + Math.floor(j / COLS) * ch, idx = K.p * PP + j; K.hit.push([x, y, cw, ch, "i", idx]);
+              const W2 = cw - 14, H2 = ch - 54; g.fillStyle = "#23262c"; g.fillRect(x + 7, y + 7, W2, H2);
+              const at = it.wa && K.atl[it.wa[0]], own = K.img[it.file];
+              if (at && at !== "x") { const [, u, v, w, hh] = it.wa; cover(at, u * at.width, v * at.height, w * at.width, hh * at.height, x + 7, y + 7, W2, H2); }
+              else if (own && own.width) cover(own, 0, 0, own.width, own.height, x + 7, y + 7, W2, H2);
+              g.fillStyle = "#c9a86a"; g.font = `700 20px ${FONT}`; g.fillText(String(it.year || ""), x + 9, y + ch - 26); g.fillStyle = "#e6dfd2"; g.font = `500 20px ${FONT}`;
+              let t = it.title || ""; while (t.length > 1 && g.measureText(t).width > W2 - 70) t = t.slice(0, -1); if (t !== (it.title || "")) t += "…"; g.fillText(t, x + 70, y + ch - 26); });
+            tex.needsUpdate = true; return page; };
+          const fill = () => { const page = draw(), want = K.h * 1000 + K.p;   // then the thumbnails arrive: atlas first, the photo itself where there is no atlas
+            page.forEach((it) => { const k = it.wa && it.wa[0];
+              if (k != null && K.atl[k] === undefined) { K.atl[k] = null; photoSrc(ATL(k)).then((src) => { const im = new Image(); im.onload = () => { K.atl[k] = im; if (K.h * 1000 + K.p === want) draw(); }; im.onerror = () => { K.atl[k] = "x"; fill(); }; im.src = src; }).catch(() => { K.atl[k] = "x"; fill(); }); }
+              else if ((k == null || K.atl[k] === "x") && !K.img[it.file]) { K.img[it.file] = 1; photoSrc(it.file).then((src) => { const im = new Image(); im.onload = () => { K.img[it.file] = im; if (K.h * 1000 + K.p === want) draw(); }; im.src = src; }); } }); };
+          K.tap = (uv) => { if (!uv) return; const x = uv.x * CW, y = (1 - uv.y) * CH, hb = K.hit.find(([a, b, w, h]) => x >= a && x < a + w && y >= b && y < b + h); if (!hb) return;
+            if (hb[4] === "h") { if (K.h !== hb[5]) { K.h = hb[5]; K.p = 0; K.atl = {}; K.img = {}; fill(); } }   // another hall: the last hall's pictures are let go
+            else if (hb[4] === "p") { const np = Math.ceil(DATA[K.h].items.length / PP); K.p = (K.p + hb[5] + np) % np; fill(); }
+            else kioskLB(K.h, hb[5]); };
+          fill();
         }
         { // 금호 가치체계 전시관: the ARTERA mark laid flat as the building's plan, so from the sky the roof reads as the mark — apex to the north, the inverted-V notch open to the south.
           // The two feet of the mark each take an archive-style door on their south face; the notch between them is a paved forecourt ; the name plaque hangs over the right-hand door.
@@ -9737,35 +9756,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     try { if (SND.bgmEl) SND.bgmEl.pause(); if (SND.ctx && SND.ctx.close) SND.ctx.close(); scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { for (const k in m) { const v = m[k]; if (v && v.isTexture) v.dispose(); } m.dispose(); }); });
       renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} }
   addEventListener("pagehide", freeGL); addEventListener("pageshow", (e) => { if (e.persisted) location.reload(); });   // never come back to a page whose GL was handed back
-  // ---- the round screen's viewer: one photo large with its year, title and caption; ◀ ▶ run on through every hall in order (1관 first) ----
-  const ringLB = { open: false, h: 0, i: 0 };
-  function ringLBEl() { let el = $("ringLB"); if (el) return el;
-    const st = document.createElement("style"); st.textContent = `#ringLB{position:fixed;inset:0;z-index:100500;background:rgba(10,10,12,.97);display:flex;flex-direction:column;color:#efe6d6;font-family:inherit}#ringLB[hidden]{display:none}
-#ringLB .top{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;gap:10px}#ringLB .k{font-size:13px;color:#c9a86a;letter-spacing:.06em}#ringLB .tabs{display:flex;gap:6px;flex-wrap:wrap}
-#ringLB button{background:rgba(40,38,34,.9);color:#f2e7d2;border:1px solid rgba(201,168,106,.55);border-radius:999px;padding:7px 14px;font:600 13px inherit;font-family:inherit;cursor:pointer}#ringLB button.on{background:#c9a86a;color:#1a1612}#ringLB button:disabled{opacity:.3}
-#ringLB .st{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 12px;touch-action:pan-y}#ringLB img{max-width:100%;max-height:100%;box-shadow:0 10px 40px rgba(0,0,0,.6);transition:opacity .2s}#ringLB img.ld{opacity:.3}
-#ringLB .cap{padding:10px 18px 4px;text-align:center}#ringLB .cap b{font-size:17px}#ringLB .cap div{font-size:13px;color:#cfc6b6;margin-top:4px;line-height:1.5}#ringLB .nav{display:flex;justify-content:center;align-items:center;gap:14px;padding:10px 0 16px;font-size:13px}`;
-    document.head.appendChild(st); el = document.createElement("div"); el.id = "ringLB"; el.hidden = true;
-    el.innerHTML = `<div class="top"><div class="tabs"></div><button type="button" data-a="x">닫기 ✕</button></div><div class="st"><img alt=""></div><div class="cap"><b></b><div></div></div><div class="nav"><button type="button" data-a="p">◀ 이전</button><span class="pg"></span><button type="button" data-a="n">다음 ▶</button></div>`;
-    document.body.appendChild(el); const HN = ["1관", "2관", "3관", "특별관 Ⅰ", "특별관 Ⅱ"];
-    el.querySelector(".tabs").innerHTML = DATA.slice(0, 5).map((H, h) => `<button type="button" data-h="${h}">${HN[h]} ${H.name}</button>`).join("");
-    ["pointerdown", "pointerup", "click", "wheel"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation()));
-    el.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.h) { ringLB.h = +b.dataset.h; ringLB.i = 0; ringShow(); } else if (b.dataset.a === "x") ringClose(); else ringStep(b.dataset.a === "n" ? 1 : -1); });
-    { let sx = null; const s = el.querySelector(".st"); s.addEventListener("pointerdown", (e) => { sx = e.clientX; }); s.addEventListener("pointerup", (e) => { if (sx != null && Math.abs(e.clientX - sx) > 40) ringStep(e.clientX < sx ? 1 : -1); sx = null; }); }
-    document.addEventListener("keydown", (e) => { if (!ringLB.open) return; if (e.key === "ArrowRight") ringStep(1); else if (e.key === "ArrowLeft") ringStep(-1); else if (e.key === "Escape") ringClose(); else return; e.preventDefault(); e.stopImmediatePropagation(); }, true);
-    return el; }
-  function ringStep(d) { const NH = Math.min(5, DATA.length); let { h, i } = ringLB; i += d;
-    if (i >= DATA[h].items.length) { h = (h + 1) % NH; i = 0; } else if (i < 0) { h = (h + NH - 1) % NH; i = DATA[h].items.length - 1; }   // on into the next hall, or back into the last
-    ringLB.h = h; ringLB.i = i; ringShow(); }
-  function ringShow() { const el = ringLBEl(), H = DATA[ringLB.h], it = H.items[ringLB.i], img = el.querySelector("img"); img.classList.add("ld"); img.dataset.want = it.file;
-    photoSrc(it.file).then((src) => { if (img.dataset.want !== it.file) return; const pre = new Image(); pre.onload = () => { if (img.dataset.want === it.file) { img.src = src; img.classList.remove("ld"); } }; pre.src = src; });
-    const b = it.file.split("/").pop(); if (HIRES.has(b)) { const hi = new Image(); hi.onload = () => { if (img.dataset.want === it.file) img.src = hi.src; }; hi.src = R("hires/" + b); }
-    el.querySelector(".cap b").textContent = `${it.year ? it.year + " · " : ""}${it.title || ""}`; el.querySelector(".cap div").textContent = it.cap || "";
-    el.querySelector(".pg").textContent = `${ringLB.i + 1} / ${H.items.length}`; el.querySelectorAll(".tabs button").forEach((t) => t.classList.toggle("on", +t.dataset.h === ringLB.h)); }
-  function ringOpen(uv) { const R0 = OUT.ring; let h = R0 ? R0.lh || 0 : 0, i = 0;
-    if (uv && R0 && R0.lay) { const x = (1 - uv.x) * 4096, y = (1 - uv.y) * 384; const c = R0.lay.find(([lx, ly, w, hh]) => x >= lx && x < lx + w && y >= ly && y < ly + hh); if (c) i = c[4]; }
-    ringLB.h = h; ringLB.i = i; ringLB.open = true; ringLBEl().hidden = false; ringShow(); }
-  function ringClose() { ringLB.open = false; const el = $("ringLB"); if (el) { el.hidden = true; el.querySelector("img").removeAttribute("src"); } }
+  // ---- the kiosk's large view: the archive's own photo view (photo, year, title, caption, story), with ◀ ▶ through the hall and on into the next ----
+  const KLB = { on: false, h: 0, i: 0 };
+  function kioskLB(h, i) { KLB.on = true; KLB.h = h; KLB.i = i; const it = DATA[h].items[i]; openLB({ data: it, kind: "kioskPhoto" });
+    let nav = $("klbNav"); if (!nav) { const st = document.createElement("style"); st.textContent = "#klbNav{position:fixed;left:0;right:0;top:50%;display:flex;justify-content:space-between;padding:0 10px;pointer-events:none;z-index:100600}#klbNav button{pointer-events:auto;width:52px;height:52px;border-radius:50%;background:rgba(20,20,22,.8);color:#f2e7d2;border:1px solid rgba(201,168,106,.6);font-size:20px;cursor:pointer}#klbNav[hidden]{display:none}";
+      document.head.appendChild(st); nav = document.createElement("div"); nav.id = "klbNav"; nav.innerHTML = '<button type="button" data-d="-1">◀</button><button type="button" data-d="1">▶</button>'; document.body.appendChild(nav);
+      ["pointerdown", "pointerup"].forEach((ev) => nav.addEventListener(ev, (e) => e.stopPropagation())); nav.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) { e.stopPropagation(); kioskStep(+b.dataset.d); } });
+      document.addEventListener("keydown", (e) => { if (!KLB.on || $("lb").hidden) return; if (e.key === "ArrowRight" || e.key === "ArrowLeft") { kioskStep(e.key === "ArrowRight" ? 1 : -1); e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+      new MutationObserver(() => { if ($("lb").hidden) { KLB.on = false; nav.hidden = true; } }).observe($("lb"), { attributes: true, attributeFilter: ["hidden"] }); }
+    nav.hidden = false; }
+  function kioskStep(d) { const NH = Math.min(5, DATA.length); let { h, i } = KLB; i += d;
+    if (i >= DATA[h].items.length) { h = (h + 1) % NH; i = 0; } else if (i < 0) { h = (h + NH - 1) % NH; i = DATA[h].items.length - 1; }
+    kioskLB(h, i); }
   function pageGo(to) {
     window.__pageLeaving = true; busy = true;
     try { sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({ ride: !!RIDE.ok, sound: !!SND.on, t: Date.now() }, to))); } catch (e) {}
@@ -11048,7 +11050,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "hoop") { hoopStart(o.userData.hoop); return; }
     if (o.userData.idx === "valueHall") { if (!busy) pageGo({ valueHall: true }); return; }   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { if (!busy) pageGo({ library: true }); return; }
-    if (o.userData.idx === "ring") { ringOpen(hitUV); return; }   // the round screen: that photo, large   // into the library (library.html)
+    if (o.userData.idx === "kiosk2") { if (OUT.kiosk) OUT.kiosk.tap(hitUV); return; }   // the park kiosk: a hall, a page, or a photo large   // into the library (library.html)
     if (o.userData.idx === "bigScreen") { if (SCR.at && !anim && Math.hypot(cam.x - SCR.at.x, cam.z - SCR.at.z) < 1.5) screenBig(); else screenFace(); return; }   // first click: walk to face it; again: see it full size
     if (o.userData.idx === "pz") { if (!PZ) pzStart(); else pzBoard(); return; }   // stepped or looked aside: back to the puzzle view
     if (o.userData.idx === "fountain") { coinThrow(); return; }   // the show only follows a thrown wish coin
