@@ -4056,11 +4056,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   canvas.addEventListener("pointerdown", (e) => { PT.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
     if (PT.size === 2) { clearTimeout(holdT); hold = null; drag = null; S.tx = null; pinch = { d0: pdist(), f0: camera.fov }; return; } if (PT.size > 2) return;
     drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0, tp: onKumo(e.clientX, e.clientY) };
-    clearTimeout(holdT); if (!drag.tp) holdT = setTimeout(() => { if (drag && drag.moved <= 8 && !pinch) { hold = { x: drag.lx, y: drag.ly, v: 0 }; S.tx = null; } }, 320); });
+    clearTimeout(holdT); if (!drag.tp) holdT = setTimeout(() => { if (drag && drag.moved <= 8 && !pinch) { hold = { x: drag.lx, y: drag.ly, v: 0, sx: S.x, sz: S.z, t0: performance.now() }; S.tx = null; } }, 320); });
   canvas.addEventListener("pointermove", (e) => { if (PT.has(e.pointerId)) PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch) { if (PT.size >= 2) { const d = pdist(); if (d > 10) { camera.fov = Math.max(35, Math.min(75, pinch.f0 * pinch.d0 / d)); camera.updateProjectionMatrix(); } } return; }
     if (!drag && TP.obj && e.pointerType === "mouse") canvas.style.cursor = onKumo(e.clientX, e.clientY) ? "grab" : "";
-    if (hold) { hold.x = e.clientX; hold.y = e.clientY; return; } if (!drag) return;
+    if (hold) { if (drag && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 24) { if (hold.t0 && performance.now() - hold.t0 < 450) { S.x = hold.sx; S.z = hold.sz; } hold = null; drag.moved = 99; drag.lx = e.clientX; drag.ly = e.clientY; } else { hold.x = e.clientX; hold.y = e.clientY; return; } }   /* pressed, then swept sideways: that is a look round, not a run */ if (!drag) return;
     if (drag.tp) { const dx = e.clientX - drag.lx; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0)); if (drag.moved > 3) { TP.face += dx * 0.012; TP.dragging = true; canvas.style.cursor = "grabbing"; } drag.lx = e.clientX; drag.ly = e.clientY; return; }
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
     if (drag.moved > 6) { const k = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight; S.yaw += dx * k; S.pitch = Math.max(-0.5, Math.min(0.7, S.pitch + dy * k)); S.tx = null; }
@@ -4106,7 +4106,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     else if (fw || tu) { S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 6.5 - (S.v || 0)) * Math.min(1, dt * 5); if (Math.abs(S.v) > 0.02) move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt); }
     else if (S.tx != null) { const dx = S.tx - S.x, dz = S.tz - S.z, d = Math.hypot(dx, dz);
       if (d < 0.05) { S.tx = null; S.v = 0; } else { S.v = Math.min((S.v || 0) + dt * 6, 4.5, d * 2.2); if (!move(dx / d, dz / d, Math.min(d, S.v * dt))) { S.tx = null; S.v = 0; } } }
-    else S.v = (S.v || 0) * Math.max(0, 1 - dt * 6), Math.abs(S.v) > 0.05 && move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt);
+    else S.v = 0;   /* let go and 쿠모 stops where he is, facing as he was */
     camera.position.set(S.x, EYE, S.z); camera.rotation.set(0, 0, 0); camera.rotation.order = "YXZ"; camera.rotation.y = S.yaw; camera.rotation.x = S.pitch;
     if (spin) spin.rotation.y += dt * 0.5; if (spinBus) spinBus.rotation.y += dt * 0.5;
     if (TP.obj) {
@@ -4130,5 +4130,14 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
 })();
 </script>
 
+<div id="rotPad"><button type="button" id="rotL" aria-label="왼쪽으로 돌기">⟲</button><button type="button" id="rotR" aria-label="오른쪽으로 돌기">⟳</button></div>
+<style>#rotPad{position:fixed;left:16px;bottom:16px;z-index:6;display:flex;gap:10px}#rotPad button{width:54px;height:54px;border-radius:50%;border:1px solid rgba(201,168,106,.6);background:rgba(20,22,24,.62);color:#f3e6c8;font-size:26px;line-height:1;padding:0;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:pointer}#rotPad button.on{background:rgba(201,168,106,.6);color:#1a1a18}@media (max-width:600px){#rotPad{left:12px;bottom:12px}#rotPad button{width:48px;height:48px;font-size:23px}}</style>
+<script>(function () { let dir = 0, last = 0; const st = () => window.__vh || window.__lib;
+  const loop = (t) => { if (!dir) return; const S = st(), dt = Math.min(0.05, (t - last) / 1000); last = t; if (S) { S.yaw += dir * 1.5 * dt; S.tx = null; S.yawTo = null; } requestAnimationFrame(loop); };
+  const bind = (id, d) => { const b = document.getElementById(id);
+    b.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); try { b.setPointerCapture(e.pointerId); } catch (_) {} b.classList.add("on"); const was = dir; dir = d; if (!was) { last = performance.now(); requestAnimationFrame(loop); } });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach((ev) => b.addEventListener(ev, () => { b.classList.remove("on"); if (dir === d) dir = 0; }));
+    b.addEventListener("contextmenu", (e) => e.preventDefault()); };
+  bind("rotL", 1); bind("rotR", -1); })();</script>
 </body>
 </html>

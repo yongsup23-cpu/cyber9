@@ -8420,7 +8420,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             ub(len + 0.5, 0.6, 0.3, CX + Math.cos(a) * (r0 - eave + 0.15), y0 + h + 0.15, CZ + Math.sin(a) * (r0 - eave + 0.15), roofE, ry); } };
         ring(RI, RO, 8, 0, Math.PI - 0.22, Math.PI * 2 + 0.22, 44, shopMs, 4.2, 0.05);
         ring(RI + 5, RO - 1, 5.5, 8.6, Math.PI + 0.06, Math.PI * 2 - 0.06, 34, bandM, 2.2, 0.04);
-        for (let i = 0; i <= 30; i++) { const a = Math.PI - 0.18 + (Math.PI + 0.36) * i / 30; ub(0.5, 8, 0.5, CX + Math.cos(a) * (RI - 3.6), 4, CZ + Math.sin(a) * (RI - 3.6), white); }   // the colonnade under the eaves
+        for (let i = 0; i <= 30; i++) { const a = Math.PI - 0.18 + (Math.PI + 0.36) * i / 30; if (Math.abs(a - Math.PI * 1.5) < 0.2) continue; ub(0.5, 8, 0.5, CX + Math.cos(a) * (RI - 3.6), 4, CZ + Math.sin(a) * (RI - 3.6), white); }   // the colonnade under the eaves
         { // the first-floor gallery: a paved walkway at 4.2 m along the shop fronts, behind the colonnade, with glass and bronze rails; the stair lands on it at the back
           const GY = 4.2, r0 = 22.7, r1 = RI, aS = -(Math.PI * 2 + 0.2), aL = Math.PI + 0.4;
           const paveT = canvasTex(512, 512, (g, W, H) => { const T = W / 4; let q = 7; const rr = () => (q = (q * 16807) % 2147483647) / 2147483647;   // 4 x 4 granite pavers, 1 m each
@@ -8448,8 +8448,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const bx = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); dg.add(b); return b; };
             bx(3.4, 0.25, 0.3, 0, 2.9, 0, fr); bx(0.14, 2.9, 0.3, -1.65, 1.45, 0, fr); bx(0.14, 2.9, 0.3, 1.65, 1.45, 0, fr); bx(0.08, 2.75, 0.2, 0, 1.38, 0, fr); bx(1.55, 2.7, 0.06, -0.8, 1.38, 0.05, gl); bx(1.55, 2.7, 0.06, 0.8, 1.38, 0.05, gl);
             [-0.15, 0.15].forEach((x) => bx(0.04, 0.7, 0.05, x, 1.3, 0.12, new THREE.MeshLambertMaterial({ color: 0xc9a86a })));
-            const st = canvasTex(512, 128, (g, W, H) => { g.fillStyle = "#c4161c"; g.fillRect(0, 0, W, H); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 56px ${FONT}`; g.fillText("유·스퀘어 입구", W / 2, H / 2); });
-            const sgn = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.62), new THREE.MeshBasicMaterial({ map: st, toneMapped: false })); sgn.position.set(0, 3.45, 0.17); dg.add(sgn);
+            const st = canvasTex(2048, 384, (g, W, H) => {   /* the name board as on the archive and the library: a bronze-framed dark plaque, the English name in white capitals, the Korean below */
+              const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#2a2620"); bg.addColorStop(1, "#1a1814"); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+              g.strokeStyle = "#a88c5c"; g.lineWidth = 14; g.strokeRect(7, 7, W - 14, H - 14); g.strokeStyle = "rgba(201,170,110,.55)"; g.lineWidth = 3; g.strokeRect(30, 30, W - 60, H - 60);
+              g.fillStyle = "#f4f3f0"; g.textAlign = "center"; g.textBaseline = "top"; g.font = `800 112px "Helvetica Neue", Arial, ${FONT}`; if ("letterSpacing" in g) g.letterSpacing = "10px"; g.fillText("U·SQUARE", W / 2, 58); if ("letterSpacing" in g) g.letterSpacing = "0px";
+              ciKr(g, "유·스퀘어", W / 2, 302, 72, "#f4f3f0", "center", 0.12); });
+            const sgn = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.6), new THREE.MeshBasicMaterial({ map: st })); sgn.position.set(0, 3.45, 0.2); dg.add(sgn); bx(3.3, 0.68, 0.06, 0, 3.45, 0.15, new THREE.MeshLambertMaterial({ color: 0x6f5c3c }));
             const pk = new THREE.Mesh(new THREE.BoxGeometry(3.4, 3.2, 1.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(0, 1.6, 0.5); pk.userData.idx = "usqDoor"; dg.add(pk); pickables.push(pk); } }
         for (let i = 0; i < 9; i++) { const a = Math.PI + 0.3 + i * 0.33; ub(3 + (i % 3), 1.6, 2.6, CX + Math.cos(a) * (RO - 3), 15.6, CZ + Math.sin(a) * (RO - 3), lam(0xd5d4d0), -a); }   // plant on the roof
         // the oval sign drum on the roof at the back, facing the street: U·square 유·스퀘어 wrapped round its front
