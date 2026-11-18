@@ -51,11 +51,10 @@ window.doorFx = (function () { const el = () => document.getElementById("doorFx"
 <canvas id="stage"></canvas>
 <div id="hud"><h1>유·스퀘어</h1><div>광주종합버스터미널</div></div>
 <button type="button" id="exitBtn">← 아테라 타운으로 나가기</button>
-<div id="hint">바닥을 누르면 그쪽으로 한두 걸음 · 조이스틱은 화면 방향대로 · 드래그로 시점 돌리기 · 두 손가락이나 휠로 확대</div>
+<div id="hint">드래그로 둘러보기 · 누르면 그쪽으로 · 길게 누르면 달리기 · 두 손가락이나 휠로 확대</div>
 <div id="pad"><div class="joy" aria-label="끌어서 이동"><svg viewBox="0 0 130 130"><circle cx="65" cy="65" r="62" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><g stroke="rgba(255,255,255,.55)" stroke-width="1.5" fill="none" stroke-linecap="round"><path d="M58 12 L65 5 L72 12" transform="rotate(0 65 65)"/><path d="M58 12 L65 5 L72 12" transform="rotate(90 65 65)"/><path d="M58 12 L65 5 L72 12" transform="rotate(180 65 65)"/><path d="M58 12 L65 5 L72 12" transform="rotate(270 65 65)"/></g></svg><i><svg viewBox="0 0 54 54"><polygon points="51.0,36.9 36.9,51.0 17.1,51.0 3.0,36.9 3.0,17.1 17.1,3.0 36.9,3.0 51.0,17.1" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linejoin="round"/><polygon points="42.2,33.3 33.3,42.2 20.7,42.2 11.8,33.3 11.8,20.7 20.7,11.8 33.3,11.8 42.2,20.7" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1"/><circle cx="27" cy="27" r="3" fill="rgba(255,255,255,.85)"/></svg></i></div></div>
 <div id="toast"></div>
 <button type="button" id="sndBtn" aria-pressed="true">♪ 음악 켬</button>
-<button type="button" id="viewBtn">👁 뒤에서 보기</button>
 <div id="tvBox" hidden><div class="in"><button type="button" class="x">닫기 ✕</button><iframe id="tvFrame" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="금호건설TV 최신 영상"></iframe><a id="ktvBtn" href="https://www.youtube.com/@kumhoenc" target="_blank" rel="noopener">▶ 금호건설TV 바로가기</a></div></div>
 <script>/**
  * @license
@@ -3904,9 +3903,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const prog = (f) => { const b = $("ldBar"), t = $("ldPct"); if (b) b.style.width = Math.round(f * 100) + "%"; if (t) t.textContent = Math.round(f * 100) + "%"; };
   prog(0.15);
   const canvas = $("stage"), renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6)); renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.78;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6)); renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.66;
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0xb9b5ad);
-  const camera = new THREE.PerspectiveCamera(50, 1, 0.05, 400), ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const camera = new THREE.PerspectiveCamera(62, 1, 0.05, 400), ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   const tex = (w, h, draw, rx = 1, ry = 1) => { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t; };
   let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const lam = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o));
@@ -3953,8 +3952,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   }
   // ---- 유·스퀘어 (광주종합버스터미널), inside: the ticket concourse with its LED timetables and light-box pillars on the west, the lobby with the founding taxi on its dais under the oval glass canopy on the east, a glass atrium with escalators and a sculpture to the south ----
   const HK = 1, HV = 1, HN0 = scene.children.length, SC = 1, OX = 0, OY = 0, HT = 4.6, px = (v) => v, pz = (v) => v;   // life size, in metres: x east, z south
-  const X0 = -24, X1 = 24, Z0 = -16, Z1 = 16;
-  const PICK = [], BOX = [], FLOORS = [], OCC = [], WALLS = [], DSL = [], GDOORS = [], WSEG = [], TVSPOT = {}, WINS = [], DOORS = [];
+  const RA = 26, X0 = -52, X1 = RA + 0.6, Z0 = -RA - 0.6, Z1 = 0.6;   /* the plan after U-square's own floor guide: a half-round hall (radius 26 m) opening north onto the bus bays, a straight wing running west */
+  const PICK = [], BOX = [], FLOORS = [], OCC = [], WALLS = [], DSL = [], GDOORS = [], WSEG = [], TVSPOT = {}, WINS = [], DOORS = [], ESC = [];
   const block = (x0, x1, z0, z1, y0 = 0, y1 = 3) => BOX.push([Math.min(x0, x1), Math.max(x0, x1), Math.min(z0, z1), Math.max(z0, z1), y0, y1]);
   const steel = lam(0xc4c8cc), ledgeM = lam(0xcfc8bc), frameM = lam(0x9aa0a6), wallMat = lam(0xeeece8);
   const glassM = new THREE.MeshBasicMaterial({ color: 0xdfeef7, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide });
@@ -3962,131 +3961,154 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const wall = (u0, v0, u1, v1, m = wallMat) => { const o = F(u0, v0, u1, v1, 0, HT, m); WALLS.push(o); return o; };
   const basic = (t) => new THREE.MeshBasicMaterial({ map: t, toneMapped: false });
   const sign = (w, h, draw, x, y, z, ry = 0, W = 512) => { const H = Math.round(W * h / w), t = tex(W, H, draw); const m = add(new THREE.PlaneGeometry(w, h), basic(t), x, y, z); m.rotation.y = ry; return m; };
-  scene.add(new THREE.AmbientLight(0xffffff, 0.22));   // a terminal is brightly lit
-  // ---- floors: polished grey granite with dark bands in the concourse, glossy white tiles with rose and green accents in the lobby ----
+  scene.add(new THREE.AmbientLight(0xffffff, 0.06));
+  const SECT = [];   // curved obstacles [r0, r1, a0, a1] about the hall's centre (0,0): a is measured from east (+x) round to the north (−z)
+  const polar = (r, a) => [r * Math.cos(a), -r * Math.sin(a)], D2R = Math.PI / 180;
+  const arcMesh = (r, a0, a1, y0, y1, m, inward = true) => { const g = new THREE.CylinderGeometry(r, r, y1 - y0, 48, 1, true, Math.PI / 2 + a0, a1 - a0); const o = add(g, m, 0, (y0 + y1) / 2, 0); if (inward) o.material.side = THREE.DoubleSide; return o; };
+  const ringTop = (r0, r1, a0, a1, y, m) => { const g = new THREE.RingGeometry(r0, r1, 48, 1, a0, a1 - a0); const o = add(g, m, 0, y, 0); o.rotation.x = -Math.PI / 2; return o; };
+  // ---- floors: grey granite with dark bands, white tiles in the wing ----
   const granite = tex(512, 512, (g, w, h) => { const T = w / 4; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const v = 198 + Math.floor(rnd() * 14); g.fillStyle = `rgb(${v},${v + 1},${v + 4})`; g.fillRect(i * T, j * T, T, T);
       for (let k = 0; k < 900; k++) { const c = rnd() < 0.5 ? 140 + rnd() * 50 : 228 + rnd() * 25; g.fillStyle = `rgba(${c},${c},${c + 4},.55)`; g.fillRect(i * T + rnd() * T, j * T + rnd() * T, 1.5, 1.5); } }
     g.fillStyle = "#9da1a6"; for (let k = 0; k <= 4; k++) { g.fillRect(k * T - 1, 0, 2, h); g.fillRect(0, k * T - 1, w, 2); } });
   const whiteT = tex(512, 512, (g, w, h) => { const T = w / 4; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const v = 238 + Math.floor(rnd() * 10); g.fillStyle = `rgb(${v},${v - 2},${v - 5})`; g.fillRect(i * T, j * T, T, T); }
     g.fillStyle = "#cfc9c0"; for (let k = 0; k <= 4; k++) { g.fillRect(k * T - 1, 0, 2, h); g.fillRect(0, k * T - 1, w, 2); } });
-  const flr = (x0, z0, x1, z1, t, k, y = 0.002) => { const c = t.clone(); c.needsUpdate = true; c.wrapS = c.wrapT = THREE.RepeatWrapping; c.repeat.set((x1 - x0) / k, (z1 - z0) / k);
-    const f = add(new THREE.PlaneGeometry(x1 - x0, z1 - z0), new THREE.MeshPhongMaterial({ map: c, shininess: 60, specular: 0x444444 }), (x0 + x1) / 2, y, (z0 + z1) / 2); f.rotation.x = -Math.PI / 2; FLOORS.push(f); return f; };
-  flr(X0, Z0, 1, Z1, granite, 3.2); flr(1, Z0, X1, Z1, whiteT, 4);
-  { const dk = lam(0x55585e), rose = lam(0xc9a596), grn = lam(0x5f7d6c), ts = lam(0xb9bcc0);
-    [-6.5, 3.5].forEach((z) => F(X0, z - 0.3, 1, z + 0.3, 0.003, 0.008, dk, false)); [-17, -9].forEach((x) => F(x - 0.3, Z0, x + 0.3, Z1, 0.003, 0.008, dk, false));   // the concourse's dark bands
-    for (let k = 0; k < 14; k++) F(-21 + k * 1.5, 5.6 - k * 0.02, -20.2 + k * 1.5, 5.75, 0.004, 0.01, ts, false);   // a strip of tactile paving across it
-    F(3, 8, 7, 10, 0.003, 0.008, rose, false); F(17, 7, 21, 9, 0.003, 0.008, rose, false); F(9.6, 9, 10.2, 15, 0.003, 0.008, grn, false); F(20, -12, 20.6, -8, 0.003, 0.008, grn, false); }
-  // ceiling (seen in the view behind 쿠모): pale grey panels with round downlights
-  { const c = add(new THREE.PlaneGeometry(X1 - X0, Z1 - Z0), lam(0xe9eaec), 0, HT, 0); c.rotation.x = Math.PI / 2;
-    const dl = new THREE.MeshBasicMaterial({ color: 0xfffbf0 }); for (let x = X0 + 2; x < X1; x += 3.2) for (let z = Z0 + 2; z < Z1; z += 3.2) { const d = add(new THREE.CircleGeometry(0.14, 14), dl, x, HT - 0.01, z); d.rotation.x = Math.PI / 2; } }
-  // ---- walls ----
-  wall(X0 - 0.3, Z0 - 0.3, X1 + 0.3, Z0); wall(X0 - 0.3, Z0, X0, Z1 + 0.3); wall(X1, Z0, X1 + 0.3, Z1 + 0.3); wall(X0, Z1, -13.4, Z1 + 0.3); wall(-10.6, Z1, 4, Z1 + 0.3);
-  F(-13.4, Z1, -10.6, Z1 + 0.3, 2.5, HT, wallMat, false);
-  // the south-east of the lobby is a glass curtain wall onto the street, mullions every 2 m
-  { const g = add(new THREE.PlaneGeometry(X1 - 4, HT), new THREE.MeshBasicMaterial({ color: 0xcfe4ee, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }), (X1 + 4) / 2, HT / 2, Z1 + 0.15); g.renderOrder = 3; block(4, X1, Z1, Z1 + 0.3);
-    for (let x = 4; x <= X1; x += 2) F(x - 0.05, Z1, x + 0.05, Z1 + 0.25, 0, HT, frameM, false); [1.2, 3.0].forEach((y) => F(4, Z1, X1, Z1 + 0.25, y, y + 0.06, frameM, false)); }
-  // outside the glass: the town as a far box round the building
-  { const D = 120, L = new THREE.TextureLoader();
-    [["s", 0, 0, D, Math.PI, 0], ["n", 0, 0, -D, 0, 0], ["e", D, 0, 0, -Math.PI / 2, 0], ["w", -D, 0, 0, Math.PI / 2, 0], ["u", 0, D, 0, 0, Math.PI / 2], ["d", 0, -D, 0, 0, -Math.PI / 2]].forEach(([k, x, y, z, ry]) => {
-      const mat = new THREE.MeshBasicMaterial({ color: k === "d" ? 0x9aa39a : 0xbcd6ea, toneMapped: false, depthWrite: false, fog: false });
-      L.load("assets/homeview/" + k + ".jpg", (t) => { t.encoding = THREE.sRGBEncoding; mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * D, 2 * D), mat); m.position.set(x, 2 + y, z);
-      if (k === "u") { m.rotation.x = Math.PI / 2; m.rotateZ(Math.PI); } else if (k === "d") { m.rotation.x = -Math.PI / 2; m.rotateZ(Math.PI); } else m.rotation.y = ry; m.renderOrder = -10; m.userData.view = true; scene.add(m); }); }
-  prog(0.4);
-  // ---- the ticket concourse (west): the counter row along the north wall, the LED timetables over it, a clock ----
-  { const ctr = lam(0xcfe0e0), top = lam(0xd9d4ca), win = new THREE.MeshBasicMaterial({ color: 0xe8f3f6, transparent: true, opacity: 0.35, depthWrite: false });
-    F(-23.5, Z0, -4.5, Z0 + 1.3, 0, 1.05, ctr); F(-23.6, Z0, -4.4, Z0 + 1.45, 1.05, 1.1, top, false);
-    { const g = add(new THREE.PlaneGeometry(19, 1.5), win, -14, 1.85, Z0 + 1.0); g.renderOrder = 3; }
-    for (let x = -23.5; x <= -4.5; x += 1.9) F(x - 0.04, Z0 + 0.95, x + 0.04, Z0 + 1.05, 1.1, 2.6, frameM, false);
-    for (let x = -22.6; x < -5; x += 1.9) { const cl = [0x2a3a52, 0x3a2a2a, 0x2f3f2f, 0x4a3a2a][Math.floor(rnd() * 4)]; F(x - 0.2, Z0 + 0.3, x + 0.2, Z0 + 0.6, 1.1, 1.65, lam(cl), false); F(x - 0.14, Z0 + 0.32, x + 0.14, Z0 + 0.58, 1.65, 1.87, lam(0xe2c9ad), false); }   // staff at their windows
-    F(-23.6, Z0, -4.4, Z0 + 0.25, 2.6, HT, lam(0xd8dadc), false);
-    const led = (title, tc, rows, sub) => (g, w, h) => { g.fillStyle = "#120806"; g.fillRect(0, 0, w, h); g.fillStyle = tc; g.font = `800 ${h * 0.13}px ${FONT}`; g.textAlign = "center"; g.fillText(title.split("").join(" "), w / 2, h * 0.15);
-      g.font = `700 ${h * 0.06}px ${FONT}`; g.textAlign = "left"; const cols = ["행선지", "첫차", "막차", "운행간격", "소요시간"], cw = w / 2 / cols.length;
-      for (let s = 0; s < 2; s++) { cols.forEach((c, i) => { g.fillStyle = "#ff9a3a"; g.fillText(c, s * w / 2 + 14 + i * cw, h * 0.27); });
-        rows.slice(s * 8, s * 8 + 8).forEach((r, j) => r.forEach((c, i) => { g.fillStyle = i ? "#ffd23c" : "#ff6a3a"; g.fillText(c, s * w / 2 + 14 + i * cw, h * (0.36 + j * 0.075)); })); }
-      if (sub) { g.fillStyle = "#8fd14f"; g.fillRect(0, h * 0.94, w, h * 0.06); } };
+  const tiled = (t, w, d, k) => { const c = t.clone(); c.needsUpdate = true; c.wrapS = c.wrapT = THREE.RepeatWrapping; c.repeat.set(w / k, d / k); return new THREE.MeshPhongMaterial({ map: c, shininess: 60, specular: 0x444444 }); };
+  { const f = add(new THREE.CircleGeometry(RA + 0.6, 64, 0, Math.PI), tiled(granite, 2 * RA, 2 * RA, 3.2), 0, 0.002, 0); f.rotation.x = -Math.PI / 2; f.material.map.offset.set(0.5, 0); FLOORS.push(f);
+    const fu = f.geometry.attributes.uv; for (let i = 0; i < fu.count; i++) fu.setXY(i, fu.getX(i) * 2 * RA / 3.2, fu.getY(i) * 2 * RA / 3.2); fu.needsUpdate = true; f.material.map.repeat.set(1, 1);
+    const wf = add(new THREE.PlaneGeometry(52 - 20, 14), tiled(whiteT, 32, 14, 4), -36, 0.003, -7); wf.rotation.x = -Math.PI / 2; FLOORS.push(wf);
+    const dk = lam(0x55585e); [14.5, 22.5].forEach((r) => ringTop(r - 0.3, r + 0.3, 0, Math.PI, 0.006, dk)); }
+  // ceiling, with round downlights
+  { const cm = lam(0xe9eaec, { side: THREE.DoubleSide }); const c = add(new THREE.CircleGeometry(RA + 0.6, 64, 0, Math.PI), cm, 0, HT, 0); c.rotation.x = -Math.PI / 2;
+    const c2 = add(new THREE.PlaneGeometry(32, 14), cm, -36, HT, -7); c2.rotation.x = Math.PI / 2;
+    const dl = new THREE.MeshBasicMaterial({ color: 0xfffbf0 }); for (let r = 4; r < RA; r += 4) for (let a = 0.1; a < Math.PI; a += 3.4 / r) { const [x, z] = polar(r, a); const d = add(new THREE.CircleGeometry(0.13, 12), dl, x, HT - 0.01, z); d.rotation.x = Math.PI / 2; }
+    for (let x = -50; x < -21; x += 3.2) for (let z = -12; z < -1; z += 3.2) { const d = add(new THREE.CircleGeometry(0.13, 12), dl, x, HT - 0.01, z); d.rotation.x = Math.PI / 2; } }
+  prog(0.35);
+  // ---- the outer arc: the bus bays beyond glass doors, the coloured band over them (orange: 고속버스 타는 곳, teal: 직행(시외)버스 타는 곳, purple, yellow: 도착하는 곳) ----
+  { const glassA = new THREE.MeshBasicMaterial({ color: 0x9fb8c2, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide });
+    arcMesh(RA + 0.3, 0, Math.PI, 2.7, HT, wallMat); arcMesh(RA + 0.3, 0, Math.PI, 0, 2.7, glassA).renderOrder = 3; SECT.push([RA - 0.2, RA + 1, 0, Math.PI]);
+    for (let a = 0; a <= Math.PI + 1e-6; a += Math.PI / 40) { const [x, z] = polar(RA + 0.25, a); const p = box(0.14, 2.7, 0.14, frameM, x, 1.35, z); }
+    const BAND = [[0, 32, "#f26a1f"], [32, 112, "#2f8f9a"], [112, 128, "#9a7ab8"], [128, 172, "#e0b43a"], [172, 180, "#9a7ab8"]];
+    BAND.forEach(([a0, a1, c]) => arcMesh(RA + 0.2, a0 * D2R, a1 * D2R, 2.7, 3.05, new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide })));
+    let n = 1; for (let a = 4; a < 112; a += 4.4, n++) { const [x, z] = polar(RA + 0.1, a * D2R), num = n;   // a number over every bay door
+      const t = tex(128, 128, (g) => { g.fillStyle = a < 32 ? "#f26a1f" : "#2f8f9a"; g.beginPath(); g.arc(64, 64, 60, 0, 7); g.fill(); g.fillStyle = "#fff"; g.font = `800 64px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(num), 64, 68); });
+      const m = add(new THREE.PlaneGeometry(0.5, 0.5), basic(t), x, 2.4, z); m.lookAt(0, 2.4, 0); }
+    [[16, "고속버스 타는 곳  1 – 15"], [72, "직행(시외)버스 타는 곳  16 – 38"], [150, "도착하는 곳"]].forEach(([a, t]) => { const [x, z] = polar(RA - 0.4, a * D2R);
+      const m = sign(4.2, 0.5, (g, w, h) => { g.fillStyle = "#16181b"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.font = `700 ${h * 0.52}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(t, w / 2, h / 2); }, x, 3.35, z); m.lookAt(0, 3.35, 0); }); }
+  // ---- the light-box pillars ① – ⑥ in the waiting area along the bays ----
+  { const ads = [["#1b1f2a", "#f26a1f", "금호고속", "프리미엄 고속버스"], ["#f4f1ea", "#1d2a5a", "ARTERA", "당신의 삶을 비추는 아름다움"], ["#c4161c", "#ffffff", "유·스퀘어", "당신의 광장 · 젊음의 광장"], ["#f4f1ea", "#c4161c", "금호건설", "대지 위의 예술"]];
+    const adT = ads.map(([bg, fg, a, b]) => tex(256, 512, (g, w, h) => { g.fillStyle = bg; g.fillRect(0, 0, w, h); const gr = g.createRadialGradient(w / 2, h * 0.42, 10, w / 2, h * 0.42, w * 0.9); gr.addColorStop(0, "rgba(255,255,255,.25)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      g.fillStyle = fg; g.textAlign = "center"; g.font = `800 40px ${FONT}`; g.fillText(a, w / 2, h * 0.45); g.font = `600 17px ${FONT}`; g.fillText(b, w / 2, h * 0.53); g.fillRect(w * 0.3, h * 0.6, w * 0.4, 3); }));
+    [8, 18, 30, 44, 60, 76].forEach((a, i) => { const [x, z] = polar(RA - 3, a * D2R); F(x - 0.55, z - 0.55, x + 0.55, z + 0.55, 0, HT, lam(0x2c2e31));
+      [0, 1, 2, 3].forEach((s) => { const r = s * Math.PI / 2, m = add(new THREE.PlaneGeometry(0.95, 2.0), basic(adT[(i + s) % 4]), x + Math.sin(r) * 0.56, 1.4, z + Math.cos(r) * 0.56); m.rotation.y = r; }); }); }
+  prog(0.45);
+  // ---- the ring of shops (convenience store, shops and a bookshop on the outer band, pink and green blocks on the inner) ----
+  { const SH = [["편의점", "#e9f4ff", "#1f5fa8"], ["매장", "#f4ecff", "#7a4ea0"], ["서점", "#eef8ee", "#2f8a5e"], ["카페", "#f3e7d6", "#6b3f22"], ["베이커리", "#fbf2e4", "#9a6a2a"], ["화장품", "#fff3f6", "#c43a6a"], ["여행용품", "#eef4f8", "#2f6f8a"], ["푸드코트", "#fff6e6", "#d9682f"]];
+    const shopT = SH.map(([n, inside, col]) => tex(512, 256, (g, w, h) => { g.fillStyle = "#f2f2f0"; g.fillRect(0, 0, w, h); g.fillStyle = col; g.fillRect(0, 0, w, h * 0.2); g.fillStyle = "#fff"; g.font = `700 ${h * 0.12}px ${FONT}`; g.textAlign = "center"; g.fillText(n, w / 2, h * 0.14);
+      g.fillStyle = inside; g.fillRect(8, h * 0.24, w - 16, h * 0.72); for (let i = 0; i < 6; i++) { g.fillStyle = `hsl(${(i * 53 + n.length * 40) % 360},45%,62%)`; g.fillRect(24 + i * 80, h * 0.5, 56, h * 0.36); g.fillStyle = "#b8b2a6"; g.fillRect(16 + i * 80, h * 0.86, 72, 4); }
+      g.fillStyle = "rgba(255,255,255,.25)"; g.fillRect(8, h * 0.24, w - 16, h * 0.08); g.fillStyle = "#c9ccd0"; for (let x = 8; x < w; x += 128) g.fillRect(x - 3, h * 0.24, 6, h * 0.72); }));
+    const block3 = (r0, r1, a0, a1, si, col) => { const A0 = a0 * D2R, A1 = a1 * D2R, H = 3.2, tm = (r, flip) => { const t = shopT[si % shopT.length].clone(); t.needsUpdate = true; t.wrapS = THREE.RepeatWrapping; t.repeat.set(Math.max(1, Math.round(r * (A1 - A0) / 6)) * (flip ? -1 : 1), 1);   /* the inner face is seen from inside the cylinder: its picture is flipped back the right way */ return new THREE.MeshLambertMaterial({ map: t, side: THREE.DoubleSide, emissive: 0x222222 }); };
+      arcMesh(r0, A0, A1, 0, H, tm(r0, true)); arcMesh(r1, A0, A1, 0, H, tm(r1)); ringTop(r0, r1, A0, A1, H, lam(col));
+      [A0, A1].forEach((a) => { const [x0, z0] = polar(r0, a), [x1, z1] = polar(r1, a), m = add(new THREE.PlaneGeometry(r1 - r0, H), lam(col, { side: THREE.DoubleSide }), (x0 + x1) / 2, H / 2, (z0 + z1) / 2); m.rotation.y = a; });
+      SECT.push([r0 - 0.15, r1 + 0.15, A0 - 0.15 / r0, A1 + 0.15 / r0]); };
+    block3(15, 20, 4, 30, 5, 0xf2b8cf); block3(15, 20, 34, 58, 2, 0xa8d18d); block3(18, 22, 62, 84, 0, 0xa9c6ea); block3(18, 22, 88, 106, 1, 0xa9c6ea); block3(18, 22, 110, 132, 2, 0x8fd1a8); block3(15.5, 21, 138, 172, 7, 0x8fd1a8);
+    // the straight wing: shops along both sides
+    [[-48, -40, 0], [-38, -30, 3], [-28, -22, 4]].forEach(([a, b, si]) => { const m = add(new THREE.PlaneGeometry(b - a, 3.2), new THREE.MeshLambertMaterial({ map: shopT[si], emissive: 0x222222 }), (a + b) / 2, 1.6, -13.4); F(a, -14.2, b, -13.45, 0, 3.2, lam(0xe2e2e0)); });
+    [[-50, -42, 6], [-40, -33, 1], [-31, -24, 7]].forEach(([a, b, si]) => { const m = add(new THREE.PlaneGeometry(b - a, 3.2), new THREE.MeshLambertMaterial({ map: shopT[si], emissive: 0x222222 }), (a + b) / 2, 1.6, -4.6); m.rotation.y = Math.PI; F(a, -4.55, b, -3.8, 0, 3.2, lam(0xe2e2e0)); });
+    wall(X0 - 0.3, -14.6, -20, -14.2); wall(X0 - 0.3, -14.6, X0, 0.3); }
+  prog(0.55);
+  // ---- 표 사는 곳: the ticket counters on an arc between GATE 2 and GATE 3, facing the middle of the hall, dark glass, the LED timetables over them ----
+  { const RC = 9.5, A0 = 62 * D2R, A1 = 118 * D2R, ctr = lam(0xcfe0e0), dark = new THREE.MeshBasicMaterial({ color: 0x1e2a30, transparent: true, opacity: 0.82, depthWrite: false, side: THREE.DoubleSide });
+    arcMesh(RC, A0, A1, 0, 1.05, ctr); ringTop(RC - 0.05, RC + 0.5, A0, A1, 1.07, lam(0xd9d4ca)); arcMesh(RC + 0.25, A0, A1, 1.07, 2.6, dark).renderOrder = 3; arcMesh(RC + 0.3, A0, A1, 2.6, HT, lam(0xd8dadc)); arcMesh(RC + 2.5, A0, A1, 0, HT, wallMat);
+    ringTop(RC, RC + 2.5, A0, A1, HT - 0.02, lam(0xd8dadc)); SECT.push([RC - 0.2, RC + 2.6, A0, A1]);
+    for (let a = A0; a <= A1 + 1e-6; a += (A1 - A0) / 10) { const [x, z] = polar(RC + 0.27, a); box(0.08, 1.55, 0.08, frameM, x, 1.83, z); }
+    const led = (title, tc, rows) => (g, w, h) => { g.fillStyle = "#120806"; g.fillRect(0, 0, w, h); g.fillStyle = tc; g.font = `800 ${h * 0.13}px ${FONT}`; g.textAlign = "center"; g.fillText(title.split("").join(" "), w / 2, h * 0.15);
+      g.font = `700 ${h * 0.065}px ${FONT}`; g.textAlign = "left"; const cols = ["행선지", "첫차", "막차", "운행간격", "소요시간"], cw = w / 2 / cols.length;
+      for (let s = 0; s < 2; s++) { cols.forEach((c, i) => { g.fillStyle = "#ff9a3a"; g.fillText(c, s * w / 2 + 14 + i * cw, h * 0.28); }); rows.slice(s * 8, s * 8 + 8).forEach((r, j) => r.forEach((c, i) => { g.fillStyle = i ? "#ffd23c" : "#ff6a3a"; g.fillText(c, s * w / 2 + 14 + i * cw, h * (0.37 + j * 0.075)); })); } };
     const R1 = [["서울", "05:30", "24:00", "10분", "3시간30분"], ["동서울", "06:00", "23:30", "30분", "3시간40분"], ["부산", "06:00", "22:30", "1시간", "3시간30분"], ["대구", "06:20", "21:10", "40분", "3시간"], ["대전", "06:00", "21:30", "30분", "2시간50분"], ["인천", "05:50", "23:00", "40분", "3시간50분"], ["성남", "06:30", "22:00", "1시간", "3시간40분"], ["수원", "06:00", "23:20", "30분", "3시간30분"], ["청주", "06:40", "20:30", "1시간", "2시간40분"], ["전주", "06:10", "21:40", "30분", "1시간30분"], ["천안", "07:00", "21:00", "1시간", "2시간30분"], ["의정부", "07:10", "19:40", "2시간", "4시간"], ["인천공항", "03:20", "22:30", "30분", "4시간"], ["김포공항", "05:00", "19:30", "1시간", "4시간"], ["강릉", "08:00", "17:20", "3시간", "6시간"], ["울산", "07:30", "18:30", "2시간", "4시간"]];
     const R2 = [["남원", "05:20", "19:50", "30분", "1시간30분"], ["목포", "05:10", "22:40", "20분", "1시간20분"], ["여수", "05:50", "21:40", "20분", "1시간50분"], ["순천", "05:30", "22:10", "15분", "1시간30분"], ["해남", "06:00", "20:30", "30분", "1시간50분"], ["완도", "06:40", "19:50", "40분", "2시간10분"], ["영광", "06:05", "20:25", "20분", "1시간"], ["담양", "05:50", "22:45", "15분", "40분"], ["진도", "06:20", "19:20", "1시간", "2시간30분"], ["보성", "06:30", "20:10", "40분", "1시간20분"], ["고흥", "06:00", "20:00", "40분", "1시간50분"], ["나주", "05:40", "22:30", "15분", "40분"], ["장흥", "06:10", "20:40", "30분", "1시간30분"], ["화순", "05:30", "22:30", "15분", "40분"], ["구례", "06:50", "19:10", "1시간", "1시간40분"], ["광양", "06:00", "21:00", "30분", "1시간40분"]];
-    sign(8.6, 1.35, led("고속버스 시간표", "#ff4a3a", R1), -18.6, 3.45, Z0 + 0.27, 0, 1024); sign(8.6, 1.35, led("직행버스 시간표", "#7be05a", R2, true), -9.4, 3.45, Z0 + 0.27, 0, 1024);
-    sign(8.6, 0.28, (g, w, h) => { g.fillStyle = "#8fd14f"; g.fillRect(0, 0, w, h); g.fillStyle = "#18320c"; g.font = `700 ${h * 0.62}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("직행(시외)버스 승차권 구입/예매는 옆 줄을 이용하여 주시기 바랍니다", w / 2, h / 2); }, -9.4, 2.62, Z0 + 0.28, 0, 1024);
-    sign(8.6, 0.28, (g, w, h) => { g.fillStyle = "#d93a2a"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.font = `700 ${h * 0.62}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("고속버스 승차권 구입/예매는 옆 줄을 이용하여 주시기 바랍니다", w / 2, h / 2); }, -18.6, 2.62, Z0 + 0.28, 0, 1024);
-    // the clock hanging between the boards: the real time, red LED digits
+    [[76, "고속버스 시간표", "#ff4a3a", R1], [104, "직행버스 시간표", "#7be05a", R2]].forEach(([a, t, c, rows]) => { const [x, z] = polar(RC + 0.2, a * D2R), m = sign(4.6, 0.95, led(t, c, rows), x, 3.25, z, 0, 1024); m.lookAt(0, 3.25, 0); });
+    { const [x, z] = polar(RC - 0.6, 90 * D2R); const m = sign(3.2, 0.46, (g, w, h) => { g.fillStyle = "#c4161c"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.font = `800 ${h * 0.55}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("표 사는 곳", w / 2, h / 2); }, x, 3.9, z); m.lookAt(0, 3.9, 0); }
     const ck = document.createElement("canvas"); ck.width = 256; ck.height = 96; const ckT = new THREE.CanvasTexture(ck); ckT.encoding = THREE.sRGBEncoding;
     const tick = () => { const g = ck.getContext("2d"), d = new Date(); g.fillStyle = "#0c0606"; g.fillRect(0, 0, 256, 96); g.fillStyle = "#ff2a1a"; g.font = `700 70px monospace`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"), 128, 50); ckT.needsUpdate = true; };
-    tick(); setInterval(tick, 20000); box(1.5, 0.62, 0.22, lam(0xb9bcc0), -14, 3.8, Z0 + 1.6); add(new THREE.PlaneGeometry(1.36, 0.5), basic(ckT), -14, 3.8, Z0 + 1.72);
-    [-14.5, -13.5].forEach((x) => box(0.03, HT - 4.1, 0.03, steel, x, (HT + 4.1) / 2, Z0 + 1.6)); }
-  // light-box pillars with the way to the bus bays on top
-  { const ads = [["#1b1f2a", "#f26a1f", "금호고속", "프리미엄 고속버스"], ["#f4f1ea", "#1d2a5a", "ARTERA", "당신의 삶을 비추는 아름다움"], ["#c4161c", "#ffffff", "유·스퀘어", "당신의 광장 · 젊음의 광장"], ["#f4f1ea", "#c4161c", "금호건설", "대지 위의 예술"]];
-    const adT = ([bg, fg, a, b]) => tex(256, 512, (g, w, h) => { g.fillStyle = bg; g.fillRect(0, 0, w, h); const gr = g.createRadialGradient(w / 2, h * 0.42, 10, w / 2, h * 0.42, w * 0.9); gr.addColorStop(0, "rgba(255,255,255,.25)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
-      g.fillStyle = fg; g.textAlign = "center"; g.font = `800 40px ${FONT}`; g.fillText(a, w / 2, h * 0.45); g.font = `600 17px ${FONT}`; g.fillText(b, w / 2, h * 0.53); g.fillRect(w * 0.3, h * 0.6, w * 0.4, 3); });
-    const wayT = tex(512, 256, (g, w, h) => { g.fillStyle = "#16181b"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.font = `700 54px ${FONT}`; g.fillText("↑", 26, 96); g.fillText("←", 22, 210); g.font = `700 40px ${FONT}`; g.fillText("고속버스 타는곳", 100, 72); g.fillText("직행버스 타는곳", 100, 186); g.font = `600 30px ${FONT}`; g.fillText("1 - 15", 120, 112); g.fillText("17 - 38", 120, 226); });
-    [[-14, -7], [-14, 1.5], [-14, 10], [-4, -7], [-4, 10]].forEach(([x, z], i) => { F(x - 0.6, z - 0.6, x + 0.6, z + 0.6, 0, HT, lam(0x2c2e31)); F(x - 0.65, z - 0.65, x + 0.65, z + 0.65, 0, 0.3, lam(0x8e9196), false);
-      [0, 1, 2, 3].forEach((s) => { const a = s * Math.PI / 2, nx = Math.sin(a), nz = Math.cos(a), m = add(new THREE.PlaneGeometry(1.0, 2.0), basic(adT(ads[(i + s) % 4])), x + nx * 0.605, 1.4, z + nz * 0.605); m.rotation.y = a;
-        const w = add(new THREE.PlaneGeometry(1.1, 0.55), basic(wayT), x + nx * 0.605, 2.95, z + nz * 0.605); w.rotation.y = a; }); }); }
-  // the west wall: the glass doors out to the bus bays, numbered
-  for (let k = 0; k < 4; k++) { const z = -10 + k * 6.5, n = k + 1; F(X0, z - 1.2, X0 + 0.15, z + 1.2, 0, 2.5, lam(0x9fb6bf), false); F(X0, z - 1.3, X0 + 0.2, z + 1.3, 2.5, 2.6, frameM, false);
-    sign(1.6, 0.42, (g, w, h) => { g.fillStyle = "#16181b"; g.fillRect(0, 0, w, h); g.fillStyle = "#ffd23c"; g.font = `800 ${h * 0.55}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(`${n * 3 - 2} - ${n * 3}  타는곳 →`, w / 2, h / 2); }, X0 + 0.22, 2.95, z, Math.PI / 2); }
-  prog(0.55);
-  // ---- the lobby (east): the founding taxi on its dais under an oval glass canopy, the history wall behind, silver round columns, shop fronts ----
-  const TX0 = 13, TZ0 = -3.2;
-  { const top = tex(512, 320, (g, w, h) => { g.fillStyle = "#3a2e2a"; g.fillRect(0, 0, w, h); g.fillStyle = "#d9d2c2"; g.fillRect(28, 28, w - 56, h - 56); for (let i = 0; i < 500; i++) { g.fillStyle = `rgba(150,140,120,${rnd() * 0.15})`; g.fillRect(28 + rnd() * (w - 56), 28 + rnd() * (h - 56), 3, 3); } });
-    F(TX0 - 3.6, TZ0 - 2.2, TX0 + 3.6, TZ0 + 2.2, 0, 0.32, steel); { const t = add(new THREE.PlaneGeometry(7.2, 4.4), lam(0xffffff, { map: top }), TX0, 0.322, TZ0); t.rotation.x = -Math.PI / 2; }
-    F(TX0 - 3.62, TZ0 - 2.22, TX0 + 3.62, TZ0 + 2.22, 0, 0.04, new THREE.MeshBasicMaterial({ color: 0xfff3d8 }), false);   // a glow under its lip
-    // the canopy: a flat oval of frosted glass on a steel rim, hung from the ceiling on rods
-    const cg = add(new THREE.CylinderGeometry(4.6, 4.6, 0.06, 48), new THREE.MeshBasicMaterial({ color: 0xeef6f4, transparent: true, opacity: 0.55, depthWrite: false }), TX0, 3.75, TZ0); cg.scale.z = 0.62;
-    const rim = add(new THREE.TorusGeometry(4.6, 0.06, 6, 64), steel, TX0, 3.75, TZ0); rim.rotation.x = Math.PI / 2; rim.scale.y = 0.62;
-    [[-3, -1.6], [3, -1.6], [-3, 1.6], [3, 1.6]].forEach(([a, b]) => box(0.03, HT - 3.75, 0.03, steel, TX0 + a, (HT + 3.75) / 2, TZ0 + b));
-    // the history wall behind: red end panels, smoked glass between with the story of the taxi, two grey columns framing it
-    const hw = tex(1024, 320, (g, w, h) => { g.fillStyle = "#c8191f"; g.fillRect(0, 0, w * 0.13, h); g.fillRect(w * 0.87, 0, w * 0.13, h); g.fillStyle = "#8e9193"; g.fillRect(w * 0.13, 0, w * 0.74, h);
-      g.fillStyle = "rgba(255,255,255,.08)"; for (let i = 0; i < 4; i++) g.fillRect(w * 0.13 + i * w * 0.185, 0, 2, h); g.fillStyle = "#2a2c2e"; g.font = `800 46px ${FONT}`; g.textAlign = "center"; g.fillText("택시 2대로 출발한 아름다운 미래", w / 2, 70);
-      g.font = `700 22px ${FONT}`; g.fillStyle = "#c8191f"; [["1946~67", "광주의 명물, 포드택시"], ["1968~87", "고속버스사업 진출"], ["1988~95", "우등고속버스 등장"], ["1996~", "세계를 향한 시작"]].forEach(([a, b], i) => { const x = w * 0.2 + i * w * 0.2; g.fillStyle = "#c8191f"; g.fillText(a, x, 130); g.fillStyle = "#f4f2ee"; g.font = `500 18px ${FONT}`; g.fillText(b, x, 160); g.font = `700 22px ${FONT}`;
-        g.fillStyle = "rgba(240,240,240,.45)"; g.fillRect(x - 70, 185, 140, 90); });
-      g.fillStyle = "#fff"; g.font = `600 18px ${FONT}`; g.fillText("사람과 사람, 사람과 세상을 이어온 60년", w * 0.065, 250 - 60); g.fillText("다가올 60년도 고객과 함께", w * 0.935, 190); });
-    F(TX0 - 6.2, TZ0 - 3.6, TX0 + 6.2, TZ0 - 3.3, 0, 3.2, lam(0x7d8083)); { const m = add(new THREE.PlaneGeometry(12.4, 3.2), basic(hw), TX0, 1.6, TZ0 - 3.29); }
-    [-6.5, 6.5].forEach((d) => F(TX0 + d - 0.3, TZ0 - 3.7, TX0 + d + 0.3, TZ0 - 3.1, 0, HT, lam(0xb9bdc2)));
-    // a red-and-grey information stand and the "please look, don't touch" plaque
-    F(TX0 - 4.6, TZ0 + 1.6, TX0 - 4.2, TZ0 + 1.75, 0, 1.6, lam(0x8e9196)); F(TX0 - 4.2, TZ0 + 1.6, TX0 - 4.15, TZ0 + 1.75, 0, 1.6, lam(0xc8191f), false);
-    sign(0.55, 0.16, (g, w, h) => { g.fillStyle = "#f6f5f2"; g.fillRect(0, 0, w, h); g.fillStyle = "#222"; g.font = `700 ${h * 0.55}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("눈으로만 보세요", w / 2, h / 2); }, TX0 + 0.5, 0.45, TZ0 + 2.05, 0, 256);
-    // the taxi itself: the archive's own founding Ford, decoded from the same two files
+    tick(); setInterval(tick, 20000); const [cx, cz] = polar(RC - 1.0, 90 * D2R); const ckm = add(new THREE.PlaneGeometry(1.3, 0.48), basic(ckT), cx, 3.25, cz); ckm.lookAt(0, 3.25, 0); }
+  // ---- 휴게실: the lounge on the west of the middle, the founding taxi on its dais under the oval glass canopy, the history wall behind ----
+  const TX0 = -8.6, TZ0 = -7.4, TAXI_ROT = -0.6;
+  { const G = new THREE.Group(); G.position.set(TX0, 0, TZ0); G.rotation.y = TAXI_ROT; scene.add(G); const ga = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); G.add(o); return o; };
+    const top = tex(512, 320, (g, w, h) => { g.fillStyle = "#3a2e2a"; g.fillRect(0, 0, w, h); g.fillStyle = "#d9d2c2"; g.fillRect(28, 28, w - 56, h - 56); });
+    ga(new THREE.BoxGeometry(7.2, 0.32, 4.4), steel, 0, 0.16, 0); const tp = ga(new THREE.PlaneGeometry(7.2, 4.4), lam(0xffffff, { map: top }), 0, 0.322, 0); tp.rotation.x = -Math.PI / 2;
+    ga(new THREE.BoxGeometry(7.24, 0.04, 4.44), new THREE.MeshBasicMaterial({ color: 0xfff3d8 }), 0, 0.02, 0);
+    const cg = ga(new THREE.CylinderGeometry(4.6, 4.6, 0.06, 48), new THREE.MeshBasicMaterial({ color: 0xeef6f4, transparent: true, opacity: 0.55, depthWrite: false }), 0, 3.75, 0); cg.scale.z = 0.62;
+    const rim = ga(new THREE.TorusGeometry(4.6, 0.06, 6, 64), steel, 0, 3.75, 0); rim.rotation.x = Math.PI / 2; rim.scale.y = 0.62;
+    { /* one information stand by the taxi: a grey panel with a red edge, the founding taxi's story on it */
+      const st = new THREE.Group(); st.position.set(-4.4, 0, 2.6); st.rotation.y = 0.5; G.add(st); const t = new THREE.TextureLoader().load("assets/usqtaxisign.jpg"); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO;
+      const sb = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); st.add(o); return o; };
+      sb(0.8, 1.75, 0.1, lam(0x8e9196), 0, 0.875, 0); sb(0.06, 1.75, 0.11, lam(0xc8191f), 0.43, 0.875, 0); sb(1.0, 0.06, 0.4, lam(0x2a2b2d), 0, 0.03, 0);
+      const pn = new THREE.Mesh(new THREE.PlaneGeometry(0.74, 0.74 * 573 / 472), new THREE.MeshBasicMaterial({ map: t, toneMapped: false })); pn.position.set(0, 1.0, 0.052); st.add(pn); }
+    const pk = ga(new THREE.BoxGeometry(4.6, 1.8, 2.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 1.2, 0); pk.userData = { idx: "taxi" }; PICK.push(pk);
     decodeTaxi().then(({ geometry, texture, surface, normal }) => { const mat = new THREE.MeshStandardMaterial({ map: texture, metalness: 1, roughness: 1, metalnessMap: surface, roughnessMap: surface, normalMap: normal, normalScale: new THREE.Vector2(0.65, 0.65), envMap: taxiEnvironment(), envMapIntensity: 0.9, side: THREE.DoubleSide });
-      const m = new THREE.Mesh(geometry, mat), k = 4.15 / 1.90101; m.scale.setScalar(k); m.position.set(TX0, 0.379509 * k - 0.075 + 0.32, TZ0); m.rotation.y = TAXI_RY; scene.add(m); }).catch(() => {});
-    const pk = F(TX0 - 2.3, TZ0 - 1.1, TX0 + 2.3, TZ0 + 1.1, 0.32, 2.1, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), false); pk.userData = { idx: "taxi" }; PICK.push(pk); }
-  // silver round columns
-  [[5.5, 5], [21, 4], [5.5, -9], [21, -10]].forEach(([x, z]) => { const c = add(new THREE.CylinderGeometry(0.55, 0.55, HT, 28), lam(0xc3c7cc), x, HT / 2, z); block(x - 0.55, x + 0.55, z - 0.55, z + 0.55); WALLS.push(c);
-    add(new THREE.CylinderGeometry(0.6, 0.6, 0.12, 28), steel, x, 0.06, z); });
-  // shop fronts along the east and north walls (glazed, lit inside, a name over each)
-  { const SH = [["서점", "#f5f0e4", "#2c4f8a"], ["문구 · 팬시", "#fff3f6", "#c43a6a"], ["카페", "#f3e7d6", "#6b3f22"], ["푸드코트", "#fff6e6", "#d9682f"], ["베이커리", "#fbf2e4", "#9a6a2a"], ["여행용품", "#eef4f8", "#2f6f8a"]];
-    const shopT = ([n, inside, col]) => tex(512, 256, (g, w, h) => { g.fillStyle = "#f2f2f0"; g.fillRect(0, 0, w, h); g.fillStyle = col; g.fillRect(0, 0, w, h * 0.2); g.fillStyle = "#fff"; g.font = `700 ${h * 0.12}px ${FONT}`; g.textAlign = "center"; g.fillText(n, w / 2, h * 0.14);
-      g.fillStyle = inside; g.fillRect(8, h * 0.24, w - 16, h * 0.72); for (let i = 0; i < 6; i++) { g.fillStyle = `hsl(${(i * 53 + n.length * 40) % 360},45%,62%)`; g.fillRect(24 + i * 80, h * 0.5, 56, h * 0.36); g.fillStyle = "#b8b2a6"; g.fillRect(16 + i * 80, h * 0.86, 72, 4); }
-      g.fillStyle = "rgba(255,255,255,.25)"; g.fillRect(8, h * 0.24, w - 16, h * 0.08); g.fillStyle = "#c9ccd0"; for (let x = 8; x < w; x += 128) g.fillRect(x - 3, h * 0.24, 6, h * 0.72); });
-    [[X1 - 0.02, 12, -Math.PI / 2], [X1 - 0.02, 4.5, -Math.PI / 2], [X1 - 0.02, -5, -Math.PI / 2], [X1 - 0.02, -12.5, -Math.PI / 2], [9, Z0 + 0.02, 0], [17, Z0 + 0.02, 0]].forEach(([x, z, ry], i) => { const m = add(new THREE.PlaneGeometry(6.4, 3.2), lam(0xffffff, { map: shopT(SH[i]), emissive: 0x333333 }), x, 1.6, z); m.rotation.y = ry; });
-    F(X1 - 0.5, -16, X1, 16, 3.2, 3.5, lam(0xdcdcdc), false); F(4, Z0, X1, Z0 + 0.5, 3.2, 3.5, lam(0xdcdcdc), false); }
-  // ---- the atrium by the glass (south): a stainless sail sculpture with three spheres, and the escalators up to the floors above ----
-  { F(15.6, 11, 18.4, 13.8, 0, 0.5, lam(0x26282b)); const ss = new THREE.MeshPhongMaterial({ color: 0xdfe3e6, shininess: 120, specular: 0xffffff });
-    [[-0.5, 0.3], [0.6, -0.25]].forEach(([dx, r]) => { const s = add(new THREE.CylinderGeometry(0.02, 0.5, 3.6, 3, 1), ss, 17 + dx, 2.3, 12.4); s.rotation.z = r * 0.2; s.scale.z = 0.1; });
-    [1.6, 2.15, 2.7].forEach((y) => add(new THREE.SphereGeometry(0.27, 20, 14), ss, 17, y, 12.4)); const ring = add(new THREE.TorusGeometry(0.8, 0.035, 6, 32), ss, 17, 1.25, 12.4); ring.rotation.x = Math.PI / 2 + 0.25;
-    // escalators: two flights side by side climbing north from x -1..3, glass balustrades, a white soffit under the upper floor
+      const m = new THREE.Mesh(geometry, mat), k = 4.15 / 1.90101; m.scale.setScalar(k); m.position.set(0, 0.379509 * k - 0.075 + 0.32, 0); G.add(m); }).catch(() => {});
+    const c = Math.cos(TAXI_ROT), s = Math.sin(TAXI_ROT); let xs = [], zs = []; [[-3.6, -3.6], [3.6, -3.6], [-3.6, 2.2], [3.6, 2.2]].forEach(([u, v]) => { xs.push(TX0 + u * c + v * s); zs.push(TZ0 - u * s + v * c); }); block(Math.min(...xs) + 1.2, Math.max(...xs) - 1.2, Math.min(...zs) + 1.2, Math.max(...zs) - 1.2); }
+  // ---- the information desk in the middle, before the ticket counters: a round pale-grey counter round a silver column, a white ring canopy with the lit "i Information" sign ----
+  { const IX = 0, IZ = -4.6, grey = new THREE.MeshPhongMaterial({ color: 0xc9ccd0, shininess: 40 }), wht = lam(0xf6f6f4);
+    const cnt = add(new THREE.CylinderGeometry(2.4, 2.4, 1.05, 48, 1, true, Math.PI * 0.15, Math.PI * 1.7), grey, IX, 0.525, IZ); cnt.material.side = THREE.DoubleSide;
+    const tp = add(new THREE.RingGeometry(1.9, 2.5, 48, 1, Math.PI * 0.15 - Math.PI / 2, Math.PI * 1.7), wht, IX, 1.07, IZ); tp.rotation.x = -Math.PI / 2; tp.rotation.z = Math.PI;
+    add(new THREE.CylinderGeometry(2.45, 2.45, 0.06, 48), steel, IX, 0.03, IZ); block(IX - 2.5, IX + 2.5, IZ - 2.5, IZ + 2.5);
+    add(new THREE.CylinderGeometry(0.55, 0.55, HT, 28), lam(0xc3c7cc), IX, HT / 2, IZ); add(new THREE.CylinderGeometry(0.75, 0.75, 0.5, 28), steel, IX, 3.6, IZ);
+    const rg = add(new THREE.CylinderGeometry(3.4, 3.4, 0.4, 56, 1, true), lam(0xf4f4f2, { side: THREE.DoubleSide }), IX, 3.0, IZ); const rb = add(new THREE.RingGeometry(2.9, 3.4, 56), lam(0xf4f4f2, { side: THREE.DoubleSide }), IX, 2.8, IZ); rb.rotation.x = Math.PI / 2;
+    const lt = add(new THREE.RingGeometry(3.0, 3.3, 56), new THREE.MeshBasicMaterial({ color: 0xfff6dc, side: THREE.DoubleSide }), IX, 2.79, IZ); lt.rotation.x = Math.PI / 2;
+    const iT = tex(512, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = "#e9a21a"; g.beginPath(); g.arc(64, 64, 52, 0, 7); g.fill(); g.strokeStyle = "#fff6d0"; g.lineWidth = 6; g.stroke(); g.fillStyle = "#fff"; g.font = `italic 800 72px Georgia, serif`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("i", 64, 68);
+      g.fillStyle = "#5a5c60"; g.textAlign = "left"; g.font = `700 52px ${FONT}`; g.fillText("Information", 136, 70); });
+    [0, Math.PI].forEach((r) => { const m = add(new THREE.PlaneGeometry(2.4, 0.6), new THREE.MeshBasicMaterial({ map: iT, transparent: true, toneMapped: false }), IX + Math.sin(r) * 3.42, 3.0, IZ + Math.cos(r) * 3.42); m.rotation.y = r; });
+    [[-1.2, 0.9], [0.4, 1.7], [1.5, 0.4]].forEach(([dx, dz]) => { box(0.42, 0.3, 0.05, lam(0x1d1e20), IX + dx, 1.22, IZ + dz); }); }
+  // ---- the escalators, climbing on the diagonal by GATE 4, glass balustrades, a white soffit ----
+  { const EX = -17, EZ = -4.5, ER = -0.78, len = Math.hypot(7, HT), sl = Math.atan2(HT, 7), G = new THREE.Group(); G.position.set(EX, 0, EZ); G.rotation.y = ER; scene.add(G);
     const stepT = tex(64, 256, (g, w, h) => { g.fillStyle = "#3a3c40"; g.fillRect(0, 0, w, h); g.fillStyle = "#6a6d72"; for (let y = 0; y < h; y += 16) g.fillRect(0, y, w, 3); g.fillStyle = "#e7c23a"; g.fillRect(0, 0, 3, h); g.fillRect(w - 3, 0, 3, h); });
-    [-0.2, 1.8].forEach((x) => { const len = Math.hypot(7, HT), r = add(new THREE.PlaneGeometry(1.0, len), lam(0xffffff, { map: stepT }), x + 0.5, HT / 2, 11.5); r.rotation.x = -Math.PI / 2 + Math.atan2(HT, 7);
-      [x, x + 1].forEach((bx) => { const b = add(new THREE.PlaneGeometry(len, 0.9), new THREE.MeshBasicMaterial({ color: 0xbfe0dc, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide }), bx, HT / 2 + 0.55, 11.5); b.rotation.y = Math.PI / 2; b.rotation.z = Math.atan2(HT, 7); b.renderOrder = 3;
-        const hr = add(new THREE.BoxGeometry(0.06, 0.06, len), lam(0x1d1e20), bx, HT / 2 + 1.0, 11.5); hr.rotation.x = Math.atan2(HT, 7); }); });
-    const sf = add(new THREE.PlaneGeometry(3.6, 7.6), lam(0xf4f4f2, { side: THREE.DoubleSide }), 1.3, HT / 2 - 0.12, 11.5); sf.rotation.x = -Math.PI / 2 + Math.atan2(HT, 7); block(-0.4, 3.2, 8, 15.2);
-    sign(1.4, 0.32, (g, w, h) => { g.fillStyle = "#16181b"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.font = `700 ${h * 0.5}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("↑  2층 · 3층  영화관 · 식당가", w / 2, h / 2); }, 1.3, 2.6, 15.25, Math.PI); }
-  // benches by the glass
-  [[7, 14.6], [11, 14.6], [21, 14.6]].forEach(([x, z]) => { F(x - 1.2, z - 0.3, x + 1.2, z + 0.3, 0.38, 0.45, lam(0x8a6a4a)); F(x - 1.1, z - 0.25, x - 1.0, z + 0.25, 0, 0.38, steel, false); F(x + 1.0, z - 0.25, x + 1.1, z + 0.25, 0, 0.38, steel, false); });
+    [-0.6, 0.6].forEach((x) => { const r = new THREE.Mesh(new THREE.PlaneGeometry(1.0, len), lam(0xffffff, { map: stepT })); r.position.set(x, HT / 2, 0); r.rotation.x = -Math.PI / 2 + sl; G.add(r);
+      [x - 0.55, x + 0.55].forEach((bx) => { const b = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.9), new THREE.MeshBasicMaterial({ color: 0xbfe0dc, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide })); b.position.set(bx, HT / 2 + 0.55, 0); b.rotation.y = Math.PI / 2; b.rotation.z = sl; b.renderOrder = 3; G.add(b);
+        const hr = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, len), lam(0x1d1e20)); hr.position.set(bx, HT / 2 + 1.0, 0); hr.rotation.x = sl; G.add(hr); }); });
+    const sf = new THREE.Mesh(new THREE.PlaneGeometry(2.6, len), lam(0xf4f4f2, { side: THREE.DoubleSide })); sf.position.set(0, HT / 2 - 0.15, 0); sf.rotation.x = -Math.PI / 2 + sl; G.add(sf);
+    SECT.push(null); ESC.push([EX, EZ, ER]);
+    const m = sign(1.6, 0.32, (g, w, h) => { g.fillStyle = "#16181b"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.font = `700 ${h * 0.5}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("↑ 2층 · 3층  영화관 · 식당가", w / 2, h / 2); }, EX + Math.sin(ER) * 4.2, 2.6, EZ + Math.cos(ER) * 4.2); m.rotation.y = ER; }
+  // a stainless sail sculpture with three spheres, and benches by the south glass
+  { F(9.6, -3.4, 12.4, -0.6, 0, 0.5, lam(0x26282b)); const ss = new THREE.MeshPhongMaterial({ color: 0xdfe3e6, shininess: 120, specular: 0xffffff });
+    [[-0.5, 0.3], [0.6, -0.25]].forEach(([dx, r]) => { const s = add(new THREE.CylinderGeometry(0.02, 0.5, 3.6, 3, 1), ss, 11 + dx, 2.3, -2); s.rotation.z = r * 0.2; s.scale.z = 0.1; });
+    [1.6, 2.15, 2.7].forEach((y) => add(new THREE.SphereGeometry(0.27, 20, 14), ss, 11, y, -2)); }
+  [[3, -1.0], [-3, -1.0], [17, -1.0]].forEach(([x, z]) => { F(x - 1.2, z - 0.3, x + 1.2, z + 0.3, 0.38, 0.45, lam(0x8a6a4a)); F(x - 1.1, z - 0.25, x - 1.0, z + 0.25, 0, 0.38, steel, false); F(x + 1.0, z - 0.25, x + 1.1, z + 0.25, 0, 0.38, steel, false); });
+  // ---- waiting seats: rows of four honey-wood shells with steel arm loops on a grey plinth ----
+  { const wood = new THREE.MeshPhongMaterial({ color: 0xc89a52, shininess: 50 }), steelA = new THREE.MeshPhongMaterial({ color: 0xc8ccd0, shininess: 90 }), base = lam(0x9a9da2);
+    const row = (cx, cz, ry) => { const G = new THREE.Group(); G.position.set(cx, 0, cz); G.rotation.y = ry; scene.add(G); const b = (w, h, d, m, x, y, z, rx = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.rotation.x = rx; G.add(o); };
+      b(2.5, 0.28, 0.42, base, 0, 0.14, 0.02); b(2.6, 0.05, 0.5, steelA, 0, 0.3, 0);
+      for (let k = 0; k < 4; k++) { const x = -0.93 + k * 0.62; b(0.56, 0.05, 0.46, wood, x, 0.43, 0); b(0.56, 0.5, 0.04, wood, x, 0.7, -0.25, -0.18);
+        b(0.03, 0.12, 0.03, steelA, x, 0.36, 0.1); b(0.03, 0.12, 0.03, steelA, x, 0.36, -0.1); }
+      for (let k = 0; k <= 4; k++) { const x = -1.24 + k * 0.62; b(0.03, 0.03, 0.42, steelA, x, 0.62, 0.02); b(0.03, 0.2, 0.03, steelA, x, 0.52, 0.22); }
+      const c = Math.cos(ry), sn = Math.sin(ry), xs = [], zs = []; [[-1.3, -0.35], [1.3, -0.35], [-1.3, 0.3], [1.3, 0.3]].forEach(([u, v]) => { xs.push(cx + u * c + v * sn); zs.push(cz - u * sn + v * c); }); block(Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs), 0, 1); };
+    row(6.2, -7.6, 0); row(9.0, -7.6, 0); row(6.2, -9.0, Math.PI); row(9.0, -9.0, Math.PI);
+    row(-14.5, -1.6, Math.PI); row(-11.7, -1.6, Math.PI); row(-36, -9, 0); row(-30, -9, 0); }
+  // silver round columns in the hall
+  [[12, -12], [-12, -12], [0, -16.5]].forEach(([x, z]) => { const c = add(new THREE.CylinderGeometry(0.55, 0.55, HT, 28), lam(0xc3c7cc), x, HT / 2, z); block(x - 0.55, x + 0.55, z - 0.55, z + 0.55); WALLS.push(c); add(new THREE.CylinderGeometry(0.6, 0.6, 0.12, 28), steel, x, 0.06, z); });
   prog(0.7);
-  // ---- the way back out: glass doors in the south wall, signed for 아테라 타운 ----
-  const DXP = -12, DZP = Z1;
-  { F(-13.4, Z1 - 0.05, -10.6, Z1 + 0.05, 0, 2.5, new THREE.MeshBasicMaterial({ color: 0xa9c4cf, transparent: true, opacity: 0.45, depthWrite: false }), false); F(-12.03, Z1 - 0.07, -11.97, Z1 + 0.07, 0, 2.5, frameM, false); F(-13.4, Z1 - 0.08, -10.6, Z1 + 0.08, 2.45, 2.55, frameM, false);
-    sign(2.6, 0.4, (g, w, h) => { g.fillStyle = "#faf8f4"; g.fillRect(0, 0, w, h); g.fillStyle = "#1d2a5a"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `700 ${h * 0.5}px ${FONT}`; g.fillText("아테라 타운으로 나가기", w / 2, h / 2); }, DXP, 2.85, Z1 - 0.06, Math.PI);
-    const door = box(2.8, 2.5, 0.6, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), DXP, 1.25, DZP - 0.3); door.userData.idx = "exit"; PICK.push(door); block(-13.4, -10.6, Z1 - 0.12, Z1 + 0.3); }
+  // ---- the south front: glass with mullions onto the street (the town as seen from U-square beyond), GATE 1 – 6 ----
+  { const g = add(new THREE.PlaneGeometry(X1 - X0, HT), new THREE.MeshBasicMaterial({ color: 0xcfe4ee, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }), (X0 + X1) / 2, HT / 2, 0.3); g.renderOrder = 3; block(X0, X1, 0.25, 0.6);
+    for (let x = X0; x <= X1; x += 2) F(x - 0.05, 0.25, x + 0.05, 0.45, 0, HT, frameM, false); [1.2, 3.0].forEach((y) => F(X0, 0.25, X1, 0.45, y, y + 0.06, frameM, false));
+    [[20, "GATE 1"], [8, "GATE 2"], [-8, "GATE 3"], [-20, "GATE 4"], [-34, "GATE 5"], [-48, "GATE 6"]].forEach(([x, t]) => { const m = sign(1.6, 0.36, (g, w, h) => { g.fillStyle = "#16181b"; g.fillRect(0, 0, w, h); g.fillStyle = "#ff4a3a"; g.beginPath(); g.arc(h * 0.5, h / 2, h * 0.22, 0, 7); g.fill(); g.fillStyle = "#fff"; g.font = `800 ${h * 0.5}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(t, w * 0.56, h / 2); }, x, 2.75, 0.2, Math.PI); }); }
+  { const D = 140, L = new THREE.TextureLoader();
+    [["s", 0, 0, D, Math.PI, 0], ["n", 0, 0, -D, 0, 0], ["e", D, 0, 0, -Math.PI / 2, 0], ["w", -D, 0, 0, Math.PI / 2, 0], ["u", 0, D, 0, 0, Math.PI / 2], ["d", 0, -D, 0, 0, -Math.PI / 2]].forEach(([k, x, y, z, ry]) => {
+      const mat = new THREE.MeshBasicMaterial({ color: k === "d" ? 0x9aa39a : 0xbcd6ea, toneMapped: false, depthWrite: false, fog: false });
+      L.load("assets/usqview/" + k + ".jpg", (t) => { t.encoding = THREE.sRGBEncoding; mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * D, 2 * D), mat); m.position.set(x - 10, 2 + y, z - 12);
+      if (k === "u") { m.rotation.x = Math.PI / 2; m.rotateZ(Math.PI); } else if (k === "d") { m.rotation.x = -Math.PI / 2; m.rotateZ(Math.PI); } else m.rotation.y = ry; m.renderOrder = -10; m.userData.view = true; scene.add(m); }); }
+  // ---- the way back out: GATE 1, glass doors in the south front, signed for 아테라 타운 ----
+  const DXP = 20, DZP = 0;
+  { F(18.6, 0.2, 21.4, 0.3, 0, 2.5, new THREE.MeshBasicMaterial({ color: 0xa9c4cf, transparent: true, opacity: 0.45, depthWrite: false }), false); F(19.97, 0.18, 20.03, 0.32, 0, 2.5, frameM, false);
+    sign(2.6, 0.4, (g, w, h) => { g.fillStyle = "#faf8f4"; g.fillRect(0, 0, w, h); g.fillStyle = "#1d2a5a"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `700 ${h * 0.5}px ${FONT}`; g.fillText("아테라 타운으로 나가기", w / 2, h / 2); }, DXP, 3.25, 0.15, Math.PI);
+    const door = box(2.8, 2.5, 0.6, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), DXP, 1.25, -0.2); door.userData.idx = "exit"; PICK.push(door); }
   scene.children.slice(HN0).forEach((o) => { if (o.isLight) return; o.position.y *= HV; if (!o.rotation.x && !o.rotation.z) o.scale.y *= HV; });   // heights grow with the plan
-  { OCC.length = 0; const bb = new THREE.Box3(), fl = new Set(FLOORS); scene.children.slice(HN0).forEach((o) => { if (!o.isMesh || fl.has(o) || o.userData.view) return; bb.setFromObject(o); if (bb.max.y - bb.min.y > 0.9 && bb.max.y > 1.4) OCC.push(o); else if (bb.min.y > HT * HV - 0.2) o.visible = false; });   /* things up at the ceiling (the light coves and downlights) would float in the air seen from above: hidden */ DOORS.forEach((D) => D.g.children.forEach((m) => OCC.push(m))); DSL.forEach((d) => d.G.children.forEach((m) => OCC.push(m))); }   // everything tall enough to hide 쿠모 can fade
+  { OCC.length = 0; const bb = new THREE.Box3(), fl = new Set(FLOORS); scene.children.slice(HN0).forEach((o) => { if (!o.isMesh || fl.has(o) || o.userData.view) return; bb.setFromObject(o); if (bb.max.y - bb.min.y > 0.9 && bb.max.y > 1.4) OCC.push(o); });   /* things up at the ceiling (the light coves and downlights) would float in the air seen from above: hidden */ DOORS.forEach((D) => D.g.children.forEach((m) => OCC.push(m))); DSL.forEach((d) => d.G.children.forEach((m) => OCC.push(m))); }   // everything tall enough to hide 쿠모 can fade
   BOX.forEach((b) => { b[4] *= HV; b[5] *= HV; });
   prog(0.85);
   scene.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) { if (m.__lin) continue; m.__lin = true; if (m.color && !m.map) m.color.convertSRGBToLinear(); if (m.emissive) m.emissive.convertSRGBToLinear(); } });
   // ---- light: bright and even, as a gallery ----
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d2c6, 0.68)); scene.add(new THREE.AmbientLight(0xfff6ea, 0.24));   // a softer, warmer home
+  scene.add(new THREE.HemisphereLight(0xfff4e6, 0xa8a196, 0.5)); scene.add(new THREE.AmbientLight(0xfff0dc, 0.12));   /* a dimmer, warmer hall */   // a softer, warmer home
   const sun = new THREE.DirectionalLight(0xfff6ea, 0.3); sun.position.set(10, 18, 14); scene.add(sun);
   [[-1, 2.2, 3], [-4.8, 2.2, 1.4], [2.4, 2.2, 2.5], [5.2, 2.2, 2.5], [-1, 2.2, -2.6], [4, 2.2, -1]].forEach(([x, y, z]) => { const p = new THREE.PointLight(0xfff0dc, 0.25, 8, 2); p.position.set(x, y, z); scene.add(p); });
 
@@ -4101,8 +4123,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
   // ---- walking ----
-  const S = window.__vh = { x: DXP, z: DZP - 2.2, fy: 0, yaw: 0.35, pitch: -0.04, R: 11, tilt: 0.95, view: "quarter",   /* starts high, from the bathroom's corner, as far out as it goes */ tx: null, tz: null }, keys = {}, EYE = 1.62 * 0.8;
-  const free = (x, z, fy) => { if (x < X0 + 0.2 || x > X1 - 0.2 || z < Z0 + 0.2 || z > Z1 - 0.2) return false;
+  const S = window.__vh = { x: 5, z: -1.6, fy: 0, yaw: 0.3, pitch: -0.04, R: 11, tilt: 0.95, view: "quarter",   /* starts high, from the bathroom's corner, as far out as it goes */ tx: null, tz: null }, keys = {}, EYE = 1.62 * 0.85;
+  const free = (x, z, fy) => { if (x < X0 + 0.2 || x > X1 - 0.2 || z < Z0 + 0.2 || z > Z1 - 0.2) return false; if (x > -20 || z < -14.2) { const r = Math.hypot(x, z), a = Math.atan2(-z, x); if (x > -20 && z < 0 && r > RA - 0.5) return false; if (x <= -20 && z < -14.2) return false; for (const q of SECT) if (q && r > q[0] - 0.2 && r < q[1] + 0.2 && a > q[2] && a < q[3]) return false; for (const [ex, ez, er] of ESC) { const dx = x - ex, dz = z - ez, u = dx * Math.cos(er) - dz * Math.sin(er), v = dx * Math.sin(er) + dz * Math.cos(er); if (Math.abs(u) < 1.5 && Math.abs(v) < 3.8) return false; } }
     for (const b of BOX) if (x > b[0] - 0.15 && x < b[1] + 0.15 && z > b[2] - 0.15 && z < b[3] + 0.15 && fy + 1 > b[4] && fy + 0.2 < b[5]) return false; return true; };
   // tap to go: find a way round the walls and through the doors (a 20 cm grid over the flat, breadth-first), then walk it corner to corner
   let GRID = null; const GS = 0.2, GW = Math.ceil((X1 - X0) / GS), GH = Math.ceil((Z1 - Z0) / GS);
@@ -4143,16 +4165,16 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const sc = (y) => { v.set(S.x, y, S.z).project(camera); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height, v.z]; };
     const f = sc(0), h = sc(1.4); if (f[2] > 1 || h[2] > 1) return false; const ht = f[1] - h[1], hw = ht * 0.34; return px > f[0] - hw && px < f[0] + hw && py > h[1] - ht * 0.08 && py < f[1] + ht * 0.05; };
   canvas.addEventListener("pointerdown", (e) => { PT.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
-    if (PT.size === 2) { clearTimeout(holdT); hold = null; drag = null; S.tx = null; pinch = { d0: pdist(), f0: S.R }; return; } if (PT.size > 2) return;
+    if (PT.size === 2) { clearTimeout(holdT); hold = null; drag = null; S.tx = null; pinch = { d0: pdist(), f0: camera.fov }; return; } if (PT.size > 2) return;
     drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0, t0: performance.now(), tp: onKumo(e.clientX, e.clientY) };
-    clearTimeout(holdT); });   /* no press-and-hold walking indoors: it set 쿠모 off on his own while one only meant to look */
+    clearTimeout(holdT); if (!drag.tp) holdT = setTimeout(() => { if (drag && drag.moved <= 8 && !pinch) { hold = { x: drag.lx, y: drag.ly, v: 0 }; S.tx = null; } }, 320); });
   canvas.addEventListener("pointermove", (e) => { if (PT.has(e.pointerId)) PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pinch) { if (PT.size >= 2) { const d = pdist(); if (d > 10) S.R = Math.max(3.5, Math.min(11, pinch.f0 * pinch.d0 / d)); } return; }
+    if (pinch) { if (PT.size >= 2) { const d = pdist(); if (d > 10) { camera.fov = Math.max(35, Math.min(75, pinch.f0 * pinch.d0 / d)); camera.updateProjectionMatrix(); } } return; }
     if (!drag && TP.obj && e.pointerType === "mouse") canvas.style.cursor = onKumo(e.clientX, e.clientY) ? "grab" : "";
     if (hold) { hold.x = e.clientX; hold.y = e.clientY; return; } if (!drag) return;
     if (drag.tp) { const dx = e.clientX - drag.lx; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0)); if (drag.moved > 3) { TP.face += dx * 0.012; TP.dragging = true; canvas.style.cursor = "grabbing"; } drag.lx = e.clientX; drag.ly = e.clientY; return; }
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
-    if (drag.moved > 6) { const k = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight; S.yaw -= dx * k * 1.4; S.tilt = Math.max(0.55, Math.min(1.35, S.tilt + dy * k)); }   /* the view swings round 쿠모 and tilts; he keeps walking where he was going */
+    if (drag.moved > 6) { const k = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight; S.yaw += dx * k; S.pitch = Math.max(-0.5, Math.min(0.7, S.pitch + dy * k)); S.tx = null; }   /* the view swings round 쿠모 and tilts; he keeps walking where he was going */
     drag.lx = e.clientX; drag.ly = e.clientY; });
   const endP = (e) => { PT.delete(e.pointerId); if (pinch) { if (PT.size < 2) { pinch = null; drag = null; } return; }
     clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (d && d.tp) { TP.dragging = false; canvas.style.cursor = ""; if (d.moved <= 4) goTo(S.x - Math.sin(S.yaw) * 1.6, S.z - Math.cos(S.yaw) * 1.6); return; }   // a tap on 쿠모: a step or two forward if (!d || d.moved > 6) return;
@@ -4160,15 +4182,15 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     if (hp && (!hf || hp.distance <= hf.distance + 0.5 || (S.sit && S.tvWatch && hp.object.userData.idx === "tv"))) { const u = hp.object.userData; if (u.idx === "exit") { const FX = DXP, FZ = DZP - 1.6;   // first tap: walk up and face the door; then ask
         if (Math.hypot(S.x - FX, S.z - FZ) > 0.6) { goTo(FX, FZ); S.faceTo = 0; return; } return askLeave(); } if (u.idx === "npc") { npcTalk(); return; } if (u.idx === "taxi") { toast("1946년 금호의 첫 택시 · 포드 디럭스 — 눈으로만 보세요"); return; } if (u.idx === "frame") { toast(u.cap); return; } if (u.idx === "tv") { if (S.sit && S.tvWatch) { openTV(); return; } S.sit = null; S.tvWatch = true; const fx = px(160), fz = pz(195); S.sitGo = { v: 195, fx, fz }; if (Math.hypot(S.x - fx, S.z - fz) > 0.15) goTo(fx, fz); else S.tx = null; toast("소파에 앉아 TV를 봐요 · 한 번 더 누르면 크게 봐요"); return; } if (u.idx === "dslide") { const to = DSL[0].to ? 0 : 1; DSL.forEach((d) => (d.to = to)); DSL.forEach((d) => (d.auto = false)); toast(to ? "드레스룸 문을 닫았어요" : "드레스룸 문을 열었어요"); return; } if (u.idx === "door") { const D = u.D; D.to = D.to ? 0 : 1; D.auto = false; if (D.pair) D.pair.forEach((q) => (q.to = D.to)); if (D.blk) { const i = BOX.findIndex((b) => b[0] === D.blk[0] && b[2] === D.blk[2] && b[1] === D.blk[1]); if (D.to && i >= 0) BOX.splice(i, 1); else if (!D.to && i < 0) BOX.push(D.blk.slice()); } GRID = null; toast(D.name + " 문을 " + (D.to ? "열었어요" : "닫았어요")); return; } if (u.idx === "sofa") { S.tvWatch = false; const fx = px(160), fz = pz(u.v); S.sitGo = { v: u.v, fx, fz }; S.sit = null; if (Math.hypot(S.x - fx, S.z - fz) > 0.15) goTo(fx, fz); else S.tx = null; return; } if (u.idx === "win") { const sl = u.sl; sl.to = sl.to ? 0 : 1; if (sl.to) toast("창문을 열었어요 · 아테라 타운이 내려다보여요"); return; }
     }
-    if (hf) { S.sitGo = null; if (d.t0 && performance.now() - d.t0 < 450) { let dx = hf.point.x - S.x, dz = hf.point.z - S.z; const L = Math.hypot(dx, dz), m = Math.min(L, 1.6); if (L > 0.05) goTo(S.x + dx / L * m, S.z + dz / L * m); } } };   // a tap takes a step or two that way, not the whole walk   // only a quick tap walks; a press that lingers (looking round) does not
+    if (hf) { S.sitGo = null; goTo(hf.point.x, hf.point.z); } };   // a tap takes a step or two that way, not the whole walk   // only a quick tap walks; a press that lingers (looking round) does not
   canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", (e) => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; clearTimeout(holdT); hold = null; drag = null; TP.dragging = false; });
-  canvas.addEventListener("wheel", (e) => { e.preventDefault(); S.R = Math.max(3.5, Math.min(11, S.R + e.deltaY * 0.006)); }, { passive: false });
+  canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.fov = Math.max(35, Math.min(75, camera.fov + e.deltaY * 0.03)); camera.updateProjectionMatrix(); }, { passive: false });
   const TVURL = "https://www.youtube.com/embed/videoseries?list=UU38v-jiUXWXXVbWgtCD2S9g&autoplay=1&rel=0";   /* 금호건설TV's uploads list: always opens on the newest video */
   function openTV() { const b = $("tvBox"); $("tvFrame").src = TVURL; b.hidden = false; if (window.__bgmAu) window.__bgmAu.pause(); }
   $("tvBox").querySelector(".x").addEventListener("click", () => { $("tvBox").hidden = true; $("tvFrame").src = "about:blank"; });
-  $("viewBtn").addEventListener("click", (e) => { e.stopPropagation(); S.view = S.view === "follow" ? "quarter" : "follow"; S.fd = null; $("viewBtn").textContent = S.view === "follow" ? "👁 위에서 보기" : "👁 뒤에서 보기"; });
+  if (0) $("viewBtn").addEventListener("click", (e) => { e.stopPropagation(); S.view = S.view === "follow" ? "quarter" : "follow"; S.fd = null; $("viewBtn").textContent = S.view === "follow" ? "👁 위에서 보기" : "👁 뒤에서 보기"; });
   // ---- 도서관 할아버지 at U-square: he tells 쿠모 about the place, then offers a ticket for the premium coach ----
-  const NPC = { g: null, mix: null, aT: null, aI: null, talk: false, x: TX0 - 5.2, z: TZ0 + 3.6 };
+  const NPC = { g: null, mix: null, aT: null, aI: null, talk: false, x: TX0 + 3.4, z: TZ0 + 4.2 };
   { const L3 = new THREE.GLTFLoader(); if (window.MeshoptDecoder) L3.setMeshoptDecoder(window.MeshoptDecoder);
     L3.load("assets/librarian.glb", (g) => { const m = g.scene, G = new THREE.Group(); m.scale.setScalar(1.8 / 1.7); m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; const mp = o.material && o.material.map; o.material = new THREE.MeshLambertMaterial({ map: mp, color: mp ? 0xffffff : o.material.color, skinning: true }); } }); G.add(m);
       const pk = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.95, 0.8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.97; pk.userData = { idx: "npc" }; G.add(pk); PICK.push(pk);
@@ -4198,7 +4220,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const TK = '<div class="tk"><div class="b"><b>금호고속 프리미엄</b><span>KUMHO EXPRESS · 21석</span></div><div class="r"><div><small>출발</small>유·스퀘어</div><div style="align-self:center">→</div><div style="text-align:right"><small>도착</small>아테라 타운</div></div><div class="m"><span>좌석 21번 · 창가 1인석</span><span>쿠모 님</span></div><div class="stamp">사용 완료</div></div>';
     const g = document.createElement("div"); g.id = "tkGet"; g.hidden = true; g.innerHTML = '<div class="rays"></div><div class="k">ITEM GET</div>' + TK + '<div class="t">🎫 프리미엄 고속버스 승차권</div><div class="s">눌러서 닫기</div>'; document.body.appendChild(g);
     const u = document.createElement("div"); u.id = "tkUse"; u.hidden = true; u.innerHTML = TK + '<div class="q">승차권을 사용해 프리미엄 버스에 탈까요?</div><div class="bt"><button type="button" class="y">YES</button><button type="button" class="n">NO</button></div>'; document.body.appendChild(u);
-    const b = document.createElement("button"); b.type = "button"; b.id = "tkBtn"; b.textContent = "🎫 승차권"; b.hidden = !tkHave(); document.body.appendChild(b);
+    const b = document.createElement("button"); b.type = "button"; b.id = "tkBtn"; b.textContent = "🎫 승차권"; b.hidden = true; document.body.appendChild(b);
     [d, g, u, b].forEach((el) => ["pointerdown", "pointerup", "wheel"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation())));
     b.addEventListener("click", (e) => { e.stopPropagation(); u.querySelector(".tk").classList.remove("used"); u.hidden = false; });
     u.querySelector(".n").addEventListener("click", () => { u.hidden = true; });
@@ -4210,11 +4232,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const x = document.createElement("button"); x.type = "button"; x.textContent = last ? "닫기" : "다음 ▶"; x.onclick = (e) => { e.stopPropagation(); if (last) { d.hidden = true; NPC.talk = false; if (done) done(); } else { i++; show(); } }; bt.appendChild(x); };
     show(); }
   const INTRO = ["오, 쿠모 왔구나! 여기가 바로 유·스퀘어란다.", "유·스퀘어는 편리하고 쾌적한 환경, 복합문화 공간으로 새롭게 태어난 광주종합터미널의 새 이름이야.", "'당신의 광장(You)', '젊음의 광장(Youth)'이라는 뜻을 담고 있지.",
-    "광주 도심 어디서든 자동차로 30분이면 닿고, 문화와 취미를 한 번에 즐길 수 있단다.", "쇼핑과 문화, 힐링을 동시에 누리며 쉬어 가는 곳이고, 온 가족이 함께 맛있는 걸 고르는 즐거움도 있지.", "그리고 만남과 헤어짐 속에 추억이 쌓여 가는 곳이란다. 저기 택시 보이지? 1946년 금호가 처음 달린 바로 그 택시야.", "그런데 쿠모야, 버스 한번 타 보겠니?"];
-  function npcTalk() { if (!NPC.g) return; const d = Math.hypot(S.x - NPC.x, S.z - NPC.z);
-    const go = () => { if (tkHave()) { npcSay(["승차권은 잘 챙겼지? 오른쪽 위 🎫 승차권 버튼을 누르면 프리미엄 버스에 바로 탈 수 있단다."]); return; }
-      npcSay(INTRO, null, { yes: () => { const g = $("tkGet"); g.hidden = false; g.onclick = () => { g.hidden = true; try { sessionStorage.setItem("kumhoTicket", "1"); } catch (x) {} $("tkBtn").hidden = false; npcSay(["자, 여기 승차권이란다.", "이건 그냥 버스가 아니라 프리미엄 버스야. 한번 타 볼래? 오른쪽 위 🎫 승차권 버튼을 누르면 바로 탈 수 있단다."]); }; },
-        no: () => npcSay(["그래, 천천히 구경하고 타고 싶으면 언제든 말하렴."]) }); };
+    "광주 도심 어디서든 자동차로 30분이면 닿고, 문화와 취미를 한 번에 즐길 수 있단다.", "쇼핑과 문화, 힐링을 동시에 누리며 쉬어 가는 곳이고, 온 가족이 함께 맛있는 걸 고르는 즐거움도 있지.", "그리고 만남과 헤어짐 속에 추억이 쌓여 가는 곳이란다. 저기 택시 보이지? 1946년 금호가 처음 달린 바로 그 택시야."];
+  function npcTalk() { if (!NPC.g) return; const d = Math.hypot(S.x - NPC.x, S.z - NPC.z);   /* he tells 쿠모 about U-square (the bus-ride event is left out for now) */
+    const go = () => npcSay(INTRO);
     if (d > 2.4) { const ux = (S.x - NPC.x) / d, uz = (S.z - NPC.z) / d; goTo(NPC.x + ux * 1.6, NPC.z + uz * 1.6); const t0 = performance.now(); (function w() { if (S.tx == null || performance.now() - t0 > 8000) go(); else setTimeout(w, 150); })(); } else go(); }
   const toast = (t) => { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2400); };
   function askLeave() { let el = $("leaveAsk"); if (!el) { const st = document.createElement("style"); st.textContent = "#leaveAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30;width:min(520px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#leaveAsk[hidden]{display:none}#leaveAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#leaveAsk button{margin:0 6px;padding:9px 24px;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#leaveAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
@@ -4247,56 +4267,40 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const fw = (keys.ArrowUp || keys.w || keys.W ? 1 : 0) - (keys.ArrowDown || keys.s || keys.S ? 1 : 0), tu = (keys.ArrowLeft || keys.a || keys.A ? 1 : 0) - (keys.ArrowRight || keys.d || keys.D ? 1 : 0);
     if (hold) { const d = aim(hold.x, hold.y).ray.direction, hl = Math.hypot(d.x, d.z); if (hl > 1e-3) { hold.v = Math.min(9.94, hold.v + dt * 15.1); move(d.x / hl, d.z / hl, hold.v * dt); } }
     else if (Math.hypot(JOY.x, JOY.y) > 0.12) {   // the stick: walk the way it points, any angle; a sideways push turns the view a little too
-      S.tx = null; const f = -JOY.y, sd = JOY.x, m = Math.min(1, Math.hypot(f, sd)), L = Math.hypot(f, sd);   /* up on the stick is up the screen, right is right: the view itself never turns */
-      S.v = (S.v || 0) + (2.4 * m - (S.v || 0)) * Math.min(1, dt * 6); const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw);
-      S.mx = (hx * f + rx * sd) / L; S.mz = (hz * f + rz * sd) / L; move(S.mx, S.mz, S.v * dt); }
-    else if (fw || tu) { S.tx = null; const L = Math.hypot(fw, tu); S.v = (S.v || 0) + (2.4 - (S.v || 0)) * Math.min(1, dt * 6); const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw); S.mx = (hx * fw - rx * tu) / L; S.mz = (hz * fw - rz * tu) / L; move(S.mx, S.mz, S.v * dt); }
+      S.tx = null; const f = -JOY.y, sd = JOY.x, m = Math.min(1, Math.hypot(f, sd)), L = Math.hypot(f, sd); S.yaw -= sd * 1.1 * dt * (f > -0.3 ? 1 : 0);
+      S.v = (S.v || 0) + (6.5 * m - (S.v || 0)) * Math.min(1, dt * 5); const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw);
+      move((hx * f + rx * sd) / L, (hz * f + rz * sd) / L, S.v * dt); }
+    else if (fw || tu) { S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 6.5 - (S.v || 0)) * Math.min(1, dt * 5); if (Math.abs(S.v) > 0.02) move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt); }
     else if (S.tx != null) { const dx = S.tx - S.x, dz = S.tz - S.z, d = Math.hypot(dx, dz);
-      if (d < 0.12 && S.path && S.path.length) { [S.tx, S.tz] = S.path.shift(); S.bestD = null; }   // on to the next corner of the way
-      else if (d < 0.05) { S.tx = null; S.v = 0; S.mx = null; S.bestD = null; if (S.faceTo != null) { S.yawTo = S.faceTo; S.faceTo = null; } } else { S.v = Math.min((S.v || 0) + dt * 6, 2.4, d * 2.2); move(dx / d, dz / d, Math.min(d, S.v * dt)); if (S.bestD == null || d < S.bestD - 0.02) { S.bestD = d; S.stuck = 0; } else if ((S.stuck = (S.stuck || 0) + dt) > 0.6) { S.tx = null; S.v = 0; S.path = null; S.stuck = 0; S.bestD = null; } S.mx = null; } }   /* sliding along a corner is fine; only a real dead stop ends the walk */
-    else { S.v = 0; S.mx = null; }   // let go and he stops: no drifting on   // let go: a short glide the way he was going, never a turn back
-    { const near = (x, z, r) => Math.hypot(S.x - x, S.z - z) < r;   /* automatic doors: open when 쿠모 comes within a step, shut again once he has gone on (a door opened by hand stays as left) */
-      DOORS.forEach((D) => { if (D.cx == null) return; if (near(D.cx, D.cz, 1.3)) { if (!D.to) { D.to = 1; D.auto = true; } } else if (D.auto && !near(D.cx, D.cz, 2.2)) { D.to = 0; D.auto = false; } });
-      if (DSL.length) { const d0 = Math.hypot(S.x - px(37), S.z - pz(128)); if (d0 < 1.5 && DSL[0].to) DSL.forEach((d) => { d.to = 0; d.auto = true; }); else if (d0 > 2.3 && DSL[0].auto && !DSL[0].to) DSL.forEach((d) => { d.to = 1; d.auto = false; }); }
-      GDOORS.forEach((d) => { const dd = Math.hypot(S.x - d.cx, S.z - d.cz); if (dd < 1.5) d.to = 1; else if (dd > 2.3) d.to = 0; if (Math.abs(d.t - d.to) > 1e-3) { d.t += Math.sign(d.to - d.t) * Math.min(Math.abs(d.to - d.t), dt * 1.4); const e = d.t * d.t * (3 - 2 * d.t); d.G.position.x = d.x0 + d.dx * e; } }); }
-    DSL.forEach((d) => { if (Math.abs(d.t - d.to) < 1e-3) return; d.t += Math.sign(d.to - d.t) * Math.min(Math.abs(d.to - d.t), dt * 1.4); const e = d.t * d.t * (3 - 2 * d.t); d.G.position.x = d.x0 + (d.x1 - d.x0) * e; });
-    DOORS.forEach((D) => { if (Math.abs(D.t - D.to) < 1e-3) return; D.t += Math.sign(D.to - D.t) * Math.min(Math.abs(D.to - D.t), dt * 1.8); D.g.rotation.y = D.sgn * D.t * D.t * (3 - 2 * D.t) * Math.PI / 2 * 0.95; });   // each swings in, into its room
+      if (d < 0.12 && S.path && S.path.length) { [S.tx, S.tz] = S.path.shift(); } else if (d < 0.05) { S.tx = null; S.v = 0; if (S.faceTo != null) { S.yawTo = S.faceTo; S.faceTo = null; } } else { S.v = Math.min((S.v || 0) + dt * 6, 4.5, d * 2.2); move(dx / d, dz / d, Math.min(d, S.v * dt)); } }
+    else S.v = (S.v || 0) * Math.max(0, 1 - dt * 6), Math.abs(S.v) > 0.05 && move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt);
     WINS.forEach((sl) => { if (Math.abs(sl.t - sl.to) < 1e-3) return; sl.t += Math.sign(sl.to - sl.t) * Math.min(Math.abs(sl.to - sl.t), dt * 1.6); const e = sl.t * sl.t * (3 - 2 * sl.t);
       sl.a.forEach((o, i) => { o.position.x = sl.from[i].x + sl.dx * e; o.position.z = sl.from[i].z + sl.dz * e; }); });
     if (S.yawTo != null) { const dy = Math.atan2(Math.sin(S.yawTo - S.yaw), Math.cos(S.yawTo - S.yaw)); S.yaw += dy * Math.min(1, dt * 6); if (Math.abs(dy) < 0.01) S.yawTo = null; }
-    if (S.sit && S.tvWatch) { /* watching TV from the sofa: the view sits just behind 쿠모's shoulder, looking past him at the screen */
-      const cx = px(190.5), cz = pz(S.sit.v) + 0.3; S.cx = S.x; S.cz = S.z; camera.position.set(cx, 1.5 * HV, cz); camera.lookAt(px(110), 0.95 * HV, pz(S.sit.v) - 0.15); }
-    else if (S.view === "follow") { /* the old view, walking behind 쿠모: it swings round behind him as he goes, and comes in rather than pass through a wall */
-      if (TP.obj && (S.v || 0) > 0.3 && !drag) S.yaw += wrapA(TP.face + Math.PI - S.yaw) * Math.min(1, dt * 2.5);
-      let d = 2.6; const o = new THREE.Vector3(S.x, 1.4, S.z), dv = new THREE.Vector3(Math.sin(S.yaw) * 2.6, 0.55, Math.cos(S.yaw) * 2.6), L = dv.length(); ray.set(o, dv.normalize()); ray.far = L + 0.3; const h = ray.intersectObjects(WALLS, false)[0]; ray.far = Infinity; if (h) d = Math.max(0.6, (h.distance - 0.3) * 2.6 / L);
-      S.fd = S.fd == null ? d : S.fd + (d - S.fd) * Math.min(1, dt * (d < S.fd ? 14 : 4)); S.cx = S.x; S.cz = S.z;
-      camera.position.set(S.x + Math.sin(S.yaw) * S.fd, 1.4 + 0.55 * S.fd / 2.6 + (2.6 - S.fd) * 0.35, S.z + Math.cos(S.yaw) * S.fd); camera.lookAt(S.x, 0.95, S.z); }
-    else { /* the quarter view: high and behind, looking down on 쿠모 at a fixed angle; it glides after him and never swings with his turns (the ceiling faces down, so from up here it simply isn't drawn) */
-      const h = S.R * Math.sin(S.tilt), r = S.R * Math.cos(S.tilt); S.cx = S.cx == null ? S.x : S.cx + (S.x - S.cx) * Math.min(1, dt * 6); S.cz = S.cz == null ? S.z : S.cz + (S.z - S.cz) * Math.min(1, dt * 6);
-      camera.position.set(S.cx + Math.sin(S.yaw) * r, 0.9 + h, S.cz + Math.cos(S.yaw) * r); camera.lookAt(S.cx, 0.9, S.cz); }
+    camera.position.set(S.x, EYE, S.z); camera.rotation.set(0, 0, 0); camera.rotation.order = "YXZ"; camera.rotation.y = S.yaw; camera.rotation.x = S.pitch;
     
     if (S.sitGo && S.tx == null && Math.hypot(S.x - S.sitGo.fx, S.z - S.sitGo.fz) < 0.25) { S.sit = { v: S.sitGo.v, x: S.x, z: S.z }; S.sitGo = null; S.yawTo = -Math.PI / 2; S.pitch = -0.04; toast("소파에 앉았어요 · 움직이면 일어납니다"); }
     if (S.sit && (S.tx != null || Math.hypot(S.x - S.sit.x, S.z - S.sit.z) > 0.04)) { S.sit = null; S.tvWatch = false; if (TP.obj) TP.face = -Math.PI / 2; }   // any step gets up
     if (TP.obj) {
       if (TP.px == null) { TP.px = S.x; TP.pz = S.z; TP.face = S.yaw + Math.PI; }
       const dx = S.x - TP.px, dz = S.z - TP.pz; let mv = Math.hypot(dx, dz) / Math.max(dt, 1e-3); if (mv > 30) mv = 0; TP.px = S.x; TP.pz = S.z; TP.spd += (mv - TP.spd) * Math.min(1, dt * 7);
-      if (mv > 0.6) TP.face += wrapA(Math.atan2(dx, dz) - TP.face) * Math.min(1, dt * 10); ;
+      if (mv > 0.6) TP.face += wrapA(Math.atan2(dx, dz) - TP.face) * Math.min(1, dt * 10); else if (!TP.dragging && TP.ly != null && Math.abs(wrapA(S.yaw - TP.ly)) > 1e-4) TP.face += wrapA(S.yaw + Math.PI - TP.face) * Math.min(1, dt * 10);
       TP.ly = S.yaw; TP.face = wrapA(TP.face);
       TP.obj.position.set(S.x, 0.012, S.z); TP.obj.rotation.y = TP.face; TP.blob.position.set(S.x, 0.02, S.z);
-      TP.obj.visible = TP.blob.visible = true;
-      { /* the camera always stays behind him: any wall or tall piece between the camera and 쿠모 turns see-through instead of pulling the camera in */
-        const o = camera.position.clone(), hit = new Set(); [0.25, 0.7, 1.15].forEach((y) => { const dv = new THREE.Vector3(S.x, y, S.z).sub(o), dl = dv.length(); ray.set(o, dv.normalize()); ray.far = dl - 0.2; ray.intersectObjects(OCC, true).forEach((h) => hit.add(h.object)); }); ray.far = Infinity;   /* from the camera to his feet, middle and head: anything in between fades */
-        (TP.faded || []).forEach((m) => { if (!hit.has(m)) { m.material = m.userData.mat0; } });
-        hit.forEach((m) => { if (!m.userData.mat0) m.userData.mat0 = m.material; const m0 = m.userData.mat0; if (!m0.userData.fade) { const f = m0.clone(); f.transparent = true; f.opacity = 0.18; f.depthWrite = false; m0.userData.fade = f; } m.material = m0.userData.fade; });
-        TP.faded = [...hit]; }
-      if (S.sit) { const th = -Math.PI / 2, k = 0.96 * 0.8 / 0.96; TP.face = th; TP.obj.rotation.y = th; TP.obj.position.set(px(169.5) + Math.sin(th) * 0.27 * k, 0.44 * HV - 0.33 * k, pz(S.sit.v) + Math.sin(th) * 0.1 * k); TP.blob.visible = false; TP.obj.visible = true; }   /* the clip sits the hips 0.27 m behind the feet */   // a tight spot in a small room: the camera comes in to his eyes rather than fill the screen with his cap
-      const W = TP.act.Walking, R = TP.act.Running, I = TP.act.Idle, Sa = TP.act.Sit;
-      if (W && R) { if (!TP.started) { TP.started = true; W.play(); R.play(); if (I) I.play(); if (Sa) { Sa.play(); Sa.setEffectiveWeight(0); } }
-        if (Sa) Sa.setEffectiveWeight(S.sit ? 1 : 0); if (S.sit) { W.setEffectiveWeight(0); R.setEffectiveWeight(0); if (I) I.setEffectiveWeight(0); TP.iw = 1; } else {
+      let d = 1.2; for (const t of [3.4, 2.8, 2.2, 1.6, 1.2]) { let ok = true; for (let k = 0.6; k <= t; k += 0.3) { const bx = S.x + Math.sin(S.yaw) * k, bz = S.z + Math.cos(S.yaw) * k; if (bx < X0 + 0.25 || bx > X1 - 0.25 || bz < Z0 + 0.25 || bz > Z1 - 0.25) { ok = false; break; }
+          for (const b of BOX) if (bx > b[0] - 0.15 && bx < b[1] + 0.15 && bz > b[2] - 0.15 && bz < b[3] + 0.15 && 1.9 > b[4] && 1.9 < b[5]) { ok = false; break; } if (!ok) break; } if (ok) { d = t; break; } }
+      TP.d += (d - TP.d) * Math.min(1, dt * 8);
+      camera.position.x += Math.sin(S.yaw) * TP.d; camera.position.z += Math.cos(S.yaw) * TP.d; camera.position.y += 0.3; camera.rotation.x -= 0.1;
+      const W = TP.act.Walking, R = TP.act.Running, I = TP.act.Idle;
+      if (W && R) { if (!TP.started) { TP.started = true; W.play(); R.play(); if (I) I.play(); }
         const moving = TP.spd > 0.3; TP.iw += ((moving || !I ? 0 : 1) - TP.iw) * Math.min(1, dt * 8); TP.rw += ((TP.spd > 4.2 ? 1 : 0) - TP.rw) * Math.min(1, dt * 6);
         W.setEffectiveWeight((1 - TP.rw) * (1 - TP.iw)); R.setEffectiveWeight(TP.rw * (1 - TP.iw)); if (I) I.setEffectiveWeight(TP.iw);
-        W.timeScale = moving ? Math.max(0.7, Math.min(1.9, TP.spd / 1.5)) : 0.3; R.timeScale = Math.max(0.8, Math.min(1.6, TP.spd / 5)); } }
+        W.timeScale = moving ? Math.max(0.7, Math.min(1.9, TP.spd / 1.5)) : 0.3; R.timeScale = Math.max(0.8, Math.min(1.6, TP.spd / 5)); }
       TP.mixer.update(dt); }
+    renderer.render(scene, camera);
+    if (first) { first = false; prog(1); setTimeout(() => { $("ld").classList.add("off"); if (document.getElementById("doorFx").classList.contains("show")) setTimeout(() => doorFx.open(), 450); }, 250); } })();
+})();
+</script>
     renderer.render(scene, camera);
     if (first) { first = false; prog(1); setTimeout(() => { $("ld").classList.add("off"); if (document.getElementById("doorFx").classList.contains("show")) setTimeout(() => doorFx.open(), 450); }, 250); } })();
 })();
