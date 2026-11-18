@@ -8221,7 +8221,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const face = new THREE.MeshBasicMaterial({ map: bTex(i), toneMapped: false });
             const post = new THREE.Mesh(new THREE.BoxGeometry(2.1, h, 0.5), [stone, stone, stone, stone, stone, stone]); post.position.y = h / 2; post.castShadow = true; G.add(post);
             const pan = new THREE.Mesh(new THREE.PlaneGeometry(1.84, 2.3), face); pan.position.set(0, h - 1.35, 0.26); (OUT.brandPos = OUT.brandPos || [])[i] = [x, BZ];
-            const pan2 = new THREE.Mesh(new THREE.PlaneGeometry(1.84, 2.3), face); pan2.position.set(0, h - 1.35, -0.26); pan2.rotation.y = Math.PI; G.add(pan2);   // the same on the back, for the lawn side G.add(pan);
+            const pan2 = new THREE.Mesh(new THREE.PlaneGeometry(1.84, 2.3), face); pan2.position.set(0, h - 1.35, -0.26); pan2.rotation.y = Math.PI; G.add(pan2); G.add(pan);   /* the same on the back, for the lawn side */
             const cap = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.08, 0.6), last ? navy : new THREE.MeshLambertMaterial({ color: 0xa88c5c })); cap.position.y = h + 0.04; G.add(cap);
             const dot = new THREE.Mesh(new THREE.CylinderGeometry(last ? 0.42 : 0.3, last ? 0.42 : 0.3, 0.05, 28), navy); dot.position.set(0, 0.07, 0.8); G.add(dot);
             if (!last) { const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.06, 24), new THREE.MeshBasicMaterial({ color: 0xffffff })); ring.position.set(0, 0.075, 0.8); G.add(ring); }
@@ -8307,7 +8307,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           slab(offP(0.55), null, VH - 0.4, 0.42, [navy, new THREE.MeshLambertMaterial({ color: 0x0a1430 })]);   // the navy roof slab, overhanging — from the sky it is the mark
           { const fc = new THREE.Shape(); fc.moveTo(-nb - 1, 0); fc.lineTo(0, na); fc.lineTo(nb + 1, 0); fc.closePath();
             const fp = mk(new THREE.ShapeGeometry(fc), PAVE_M, 0, 0.05, 0); fp.rotation.x = -Math.PI / 2; fp.castShadow = false;   // the notch paved as a forecourt
-            const ap = mk(new THREE.PlaneGeometry(VW, 1.6), PAVE_M, 0, 0.048, 0.8);   // only as wide as the building: it no longer runs out over the pavement and road beside it ap.rotation.x = -Math.PI / 2; ap.castShadow = false;   // an apron along the south front, past both doors, up to the pavement edge
+            const ap = mk(new THREE.PlaneGeometry(VW, 1.6), PAVE_M, 0, 0.048, 0.8); ap.rotation.x = -Math.PI / 2; ap.castShadow = false;   /* only as wide as the building: it no longer runs out over the pavement and road beside it */   // an apron along the south front, past both doors, up to the pavement edge
             }
           // the doors: the same as the archive's — a travertine surround, a warm lit reveal, dark oak leaves with bronze edges and long bronze pulls — one on each foot
           for (const dx of [-(nb + VW / 2) / 2, (nb + VW / 2) / 2]){ const DW = 2.0, DH = 2.85, FW = 0.42, D = 0.42, zf = 0.02; const SD = new THREE.Group(); SD.position.set(dx, 0.32, 0.02); G.add(SD);
