@@ -3911,7 +3911,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const HK = 1.56, HN0 = scene.children.length, SC = 0.044 * HK, OX = 170, OY = 135, HT = 2.4,   // HK: the whole flat drawn 1.3 times life size, so it sits right with 쿠모 (who is a big lad)
    px = (v) => (v - OX) * SC, pz = (v) => (v - OY) * SC;
   const X0 = px(17), X1 = px(322), Z0 = pz(37), Z1 = pz(232);
-  const PICK = [], BOX = [], FLOORS = [];
+  const PICK = [], BOX = [], FLOORS = [], OCC = [], WALLS = [];   // OCC: walls and tall pieces that fade when they stand between the camera and 쿠모
   const block = (x0, x1, z0, z1, y0 = 0, y1 = 3) => BOX.push([Math.min(x0, x1), Math.max(x0, x1), Math.min(z0, z1), Math.max(z0, z1), y0, y1]);
   const grain = (base, line, w, h, n) => tex(w, h, (g) => { g.fillStyle = base; g.fillRect(0, 0, w, h); for (let i = 0; i < n; i++) { g.strokeStyle = line; g.globalAlpha = 0.08 + rnd() * 0.12; g.lineWidth = 1 + rnd() * 2; const y = rnd() * h; g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + rnd() * 6 - 3, w * 0.7, y + rnd() * 6 - 3, w, y); g.stroke(); } g.globalAlpha = 1; });
   const woodT = tex(512, 512, (g, w, h) => { g.fillStyle = "#cdb89c"; g.fillRect(0, 0, w, h); for (let r = 0; r < 8; r++) { const y = r * 64, off = (r % 2) * 180; g.fillStyle = `rgba(${150 + rnd() * 30},${120 + rnd() * 25},${90 + rnd() * 20},.18)`; g.fillRect(0, y, w, 64);
@@ -3938,7 +3938,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const glassM = new THREE.MeshBasicMaterial({ color: 0xdfeef7, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide }), WINS = [];
   const sashM = (() => { const t = tex(64, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.strokeStyle = "#dcd6cd"; g.lineWidth = 5; g.strokeRect(2, 2, w - 4, h - 4); g.strokeStyle = "#b9b2a8"; g.lineWidth = 1; g.strokeRect(5, 5, w - 10, h - 10); }); return new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, side: THREE.DoubleSide }); })();
   const piece = (x0, z0, x1, z1, y0, y1, t, m) => { const hor = Math.abs(z1 - z0) < 1e-6, len = hor ? Math.abs(x1 - x0) : Math.abs(z1 - z0); if (len < 0.01 || y1 - y0 < 0.01) return;
-    const b = box(hor ? len : t, y1 - y0, hor ? t : len, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    const b = box(hor ? len : t, y1 - y0, hor ? t : len, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); OCC.push(b); WALLS.push(b);
     if (m === wallMat || m === extMat) { const W0 = hor ? len : t, H0 = (y1 - y0) * HK, D0 = hor ? t : len, uv = b.geometry.attributes.uv, dims = [[D0, H0], [D0, H0], [W0, D0], [W0, D0], [W0, H0], [W0, H0]];   // the paper at its true size on every face
       for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const n = f * 4 + v; uv.setXY(n, uv.getX(n) * dims[f][0], uv.getY(n) * dims[f][1]); } uv.needsUpdate = true; } if (y0 < 1.8) block(x0 - (hor ? 0 : t / 2), x1 + (hor ? 0 : t / 2), z0 - (hor ? t / 2 : 0), z1 + (hor ? t / 2 : 0), y0, y1); return b; };
   function W(a, b, c, d, opt = {}) { const t = (opt.t || 4) * SC, m = opt.ext ? extMat : wallMat, hor = b === d, L = hor ? Math.min(a, c) : Math.min(b, d), Hh = hor ? Math.max(a, c) : Math.max(b, d);
@@ -3969,7 +3969,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // the bathroom walls lined in the same tile (with the doorways left open)
   { const lin = (u0, v0, u1, v1, nx, nz, y0 = 0, y1 = HT, hw = 2, file = "bathtile.jpg", k = 1.2 * HK) => { const o = hw * SC + 0.012; const hor = v0 === v1, len = (hor ? u1 - u0 : v1 - v0) * SC, h = y1 - y0; if (len <= 0) return;
       const t = BATH.tex(len / k, h * HK / k, file);
-      const m = add(new THREE.PlaneGeometry(len, h), new THREE.MeshLambertMaterial({ map: t }), hor ? (px(u0) + px(u1)) / 2 : px(u0) + nx * o, (y0 + y1) / 2, hor ? pz(v0) + nz * o : (pz(v0) + pz(v1)) / 2);
+      const m = add(new THREE.PlaneGeometry(len, h), new THREE.MeshLambertMaterial({ map: t }), hor ? (px(u0) + px(u1)) / 2 : px(u0) + nx * o, (y0 + y1) / 2, hor ? pz(v0) + nz * o : (pz(v0) + pz(v1)) / 2); OCC.push(m); WALLS.push(m);
       m.rotation.y = hor ? (nz > 0 ? 0 : Math.PI) : (nx > 0 ? Math.PI / 2 : -Math.PI / 2); };
     // 욕실2 (x 60–100, y 80–128): door in its west wall at y 90–107
     lin(60, 80, 100, 80, 0, 1); lin(60, 128, 100, 128, 0, -1); lin(100, 80, 100, 128, -1, 0); lin(60, 80, 60, 90, 1, 0); lin(60, 107, 60, 128, 1, 0); lin(60, 90, 60, 107, 1, 0, 2.1, HT);
@@ -3996,7 +3996,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   prog(0.45);
   // ---- furnishing, kept simple ----
   const white = lam(0xf3f1ec), greige = lam(0xd8d2c8), oakM = lam(0xb68d62), dark = lam(0x2b2c30), stone = lam(0xe9e5dc), green = lam(0x8fa77c), tan = lam(0xc9a27a), porcelain = lam(0xfbfbf9), steel = lam(0xb8bcc0);
-  const F = (u0, v0, u1, v1, y0, y1, m, solid = true) => { const o = box((u1 - u0) * SC, y1 - y0, (v1 - v0) * SC, m, (px(u0) + px(u1)) / 2, (y0 + y1) / 2, (pz(v0) + pz(v1)) / 2); if (solid) block(px(u0), px(u1), pz(v0), pz(v1), y0, Math.max(y1, 0.6)); return o; };
+  const F = (u0, v0, u1, v1, y0, y1, m, solid = true) => { const o = box((u1 - u0) * SC, y1 - y0, (v1 - v0) * SC, m, (px(u0) + px(u1)) / 2, (y0 + y1) / 2, (pz(v0) + pz(v1)) / 2); if (solid) block(px(u0), px(u1), pz(v0), pz(v1), y0, Math.max(y1, 0.6)); if (y1 > 1.3) OCC.push(o); return o; };
   // kitchen: the long counter under the window with its sink, the island, tall cabinets with the fridge on the west side
   { const TXK = (f, rx, ry) => { const t = new THREE.TextureLoader().load("assets/" + f); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = ANISO; return lam(0xffffff, { map: t }); };
     const flute = lam(0xffffff, { map: tex(256, 64, (g, w, h) => { g.fillStyle = "#ece8df"; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 8) { const gr = g.createLinearGradient(x, 0, x + 8, 0); gr.addColorStop(0, "rgba(0,0,0,.10)"); gr.addColorStop(0.5, "rgba(255,255,255,.18)"); gr.addColorStop(1, "rgba(0,0,0,.10)"); g.fillStyle = gr; g.fillRect(x, 0, 8, h); } }) }); flute.map.wrapS = THREE.RepeatWrapping; flute.map.repeat.set(4, 1);
@@ -4119,9 +4119,15 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const tank = add(new THREE.BoxGeometry(0.22, 0.4, 0.5), pw, wx - 0.13, 0.62, cz); const lid = add(new THREE.BoxGeometry(0.25, 0.04, 0.53), pw, wx - 0.13, 0.84, cz); add(new THREE.CylinderGeometry(0.02, 0.02, 0.012, 12), steel, wx - 0.13, 0.865, cz);
       const pan = add(new THREE.BoxGeometry(0.2, 0.06, 0.03), lam(0xeef0f0), wx - 0.55, 0.42, cz - 0.3); block(px(308.5), px(321), pz(84), pz(94)); }
     /* the glass-fronted mirror cabinet high on the east wall, an open niche beneath it */
-    F(319.2, 96, 321, 116, 1.3, 1.36, lam(0xe9e2d4), false); F(318.8, 96, 321, 116, 1.36, 2.2, lam(0xe4ddd1), false);
-    { const g = add(new THREE.PlaneGeometry(20 * SC - 0.04, 0.8), new THREE.MeshBasicMaterial({ color: 0xc9d3d7 }), px(318.8) - 0.004, 1.78, (pz(96) + pz(116)) / 2); g.rotation.y = -Math.PI / 2; F(318.75, 105.9, 318.8, 106.1, 1.38, 2.18, lam(0x9aa0a3), false); }
-    add(new THREE.CylinderGeometry(0.05, 0.05, 0.14, 12), lam(0xe6dfd0), px(320), 1.43, pz(100)); }
+    F(316.6, 96, 318.7, 116, 1.3, 1.36, lam(0xe9e2d4), false); F(316.4, 96, 318.7, 116, 1.36, 2.2, lam(0xe4ddd1), false);   /* stood clear of the tiled lining (it sat in the same plane and flickered) */
+    { const g = add(new THREE.PlaneGeometry(20 * SC - 0.04, 0.8), new THREE.MeshBasicMaterial({ color: 0xc9d3d7 }), px(316.4) - 0.006, 1.78, (pz(96) + pz(116)) / 2); g.rotation.y = -Math.PI / 2; F(316.3, 105.9, 316.38, 106.1, 1.38, 2.18, lam(0x9aa0a3), false); }
+    add(new THREE.CylinderGeometry(0.05, 0.05, 0.14, 12), lam(0xe6dfd0), px(317.6), 1.43, pz(100)); }
+  /* the door between the vanity (욕실1-1) and the bath and WC (욕실1-2): shut by default so the two read as separate rooms; tap it to open or shut */
+  const BDOOR = { g: new THREE.Group(), t: 0, to: 0, blk: null }; { const g = BDOOR.g; g.position.set(px(290.4), 0, pz(128)); scene.add(g);
+    const leaf = new THREE.Mesh(new THREE.BoxGeometry(17.2 * SC, 2.08, 0.04), lam(0xefebe4)); leaf.position.set(17.2 * SC / 2, 1.04, 0); g.add(leaf);
+    const hd = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.2, 0.06), steel); hd.position.set(17.2 * SC - 0.12, 1.0, 0); g.add(hd);
+    F(278, 126.4, 290.4, 129.6, 0, HT, wallMat); F(307.6, 126.4, 322, 129.6, 0, HT, wallMat); F(290.4, 126.4, 307.6, 129.6, 2.1, HT, wallMat, false);   /* the partition between the corridor and the bathroom, made solid on both sides of its door */
+    leaf.userData = { idx: "bdoor" }; PICK.push(leaf); block(px(290), px(308), pz(128) - 0.05, pz(128) + 0.05); BDOOR.blk = BOX[BOX.length - 1].slice(); }
   { // the vanity at the end of the corridor (욕실1-1), as in the show flat: pale oak-look wall panels, two tall mirrors, a long white stone counter with an undermount basin and a brushed tap
     const oakW = tex(256, 256, (g, w, h) => { g.fillStyle = "#d9cdbb"; g.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { g.strokeStyle = `rgba(150,128,100,${0.08 + rnd() * 0.12})`; g.lineWidth = 1 + rnd() * 2; const x = rnd() * w; g.beginPath(); g.moveTo(x, 0); g.bezierCurveTo(x + rnd() * 6 - 3, h * 0.3, x + rnd() * 6 - 3, h * 0.7, x, h); g.stroke(); } });
     const panel = (u0, v0, u1, v1, nx) => { const len = (v1 - v0) * SC, p = add(new THREE.PlaneGeometry(len, HT), lam(0xffffff, { map: oakW }), px(u0) + nx * 0.012, HT / 2, (pz(v0) + pz(v1)) / 2); p.rotation.y = nx > 0 ? Math.PI / 2 : -Math.PI / 2; };
@@ -4222,6 +4228,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     add(new THREE.PlaneGeometry(0.9, 0.22), new THREE.MeshBasicMaterial({ map: sg, toneMapped: false }), DXP, 2.24, DZP + 0.1);
     const door = box(1.0, 2.2, 0.5, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), DXP, 1.1, DZP + 0.25); door.userData.idx = "exit"; PICK.push(door); block(px(247), px(267), DZP - 0.3, DZP + 0.05); }
   scene.children.slice(HN0).forEach((o) => { if (o.isLight) return; o.position.y *= HK; if (!o.rotation.x && !o.rotation.z) o.scale.y *= HK; });   // heights grow with the plan
+  { OCC.length = 0; const bb = new THREE.Box3(), fl = new Set(FLOORS); scene.children.slice(HN0).forEach((o) => { if (!o.isMesh || fl.has(o) || o.userData.view) return; bb.setFromObject(o); if (bb.max.y - bb.min.y > 0.9 && bb.max.y > 1.4) OCC.push(o); }); }   // everything tall enough to hide 쿠모 can fade
   BOX.forEach((b) => { b[4] *= HK; b[5] *= HK; });
   prog(0.85);
   scene.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) { if (m.__lin) continue; m.__lin = true; if (m.color && !m.map) m.color.convertSRGBToLinear(); if (m.emissive) m.emissive.convertSRGBToLinear(); } });
@@ -4284,8 +4291,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const f = sc(0), h = sc(1.4); if (f[2] > 1 || h[2] > 1) return false; const ht = f[1] - h[1], hw = ht * 0.34; return px > f[0] - hw && px < f[0] + hw && py > h[1] - ht * 0.08 && py < f[1] + ht * 0.05; };
   canvas.addEventListener("pointerdown", (e) => { PT.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
     if (PT.size === 2) { clearTimeout(holdT); hold = null; drag = null; S.tx = null; pinch = { d0: pdist(), f0: camera.fov }; return; } if (PT.size > 2) return;
-    drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0, tp: onKumo(e.clientX, e.clientY) };
-    clearTimeout(holdT); if (!drag.tp) holdT = setTimeout(() => { if (drag && drag.moved <= 8 && !pinch) { hold = { x: drag.lx, y: drag.ly, v: 0 }; S.tx = null; } }, 320); });
+    drag = { x0: e.clientX, y0: e.clientY, lx: e.clientX, ly: e.clientY, moved: 0, t0: performance.now(), tp: onKumo(e.clientX, e.clientY) };
+    clearTimeout(holdT); });   /* no press-and-hold walking indoors: it set 쿠모 off on his own while one only meant to look */
   canvas.addEventListener("pointermove", (e) => { if (PT.has(e.pointerId)) PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch) { if (PT.size >= 2) { const d = pdist(); if (d > 10) { camera.fov = Math.max(45, Math.min(100, pinch.f0 * pinch.d0 / d)); camera.updateProjectionMatrix(); } } return; }
     if (!drag && TP.obj && e.pointerType === "mouse") canvas.style.cursor = onKumo(e.clientX, e.clientY) ? "grab" : "";
@@ -4298,16 +4305,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (d && d.tp) { TP.dragging = false; canvas.style.cursor = ""; if (d.moved <= 4) goTo(S.x - Math.sin(S.yaw) * 1.6, S.z - Math.cos(S.yaw) * 1.6); return; }   // a tap on 쿠모: a step or two forward if (!d || d.moved > 6) return;
     const r = aim(e.clientX, e.clientY), hp = r.intersectObjects(PICK, false)[0], hf = r.intersectObjects(FLOORS, false)[0];
     if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { const u = hp.object.userData; if (u.idx === "exit") { const FX = DXP, FZ = DZP + 1.5;   // first tap: walk up and face the door; then ask
-        if (Math.hypot(S.x - FX, S.z - FZ) > 0.6) { goTo(FX, FZ); S.faceTo = 0; return; } if (Math.abs(Math.atan2(Math.sin(S.yaw), Math.cos(S.yaw))) > 0.3) { S.yawTo = 0; return; } return askLeave(); } if (u.idx === "frame") { toast(u.cap); return; } if (u.idx === "sofa") { const fx = px(160), fz = pz(u.v); S.sitGo = { v: u.v, fx, fz }; S.sit = null; if (Math.hypot(S.x - fx, S.z - fz) > 0.15) goTo(fx, fz); else S.tx = null; return; } if (u.idx === "win") { const sl = u.sl; sl.to = sl.to ? 0 : 1; if (sl.to) toast("창문을 열었어요 · 아테라 타운이 내려다보여요"); return; }
+        if (Math.hypot(S.x - FX, S.z - FZ) > 0.6) { goTo(FX, FZ); S.faceTo = 0; return; } if (Math.abs(Math.atan2(Math.sin(S.yaw), Math.cos(S.yaw))) > 0.3) { S.yawTo = 0; return; } return askLeave(); } if (u.idx === "frame") { toast(u.cap); return; } if (u.idx === "bdoor") { BDOOR.to = BDOOR.to ? 0 : 1; const i = BOX.findIndex((b) => b[0] === BDOOR.blk[0] && b[2] === BDOOR.blk[2]); if (BDOOR.to && i >= 0) BOX.splice(i, 1); else if (!BDOOR.to && i < 0) BOX.push(BDOOR.blk.slice()); GRID = null; toast(BDOOR.to ? "욕실 문을 열었어요" : "욕실 문을 닫았어요"); return; } if (u.idx === "sofa") { const fx = px(160), fz = pz(u.v); S.sitGo = { v: u.v, fx, fz }; S.sit = null; if (Math.hypot(S.x - fx, S.z - fz) > 0.15) goTo(fx, fz); else S.tx = null; return; } if (u.idx === "win") { const sl = u.sl; sl.to = sl.to ? 0 : 1; if (sl.to) toast("창문을 열었어요 · 아테라 타운이 내려다보여요"); return; }
     }
-    if (hf) { S.sitGo = null; const r = roomAt(hf.point.x, hf.point.z), here = roomAt(S.x, S.z); if (r && r !== here) { S.yawTo = null; goTo(px(r[2]), pz(r[3])); S.faceTo = r[4]; S.pitch = -0.04; } else goTo(hf.point.x, hf.point.z); } };
+    if (hf) { S.sitGo = null; if (d.t0 && performance.now() - d.t0 < 450) goTo(hf.point.x, hf.point.z); } };   // only a quick tap walks; a press that lingers (looking round) does not
   canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", (e) => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; clearTimeout(holdT); hold = null; drag = null; TP.dragging = false; });
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.fov = Math.max(45, Math.min(100, camera.fov + e.deltaY * 0.03)); camera.updateProjectionMatrix(); }, { passive: false });
-  /* tapping into another room (or its doorway) walks 쿠모 to that room's standing spot and turns him to face it; inside the same room a tap goes where it lands */
-  const ROOMS = [["living", [[100, 155, 192, 232]], 145, 172, Math.PI], ["kitchen", [[100, 37, 188, 130]], 150, 104, 0],
-    ["master", [[17, 128, 98, 200], [98, 133, 108, 151]], 88, 142, Math.PI / 2], ["dress", [[17, 58, 60, 128], [27, 128, 47, 134]], 37, 122, 0],
-    ["kumo", [[257, 155, 322, 232], [260, 145, 279, 155]], 269.5, 176, Math.PI], ["study", [[193, 155, 257, 232], [236, 145, 254, 155]], 244, 176, Math.PI]];
-  const roomAt = (x, z) => { const u = x / SC + OX, v = z / SC + OY; for (const r of ROOMS) for (const [a, b, c, d] of r[1]) if (u >= a && u <= c && v >= b && v <= d) return r; return null; };
   const toast = (t) => { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2400); };
   function askLeave() { let el = $("leaveAsk"); if (!el) { const st = document.createElement("style"); st.textContent = "#leaveAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30;width:min(520px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#leaveAsk[hidden]{display:none}#leaveAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#leaveAsk button{margin:0 6px;padding:9px 24px;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#leaveAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
       document.head.appendChild(st); el = document.createElement("div"); el.id = "leaveAsk"; el.hidden = true; el.innerHTML = '<div class="q">🚪 나가시겠습니까?</div><button type="button" class="y">예</button><button type="button" class="n">아니요</button>'; document.body.appendChild(el);
@@ -4340,13 +4342,14 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     if (hold) { const d = aim(hold.x, hold.y).ray.direction, hl = Math.hypot(d.x, d.z); if (hl > 1e-3) { hold.v = Math.min(9.94, hold.v + dt * 15.1); move(d.x / hl, d.z / hl, hold.v * dt); } }
     else if (Math.hypot(JOY.x, JOY.y) > 0.12) {   // the stick: walk the way it points, any angle; a sideways push turns the view a little too
       S.tx = null; const f = -JOY.y, sd = JOY.x, m = Math.min(1, Math.hypot(f, sd)), L = Math.hypot(f, sd); S.yaw -= sd * 1.1 * dt * (f > -0.3 ? 1 : 0);
-      S.v = (S.v || 0) + (6.5 * m - (S.v || 0)) * Math.min(1, dt * 5); const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw);
+      S.v = (S.v || 0) + (2.4 * m - (S.v || 0)) * Math.min(1, dt * 6); const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw);
       S.mx = (hx * f + rx * sd) / L; S.mz = (hz * f + rz * sd) / L; move(S.mx, S.mz, S.v * dt); }
-    else if (fw || tu) { S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 6.5 - (S.v || 0)) * Math.min(1, dt * 5); S.mx = -Math.sin(S.yaw) * Math.sign(S.v || 1); S.mz = -Math.cos(S.yaw) * Math.sign(S.v || 1); if (Math.abs(S.v) > 0.02) move(S.mx, S.mz, Math.abs(S.v) * dt); }
+    else if (fw || tu) { S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 2.4 - (S.v || 0)) * Math.min(1, dt * 6); S.mx = -Math.sin(S.yaw) * Math.sign(S.v || 1); S.mz = -Math.cos(S.yaw) * Math.sign(S.v || 1); if (Math.abs(S.v) > 0.02) move(S.mx, S.mz, Math.abs(S.v) * dt); }
     else if (S.tx != null) { const dx = S.tx - S.x, dz = S.tz - S.z, d = Math.hypot(dx, dz);
       if (d < 0.12 && S.path && S.path.length) { [S.tx, S.tz] = S.path.shift(); S.bestD = null; }   // on to the next corner of the way
-      else if (d < 0.05) { S.tx = null; S.v = 0; S.mx = null; S.bestD = null; if (S.faceTo != null) { S.yawTo = S.faceTo; S.faceTo = null; } } else { S.v = Math.min((S.v || 0) + dt * 6, 4.5, d * 2.2); move(dx / d, dz / d, Math.min(d, S.v * dt)); if (S.bestD == null || d < S.bestD - 0.02) { S.bestD = d; S.stuck = 0; } else if ((S.stuck = (S.stuck || 0) + dt) > 0.6) { S.tx = null; S.v = 0; S.path = null; S.stuck = 0; S.bestD = null; } S.mx = null; } }   /* sliding along a corner is fine; only a real dead stop ends the walk */
-    else { S.v = (S.v || 0) * Math.max(0, 1 - dt * 12); if (Math.abs(S.v) > 0.05 && S.mx != null) move(S.mx, S.mz, Math.abs(S.v) * dt); else { S.v = 0; S.mx = null; } }   // let go: a short glide the way he was going, never a turn back
+      else if (d < 0.05) { S.tx = null; S.v = 0; S.mx = null; S.bestD = null; if (S.faceTo != null) { S.yawTo = S.faceTo; S.faceTo = null; } } else { S.v = Math.min((S.v || 0) + dt * 6, 2.4, d * 2.2); move(dx / d, dz / d, Math.min(d, S.v * dt)); if (S.bestD == null || d < S.bestD - 0.02) { S.bestD = d; S.stuck = 0; } else if ((S.stuck = (S.stuck || 0) + dt) > 0.6) { S.tx = null; S.v = 0; S.path = null; S.stuck = 0; S.bestD = null; } S.mx = null; } }   /* sliding along a corner is fine; only a real dead stop ends the walk */
+    else { S.v = 0; S.mx = null; }   // let go and he stops: no drifting on   // let go: a short glide the way he was going, never a turn back
+    if (Math.abs(BDOOR.t - BDOOR.to) > 1e-3) { BDOOR.t += Math.sign(BDOOR.to - BDOOR.t) * Math.min(Math.abs(BDOOR.to - BDOOR.t), dt * 1.8); BDOOR.g.rotation.y = BDOOR.t * BDOOR.t * (3 - 2 * BDOOR.t) * Math.PI / 2 * 0.95; }   // swings in, into the bathroom
     WINS.forEach((sl) => { if (Math.abs(sl.t - sl.to) < 1e-3) return; sl.t += Math.sign(sl.to - sl.t) * Math.min(Math.abs(sl.to - sl.t), dt * 1.6); const e = sl.t * sl.t * (3 - 2 * sl.t);
       sl.a.forEach((o, i) => { o.position.x = sl.from[i].x + sl.dx * e; o.position.z = sl.from[i].z + sl.dz * e; }); });
     if (S.yawTo != null) { const dy = Math.atan2(Math.sin(S.yawTo - S.yaw), Math.cos(S.yawTo - S.yaw)); S.yaw += dy * Math.min(1, dt * 6); if (Math.abs(dy) < 0.01) S.yawTo = null; }
@@ -4360,11 +4363,18 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       if (mv > 0.6) TP.face += wrapA(Math.atan2(dx, dz) - TP.face) * Math.min(1, dt * 10); else if (!TP.dragging && TP.ly != null && Math.abs(wrapA(S.yaw - TP.ly)) > 1e-4) TP.face += wrapA(S.yaw + Math.PI - TP.face) * Math.min(1, dt * 10);
       TP.ly = S.yaw; TP.face = wrapA(TP.face);
       TP.obj.position.set(S.x, 0.012, S.z); TP.obj.rotation.y = TP.face; TP.blob.position.set(S.x, 0.02, S.z);
-      let d = 0.2; for (const t of [4.0, 3.4, 2.8, 2.2, 1.8, 1.4, 1.0, 0.6]) { let ok = true; for (let k = 0.3; k <= t + 0.25; k += 0.2) { const bx = S.x + Math.sin(S.yaw) * k, bz = S.z + Math.cos(S.yaw) * k; if (bx < X0 + 0.25 || bx > X1 - 0.25 || bz < Z0 + 0.25 || bz > Z1 - 0.25) { ok = false; break; }
-          for (const b of BOX) if (bx > b[0] - 0.12 && bx < b[1] + 0.12 && bz > b[2] - 0.12 && bz < b[3] + 0.12 && 1.2 > b[4] && 1.2 < b[5]) { ok = false; break; } if (!ok) break; } if (ok) { d = t; break; } }
-      TP.d += (d - TP.d) * Math.min(1, dt * 8);
-      camera.position.x += Math.sin(S.yaw) * TP.d; camera.position.z += Math.cos(S.yaw) * TP.d; camera.position.y += 0.75 * Math.min(1, TP.d / 2); camera.rotation.x -= 0.22 * Math.min(1, TP.d / 2);   // further back and a little higher, looking down on him
-      TP.obj.visible = TP.blob.visible = TP.d > 1.15;
+      let d = 2.6; { /* stay behind him, but never through a wall: in a tight spot the camera comes in and rises to look down over him instead */
+        const o = new THREE.Vector3(S.x, 1.5, S.z), dv = new THREE.Vector3(Math.sin(S.yaw) * 2.6, 0.75, Math.cos(S.yaw) * 2.6), L = dv.length(); ray.set(o, dv.normalize()); ray.far = L + 0.3;
+        const h = ray.intersectObjects(WALLS, false)[0]; ray.far = Infinity; if (h) d = Math.max(0.45, Math.min(2.6, (h.distance - 0.3) * 2.6 / L)); }
+      TP.d += (d - TP.d) * Math.min(1, dt * (d < TP.d ? 14 : 5)); const k = (2.6 - TP.d) / 2.15;
+      camera.position.x += Math.sin(S.yaw) * TP.d; camera.position.z += Math.cos(S.yaw) * TP.d; camera.position.y = Math.min(HT * HK - 0.3, EYE + 0.95 + k * 1.3); camera.rotation.x -= 0.3 + k * 0.55;   // further back and a little higher, looking down on him
+      TP.obj.visible = TP.blob.visible = true;
+      { /* the camera always stays behind him: any wall or tall piece between the camera and 쿠모 turns see-through instead of pulling the camera in */
+        const o = camera.position.clone(), dv = new THREE.Vector3(S.x, 1.1, S.z).sub(o), dl = dv.length(); ray.set(o, dv.normalize()); ray.far = dl;   /* cast from the camera, so one-sided linings facing it are caught */
+        const hit = new Set(ray.intersectObjects(OCC, false).map((h) => h.object)); ray.far = Infinity;
+        (TP.faded || []).forEach((m) => { if (!hit.has(m)) { m.material = m.userData.mat0; } });
+        hit.forEach((m) => { if (!m.userData.mat0) m.userData.mat0 = m.material; const m0 = m.userData.mat0; if (!m0.userData.fade) { const f = m0.clone(); f.transparent = true; f.opacity = 0.18; f.depthWrite = false; m0.userData.fade = f; } m.material = m0.userData.fade; });
+        TP.faded = [...hit]; }
       if (S.sit) { const th = -Math.PI / 2, k = 0.96 * 0.8 / 0.96; TP.face = th; TP.obj.rotation.y = th; TP.obj.position.set(px(169.5) + Math.sin(th) * 0.27 * k, 0.44 * HK - 0.33 * k, pz(S.sit.v) + Math.sin(th) * 0.1 * k); TP.blob.visible = false; TP.obj.visible = true; }   /* the clip sits the hips 0.27 m behind the feet */   // a tight spot in a small room: the camera comes in to his eyes rather than fill the screen with his cap
       const W = TP.act.Walking, R = TP.act.Running, I = TP.act.Idle, Sa = TP.act.Sit;
       if (W && R) { if (!TP.started) { TP.started = true; W.play(); R.play(); if (I) I.play(); if (Sa) { Sa.play(); Sa.setEffectiveWeight(0); } }
