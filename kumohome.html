@@ -4052,7 +4052,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
         g.fillStyle = "#f26a1f"; g.beginPath(); g.arc(w / 2, h / 2 - 22, 46, 0, 7); g.fill(); g.fillStyle = "#fff"; g.beginPath(); g.moveTo(w / 2 - 14, h / 2 - 48); g.lineTo(w / 2 + 22, h / 2 - 22); g.lineTo(w / 2 - 14, h / 2 + 4); g.closePath(); g.fill();
         g.textAlign = "center"; g.font = "800 40px sans-serif"; g.fillText("금호건설TV", w / 2, h / 2 + 76); g.font = "500 20px sans-serif"; g.fillStyle = "#c9d4ea"; g.fillText("최신 영상 보기 · 누르세요", w / 2, h / 2 + 110); });
       box(0.05, TH + 0.06, TW + 0.06, lam(0x111214), tx + 0.01, ty, tz); const sc = add(new THREE.PlaneGeometry(TW, TH), new THREE.MeshBasicMaterial({ map: scr, toneMapped: false }), tx + 0.04, ty, tz); sc.rotation.y = Math.PI / 2;
-      sc.userData = { idx: "tv" }; PICK.push(sc); TVSPOT.x = px(121); TVSPOT.z = tz; }
+      sc.userData = { idx: "tv" }; PICK.push(sc); { const hit = add(new THREE.PlaneGeometry(TW + 0.7, TH + 0.5), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), tx + 0.06, ty, tz); hit.rotation.y = Math.PI / 2; hit.userData = { idx: "tv" }; PICK.push(hit); }   /* the whole set and a margin round it count as the TV: a tap near the edge no longer lands on the floor and gets 쿠모 up */ TVSPOT.x = px(121); TVSPOT.z = tz; }
     /* the sofa: one straight run along the east wall, facing the ledge */
     F(168, 168, 190, 222, 0, 0.3, ivoryS); F(184, 168, 190, 222, 0.3, 0.82, ivoryS, false); F(168, 168, 190, 172, 0.3, 0.6, ivoryS, false); F(168, 218, 190, 222, 0.3, 0.6, ivoryS, false);
     [[172, 187], [187, 203], [203, 218]].forEach(([a, b]) => { F(169, a + 0.3, 184, b - 0.3, 0.3, 0.44, cush, false); F(181, a + 2, 184.5, b - 2, 0.44, 0.74, cush, false); });
@@ -4137,13 +4137,13 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     F(310, 65.6, 315, 66.8, 0.72, 0.8, steel, false); F(313.2, 66.6, 313.6, 70, 0.68, 0.72, steel, false); F(316.5, 65.6, 316.9, 66, 0.9, 2.0, steel, false); F(316, 65.8, 317.4, 67.4, 1.98, 2.0, steel, false);
     add(new THREE.CylinderGeometry(0.08, 0.08, 0.02, 16), steel, px(316.7), 2.0, pz(68)); add(new THREE.CylinderGeometry(0.008, 0.008, 1.3, 6), steel, px(315.5), 1.05, pz(66.6));
     { /* the WC, shaped: a tapered oval bowl, a round seat with its lid, a soft tank against the wall, the bidet panel on its side */
-      const cz = pz(89), wx = px(321), pw = lam(0xfbfbf9);
+      const cz = pz(106), wx = px(321), pw = lam(0xfbfbf9);   /* under the glass cabinet */
       const bowl = add(new THREE.CylinderGeometry(0.21, 0.15, 0.38, 28), pw, wx - 0.5, 0.19, cz); bowl.scale.x = 1.35;
       const seat = add(new THREE.CylinderGeometry(0.225, 0.225, 0.05, 28), pw, wx - 0.5, 0.405, cz); seat.scale.x = 1.35;
       const hole = add(new THREE.CylinderGeometry(0.14, 0.14, 0.004, 24), lam(0xcfd6d9), wx - 0.52, 0.432, cz); hole.scale.x = 1.35;
-      F(316.6, 84.8, 318.4, 93.2, 0.38, 0.46, pw, false);
+      F(316.6, 101.8, 318.4, 110.2, 0.38, 0.46, pw, false);
       const tank = add(new THREE.BoxGeometry(0.22, 0.4, 0.5), pw, wx - 0.13, 0.62, cz); const lid = add(new THREE.BoxGeometry(0.25, 0.04, 0.53), pw, wx - 0.13, 0.84, cz); add(new THREE.CylinderGeometry(0.02, 0.02, 0.012, 12), steel, wx - 0.13, 0.865, cz);
-      const pan = add(new THREE.BoxGeometry(0.2, 0.06, 0.03), lam(0xeef0f0), wx - 0.55, 0.42, cz - 0.3); block(px(308.5), px(321), pz(84), pz(94)); }
+      const pan = add(new THREE.BoxGeometry(0.2, 0.06, 0.03), lam(0xeef0f0), wx - 0.55, 0.42, cz - 0.3); block(px(308.5), px(321), pz(101), pz(111)); }
     /* the glass-fronted mirror cabinet high on the east wall, an open niche beneath it */
     F(316.6, 96, 318.7, 116, 1.3, 1.36, lam(0xe9e2d4), false); F(316.4, 96, 318.7, 116, 1.36, 2.2, lam(0xe4ddd1), false);   /* stood clear of the tiled lining (it sat in the same plane and flickered) */
     { const g = add(new THREE.PlaneGeometry(20 * SC - 0.04, 0.8), new THREE.MeshBasicMaterial({ color: 0xc9d3d7 }), px(316.4) - 0.006, 1.78, (pz(96) + pz(116)) / 2); g.rotation.y = -Math.PI / 2; F(316.3, 105.9, 316.38, 106.1, 1.38, 2.18, lam(0x9aa0a3), false); }
@@ -4325,7 +4325,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const aim = (cx, cy) => { const r = canvas.getBoundingClientRect(); ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); return ray; };
   const PT = new Map(); let pinch = null;
   const pdist = () => { const [a, b] = [...PT.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
-  const onKumo = (px, py) => { if (!TP.obj) return false; const r = canvas.getBoundingClientRect(), v = new THREE.Vector3();
+  const onKumo = (px, py) => { if (!TP.obj || S.sit) return false;   /* seated (on the sofa, watching TV), a tap is never a grab of 쿠모 */ const r = canvas.getBoundingClientRect(), v = new THREE.Vector3();
     const sc = (y) => { v.set(S.x, y, S.z).project(camera); return [r.left + (v.x + 1) / 2 * r.width, r.top + (1 - v.y) / 2 * r.height, v.z]; };
     const f = sc(0), h = sc(1.4); if (f[2] > 1 || h[2] > 1) return false; const ht = f[1] - h[1], hw = ht * 0.34; return px > f[0] - hw && px < f[0] + hw && py > h[1] - ht * 0.08 && py < f[1] + ht * 0.05; };
   canvas.addEventListener("pointerdown", (e) => { PT.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { canvas.setPointerCapture(e.pointerId); } catch (x) {}
@@ -4342,8 +4342,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     drag.lx = e.clientX; drag.ly = e.clientY; });
   const endP = (e) => { PT.delete(e.pointerId); if (pinch) { if (PT.size < 2) { pinch = null; drag = null; } return; }
     clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (d && d.tp) { TP.dragging = false; canvas.style.cursor = ""; if (d.moved <= 4) goTo(S.x - Math.sin(S.yaw) * 1.6, S.z - Math.cos(S.yaw) * 1.6); return; }   // a tap on 쿠모: a step or two forward if (!d || d.moved > 6) return;
-    const r = aim(e.clientX, e.clientY), hp = r.intersectObjects(PICK, false)[0], hf = r.intersectObjects(FLOORS, false)[0];
-    if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { const u = hp.object.userData; if (u.idx === "exit") { const FX = DXP, FZ = DZP + 1.5;   // first tap: walk up and face the door; then ask
+    const r = aim(e.clientX, e.clientY), hits = r.intersectObjects(PICK, false), hp = (S.sit && S.tvWatch && hits.find((h) => h.object.userData.idx === "tv")) || hits[0],   /* watching from the sofa, the sofa itself is in front of the camera: a tap that reaches the TV counts as the TV */ hf = r.intersectObjects(FLOORS, false)[0];
+    if (hp && (!hf || hp.distance <= hf.distance + 0.5 || (S.sit && S.tvWatch && hp.object.userData.idx === "tv"))) { const u = hp.object.userData; if (u.idx === "exit") { const FX = DXP, FZ = DZP + 1.5;   // first tap: walk up and face the door; then ask
         if (Math.hypot(S.x - FX, S.z - FZ) > 0.6) { goTo(FX, FZ); S.faceTo = 0; return; } return askLeave(); } if (u.idx === "frame") { toast(u.cap); return; } if (u.idx === "tv") { if (S.sit && S.tvWatch) { openTV(); return; } S.sit = null; S.tvWatch = true; const fx = px(160), fz = pz(195); S.sitGo = { v: 195, fx, fz }; if (Math.hypot(S.x - fx, S.z - fz) > 0.15) goTo(fx, fz); else S.tx = null; toast("소파에 앉아 TV를 봐요 · 한 번 더 누르면 크게 봐요"); return; } if (u.idx === "dslide") { const to = DSL[0].to ? 0 : 1; DSL.forEach((d) => (d.to = to)); DSL.forEach((d) => (d.auto = false)); toast(to ? "드레스룸 문을 닫았어요" : "드레스룸 문을 열었어요"); return; } if (u.idx === "door") { const D = u.D; D.to = D.to ? 0 : 1; D.auto = false; if (D.pair) D.pair.forEach((q) => (q.to = D.to)); if (D.blk) { const i = BOX.findIndex((b) => b[0] === D.blk[0] && b[2] === D.blk[2] && b[1] === D.blk[1]); if (D.to && i >= 0) BOX.splice(i, 1); else if (!D.to && i < 0) BOX.push(D.blk.slice()); } GRID = null; toast(D.name + " 문을 " + (D.to ? "열었어요" : "닫았어요")); return; } if (u.idx === "sofa") { S.tvWatch = false; const fx = px(160), fz = pz(u.v); S.sitGo = { v: u.v, fx, fz }; S.sit = null; if (Math.hypot(S.x - fx, S.z - fz) > 0.15) goTo(fx, fz); else S.tx = null; return; } if (u.idx === "win") { const sl = u.sl; sl.to = sl.to ? 0 : 1; if (sl.to) toast("창문을 열었어요 · 아테라 타운이 내려다보여요"); return; }
     }
     if (hf) { S.sitGo = null; if (d.t0 && performance.now() - d.t0 < 450) { let dx = hf.point.x - S.x, dz = hf.point.z - S.z; const L = Math.hypot(dx, dz), m = Math.min(L, 1.6); if (L > 0.05) goTo(S.x + dx / L * m, S.z + dz / L * m); } } };   // a tap takes a step or two that way, not the whole walk   // only a quick tap walks; a press that lingers (looking round) does not
