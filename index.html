@@ -8441,7 +8441,16 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           const land = new THREE.Mesh(new THREE.BoxGeometry(13, 0.3, LD), [slabM, slabM, pave(13 / 4, LD / 4), slabM, slabM, slabM]); land.position.set(CX, GY - 0.15, lz); land.receiveShadow = true; U.add(land);
           for (const d of [-1, 1]) { const ex = -36 - Math.sqrt(r0 * r0 - 6.5 * 6.5), sl = LZ0 - ex;   // rails: along the landing's front beside the stair, and down its sides to the gallery
             ub(4, 1.05, 0.06, CX + d * 4.5, GY + 0.53, LZ0, glassM).castShadow = false; ub(4, 0.07, 0.07, CX + d * 4.5, GY + 1.08, LZ0, railM2);
-            ub(0.06, 1.05, sl, CX + d * 6.5, GY + 0.53, LZ0 - sl / 2, glassM).castShadow = false; ub(0.07, 0.07, sl, CX + d * 6.5, GY + 1.08, LZ0 - sl / 2, railM2); } }
+            ub(0.06, 1.05, sl, CX + d * 6.5, GY + 0.53, LZ0 - sl / 2, glassM).castShadow = false; ub(0.07, 0.07, sl, CX + d * 6.5, GY + 1.08, LZ0 - sl / 2, railM2); }
+          { /* the way in: a glass double door in the shop front at the head of the stair (kept out of U-square's merged mesh so it stays clickable) */
+            const DZ = -36 - RI + 0.45 + UZ, dg = new THREE.Group(); dg.position.set(CX, GY, DZ); world.add(dg);
+            const fr = new THREE.MeshLambertMaterial({ color: 0x3a3d42 }), gl = new THREE.MeshLambertMaterial({ color: 0xbcd8e4, transparent: true, opacity: 0.55 });
+            const bx = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); dg.add(b); return b; };
+            bx(3.4, 0.25, 0.3, 0, 2.9, 0, fr); bx(0.14, 2.9, 0.3, -1.65, 1.45, 0, fr); bx(0.14, 2.9, 0.3, 1.65, 1.45, 0, fr); bx(0.08, 2.75, 0.2, 0, 1.38, 0, fr); bx(1.55, 2.7, 0.06, -0.8, 1.38, 0.05, gl); bx(1.55, 2.7, 0.06, 0.8, 1.38, 0.05, gl);
+            [-0.15, 0.15].forEach((x) => bx(0.04, 0.7, 0.05, x, 1.3, 0.12, new THREE.MeshLambertMaterial({ color: 0xc9a86a })));
+            const st = canvasTex(512, 128, (g, W, H) => { g.fillStyle = "#c4161c"; g.fillRect(0, 0, W, H); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 56px ${FONT}`; g.fillText("유·스퀘어 입구", W / 2, H / 2); });
+            const sgn = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.62), new THREE.MeshBasicMaterial({ map: st, toneMapped: false })); sgn.position.set(0, 3.45, 0.17); dg.add(sgn);
+            const pk = new THREE.Mesh(new THREE.BoxGeometry(3.4, 3.2, 1.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(0, 1.6, 0.5); pk.userData.idx = "usqDoor"; dg.add(pk); pickables.push(pk); } }
         for (let i = 0; i < 9; i++) { const a = Math.PI + 0.3 + i * 0.33; ub(3 + (i % 3), 1.6, 2.6, CX + Math.cos(a) * (RO - 3), 15.6, CZ + Math.sin(a) * (RO - 3), lam(0xd5d4d0), -a); }   // plant on the roof
         // the oval sign drum on the roof at the back, facing the street: U·square 유·스퀘어 wrapped round its front
         const sT = canvasTex(2048, 300, (g, W, H) => { g.fillStyle = "#f7f7f5"; g.fillRect(0, 0, W, H); g.lineCap = "round";
@@ -9825,7 +9834,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function pageGo(to) {
     window.__pageLeaving = true; busy = true;
     try { sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({ ride: !!RIDE.ok, sound: !!SND.on, t: Date.now() }, to))); } catch (e) {}
-    if ((to.library || to.valueHall || to.home) && window.doorFx) { doorFx.close(() => { freeGL(); kumhoHop(); location.replace(to.library ? "library.html" : to.home ? "kumohome.html" : "valuehall.html"); }); return; }   // through the doors: they swing shut, then the room
+    if ((to.library || to.valueHall || to.home || to.usquare) && window.doorFx) { doorFx.close(() => { freeGL(); kumhoHop(); location.replace(to.library ? "library.html" : to.home ? "kumohome.html" : to.usquare ? "usquare.html" : "valuehall.html"); }); return; }   // through the doors: they swing shut, then the room
     const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">${to.library ? "금호 도서관으로 이동 중…" : to.valueHall ? "금호 가치체계 전시관으로 이동 중…" : to.park ? "아테라 타운으로 이동 중…" : "금호 아카이브로 이동 중…"}</div>`; }
     setTimeout(() => { freeGL(); kumhoHop(); location.href = to.library ? "library.html" : to.valueHall ? "valuehall.html" : to.park ? "park.html" : "index.html"; }, 160);
   }
@@ -11106,7 +11115,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "outBench") { if (TP.on && TP.obj && TP.act.Sit) { seatSit({ x: 4.6, z: 6.08, top: 0.66, fx: 0, fz: -1 }); return; } moveTo({ x: 4.6, z: 6.1, yaw: 0, pitch: 0.03, y: 1.22 }); taxiCSS(); taxiToast("벤치에 앉았습니다 · 길 건너 풍경과 오가는 버스를 바라봅니다", 2800); return; }   /* third person: 쿠모 sits down on the bus-stop bench, like the park benches */
     if (o.userData.idx === "hoop") { hoopStart(o.userData.hoop); return; }
     if (o.userData.idx === "valueHall") { if (!busy) pageGo({ valueHall: true }); return; }
-    if (o.userData.idx === "kumoHome") { goHomeAsk(); return; }   // 쿠모네 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
+    if (o.userData.idx === "usqDoor") { usqAsk(); return; } if (o.userData.idx === "kumoHome") { goHomeAsk(); return; }   // 쿠모네 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { if (!busy) pageGo({ library: true }); return; }
     if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }   // 도서관 할아버지 on his walk
     if (o.userData.idx === "brand") { const B = OUT.brandPos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 };   // first tap: stand square in front of that post (on whichever side 쿠모 is)
@@ -11429,12 +11438,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function hbShow() { const v = $("hbView"); v.querySelector("img").src = R("assets/heritage/p" + String(HBV.i + 1).padStart(2, "0") + ".jpg"); v.querySelector(".pg").textContent = `${HBV.i + 1} / ${HBV.n}`;
     const b = v.querySelectorAll(".nav button"); b[0].disabled = HBV.i <= 0; b[1].disabled = HBV.i >= HBV.n - 1; }
   function bookBtns() { bookUI(); const h = HAVE(), out = mode === "outside"; $("hbBtn").hidden = !(out && h.hb); $("ezBtn").hidden = !(out && h.easy); }
+  function usqAsk() { if (busy) return; goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🚌 유·스퀘어로 들어가겠습니까?"; el.dataset.to = "usquare"; }
   function goHomeAsk() { if (busy) return; let el = $("homeAsk");   // "이제 집으로 갈까?" — yes goes up to 쿠모네 집
     if (!el) { const st = document.createElement("style"); st.textContent = "#homeAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100400;width:min(560px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#homeAsk[hidden]{display:none}#homeAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#homeAsk button{margin:0 6px;padding:9px 22px;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#homeAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
       document.head.appendChild(st); el = document.createElement("div"); el.id = "homeAsk"; el.hidden = true; el.innerHTML = '<div class="q">🏠 집(아테라 아파트)으로 들어가겠습니까?</div><button type="button" class="y">YES</button><button type="button" class="n">NO</button>'; document.body.appendChild(el);
       ["pointerdown", "pointerup"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation()));
-      el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; el.hidden = true; if (b.classList.contains("y")) pageGo({ home: true }); }); }
-    el.hidden = false; }
+      el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; el.hidden = true; if (b.classList.contains("y")) pageGo(el.dataset.to === "usquare" ? { usquare: true } : { home: true }); }); }
+    el.dataset.to = "home"; el.querySelector(".q").textContent = "🏠 집(아테라 아파트)으로 들어가겠습니까?"; el.hidden = false; }
   const RIDE = { on: false, bus: null, ok: false };
   function busUnlocked() { return !!RIDE.ok; }   // earned anew on each visit (no longer remembered by the browser)
   try { localStorage.removeItem("kumhoBusOK"); } catch (e) {}
@@ -12427,8 +12437,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const start = () => { BOOTED = true; resize(); if (!IS_PARK) buildLobby(); requestAnimationFrame(frame);
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
-        if ((arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home") && window.doorFx) { doorFx.closed(); setTimeout(() => doorFx.open(), 700); }   /* out through the doors: they open on the park */   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usquare") moveTo({ x: 240, z: -36 - 26 + 3.2 + UZ, yaw: Math.PI, pitch: 0.02, fy: 4.2, y: 4.2 + EYE }, true); else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
+        if ((arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home" || arrive.from === "usquare" || arrive.from === "bus") && window.doorFx) { doorFx.closed(); setTimeout(() => doorFx.open(), 700); }   /* out through the doors: they open on the park */   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }
       setTimeout(() => document.documentElement.classList.add("arrived"), 350);   // the scene is up: the moving card fades
