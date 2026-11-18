@@ -12,9 +12,14 @@
 html,body{margin:0;height:100%;background:#141414;overflow:hidden;font-family:"Noto Sans KR","Apple SD Gothic Neo",sans-serif;color:#e8dfcf;-webkit-user-select:none;user-select:none}
 #stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #hud{position:fixed;left:20px;top:16px;z-index:5;pointer-events:none}
+#viewBtn{position:fixed;right:16px;top:104px;z-index:6;background:rgba(23,24,21,.85);color:#e8dfcf;border:1px solid rgba(201,168,106,.6);border-radius:999px;padding:7px 14px;font:600 13px inherit;font-family:inherit;cursor:pointer}
+#plan{position:fixed;left:16px;top:74px;z-index:5;width:250px;background:rgba(20,22,24,.78);border:1px solid rgba(201,168,106,.5);border-radius:10px;padding:6px}#planCv{display:block;width:100%;height:auto;border-radius:6px;background:#efe9df}#planRooms{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}#planRooms button{font:600 10.5px inherit;font-family:inherit;padding:3px 6px;border-radius:5px;border:1px solid rgba(201,168,106,.45);background:rgba(40,42,44,.9);color:#e8dfcf;cursor:pointer}#planRooms button.on{background:#c9a86a;color:#1c1a18}
+#ktvBtn{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:6;background:#c4161c;color:#fff;text-decoration:none;border-radius:999px;padding:9px 18px;font:700 14px inherit;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+#tvBox{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center}#tvBox[hidden]{display:none}#tvBox .in{position:relative;width:min(1100px,94vw);aspect-ratio:16/9}#tvBox iframe{width:100%;height:100%;border:0;border-radius:8px;background:#000}#tvBox .x{position:absolute;right:0;top:-44px;background:#fff;color:#222;border:0;border-radius:999px;padding:8px 16px;font:700 14px inherit;font-family:inherit;cursor:pointer}
+@media (max-width:700px){#plan{width:150px;top:58px;padding:4px}#planRooms button{font-size:9px;padding:2px 4px}#ktvBtn{font-size:12px;padding:7px 12px;bottom:12px}}
 #hud h1{margin:0;font-size:26px;font-weight:700;color:#fbf6ee;text-shadow:0 2px 10px rgba(0,0,0,.6)}#hud div{font-size:12px;letter-spacing:.14em;color:#c9a86a;margin-top:2px}
 #exitBtn{position:fixed;right:16px;top:16px;z-index:6;background:rgba(23,24,21,.85);color:#e8dfcf;border:1px solid rgba(201,168,106,.6);border-radius:999px;padding:9px 16px;font:600 14px inherit;font-family:inherit;cursor:pointer}
-#hint{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;font-size:12px;color:#d8cfbf;background:rgba(20,20,18,.55);padding:6px 12px;border-radius:999px;pointer-events:none;white-space:nowrap}
+#hint{position:fixed;left:50%;bottom:62px;transform:translateX(-50%);z-index:5;font-size:12px;color:#d8cfbf;background:rgba(20,20,18,.55);padding:6px 12px;border-radius:999px;pointer-events:none;white-space:nowrap}
 #pad{position:fixed;right:16px;bottom:16px;z-index:6}.joy{position:relative;width:124px;height:124px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));opacity:.8;transition:opacity .2s}.joy.on{opacity:1}.joy svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}.joy i{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;pointer-events:none}.joy i svg{inset:0}
 #toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:7;background:rgba(23,24,21,.9);border:1px solid rgba(201,168,106,.5);border-radius:12px;padding:10px 16px;opacity:0;transition:opacity .3s;pointer-events:none}#toast.on{opacity:1}
 #ld{position:fixed;inset:0;z-index:20;background:#141414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s}#ld.off{opacity:0;pointer-events:none}
@@ -46,10 +51,13 @@ window.doorFx = (function () { const el = () => document.getElementById("doorFx"
 <canvas id="stage"></canvas>
 <div id="hud"><h1>쿠모네 집</h1><div>ARTERA 84A</div></div>
 <button type="button" id="exitBtn">← 아테라 타운으로 나가기</button>
-<div id="hint">바닥을 누르면 그쪽으로 걸어가요 · 조이스틱은 화면 방향대로 · 드래그로 시점 돌리기 · 두 손가락이나 휠로 확대</div>
+<div id="hint">바닥을 누르면 그쪽으로 한두 걸음 · 조이스틱은 화면 방향대로 · 드래그로 시점 돌리기 · 두 손가락이나 휠로 확대</div>
 <div id="pad"><div class="joy" aria-label="끌어서 이동"><svg viewBox="0 0 130 130"><circle cx="65" cy="65" r="62" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><g stroke="rgba(255,255,255,.55)" stroke-width="1.5" fill="none" stroke-linecap="round"><path d="M58 12 L65 5 L72 12" transform="rotate(0 65 65)"/><path d="M58 12 L65 5 L72 12" transform="rotate(90 65 65)"/><path d="M58 12 L65 5 L72 12" transform="rotate(180 65 65)"/><path d="M58 12 L65 5 L72 12" transform="rotate(270 65 65)"/></g></svg><i><svg viewBox="0 0 54 54"><polygon points="51.0,36.9 36.9,51.0 17.1,51.0 3.0,36.9 3.0,17.1 17.1,3.0 36.9,3.0 51.0,17.1" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linejoin="round"/><polygon points="42.2,33.3 33.3,42.2 20.7,42.2 11.8,33.3 11.8,20.7 20.7,11.8 33.3,11.8 42.2,20.7" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1"/><circle cx="27" cy="27" r="3" fill="rgba(255,255,255,.85)"/></svg></i></div></div>
 <div id="toast"></div>
 <button type="button" id="sndBtn" aria-pressed="true">♪ 음악 켬</button>
+<button type="button" id="viewBtn">👁 뒤에서 보기</button>
+<a id="ktvBtn" href="https://www.youtube.com/@kumhoenc" target="_blank" rel="noopener">▶ 금호건설TV 바로가기</a>
+<div id="tvBox" hidden><div class="in"><button type="button" class="x">닫기 ✕</button><iframe id="tvFrame" allow="autoplay; encrypted-media; fullscreen" allowfullscreen title="금호건설TV 최신 영상"></iframe></div></div>
 <script>/**
  * @license
  * Copyright 2010-2021 Three.js Authors
@@ -3911,7 +3919,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const HK = 1.56, HV = 1.08, HN0 = scene.children.length,   /* HK: the plan is drawn 1.56 times life size so 쿠모 moves freely; HV: heights only 1.08 times (a 2.6 m ceiling), in proportion to 쿠모 */ SC = 0.044 * HK, OX = 170, OY = 135, HT = 2.4,   // HK: the whole flat drawn 1.3 times life size, so it sits right with 쿠모 (who is a big lad)
    px = (v) => (v - OX) * SC, pz = (v) => (v - OY) * SC;
   const X0 = px(17), X1 = px(322), Z0 = pz(37), Z1 = pz(232);
-  const PICK = [], BOX = [], FLOORS = [], OCC = [], WALLS = [], DSL = [];   // DSL: the dressing room's sliding glass leaves   // OCC: walls and tall pieces that fade when they stand between the camera and 쿠모
+  const PICK = [], BOX = [], FLOORS = [], OCC = [], WALLS = [], DSL = [], WSEG = [], TVSPOT = {};   // DSL: the dressing room's sliding glass leaves   // OCC: walls and tall pieces that fade when they stand between the camera and 쿠모
   const block = (x0, x1, z0, z1, y0 = 0, y1 = 3) => BOX.push([Math.min(x0, x1), Math.max(x0, x1), Math.min(z0, z1), Math.max(z0, z1), y0, y1]);
   const grain = (base, line, w, h, n) => tex(w, h, (g) => { g.fillStyle = base; g.fillRect(0, 0, w, h); for (let i = 0; i < n; i++) { g.strokeStyle = line; g.globalAlpha = 0.08 + rnd() * 0.12; g.lineWidth = 1 + rnd() * 2; const y = rnd() * h; g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + rnd() * 6 - 3, w * 0.7, y + rnd() * 6 - 3, w, y); g.stroke(); } g.globalAlpha = 1; });
   const woodT = tex(512, 512, (g, w, h) => { g.fillStyle = "#cdb89c"; g.fillRect(0, 0, w, h); for (let r = 0; r < 8; r++) { const y = r * 64, off = (r % 2) * 180; g.fillStyle = `rgba(${150 + rnd() * 30},${120 + rnd() * 25},${90 + rnd() * 20},.18)`; g.fillRect(0, y, w, 64);
@@ -3942,7 +3950,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const b = box(hor ? len : t, y1 - y0, hor ? t : len, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); OCC.push(b); WALLS.push(b);
     if (m === wallMat || m === extMat) { const W0 = hor ? len : t, H0 = (y1 - y0) * HV, D0 = hor ? t : len, uv = b.geometry.attributes.uv, dims = [[D0, H0], [D0, H0], [W0, D0], [W0, D0], [W0, H0], [W0, H0]];   // the paper at its true size on every face
       for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const n = f * 4 + v; uv.setXY(n, uv.getX(n) * dims[f][0], uv.getY(n) * dims[f][1]); } uv.needsUpdate = true; } if (y0 < 1.8) block(x0 - (hor ? 0 : t / 2), x1 + (hor ? 0 : t / 2), z0 - (hor ? t / 2 : 0), z1 + (hor ? t / 2 : 0), y0, y1); return b; };
-  function W(a, b, c, d, opt = {}) { const t = (opt.t || 4) * SC, m = opt.ext ? extMat : wallMat, hor = b === d, L = hor ? Math.min(a, c) : Math.min(b, d), Hh = hor ? Math.max(a, c) : Math.max(b, d);
+  function W(a, b, c, d, opt = {}) { WSEG.push([a, b, c, d, opt.door || [], opt.win || []]); const t = (opt.t || 4) * SC, m = opt.ext ? extMat : wallMat, hor = b === d, L = hor ? Math.min(a, c) : Math.min(b, d), Hh = hor ? Math.max(a, c) : Math.max(b, d);
     const gaps = [...(opt.door || []).map((g) => [g[0], g[1], "d"]), ...(opt.win || []).map((g) => [g[0], g[1], g[2] ? "f" : "w"])].sort((p, q) => p[0] - q[0]);
     const at = (v) => (hor ? [px(v), pz(b)] : [px(a), pz(v)]); let cur = L;
     for (const [g0, g1, k] of gaps.concat([[Hh, Hh, "end"]])) { const [sx, sz] = at(cur), [ex, ez] = at(g0); piece(sx, sz, ex, ez, 0, HT, t, m);
@@ -4038,7 +4046,14 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const aw = add(new THREE.PlaneGeometry(L, HT), lam(0xffffff, { map: t }), px(98) + 2 * SC + 0.014, HT / 2, (pz(155) + pz(232)) / 2); aw.rotation.y = Math.PI / 2; }
     /* the west wall (right, facing the windows): a long floating ledge lit from beneath, and a shelf above it with its own light */
     F(99, 160, 112, 228, 0.1, 0.45, ledgeM); F(99.5, 161, 111, 227, 0.0, 0.1, ledgeM, false); F(100, 161, 110.5, 227, 0.09, 0.1, glow, false);
-    F(99, 170, 107, 220, 1.22, 1.27, ledgeM, false); F(99, 171, 106, 219, 1.215, 1.22, glow, false); F(98.6, 170, 99.2, 220, 1.27, 1.6, lam(0xd8d2c8), false);
+    { /* the TV on the art wall, showing 금호건설TV: tap it once to stand facing it, again to play the channel's newest video full screen */
+      const TW = 2.1, TH = TW * 9 / 16, tz = (pz(160) + pz(228)) / 2, tx = px(98) + 2 * SC + 0.03, ty = 1.32;
+      const scr = tex(640, 360, (g, w, h) => { const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, "#0d1a33"); gr.addColorStop(1, "#1c2f5c"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        g.fillStyle = "rgba(255,255,255,.06)"; for (let i = 0; i < 9; i++) g.fillRect(0, i * 44, w, 1);
+        g.fillStyle = "#f26a1f"; g.beginPath(); g.arc(w / 2, h / 2 - 22, 46, 0, 7); g.fill(); g.fillStyle = "#fff"; g.beginPath(); g.moveTo(w / 2 - 14, h / 2 - 48); g.lineTo(w / 2 + 22, h / 2 - 22); g.lineTo(w / 2 - 14, h / 2 + 4); g.closePath(); g.fill();
+        g.textAlign = "center"; g.font = "800 40px sans-serif"; g.fillText("금호건설TV", w / 2, h / 2 + 76); g.font = "500 20px sans-serif"; g.fillStyle = "#c9d4ea"; g.fillText("최신 영상 보기 · 누르세요", w / 2, h / 2 + 110); });
+      box(0.05, TH + 0.06, TW + 0.06, lam(0x111214), tx + 0.01, ty, tz); const sc = add(new THREE.PlaneGeometry(TW, TH), new THREE.MeshBasicMaterial({ map: scr, toneMapped: false }), tx + 0.04, ty, tz); sc.rotation.y = Math.PI / 2;
+      sc.userData = { idx: "tv" }; PICK.push(sc); TVSPOT.x = px(121); TVSPOT.z = tz; }
     /* the sofa: one straight run along the east wall, facing the ledge */
     F(168, 168, 190, 222, 0, 0.3, ivoryS); F(184, 168, 190, 222, 0.3, 0.82, ivoryS, false); F(168, 168, 190, 172, 0.3, 0.6, ivoryS, false); F(168, 218, 190, 222, 0.3, 0.6, ivoryS, false);
     [[172, 187], [187, 203], [203, 218]].forEach(([a, b]) => { F(169, a + 0.3, 184, b - 0.3, 0.3, 0.44, cush, false); F(181, a + 2, 184.5, b - 2, 0.44, 0.74, cush, false); });
@@ -4268,7 +4283,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
   // ---- walking ----
-  const S = window.__vh = { x: DXP, z: DZP + 1.1, fy: 0, yaw: Math.PI, pitch: -0.04, R: 6.2, tilt: 0.95, tx: null, tz: null }, keys = {}, EYE = 1.62 * 0.8;
+  const S = window.__vh = { x: DXP, z: DZP + 1.1, fy: 0, yaw: Math.PI * 0.75, pitch: -0.04, R: 11, tilt: 0.95, view: "quarter",   /* starts high, from the bathroom's corner, as far out as it goes */ tx: null, tz: null }, keys = {}, EYE = 1.62 * 0.8;
   const free = (x, z, fy) => { if (x < X0 + 0.2 || x > X1 - 0.2 || z < Z0 + 0.2 || z > Z1 - 0.2) return false;
     for (const b of BOX) if (x > b[0] - 0.15 && x < b[1] + 0.15 && z > b[2] - 0.15 && z < b[3] + 0.15 && fy + 1 > b[4] && fy + 0.2 < b[5]) return false; return true; };
   // tap to go: find a way round the walls and through the doors (a 20 cm grid over the flat, breadth-first), then walk it corner to corner
@@ -4325,11 +4340,15 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (d && d.tp) { TP.dragging = false; canvas.style.cursor = ""; if (d.moved <= 4) goTo(S.x - Math.sin(S.yaw) * 1.6, S.z - Math.cos(S.yaw) * 1.6); return; }   // a tap on 쿠모: a step or two forward if (!d || d.moved > 6) return;
     const r = aim(e.clientX, e.clientY), hp = r.intersectObjects(PICK, false)[0], hf = r.intersectObjects(FLOORS, false)[0];
     if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { const u = hp.object.userData; if (u.idx === "exit") { const FX = DXP, FZ = DZP + 1.5;   // first tap: walk up and face the door; then ask
-        if (Math.hypot(S.x - FX, S.z - FZ) > 0.6) { goTo(FX, FZ); S.faceTo = 0; return; } return askLeave(); } if (u.idx === "frame") { toast(u.cap); return; } if (u.idx === "dslide") { const to = DSL[0].to ? 0 : 1; DSL.forEach((d) => (d.to = to)); DSL.forEach((d) => (d.auto = false)); toast(to ? "드레스룸 문을 닫았어요" : "드레스룸 문을 열었어요"); return; } if (u.idx === "door") { const D = u.D; D.to = D.to ? 0 : 1; D.auto = false; if (D.pair) D.pair.forEach((q) => (q.to = D.to)); if (D.blk) { const i = BOX.findIndex((b) => b[0] === D.blk[0] && b[2] === D.blk[2] && b[1] === D.blk[1]); if (D.to && i >= 0) BOX.splice(i, 1); else if (!D.to && i < 0) BOX.push(D.blk.slice()); } GRID = null; toast(D.name + " 문을 " + (D.to ? "열었어요" : "닫았어요")); return; } if (u.idx === "sofa") { const fx = px(160), fz = pz(u.v); S.sitGo = { v: u.v, fx, fz }; S.sit = null; if (Math.hypot(S.x - fx, S.z - fz) > 0.15) goTo(fx, fz); else S.tx = null; return; } if (u.idx === "win") { const sl = u.sl; sl.to = sl.to ? 0 : 1; if (sl.to) toast("창문을 열었어요 · 아테라 타운이 내려다보여요"); return; }
+        if (Math.hypot(S.x - FX, S.z - FZ) > 0.6) { goTo(FX, FZ); S.faceTo = 0; return; } return askLeave(); } if (u.idx === "frame") { toast(u.cap); return; } if (u.idx === "tv") { if (Math.hypot(S.x - TVSPOT.x, S.z - TVSPOT.z) > 0.5) { S.sit = null; goTo(TVSPOT.x, TVSPOT.z); S.yaw = Math.PI / 2; S.yawTo = null; toast("TV 앞으로 가요 · 한 번 더 누르면 크게 봐요"); } else openTV(); return; } if (u.idx === "dslide") { const to = DSL[0].to ? 0 : 1; DSL.forEach((d) => (d.to = to)); DSL.forEach((d) => (d.auto = false)); toast(to ? "드레스룸 문을 닫았어요" : "드레스룸 문을 열었어요"); return; } if (u.idx === "door") { const D = u.D; D.to = D.to ? 0 : 1; D.auto = false; if (D.pair) D.pair.forEach((q) => (q.to = D.to)); if (D.blk) { const i = BOX.findIndex((b) => b[0] === D.blk[0] && b[2] === D.blk[2] && b[1] === D.blk[1]); if (D.to && i >= 0) BOX.splice(i, 1); else if (!D.to && i < 0) BOX.push(D.blk.slice()); } GRID = null; toast(D.name + " 문을 " + (D.to ? "열었어요" : "닫았어요")); return; } if (u.idx === "sofa") { const fx = px(160), fz = pz(u.v); S.sitGo = { v: u.v, fx, fz }; S.sit = null; if (Math.hypot(S.x - fx, S.z - fz) > 0.15) goTo(fx, fz); else S.tx = null; return; } if (u.idx === "win") { const sl = u.sl; sl.to = sl.to ? 0 : 1; if (sl.to) toast("창문을 열었어요 · 아테라 타운이 내려다보여요"); return; }
     }
-    if (hf) { S.sitGo = null; if (d.t0 && performance.now() - d.t0 < 450) goTo(hf.point.x, hf.point.z); } };   // only a quick tap walks; a press that lingers (looking round) does not
+    if (hf) { S.sitGo = null; if (d.t0 && performance.now() - d.t0 < 450) { let dx = hf.point.x - S.x, dz = hf.point.z - S.z; const L = Math.hypot(dx, dz), m = Math.min(L, 1.6); if (L > 0.05) goTo(S.x + dx / L * m, S.z + dz / L * m); } } };   // a tap takes a step or two that way, not the whole walk   // only a quick tap walks; a press that lingers (looking round) does not
   canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", (e) => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; clearTimeout(holdT); hold = null; drag = null; TP.dragging = false; });
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); S.R = Math.max(3.5, Math.min(11, S.R + e.deltaY * 0.006)); }, { passive: false });
+  const TVURL = "https://www.youtube.com/embed/videoseries?list=UU38v-jiUXWXXVbWgtCD2S9g&autoplay=1&rel=0";   /* 금호건설TV's uploads list: always opens on the newest video */
+  function openTV() { const b = $("tvBox"); $("tvFrame").src = TVURL; b.hidden = false; if (window.__bgmAu) window.__bgmAu.pause(); }
+  $("tvBox").querySelector(".x").addEventListener("click", () => { $("tvBox").hidden = true; $("tvFrame").src = "about:blank"; });
+  $("viewBtn").addEventListener("click", (e) => { e.stopPropagation(); S.view = S.view === "follow" ? "quarter" : "follow"; S.fd = null; $("viewBtn").textContent = S.view === "follow" ? "👁 위에서 보기" : "👁 뒤에서 보기"; });
   const toast = (t) => { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2400); };
   function askLeave() { let el = $("leaveAsk"); if (!el) { const st = document.createElement("style"); st.textContent = "#leaveAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30;width:min(520px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#leaveAsk[hidden]{display:none}#leaveAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#leaveAsk button{margin:0 6px;padding:9px 24px;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#leaveAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
       document.head.appendChild(st); el = document.createElement("div"); el.id = "leaveAsk"; el.hidden = true; el.innerHTML = '<div class="q">🚪 나가시겠습니까?</div><button type="button" class="y">예</button><button type="button" class="n">아니요</button>'; document.body.appendChild(el);
@@ -4377,7 +4396,12 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     WINS.forEach((sl) => { if (Math.abs(sl.t - sl.to) < 1e-3) return; sl.t += Math.sign(sl.to - sl.t) * Math.min(Math.abs(sl.to - sl.t), dt * 1.6); const e = sl.t * sl.t * (3 - 2 * sl.t);
       sl.a.forEach((o, i) => { o.position.x = sl.from[i].x + sl.dx * e; o.position.z = sl.from[i].z + sl.dz * e; }); });
     if (S.yawTo != null) { const dy = Math.atan2(Math.sin(S.yawTo - S.yaw), Math.cos(S.yawTo - S.yaw)); S.yaw += dy * Math.min(1, dt * 6); if (Math.abs(dy) < 0.01) S.yawTo = null; }
-    { /* the quarter view: high and behind, looking down on 쿠모 at a fixed angle; it glides after him and never swings with his turns (the ceiling faces down, so from up here it simply isn't drawn) */
+    if (S.view === "follow") { /* the old view, walking behind 쿠모: it swings round behind him as he goes, and comes in rather than pass through a wall */
+      if (TP.obj && (S.v || 0) > 0.3 && !drag) S.yaw += wrapA(TP.face + Math.PI - S.yaw) * Math.min(1, dt * 2.5);
+      let d = 2.6; const o = new THREE.Vector3(S.x, 1.4, S.z), dv = new THREE.Vector3(Math.sin(S.yaw) * 2.6, 0.55, Math.cos(S.yaw) * 2.6), L = dv.length(); ray.set(o, dv.normalize()); ray.far = L + 0.3; const h = ray.intersectObjects(WALLS, false)[0]; ray.far = Infinity; if (h) d = Math.max(0.6, (h.distance - 0.3) * 2.6 / L);
+      S.fd = S.fd == null ? d : S.fd + (d - S.fd) * Math.min(1, dt * (d < S.fd ? 14 : 4)); S.cx = S.x; S.cz = S.z;
+      camera.position.set(S.x + Math.sin(S.yaw) * S.fd, 1.4 + 0.55 * S.fd / 2.6 + (2.6 - S.fd) * 0.35, S.z + Math.cos(S.yaw) * S.fd); camera.lookAt(S.x, 0.95, S.z); }
+    else { /* the quarter view: high and behind, looking down on 쿠모 at a fixed angle; it glides after him and never swings with his turns (the ceiling faces down, so from up here it simply isn't drawn) */
       const h = S.R * Math.sin(S.tilt), r = S.R * Math.cos(S.tilt); S.cx = S.cx == null ? S.x : S.cx + (S.x - S.cx) * Math.min(1, dt * 6); S.cz = S.cz == null ? S.z : S.cz + (S.z - S.cz) * Math.min(1, dt * 6);
       camera.position.set(S.cx + Math.sin(S.yaw) * r, 0.9 + h, S.cz + Math.cos(S.yaw) * r); camera.lookAt(S.cx, 0.9, S.cz); }
     
