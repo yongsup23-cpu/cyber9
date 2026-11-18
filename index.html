@@ -11343,7 +11343,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     el._next = () => { if (timer) { clearInterval(timer); timer = 0; tx.textContent = lines[li]; return; } li++; if (li < lines.length) show(); else { el.hidden = true; el._next = null; NPC.talk = false; NPC.wait = 2; if (done) done(); } };
     show(); }
   function npcTalk() { const G = NPC.g; if (!G) return; NPC.wait = 99; const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z);
-    const go = () => npcSay(mapGot ? ["또 만났구나, 쿠모!", "지도는 오른쪽 위 🗺 지도 버튼으로 언제든 볼 수 있단다. 공원 구경 잘 하렴."] : ["오, 쿠모 왔구나! 도서관 할아버지란다. 공원에 산책 나왔지.", "아테라 타운이 꽤 넓지? 길 잃지 말라고 공원 안내도를 하나 줄게."], () => { if (!mapGot) mapGive(); });
+    const hv = HAVE(), books = hv.hb && hv.easy, HOME = ["쿠모야, 책도 다 찾았으니 이제 집에도 가 봐야 하지 않겠니?", "네 집은 공원 뒤에 있는 아테라 단지잖아. 저 아테라 아파트를 한번 눌러 보렴!"];   /* both books found: he sends 쿠모 home */
+    const go = () => npcSay(mapGot ? (books ? ["또 만났구나, 쿠모!"].concat(HOME) : ["또 만났구나, 쿠모!", "지도는 오른쪽 위 🗺 지도 버튼으로 언제든 볼 수 있단다. 공원 구경 잘 하렴."]) : ["오, 쿠모 왔구나! 도서관 할아버지란다. 공원에 산책 나왔지.", "아테라 타운이 꽤 넓지? 길 잃지 말라고 공원 안내도를 하나 줄게."].concat(books ? HOME : []), () => { if (!mapGot) mapGive(); });
     if (d > 3.5) { const ux = (cam.x - G.position.x) / d, uz = (cam.z - G.position.z) / d, sx = G.position.x + ux * 2.3, sz = G.position.z + uz * 2.3;   // walk up to him first
       moveTo({ x: sx, z: sz, yaw: Math.atan2(-(G.position.x - sx), -(G.position.z - sz)), pitch: 0.06 }); setTimeout(go, 1300); } else go(); }
   // the map as a found item: rays and sparkles, then the map itself
