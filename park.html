@@ -10258,7 +10258,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const el = $("wallMap"); if (!el) return;
     wMap = new naver.maps.Map(el, { center: new naver.maps.LatLng(36.2, 127.8), zoom: 7, draggable: false, pinchZoom: false, scrollWheel: false,
       keyboardShortcuts: false, disableDoubleTapZoom: true, disableDoubleClickZoom: true, disableTwoFingerTapZoom: true,
-      scaleControl: false, logoControl: true, mapDataControl: false, zoomControl: false, mapTypeControl: false });
+      scaleControl: false, logoControl: true, mapDataControl: false, zoomControl: false, mapTypeControl: false }); fitNaver(wMap, el);
     mpoints(MH).forEach((it, i) => isDom(it) && new naver.maps.Marker({ position: new naver.maps.LatLng(it.lat, it.lng), map: wMap, icon: { content: markerHtml(i), anchor: new naver.maps.Point(0, 0) } }));
     addRoadLine(wMap, el, () => mode === "hall" && $("wallMapWrap").style.display !== "none");
     wallPlayed = false;
@@ -10481,13 +10481,16 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     nMap.morph(m.getPosition(), isDom(it) ? 14 : 11, { duration: reduce ? 0 : 1700, easing: "easeOutCubic" });
     nInfo.setContent(`<div class="iwpin">${infoHtml(it, i)}</div>`); nInfo.open(nMap, m.getPosition()); fillInfoImage(it);
   }
+  function fitNaver(map, el) {   /* a Naver map drawn while its box was still hidden or growing kept that size (a quarter of the screen, top-left): follow the box and redraw at its real size */
+    if (!map || !el) return; const fit = () => { const w = el.clientWidth, h = el.clientHeight; if (w > 10 && h > 10) { const sz = map.getSize && map.getSize(); if (!sz || Math.abs(sz.width - w) > 1 || Math.abs(sz.height - h) > 1) { const c = map.getCenter(); map.setSize(new naver.maps.Size(w, h)); map.setCenter(c); } } };
+    if (window.ResizeObserver && !el.__ro) { el.__ro = new ResizeObserver(fit); el.__ro.observe(el); } [0, 80, 300, 700, 1500].forEach((t) => setTimeout(fit, t)); }
   function createNaverMap() {
     if (nMap || nFailed) return;
     const gj = geocodeAll(MH);
     if (gj.pending !== false) { const h0 = MH; gj.then(() => { gj.pending = false; if (MH === h0 && !$("mapLB").hidden) createNaverMap(); }); return; }
     mapMsg(""); $("mapLB").classList.remove("nomap"); $("mapDetail").innerHTML = "";
     nMap = new naver.maps.Map("nmap", { center: new naver.maps.LatLng(36.3, 127.7), zoom: 7, zoomControl: true,
-      zoomControlOptions: { position: naver.maps.Position.TOP_RIGHT }, mapTypeControl: true });
+      zoomControlOptions: { position: naver.maps.Position.TOP_RIGHT }, mapTypeControl: true }); fitNaver(nMap, $("nmap"));
     nInfo = new naver.maps.InfoWindow({ content: "", borderWidth: 0, backgroundColor: "transparent", disableAnchor: true, anchorSize: new naver.maps.Size(0, 0), pixelOffset: new naver.maps.Point(0, 0) });
     nMarkers = mpoints(MH).map((it, i) => {
       const mk = new naver.maps.Marker({ position: new naver.maps.LatLng(it.lat, it.lng), map: isDom(it) ? nMap : null, title: it.title, icon: { content: markerHtml(i, true), anchor: new naver.maps.Point(0, 0) } });
@@ -10547,7 +10550,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (nFailed) { naverFailed(nIdx + 1 >= NAVER_IDS.length ? "auth" : "load"); return; }
     if (!nMap) mapMsg("네이버 지도를 불러오는 중입니다…");
     const had = !!nMap;
-    ensureNaver().then(() => { createNaverMap(); setTimeout(() => { if (!nMap) return; naver.maps.Event.trigger(nMap, "resize"); if (had) playMapFx(nMap); }, 60); })
+    ensureNaver().then(() => { createNaverMap(); setTimeout(() => { if (!nMap) return; naver.maps.Event.trigger(nMap, "resize"); fitNaver(nMap, $("nmap")); if (had) playMapFx(nMap); }, 60); })
       .catch(() => naverFailed("load"));
     $("mapClose").focus();
   }
@@ -11428,7 +11431,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function bookBtns() { bookUI(); const h = HAVE(), out = mode === "outside"; $("hbBtn").hidden = !(out && h.hb); $("ezBtn").hidden = !(out && h.easy); }
   function goHomeAsk() { if (busy) return; let el = $("homeAsk");   // "이제 집으로 갈까?" — yes goes up to 쿠모네 집
     if (!el) { const st = document.createElement("style"); st.textContent = "#homeAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100400;width:min(560px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#homeAsk[hidden]{display:none}#homeAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#homeAsk button{margin:0 6px;padding:9px 22px;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#homeAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
-      document.head.appendChild(st); el = document.createElement("div"); el.id = "homeAsk"; el.hidden = true; el.innerHTML = '<div class="q">🏠 이제 집으로 갈까?</div><button type="button" class="y">응, 집에 갈래</button><button type="button" class="n">조금 더 놀래</button>'; document.body.appendChild(el);
+      document.head.appendChild(st); el = document.createElement("div"); el.id = "homeAsk"; el.hidden = true; el.innerHTML = '<div class="q">🏠 집(아테라 아파트)으로 들어가겠습니까?</div><button type="button" class="y">YES</button><button type="button" class="n">NO</button>'; document.body.appendChild(el);
       ["pointerdown", "pointerup"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation()));
       el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; el.hidden = true; if (b.classList.contains("y")) pageGo({ home: true }); }); }
     el.hidden = false; }
