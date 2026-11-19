@@ -3939,17 +3939,17 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     bfl(60, 80, 100, 128); bfl(287, 80, 322, 128); }
   { const w = (278 - 232) * SC, d = (128 - 92) * SC, t = new THREE.TextureLoader().load("assets/entrytile.jpg"); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = ANISO; t.repeat.set(w / (1.2 * HK), d / (1.2 * HK));   // the entrance: the chosen 600 mm grey stone tile
     const f = add(new THREE.PlaneGeometry(w, d), new THREE.MeshLambertMaterial({ map: t }), (px(232) + px(278)) / 2, 0.004, (pz(92) + pz(128)) / 2); f.rotation.x = -Math.PI / 2; FLOORS.push(f); }
-  // walls: a plan line of [x0,y0,x1,y1] in plan pixels, with door gaps [a,b] and windows [a,b] (glass from 0.9 m, or from the floor when full-height)
+  // walls (inner partitions 3 px ≈ 13 cm, outer walls 6 px): a plan line of [x0,y0,x1,y1] in plan pixels, with door gaps [a,b] and windows [a,b] (glass from 0.9 m, or from the floor when full-height)
   const paintT = tex(256, 256, (g, w, h) => { g.fillStyle = "#f1eee8"; g.fillRect(0, 0, w, h); for (let i = 0; i < 2500; i++) { const c = 232 + rnd() * 20; g.fillStyle = `rgba(${c},${c - 2},${c - 6},.18)`; g.fillRect(rnd() * w, rnd() * h, 1, 1); } });
   const paperT = new THREE.TextureLoader().load("assets/wallpaper.jpg"); paperT.encoding = THREE.sRGBEncoding; paperT.wrapS = paperT.wrapT = THREE.RepeatWrapping; paperT.anisotropy = ANISO;   // the chosen wallpaper, tiled at 1 m
-  const wallMat = lam(0xd6cdbf, { map: paperT }), extMat = lam(0xd6cdbf, { map: paperT }), frameM = (() => { const t = new THREE.TextureLoader().load("assets/winframe.jpg"); t.encoding = THREE.sRGBEncoding; return lam(0xffffff, { map: t }); })(), sillM = lam(0xd9d4ca);
+  const wallMat = lam(0xe3dccf, { map: paperT }), extMat = lam(0xe3dccf, { map: paperT }),   /* a touch lighter */ frameM = (() => { const t = new THREE.TextureLoader().load("assets/winframe.jpg"); t.encoding = THREE.sRGBEncoding; return lam(0xffffff, { map: t }); })(), sillM = lam(0xd9d4ca);
   const glassM = new THREE.MeshBasicMaterial({ color: 0xdfeef7, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide }), WINS = [];
   const sashM = (() => { const t = tex(64, 64, (g, w, h) => { g.clearRect(0, 0, w, h); g.strokeStyle = "#dcd6cd"; g.lineWidth = 5; g.strokeRect(2, 2, w - 4, h - 4); g.strokeStyle = "#b9b2a8"; g.lineWidth = 1; g.strokeRect(5, 5, w - 10, h - 10); }); return new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, side: THREE.DoubleSide }); })();
   const piece = (x0, z0, x1, z1, y0, y1, t, m) => { const hor = Math.abs(z1 - z0) < 1e-6, len = hor ? Math.abs(x1 - x0) : Math.abs(z1 - z0); if (len < 0.01 || y1 - y0 < 0.01) return;
     const b = box(hor ? len : t, y1 - y0, hor ? t : len, m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); OCC.push(b); WALLS.push(b);
     if (m === wallMat || m === extMat) { const W0 = hor ? len : t, H0 = (y1 - y0) * HV, D0 = hor ? t : len, uv = b.geometry.attributes.uv, dims = [[D0, H0], [D0, H0], [W0, D0], [W0, D0], [W0, H0], [W0, H0]];   // the paper at its true size on every face
       for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const n = f * 4 + v; uv.setXY(n, uv.getX(n) * dims[f][0], uv.getY(n) * dims[f][1]); } uv.needsUpdate = true; } if (y0 < 1.8) block(x0 - (hor ? 0 : t / 2), x1 + (hor ? 0 : t / 2), z0 - (hor ? t / 2 : 0), z1 + (hor ? t / 2 : 0), y0, y1); return b; };
-  function W(a, b, c, d, opt = {}) { WSEG.push([a, b, c, d, opt.door || [], opt.win || []]); const t = (opt.t || 4) * SC, m = opt.ext ? extMat : wallMat, hor = b === d, L = hor ? Math.min(a, c) : Math.min(b, d), Hh = hor ? Math.max(a, c) : Math.max(b, d);
+  function W(a, b, c, d, opt = {}) { WSEG.push([a, b, c, d, opt.door || [], opt.win || []]); const t = (opt.t || 3) * SC, m = opt.ext ? extMat : wallMat, hor = b === d, L = hor ? Math.min(a, c) : Math.min(b, d), Hh = hor ? Math.max(a, c) : Math.max(b, d);
     const gaps = [...(opt.door || []).map((g) => [g[0], g[1], "d"]), ...(opt.win || []).map((g) => [g[0], g[1], g[2] ? "f" : "w", g[3]])].sort((p, q) => p[0] - q[0]);
     const at = (v) => (hor ? [px(v), pz(b)] : [px(a), pz(v)]); let cur = L;
     for (const [g0, g1, k, tri] of gaps.concat([[Hh, Hh, "end"]])) { const [sx, sz] = at(cur), [ex, ez] = at(g0); piece(sx, sz, ex, ez, 0, HT, t, m);
@@ -3983,7 +3983,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   W(188, 55, 188, 100, { door: [[62, 82]] });   /* the pantry and the laundry can be walked into now */ W(188, 100, 232, 100); W(232, 92, 232, 130); W(278, 92, 278, 128); W(278, 128, 322, 128, { door: [[290, 308]] });
   W(193, 155, 257, 155, { door: [[236, 254]] }); W(193, 155, 193, 232); W(257, 155, 322, 155, { door: [[260, 279]] }); W(257, 155, 257, 232);
   // the bathroom walls lined in the same tile (with the doorways left open)
-  { const lin = (u0, v0, u1, v1, nx, nz, y0 = 0, y1 = HT, hw = 2, file = "bathtile.jpg", k = 1.2 * HK) => { const o = hw * SC + 0.012; const hor = v0 === v1, len = (hor ? u1 - u0 : v1 - v0) * SC, h = y1 - y0; if (len <= 0) return;
+  { const lin = (u0, v0, u1, v1, nx, nz, y0 = 0, y1 = HT, hw = 1.5, file = "bathtile.jpg", k = 1.2 * HK) => { const o = hw * SC + 0.012; const hor = v0 === v1, len = (hor ? u1 - u0 : v1 - v0) * SC, h = y1 - y0; if (len <= 0) return;
       const t = BATH.tex(len / k, h * HV / k, file);
       const m = add(new THREE.PlaneGeometry(len, h), new THREE.MeshLambertMaterial({ map: t }), hor ? (px(u0) + px(u1)) / 2 : px(u0) + nx * o, (y0 + y1) / 2, hor ? pz(v0) + nz * o : (pz(v0) + pz(v1)) / 2); BATH.uv(m); OCC.push(m); WALLS.push(m);
       m.rotation.y = hor ? (nz > 0 ? 0 : Math.PI) : (nx > 0 ? Math.PI / 2 : -Math.PI / 2); };
@@ -3993,8 +3993,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     lin(287, 80, 322, 80, 0, 1, 0, HT, 0); lin(287, 80, 287, 128, 1, 0, 0, HT, 0); lin(322, 80, 322, 128, -1, 0, 0, HT, 3); lin(287, 128, 290, 128, 0, -1); lin(308, 128, 322, 128, 0, -1); lin(290, 128, 308, 128, 0, -1, 2.1, HT);
     // 쿠모's room (x 257–322, y 155–232) papered in sky blue: door in its north wall at x 260–279, the full-height windows in the south wall at x 264–316
     const KB = (a, b, c, d, nx, nz, y0, y1, hw) => lin(a, b, c, d, nx, nz, y0, y1, hw, "kumowall.jpg", 1.0);
-    KB(257, 155, 260, 155, 0, 1, 0, HT, 2); KB(279, 155, 322, 155, 0, 1, 0, HT, 2); KB(260, 155, 279, 155, 0, 1, 2.1, HT, 2);
-    KB(257, 155, 257, 232, 1, 0, 0, HT, 2); KB(322, 155, 322, 232, -1, 0, 0, HT, 3);
+    KB(257, 155, 260, 155, 0, 1, 0, HT, 1.5); KB(279, 155, 322, 155, 0, 1, 0, HT, 1.5); KB(260, 155, 279, 155, 0, 1, 2.1, HT, 1.5);
+    KB(257, 155, 257, 232, 1, 0, 0, HT, 1.5); KB(322, 155, 322, 232, -1, 0, 0, HT, 3);
     KB(257, 232, 272, 232, 0, -1, 0, HT, 3); KB(306, 232, 322, 232, 0, -1, 0, HT, 3); KB(272, 232, 306, 232, 0, -1, 2.15, HT, 3); KB(272, 232, 306, 232, 0, -1, 0, 0.9, 3); }
   // ceiling, with a recessed light cove over the living room
   { const c = add(new THREE.PlaneGeometry(X1 - X0, Z1 - Z0), lam(0xf6f4f0), (X0 + X1) / 2, HT, (Z0 + Z1) / 2); c.rotation.x = Math.PI / 2;
@@ -4061,7 +4061,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     F(99, 160, 112, 228, 0.1, 0.45, ledgeM);
     { /* on the ledge, by the end away from the TV: a small standing guide to the flat, softly glowing and twinkling; tap it for the big guide */
       const gt = tex(256, 340, (g, w, h) => { g.fillStyle = "#1d2a5a"; g.fillRect(0, 0, w, h); g.fillStyle = "#f26a1f"; g.fillRect(0, h - 22, w, 22); g.strokeStyle = "rgba(201,168,106,.9)"; g.lineWidth = 6; g.strokeRect(10, 10, w - 20, h - 42);
-        g.fillStyle = "#f4ead2"; g.textAlign = "center"; g.font = `800 26px ${FONT}`; g.fillText("쿠모의 집", w / 2, 92); g.font = `600 17px ${FONT}`; g.fillText("ARTERA 84㎡A", w / 2, 126); g.fillText("발코니 확장형", w / 2, 150);
+        g.fillStyle = "#f4ead2"; g.textAlign = "center"; g.font = `800 26px ${FONT}`; g.fillText("쿠모의 집", w / 2, 92); g.font = `600 17px ${FONT}`; g.fillText("ARTERA 84㎡A", w / 2, 126); g.fillText("확장옵션형", w / 2, 150);
         g.fillStyle = "#c9a86a"; g.font = `700 15px ${FONT}`; g.fillText("집 안내 · 눌러 보세요", w / 2, 250); });
       const gx = px(105), gz = pz(220), bk = new THREE.MeshBasicMaterial({ map: gt, toneMapped: false });
       add(new THREE.BoxGeometry(0.03, 0.44, 0.33), lam(0x1d2a5a), gx, 0.45 + 0.22, gz);
@@ -4376,12 +4376,17 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   document.addEventListener("keydown", (e) => { const k = kName(e); keys[k] = true; if (/^Arrow/.test(k)) e.preventDefault(); }, true); document.addEventListener("keyup", (e) => { keys[kName(e)] = false; }, true);
   addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
   function joystick(el, set) {   // a virtual stick: drag the knob any way, diagonals included; set(x, y) with x right, y down, each −1…1 (0, 0 on release)
-    const k = el.querySelector("i"), R = 44; let id = null;
-    const mv = (e) => { const r = el.getBoundingClientRect(); let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2); const d = Math.hypot(dx, dy); if (d > R) { dx *= R / d; dy *= R / d; }
-      k.style.transform = `translate(${dx}px,${dy}px)`; set(dx / R, dy / R); };
+    const k = el.querySelector("i"), R = 44; let id = null, sec = null, lv = 0;
+    const mv = (e) => { const r = el.getBoundingClientRect(); const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2), d = Math.hypot(dx, dy);   /* eight set directions (up, down, left, right and the diagonals), each held until the thumb has clearly moved on, and two steps of speed: the stick clicks into place rather than drifting */
+      if (d < R * 0.22) { sec = null; lv = 0; k.style.transform = ""; set(0, 0); return; }
+      const a = Math.atan2(dy, dx), s8 = (((Math.round(a / (Math.PI / 4))) % 8) + 8) % 8;
+      if (sec === null) sec = s8; else { const ca = sec * Math.PI / 4, df = Math.atan2(Math.sin(a - ca), Math.cos(a - ca)); if (Math.abs(df) > Math.PI / 8 + 0.24) sec = s8; }
+      const nl = d < R * 0.62 ? (lv === 2 && d > R * 0.5 ? 2 : 1) : 2; if ((nl !== lv || sec !== mv.ls) && navigator.vibrate) { try { navigator.vibrate(6); } catch (x) {} } lv = nl; mv.ls = sec;
+      const m = lv === 2 ? 1 : 0.55, sx = Math.cos(sec * Math.PI / 4) * m, sy = Math.sin(sec * Math.PI / 4) * m;
+      k.style.transform = `translate(${sx * R}px,${sy * R}px)`; set(sx, sy); };
     el.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); id = e.pointerId; try { el.setPointerCapture(id); } catch (x) {} el.classList.add("on"); mv(e); });
     el.addEventListener("pointermove", (e) => { if (e.pointerId === id) { e.preventDefault(); mv(e); } });
-    const up = (e) => { if (e.pointerId !== id) return; id = null; el.classList.remove("on"); k.style.transform = ""; set(0, 0); };
+    const up = (e) => { if (e.pointerId !== id) return; id = null; sec = null; lv = 0; el.classList.remove("on"); k.style.transform = ""; set(0, 0); };
     ["pointerup", "pointercancel", "lostpointercapture"].forEach((t) => el.addEventListener(t, up)); el.addEventListener("contextmenu", (e) => e.preventDefault()); }
   const JOY = { x: 0, y: 0 }; joystick(document.querySelector("#pad .joy"), (x, y) => { JOY.x = x; JOY.y = y; });
   document.querySelectorAll("#pad button").forEach((b) => { const k = b.dataset.k; const on = (e) => { e.preventDefault(); keys[k] = true; try { b.setPointerCapture(e.pointerId); } catch (x) {} }, off = () => { keys[k] = false; };
@@ -4419,7 +4424,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   $("tvBox").querySelector(".x").addEventListener("click", () => { $("tvBox").hidden = true; $("tvFrame").src = "about:blank"; });
   $("viewBtn").addEventListener("click", (e) => { e.stopPropagation(); S.view = S.view === "follow" ? "quarter" : "follow"; S.fd = null; $("viewBtn").textContent = S.view === "follow" ? "👁 위에서 보기" : "👁 뒤에서 보기"; });
   const toast = (t) => { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2400); };
-  function askLeave() { let el = $("leaveAsk"); if (!el) { const st = document.createElement("style"); st.textContent = "#leaveAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30;width:min(520px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#leaveAsk[hidden]{display:none}#leaveAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#leaveAsk button{margin:0 6px;padding:9px 24px;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#leaveAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
+  function askLeave() { let el = $("leaveAsk"); if (!el) { const st = document.createElement("style"); st.textContent = "#leaveAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30;width:min(520px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#leaveAsk[hidden]{display:none}#leaveAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#leaveAsk button{margin:0 6px;padding:9px 0;width:124px;box-sizing:border-box;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#leaveAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
       document.head.appendChild(st); el = document.createElement("div"); el.id = "leaveAsk"; el.hidden = true; el.innerHTML = '<div class="q">🚪 나가시겠습니까?</div><button type="button" class="y">예</button><button type="button" class="n">아니요</button>'; document.body.appendChild(el);
       ["pointerdown", "pointerup"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation())); el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; el.hidden = true; if (b.classList.contains("y")) leave(); }); }
     el.hidden = false; }
@@ -4520,33 +4525,66 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   bind("rotL", 1); bind("rotR", -1); })();</script>
 <div id="guideBox" hidden><div class="gcard" role="dialog" aria-label="쿠모의 집 안내">
 <button type="button" class="gx" aria-label="닫기">✕</button>
-<div class="ghead"><div class="gk">ARTERA 84㎡A · 발코니 확장형</div><h2>쿠모의 집에 오신 걸 환영해요</h2><p>고덕신도시 아테라 84㎡A 평면을 바탕으로, 가로·세로·높이 모두 같은 비율로 지은 집이에요. 쿠모와 함께 한 바퀴 둘러보세요.</p></div>
-<div class="gsec"><h3>한눈에 보기</h3><div class="gchips"><span>4베이 판상형</span><span>남향 위주 배치</span><span>침실 3 · 욕실 2</span><span>발코니 확장</span><span>넓은 수납</span></div></div>
-<div class="gsec"><h3>이런 공간도 있어요</h3><ul class="glist">
-<li><b>현관 창고 · 중문</b>신발장 옆 넉넉한 창고, 검은 유리 중문으로 현관과 거실을 나눴어요.</li>
-<li><b>안방 드레스룸 · 파우더룸</b>유리 미닫이문 안에 옷 수납과 화장대가 함께 있어요.</li>
-<li><b>주방 팬트리</b>양문을 열고 들어가면 벽 따라 선반이 이어져요.</li>
-<li><b>클리닝 스테이션</b>청소기와 세탁 소품을 한곳에 두는 작은 방이에요.</li>
-<li><b>다용도실</b>세탁기와 건조기를 나란히 둘 수 있어요.</li>
-<li><b>식탁 옆 커피 니치</b>천장까지 닿는 수납장 사이에 작은 홈카페 공간을 넣었어요.</li>
-<li><b>거실 창</b>가운데는 큰 고정창, 좌우 창만 열려서 시야가 시원해요.</li></ul></div>
-<div class="gsec"><h3>스마트 홈</h3><ul class="glist">
-<li><b>13인치 월패드</b>조명·난방·환기를 한 화면에서 함께 조절해요.</li>
-<li><b>아테라 스마트홈 앱</b>밖에서도 가전을 켜고 끄고, 커뮤니티 시설을 예약할 수 있어요.</li></ul></div>
-<div class="gsec"><h3>단지 이야기</h3><p class="gp">지하 1층~지상 27층, 6개 동 630가구. 단지 전체를 하나의 숲처럼 꾸몄고(조경률 42.65%), 지상에는 차가 다니지 않는 공원형 단지예요. 작은도서관, 다함께돌봄센터, 골프연습장, GX룸, 게스트하우스, 캠핑셰어센터 같은 커뮤니티도 준비돼요.</p></div>
-<div class="gsec"><h3>집 안에서 해 보세요</h3><div class="gchips gt"><span>📺 TV 누르면 금호건설TV</span><span>🛋 소파에 앉기</span><span>🖼 액자 눌러 보기</span><span>🪟 창문 열어 보기</span></div></div>
-<p class="gnote">집 안 가구와 마감은 연출이에요. 실제 평면·옵션·사양은 분양 안내를 기준으로 해요.</p>
+<div class="ghead">
+  <img class="gmark" src="assets/kumoguide/artera.png" alt="ARTERA">
+  <div class="gtitle"><div class="gk">ARTERA 84㎡A · 확장옵션형</div><h2>쿠모의 집 안내</h2><p>전용 84.5600㎡ · 공급 115.1116㎡ · 계약 161.4727㎡ — 평면도에서 방을 누르면 아래에 그 공간 이야기와 선택 옵션이 나와요.</p></div>
+  <div class="gkumo" aria-hidden="true"><div class="gbub">안녕! 우리 집 구경해 볼래?</div>
+    <img class="gkimg" src="assets/kumoguide/kumo.png" alt=""></div>
+</div>
+<div class="gplan"><svg id="gPlanSvg" viewBox="10 30 319 209" role="img" aria-label="84㎡A 평면도"></svg></div>
+<div class="gdet" id="gDet"></div>
+<p class="gnote">옵션 내용은 분양 옵션 안내문(84㎡A 확장옵션형) 기준이며, 계약 시 최종 안내문을 확인해 주세요. 집 안 가구와 소품은 연출이에요.</p>
 </div></div>
-<style>#guideBox{position:fixed;inset:0;z-index:42;background:rgba(10,14,28,.62);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}#guideBox[hidden]{display:none}
-#guideBox .gcard{position:relative;width:min(640px,100%);max-height:min(86vh,860px);overflow:auto;background:#faf7f1;color:#22252b;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.4);padding:26px 26px 18px;box-sizing:border-box;font-family:inherit;-webkit-overflow-scrolling:touch}
-#guideBox .gx{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:0;background:#1d2a5a;color:#fff;font-size:16px;cursor:pointer}
-#guideBox .ghead{border-bottom:2px solid #f26a1f;padding-bottom:12px;margin-bottom:10px}#guideBox .gk{font-size:12px;font-weight:800;letter-spacing:.08em;color:#f26a1f}
-#guideBox h2{margin:6px 40px 6px 0;font-size:22px;color:#1d2a5a}#guideBox .ghead p,#guideBox .gp{margin:0;font-size:14px;line-height:1.6;color:#4a4f58}
-#guideBox .gsec{margin-top:14px}#guideBox h3{margin:0 0 8px;font-size:15px;color:#1d2a5a}#guideBox .gchips{display:flex;flex-wrap:wrap;gap:6px}#guideBox .gchips span{font-size:13px;background:#fff;border:1px solid #e3dccd;border-radius:999px;padding:5px 11px}
-#guideBox .glist{margin:0;padding:0;list-style:none;display:grid;gap:7px}#guideBox .glist li{background:#fff;border:1px solid #ece5d6;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.5;color:#4a4f58}#guideBox .glist b{display:block;color:#22252b;font-size:14px;margin-bottom:1px}
-#guideBox .gnote{margin:16px 0 0;font-size:11.5px;color:#8a8f98}@media (max-width:520px){#guideBox .gcard{padding:22px 16px 14px}#guideBox h2{font-size:19px}}</style>
+<style>#guideBox{position:fixed;inset:0;z-index:42;background:rgba(10,14,28,.62);display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box}#guideBox[hidden]{display:none}
+#guideBox .gcard{position:relative;width:min(880px,100%);max-height:94vh;overflow:auto;background:#faf7f1;color:#22252b;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.4);padding:18px 20px 14px;box-sizing:border-box;font-family:inherit;-webkit-overflow-scrolling:touch}
+#guideBox .gx{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:0;background:#1d2a5a;color:#fff;font-size:16px;cursor:pointer;z-index:2}
+#guideBox .ghead{display:flex;align-items:center;gap:14px;border-bottom:2px solid #f26a1f;padding:0 44px 10px 0}#guideBox .gmark{height:44px;width:auto;flex:none}
+#guideBox .gtitle{flex:1;min-width:0}#guideBox .gk{font-size:12px;font-weight:800;letter-spacing:.06em;color:#f26a1f}#guideBox h2{margin:2px 0;font-size:21px;color:#1d2a5a}#guideBox .gtitle p{margin:0;font-size:13px;color:#5a5f68}
+#guideBox .gkumo{position:relative;flex:none;display:flex;align-items:flex-end}#guideBox .gbub{position:absolute;right:58px;top:4px;white-space:nowrap;background:#fff;border:1.5px solid #1d2a5a;border-radius:12px;padding:5px 9px;font-size:12px;font-weight:700;color:#1d2a5a}
+#guideBox .gbub:after{content:"";position:absolute;right:-7px;top:12px;border:6px solid transparent;border-left-color:#1d2a5a}
+#guideBox .gkumo .gkimg{height:104px;width:auto;display:block;animation:gHop 2.4s ease-in-out infinite;filter:drop-shadow(0 3px 4px rgba(0,0,0,.15))}@keyframes gHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+#guideBox .gplan{margin-top:10px;background:#f1efeb;border:1px solid #e6dfd0;border-radius:14px;padding:10px}#guideBox .gplan svg{display:block;width:100%;height:auto}
+#gPlanSvg .rm{fill:rgba(255,255,255,0);stroke:rgba(29,42,90,0);stroke-width:1.2;cursor:pointer;transition:fill .18s,stroke .18s}#gPlanSvg .rm:hover{fill:rgba(242,106,31,.14);stroke:rgba(242,106,31,.7)}#gPlanSvg .rm.on{fill:rgba(242,106,31,.22);stroke:#f26a1f;stroke-width:1.8}
+#gPlanSvg .pill{cursor:pointer}#gPlanSvg .pill rect{fill:rgba(255,255,255,.92);stroke:rgba(29,42,90,.25);stroke-width:.4}#gPlanSvg .pill text{font-weight:800;fill:#1d2a5a;text-anchor:middle;dominant-baseline:middle;letter-spacing:.02em}
+#gPlanSvg .ring{fill:rgba(255,255,255,0);stroke:rgba(242,106,31,0);stroke-width:1.6;cursor:pointer}#gPlanSvg .ring:hover{stroke:rgba(242,106,31,.6)}#gPlanSvg .ring.on{stroke:#f26a1f;stroke-width:2}
+#gPlanSvg .pill.on rect{fill:#f26a1f;stroke:#f26a1f}#gPlanSvg .pill.on text{fill:#fff}
+#guideBox .gdet{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;margin-top:12px;align-items:start}
+#guideBox .gdet img{width:100%;border-radius:12px;display:block;aspect-ratio:991/566;object-fit:cover;background:#ddd}
+#guideBox .gdet h3{margin:0 0 4px;font-size:19px;color:#1d2a5a}#guideBox .gdet .gsub{font-size:12px;font-weight:700;color:#f26a1f;margin-bottom:8px}
+#guideBox .gdet ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6;color:#3d424b}#guideBox .gdet .gext{margin-top:10px;background:#1d2a5a;color:#f4ead2;border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.5}#guideBox .gdet .gext b{color:#f2a33a;margin-right:6px}
+#guideBox .gopt{margin-top:10px;border:1.5px solid #f26a1f;border-radius:10px;padding:8px 11px;background:#fff7f0}#guideBox .gopt .got{font-size:12.5px;font-weight:800;color:#c4501a;margin-bottom:4px}#guideBox .gopt ul{font-size:13px;line-height:1.55}
+#guideBox .gnote{margin:12px 0 0;font-size:11.5px;color:#8a8f98}
+@media (max-width:640px){#guideBox .gdet{grid-template-columns:1fr}#guideBox .gmark{height:32px}#guideBox h2{font-size:18px}#guideBox .gbub{display:none}#guideBox .gkumo .gkimg{height:74px}#guideBox .gcard{padding:14px 12px 12px}}</style>
 <script>(function () { const b = document.getElementById("guideBox"); if (!b) return; ["pointerdown", "pointerup", "wheel", "touchstart"].forEach((ev) => b.addEventListener(ev, (e) => e.stopPropagation(), { passive: true }));
   const close = () => { b.hidden = true; }; b.querySelector(".gx").addEventListener("click", close); b.addEventListener("click", (e) => { if (e.target === b) close(); });
-  window.openGuide = () => { b.hidden = false; b.querySelector(".gcard").scrollTop = 0; }; })();</script>
+  const R = [
+    ["entry", "현관", 232, 92, 278, 128, "들어서자마자 정돈되는 현관", ["양쪽 벽을 천장까지 채운 신발장, 가운데는 브론즈 유리 도어", "검은 반투명 유리 중문으로 현관과 거실을 나눠 아늑해요", "<b>현관창고</b>도 있어요. 유모차·캠핑용품·골프백처럼 큰 짐을 넣어 두기 좋아요"], "", ["개별 옵션", ["현관 중문: 3연동 중문(1FIX + 2DOOR) + 신발장 하부 간접조명", "슬라이딩 도어: 파우더룸 슬라이딩 도어", "침실2 슬라이딩 붙박이장 / 침실3 슬라이딩 붙박이장"]]],
+    ["living", "거실", 98, 155, 193, 232, "남향 4베이의 중심, 넓고 밝은 거실", ["간접조명이 들어간 천장과 대형 아트월, 벽걸이 TV", "가운데 큰 창은 고정, 좌우 창만 열려 시야가 시원해요", "소파 뒤 벽에는 액자를 걸 수 있는 여유 있는 벽면"], "발코니를 거실로 넓혀 창가까지 생활공간이 이어져요"],
+    ["kitchen", "주방", 100, 37, 188, 128, "창을 마주한 주방과 아일랜드", ["창 앞 일자형 싱크대, 쿡탑, 상부장 아래 간접조명", "넉넉한 아일랜드와 6인 식탁", "냉장고장과 식탁 옆 키 큰 수납장 속 커피 니치"], "주방 쪽 공간을 넓혀 작업대와 수납을 여유 있게 배치했어요", ["주방 마감재 · 선택1 엔지니어드 스톤", ["주방 벽·상판 엔지니어드 스톤", "상부장 하부 LED 조명", "무선 충전 매입 콘센트"]]],
+    ["pantry", "주방팬트리", 188, 55, 232, 100, "양문을 열면 나오는 식품 창고", ["벽을 따라 이어지는 L자 오픈 선반", "식재료·소형 가전·와인을 한눈에 보관", "주방 바로 옆이라 동선이 짧아요"], "", ["가변 공간 · 클리닝스테이션 선택2에 포함", ["팬트리 가구도어 + 시스템가구"]]],
+    ["cleaning", "클리닝스테이션", 188, 100, 232, 128, "청소 도구를 위한 작은 방", ["청소기 충전과 세제·소모품 수납을 한곳에", "타공판과 작업대, 간접조명이 들어간 선반", "문을 닫으면 깔끔하게 가려져요"], "", ["가변 공간 및 마감 특화 · 클리닝스테이션 선택2 세라믹타일", ["11자 주방가구 + 팬트리(가구도어 + 시스템가구)", "클리닝스테이션(가구도어 + 클리닝스테이션 가구) + 홈바", "거실 특화 + 주방 특화 포함"]]],
+    ["utility", "다용도실", 60, 37, 100, 80, "세탁을 위한 공간", ["세탁기와 건조기를 나란히 둘 수 있어요", "벽 선반과 수전, 환기용 창", "주방과 가까워 집안일 동선이 편해요"], ""],
+    ["bath2", "욕실2", 60, 80, 100, 128, "안방 전용 욕실", ["유리 샤워부스와 레인 샤워", "세면대와 거울 수납장, 비데 일체형 변기", "밝은 석재 타일로 마감"], "", ["욕실 스타일 업 · 욕실2(부부욕실)", ["욕실 벽 포세린타일(600×1200)", "샤워부스 무광 니켈 프레임, 캔버스 샤워수전", "디자인 욕실장 + 간접조명", "수전·악세서리 니켈 무광 마감, 복합 환풍기, 청소수전"]]],
+    ["dress", "드레스룸", 17, 58, 60, 128, "안방에 딸린 넓은 드레스룸", ["유리 미닫이문 안쪽에 양쪽 오픈 행거", "들어가자마자 왼쪽에 파우더(화장대) 공간", "가방·신발을 올려 두는 선반과 서랍"], "", ["드레스룸 특화 · 선택1 화장대 분리형", ["드레스룸 벽판넬 조명형 선반", "슬라이딩 도어는 별도 선택 가능"]]],
+    ["bed1", "침실1", 17, 128, 98, 200, "호텔처럼 꾸민 안방", ["조명이 들어간 헤드월과 대리석 선반", "침대 맞은편 벽걸이 TV와 낮은 수납장", "드레스룸과 안방 욕실로 바로 이어져요"], "발코니를 넓혀 침대 양쪽과 창가가 여유로워요"],
+    ["balcony", "발코니", 17, 200, 98, 232, "안방 앞 발코니", ["안방에서 유리 미닫이로 나가는 발코니", "실외기실이 따로 있어 깔끔해요", "작은 화분이나 의자를 두기 좋아요"], ""],
+    ["study", "침실2", 193, 155, 257, 232, "책과 음악이 있는 방", ["월넛 책장 벽과 조명이 들어간 선반", "음악 감상 의자와 작은 테이블", "창가 쪽 책상으로 공부방으로도 좋아요"], "발코니를 넓혀 책상과 의자를 놓을 자리가 넉넉해요"],
+    ["bed3", "침실3", 257, 155, 322, 232, "쿠모가 지내는 초록빛 방", ["초록 루버 벽과 조명 선반 아래 침대", "창가 쪽 책상과 3단 선반", "슬라이딩 붙박이장"], "발코니를 넓혀 침대와 책상이 함께 들어가요"],
+    ["bath11", "욕실1-1", 280, 128, 322, 155, "따로 쓰는 세면 공간", ["욕실과 분리된 세면대로 아침 준비가 동시에", "큰 거울 두 개와 하부장", "검은 유리문으로 복도와 구분"], "", ["욕실1 공간옵션", ["건식 세면대로 욕실과 세면 공간을 분리", "조명형 거울, 여닫이 욕실장(간접조명 없음)", "스윙도어"]]],
+    ["bath12", "욕실1-2", 287, 80, 322, 128, "욕조가 있는 공용 욕실", ["욕조와 슬라이드 샤워", "비데 일체형 변기와 거울 수납장", "밝은 석재 타일로 마감"], "", ["욕실1 공간옵션", ["욕실 스타일 업 적용", "벽 스톤보드 / 바닥 타일(600×600)", "여닫이 욕실장(간접조명 없음)"]]]];
+  const svg = document.getElementById("gPlanSvg"), NS = "http://www.w3.org/2000/svg", det = document.getElementById("gDet"), el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const OUTL = "17,58 60,58 60,37 190,37 190,55 232,55 232,92 278,92 278,65 322,65 322,232 17,232";   /* the plan drawn from the flat itself, seen from above, clipped to its outline */
+  const defs = el("defs", {}), cp = el("clipPath", { id: "gClip" }); cp.appendChild(el("polygon", { points: OUTL })); defs.appendChild(cp);
+  const sh = el("filter", { id: "gSh", x: "-10%", y: "-10%", width: "120%", height: "120%" }); sh.appendChild(el("feDropShadow", { dx: 0, dy: 1.6, stdDeviation: 2.2, "flood-color": "#1d2a5a", "flood-opacity": 0.28 })); defs.appendChild(sh); svg.appendChild(defs);
+  const im = el("image", { href: "assets/kumoguide/plan.jpg", x: 8.52, y: 7.73, width: 322.3, height: 237.7, preserveAspectRatio: "none" }); svg.appendChild(im);   /* the 84㎡A floor plan as given, laid over the plan units (4.53 px of it to one) */
+  const show = (k) => { const r = R.find((q) => q[0] === k); svg.querySelectorAll(".rm,.pill,.ring").forEach((e) => e.classList.toggle("on", e.dataset.k === k));
+    det.innerHTML = `<img src="assets/kumoguide/${r[0]}.jpg" alt="${r[1]} 사진" loading="lazy"><div><h3>${r[1]}</h3><div class="gsub">${r[6]}</div><ul>${r[7].map((t) => `<li>${t}</li>`).join("")}</ul>${r[8] ? `<div class="gext"><b>확장형</b>${r[8]}</div>` : ""}${r[9] ? `<div class="gopt"><div class="got">선택 옵션 · ${r[9][0]}</div><ul>${r[9][1].map((t) => `<li>${t}</li>`).join("")}</ul></div>` : ""}</div>`; };
+  const CIRC = { utility: [81, 59.9], kitchen: [134.4, 69], pantry: [206.8, 76], dress: [44.7, 92.1], bath2: [72.9, 105.2], bath12: [300.5, 106.3], entry: [251.3, 112.3], cleaning: [209.9, 114.2], bath11: [301.6, 141.6], bed1: [64, 163.5], bed3: [289.5, 188.9], living: [149.6, 189.9], study: [226, 189.9], balcony: [75, 217.1] };
+  const LB = el("g", {}); R.forEach(([k, n, x0, y0, x1, y1]) => { const g = el("rect", { class: "rm", x: x0 + 1.2, y: y0 + 1.2, width: x1 - x0 - 2.4, height: y1 - y0 - 2.4, rx: 2, "data-k": k }); g.addEventListener("click", () => show(k)); svg.appendChild(g);
+    const C = CIRC[k] || [(x0 + x1) / 2, (y0 + y1) / 2], fs = 4.6, w = n.length * fs * 0.92 + 5, cx = C[0], cy = C[1] + 6.4 + fs * 0.85, pg = el("g", { class: "pill", "data-k": k });   /* every name sits just under its room's round marker */
+    const ring = el("circle", { class: "ring", cx: C[0], cy: C[1], r: 7.4, "data-k": k }); ring.addEventListener("click", () => show(k)); LB.appendChild(ring);
+    pg.appendChild(el("rect", { x: cx - w / 2, y: cy - fs * 0.85, width: w, height: fs * 1.7, rx: fs * 0.85 })); const t = el("text", { x: cx, y: cy + 0.2, style: `font-size:${fs}px` }); t.textContent = n; pg.appendChild(t); pg.addEventListener("click", () => show(k)); LB.appendChild(pg); }); svg.appendChild(LB);
+  window.openGuide = () => { b.hidden = false; b.querySelector(".gcard").scrollTop = 0; show("living"); }; })();</script>
+
 </body>
 </html>
