@@ -4711,7 +4711,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function groundOK(a, b) {
     if (a < -112 || a > 300 || b < -170 || b > 44) return false;
     if (a > -34 && a < 34 && b > HZ - 0.9) return false;   // the archive
-    const dx = a - 240, dz = b + 36 - UZ, r2 = dx * dx + dz * dz; if (b <= -29 + UZ && r2 > 21.3 * 21.3 && r2 < 40 * 40) return false;   // U-square's ring of shops
+    const dx = a - 240, dz = b + 36 - UZ, r2 = dx * dx + dz * dz; if (b <= -29 + UZ && r2 > 21.3 * 21.3 && r2 < 40 * 40 && !(Math.abs(dx) <= 6.2 && b - UZ <= -55.4 && b - UZ >= -61.3)) return false;   // U-square's ring of shops (open under the stair's landing, where its door is)
     if (a > 283 && a < 297 && b > -37 + UZ && b < -7 + UZ) return false;   // its low wing on the street
     return true;
   }
@@ -8469,8 +8469,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           for (const d of [-1, 1]) { const ex = -36 - Math.sqrt(r0 * r0 - 6.5 * 6.5), sl = LZ0 - ex;   // rails: along the landing's front beside the stair, and down its sides to the gallery
             ub(4, 1.05, 0.06, CX + d * 4.5, GY + 0.53, LZ0, glassM).castShadow = false; ub(4, 0.07, 0.07, CX + d * 4.5, GY + 1.08, LZ0, railM2);
             ub(0.06, 1.05, sl, CX + d * 6.5, GY + 0.53, LZ0 - sl / 2, glassM).castShadow = false; ub(0.07, 0.07, sl, CX + d * 6.5, GY + 1.08, LZ0 - sl / 2, railM2); }
-          { /* the way in: a glass double door in the shop front at the head of the stair (kept out of U-square's merged mesh so it stays clickable) */
-            const DZ = -36 - RI + 0.45 + UZ, dg = new THREE.Group(); dg.position.set(CX, GY, DZ); world.add(dg);
+          { /* the way in: a glass double door in the shop front on the ground floor, behind the stair, under its landing (kept out of U-square's merged mesh so it stays clickable); through the glass, the lit hall inside, never a blank wall */
+            const DZ = -36 - RI + 0.45 + UZ, dg = new THREE.Group(); dg.position.set(CX, 0.2, DZ); world.add(dg);
+            { const inT = canvasTex(512, 512, (g, W, H) => { const fl = g.createLinearGradient(0, H * 0.55, 0, H); fl.addColorStop(0, "#b9b6ae"); fl.addColorStop(1, "#e2ddd2"); g.fillStyle = "#f1efe9"; g.fillRect(0, 0, W, H); g.fillStyle = fl; g.fillRect(0, H * 0.55, W, H * 0.45);
+                g.strokeStyle = "rgba(120,116,108,.35)"; g.lineWidth = 2; for (let k = -6; k <= 6; k++) { g.beginPath(); g.moveTo(W / 2 + k * 18, H * 0.55); g.lineTo(W / 2 + k * 120, H); g.stroke(); } for (let y = H * 0.6; y < H; y += (y - H * 0.5) * 0.35) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+                g.fillStyle = "#dcdad4"; g.fillRect(0, 0, W, H * 0.16); g.fillStyle = "#fffbe8"; for (let x = 40; x < W; x += 72) { g.beginPath(); g.ellipse(x, H * 0.09, 14, 5, 0, 0, 7); g.fill(); }
+                g.fillStyle = "#1b0d08"; g.fillRect(W * 0.18, H * 0.24, W * 0.64, H * 0.12); g.fillStyle = "#ff8a2a"; for (let r = 0; r < 4; r++) for (let c = 0; c < 9; c++) g.fillRect(W * 0.2 + c * W * 0.067, H * (0.255 + r * 0.025), W * 0.05, H * 0.012);
+                g.fillStyle = "#7cc243"; g.fillRect(W * 0.18, H * 0.37, W * 0.64, H * 0.03); g.fillStyle = "#c4161c"; g.fillRect(W * 0.4, H * 0.18, W * 0.2, H * 0.045); g.fillStyle = "#fff"; g.font = `700 ${H * 0.03}px ${FONT}`; g.textAlign = "center"; g.fillText("표 사는 곳", W / 2, H * 0.213);
+                g.fillStyle = "#bfe3df"; g.fillRect(W * 0.18, H * 0.47, W * 0.64, H * 0.08); g.fillStyle = "rgba(255,246,220,.9)"; g.fillRect(W * 0.18, H * 0.4, W * 0.64, H * 0.07);
+                [[0.3, 0.62, 1], [0.66, 0.66, 1.15], [0.48, 0.58, 0.8]].forEach(([x, y, k]) => { g.fillStyle = "rgba(60,64,72,.55)"; g.beginPath(); g.arc(W * x, H * (y - 0.07 * k), 10 * k, 0, 7); g.fill(); g.fillRect(W * x - 9 * k, H * (y - 0.055 * k), 18 * k, 60 * k); });
+                const vg = g.createRadialGradient(W / 2, H / 2, W * 0.2, W / 2, H / 2, W * 0.75); vg.addColorStop(0, "rgba(255,240,210,0)"); vg.addColorStop(1, "rgba(60,50,40,.35)"); g.fillStyle = vg; g.fillRect(0, 0, W, H); });
+              const iv = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.75), new THREE.MeshBasicMaterial({ map: inT })); iv.position.set(0, 1.38, -0.25); dg.add(iv);
+              const jm = new THREE.MeshLambertMaterial({ color: 0xd8d4cc }); [-1.68, 1.68].forEach((x) => { const j = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.9, 0.5), jm); j.position.set(x, 1.45, -0.12); dg.add(j); }); const tp = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.1, 0.5), jm); tp.position.set(0, 2.82, -0.12); dg.add(tp); }
             const fr = new THREE.MeshLambertMaterial({ color: 0x3a3d42 }), gl = new THREE.MeshLambertMaterial({ color: 0xbcd8e4, transparent: true, opacity: 0.55 });
             const bx = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); dg.add(b); return b; };
             bx(3.4, 0.25, 0.3, 0, 2.9, 0, fr); bx(0.14, 2.9, 0.3, -1.65, 1.45, 0, fr); bx(0.14, 2.9, 0.3, 1.65, 1.45, 0, fr); bx(0.08, 2.75, 0.2, 0, 1.38, 0, fr); bx(1.55, 2.7, 0.06, -0.8, 1.38, 0.05, gl); bx(1.55, 2.7, 0.06, 0.8, 1.38, 0.05, gl);
@@ -8481,7 +8491,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
               g.fillStyle = "#f4f3f0"; g.textAlign = "center"; g.textBaseline = "top"; g.font = `800 112px "Helvetica Neue", Arial, ${FONT}`; if ("letterSpacing" in g) g.letterSpacing = "10px"; g.fillText("U·SQUARE", W / 2, 58); if ("letterSpacing" in g) g.letterSpacing = "0px";
               ciKr(g, "유·스퀘어", W / 2, 302, 72, "#f4f3f0", "center", 0.12); });
             const sgn = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.6), new THREE.MeshBasicMaterial({ map: st })); sgn.position.set(0, 3.45, 0.2); dg.add(sgn); bx(3.3, 0.68, 0.06, 0, 3.45, 0.15, new THREE.MeshLambertMaterial({ color: 0x6f5c3c }));
-            const pk = new THREE.Mesh(new THREE.BoxGeometry(3.4, 3.2, 1.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(0, 1.6, 0.5); pk.userData.idx = "usqDoor"; dg.add(pk); pickables.push(pk); } }
+            const pk = new THREE.Mesh(new THREE.BoxGeometry(3.4, 3.2, 1.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(0, 1.6, 0.5); pk.userData.idx = "usqDoor"; dg.add(pk); pickables.push(pk); }
+          { /* the door is out of sight behind the stair, so a standing sign at the stair foot says where it is */ const sT = canvasTex(512, 640, (g, W, H) => { g.fillStyle = "#1d2a5a"; g.fillRect(0, 0, W, H); g.fillStyle = "#c4161c"; g.fillRect(0, 0, W, H * 0.2); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 ${H * 0.085}px ${FONT}`; g.fillText("유·스퀘어 입구", W / 2, H * 0.1);
+              g.font = `800 ${H * 0.075}px ${FONT}`; g.fillText("계단 뒤 1층에", W / 2, H * 0.36); g.fillText("문이 있어요", W / 2, H * 0.48); g.fillStyle = "#f2a33a"; g.beginPath(); g.moveTo(W * 0.5, H * 0.58); g.lineTo(W * 0.68, H * 0.72); g.lineTo(W * 0.56, H * 0.72); g.lineTo(W * 0.56, H * 0.9); g.lineTo(W * 0.44, H * 0.9); g.lineTo(W * 0.44, H * 0.72); g.lineTo(W * 0.32, H * 0.72); g.closePath(); g.fill();
+              g.fillStyle = "#c9d2ea"; g.font = `600 ${H * 0.04}px ${FONT}`; g.fillText("Entrance behind the stairs · 1F", W / 2, H * 0.95); });
+            const sg = new THREE.Group(); sg.position.set(CX + 4.2, 0.2, -47.2 + UZ); world.add(sg); const sm = lam(0x2b2e33);
+            const pst = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.0, 0.12), sm); pst.position.set(0, 0.5, 0); sg.add(pst); const bd = new THREE.Mesh(new THREE.BoxGeometry(1.06, 1.32, 0.08), sm); bd.position.set(0, 1.62, 0); sg.add(bd);
+            [1, -1].forEach((sd) => { const f = new THREE.Mesh(new THREE.PlaneGeometry(0.98, 1.24), new THREE.MeshBasicMaterial({ map: sT })); f.position.set(0, 1.62, sd * 0.045); if (sd < 0) f.rotation.y = Math.PI; sg.add(f); }); } }
         for (let i = 0; i < 9; i++) { const a = Math.PI + 0.3 + i * 0.33; ub(3 + (i % 3), 1.6, 2.6, CX + Math.cos(a) * (RO - 3), 15.6, CZ + Math.sin(a) * (RO - 3), lam(0xd5d4d0), -a); }   // plant on the roof
         // the oval sign drum on the roof at the back, facing the street: U·square 유·스퀘어 wrapped round its front
         const sT = canvasTex(2048, 300, (g, W, H) => { g.fillStyle = "#f7f7f5"; g.fillRect(0, 0, W, H); g.lineCap = "round";
@@ -11134,8 +11150,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const FP = { x: fx, z: fz, yaw: Math.atan2(n.x, n.z), pitch: 0.05 };
     clearInterval(doorWait);
     if (Math.hypot(cam.x - FP.x, cam.z - FP.z) < 1.0 && Math.abs(wrapAngle(cam.yaw - FP.yaw)) < 0.3) { go(); return; }
-    looked = true; moveTo(FP, false, Math.min(2200, 600 + Math.hypot(cam.x - FP.x, cam.z - FP.z) * 170));
-    const A = anim, t0 = performance.now(); doorWait = setInterval(() => { if (anim && anim === A && performance.now() - t0 < 20000) return; clearInterval(doorWait); if (Math.hypot(cam.x - FP.x, cam.z - FP.z) < 1.2) go(); }, 120); }
+    looked = true; const legs = [];
+    if (o.userData.idx === "usqDoor" && cam.z > -49.4 + UZ - 0.5) { const sd = cam.x >= 240 ? 1 : -1; legs.push({ x: 240 + sd * 4.4, z: -47 + UZ, yaw: 0, pitch: 0.04 }, { x: 240 + sd * 4.4, z: -55.8 + UZ, yaw: 0, pitch: 0.04 }); }   /* round the stair, never through it, to the door behind */
+    legs.push(FP);
+    const leg = () => { const P = legs.shift(), A = (moveTo(P, false, Math.min(2200, 600 + Math.hypot(cam.x - P.x, cam.z - P.z) * 170)), anim), t0 = performance.now();
+      doorWait = setInterval(() => { if (anim && anim === A && performance.now() - t0 < 20000) return; clearInterval(doorWait); if (anim !== A && Math.hypot(cam.x - P.x, cam.z - P.z) > 1.2) return; if (legs.length) leg(); else go(); }, 120); };   /* turned aside by another move: drop it; otherwise on to the next leg */
+    leg(); }
   function pick(cx, cy) {
     if (mode === "outside" && OUT.st === "ride") { laneTap(cx, cy); return; }
     const o = hit(cx, cy);
@@ -12483,7 +12503,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const start = () => { BOOTED = true; resize(); if (!IS_PARK) buildLobby(); requestAnimationFrame(frame);
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usquare") moveTo({ x: 240, z: -36 - 26 + 3.2 + UZ, yaw: Math.PI, pitch: 0.02, fy: 4.2, y: 4.2 + EYE }, true); else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usquare") moveTo({ x: 240, z: -36 - 26 + 3.2 + UZ, yaw: Math.PI, pitch: 0.02, fy: 0, y: EYE }, true); else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
         if ((arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home" || arrive.from === "usquare" || arrive.from === "bus") && window.doorFx) { doorFx.closed(); setTimeout(() => doorFx.open(), 700); }   /* out through the doors: they open on the park */   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }

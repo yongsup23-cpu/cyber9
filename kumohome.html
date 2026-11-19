@@ -3978,7 +3978,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   W(322, 65, 322, 232, { ext: 1, t: 6 }); W(17, 58, 17, 232, { ext: 1, t: 6 });   // no window behind the master bed
   W(17, 232, 322, 232, { ext: 1, t: 6, win: [[22, 58, 1], [62, 95, 1], [106, 188, 1, 3], [204, 246], [272, 306]] });   // the study and 쿠모's room have ordinary windows   // 쿠모's room has an ordinary window
   // … and the rooms inside
-  W(60, 58, 60, 128);   /* 욕실2 no longer opens off the dressing room */ W(60, 80, 100, 80); W(100, 37, 100, 80, { door: [[58, 76]] }); W(100, 80, 100, 128); W(17, 128, 100, 128, { door: [[27, 47], [82, 97]] });   /* the dressing room's glass door, and 욕실2's door straight off the bedroom by its entrance */
+  W(60, 58, 60, 128, { door: [[109, 126]] });   /* 욕실2 opens off the dressing room, across from the dressing table, close by the sliding door */ W(60, 80, 100, 80); W(100, 37, 100, 80, { door: [[58, 76]] }); W(100, 80, 100, 128); W(17, 128, 100, 128, { door: [[27, 47]] });   /* the dressing room's glass door */
   W(98, 128, 98, 232, { door: [[133, 151]] }); W(17, 200, 98, 200, { door: [[64, 82]] }); W(60, 200, 60, 232, { door: [[208, 225]] });   // the balcony's little service room, its door off the balcony
   W(188, 55, 188, 100, { door: [[62, 82]] });   /* the pantry and the laundry can be walked into now */ W(188, 100, 232, 100); W(232, 92, 232, 130); W(278, 92, 278, 128); W(278, 128, 322, 128, { door: [[290, 308]] });
   W(193, 155, 257, 155, { door: [[236, 254]] }); W(193, 155, 193, 232); W(257, 155, 322, 155, { door: [[260, 279]] }); W(257, 155, 257, 232);
@@ -3988,7 +3988,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const m = add(new THREE.PlaneGeometry(len, h), new THREE.MeshLambertMaterial({ map: t }), hor ? (px(u0) + px(u1)) / 2 : px(u0) + nx * o, (y0 + y1) / 2, hor ? pz(v0) + nz * o : (pz(v0) + pz(v1)) / 2); BATH.uv(m); OCC.push(m); WALLS.push(m);
       m.rotation.y = hor ? (nz > 0 ? 0 : Math.PI) : (nx > 0 ? Math.PI / 2 : -Math.PI / 2); };
     // 욕실2 (x 60–100, y 80–128): door in its west wall at y 90–107
-    lin(60, 80, 100, 80, 0, 1); lin(60, 128, 82, 128, 0, -1); lin(97, 128, 100, 128, 0, -1); lin(82, 128, 97, 128, 0, -1, 2.1, HT); lin(100, 80, 100, 128, -1, 0); lin(60, 80, 60, 128, 1, 0);
+    lin(60, 80, 100, 80, 0, 1); lin(60, 128, 100, 128, 0, -1); lin(100, 80, 100, 128, -1, 0); lin(60, 80, 60, 109, 1, 0); lin(60, 126, 60, 128, 1, 0); lin(60, 109, 60, 126, 1, 0, 2.1, HT);
     // 욕실1 (x 287–322, y 80–128, cut down to the plan's size): door in its south wall at x 290–308
     lin(287, 80, 322, 80, 0, 1, 0, HT, 0); lin(287, 80, 287, 128, 1, 0, 0, HT, 0); lin(322, 80, 322, 128, -1, 0, 0, HT, 3); lin(287, 128, 290, 128, 0, -1); lin(308, 128, 322, 128, 0, -1); lin(290, 128, 308, 128, 0, -1, 2.1, HT);
     // 쿠모's room (x 257–322, y 155–232) papered in sky blue: door in its north wall at x 260–279, the full-height windows in the south wall at x 264–316
@@ -4176,11 +4176,10 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // bathrooms: the shower and basin and WC in the master's (욕실2), the bath, WC and basin in the common one (욕실1)
   { /* 욕실2 (x 60-100, y 80-128), entered from the dressing room: along the far (east) wall the WC, then the basin on a dark cabinet under a stone ledge and a lit mirror cabinet, then the glass shower at the north end */
     const cab = lam(0x3a3e44), led = lam(0xe9e2d4), glow = new THREE.MeshBasicMaterial({ color: 0xfff3dc }), mir = new THREE.MeshBasicMaterial({ color: 0xc7cfd3 });
-    WC(100, 106);   /* the WC on the east wall, clear of the door's swing (the door now comes in from the bedroom, at the south-east) */
-    /* the basin moved to the west wall, facing the door: dark cabinet, stone top, lit mirror cabinet */
-    F(62, 104, 68, 115, 0.38, 0.8, cab); F(62, 103.5, 69.5, 115.5, 0.8, 0.9, porcelain); F(64, 105.5, 68.5, 113.5, 0.895, 0.902, lam(0xdfe3e6), false);
-    add(new THREE.CylinderGeometry(0.015, 0.02, 0.22, 10), steel, px(63), 1.01, pz(109.5)); F(63, 109.2, 64.6, 109.8, 1.1, 1.12, steel, false);
-    F(62, 100, 64, 120, 1.02, 1.06, led, false); F(62, 100, 62.8, 120, 1.06, 1.85, lam(0xdcd6cc), false); F(62.8, 100.5, 63, 119.5, 1.08, 1.83, mir, false); F(62.4, 100.5, 63.2, 119.5, 1.85, 1.87, glow, false);
+    WC(100, 116);   /* the WC: the same shaped one as in the entrance bathroom */
+    F(92, 97, 98, 108, 0.38, 0.8, cab); F(90.5, 96.5, 98, 108.5, 0.8, 0.9, porcelain); F(91.5, 98.5, 96, 106.5, 0.895, 0.902, lam(0xdfe3e6), false);
+    add(new THREE.CylinderGeometry(0.015, 0.02, 0.22, 10), steel, px(97), 1.01, pz(102.5)); F(95.4, 102.2, 97, 102.8, 1.1, 1.12, steel, false);
+    F(96, 95, 98, 123, 1.02, 1.06, led, false); F(97.2, 95, 98, 123, 1.06, 1.85, lam(0xdcd6cc), false); F(97, 95.5, 97.2, 122.5, 1.08, 1.83, mir, false); F(96.8, 95.5, 97.6, 122.5, 1.85, 1.87, glow, false);
     /* the shower: glass screens on the south and west, a rail head on the east wall, a niche shelf */
     { const gs = (x0, z0, x1, z1) => { const w = Math.hypot(x1 - x0, z1 - z0), g = add(new THREE.PlaneGeometry(w, 2.0), glassM, (x0 + x1) / 2, 1.0, (z0 + z1) / 2); g.rotation.y = Math.atan2(-(z1 - z0), x1 - x0); g.renderOrder = 3; };
       gs(px(76), pz(95), px(98), pz(95)); gs(px(76), pz(82), px(76), pz(89)); F(76, 94.8, 98, 95.2, 2.0, 2.03, steel, false); F(75.8, 82, 76.2, 95, 2.0, 2.03, steel, false); F(75.8, 94.8, 76.2, 95.2, 0, 2.03, steel, false);
@@ -4220,7 +4219,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       glassy(DOORS[DOORS.length - 2], 17.2, true); glassy(DOORS[DOORS.length - 1], 17.6, false);
       const z = pz(128); F(239, 127.6, 239.6, 128.4, 0, HT, bf, false); F(251.9, 127.6, 252.5, 128.4, 0, 2.1, bf, false); F(269.9, 127.6, 270.5, 128.4, 0, HT, bf, false); F(239, 127.6, 270.5, 128.4, 2.08, 2.14, bf, false);
       { const g = add(new THREE.PlaneGeometry((251.9 - 239.6) * SC, 2.08), smoke, (px(239.6) + px(251.9)) / 2, 1.04, z); g.renderOrder = 3; block(px(239), px(252.5), z - 0.08, z + 0.08); }   /* the fixed side panel */
-      { const g = add(new THREE.PlaneGeometry((269.9 - 239.6) * SC, HT - 2.14), smoke, (px(239.6) + px(269.9)) / 2, (2.14 + HT) / 2, z); g.renderOrder = 3; }   /* the glass over it to the ceiling */ } mk(236.4, 155, 17.2, false, -1, "서재"); mk(260.4, 155, 18.2, false, -1, "쿠모방"); mk(98, 133.4, 17.2, true, -1, "안방"); mk(82.4, 128, 14.2, false, 1, "안방 욕실");
+      { const g = add(new THREE.PlaneGeometry((269.9 - 239.6) * SC, HT - 2.14), smoke, (px(239.6) + px(269.9)) / 2, (2.14 + HT) / 2, z); g.renderOrder = 3; }   /* the glass over it to the ceiling */ } mk(236.4, 155, 17.2, false, -1, "서재"); mk(260.4, 155, 18.2, false, -1, "쿠모방"); mk(98, 133.4, 17.2, true, -1, "안방"); mk(60, 109.4, 16.2, true, 1, "안방 욕실");
     F(188, 128.6, 194, 131.4, 0, HT, wallMat); F(210, 128.6, 232, 131.4, 0, HT, wallMat); F(194, 128.6, 210, 131.4, 2.1, HT, wallMat, false); mk(194, 130, 16, false, 1, "클리닝룸"); mk(100, 58.4, 17.2, true, -1, "다용도실");
     { /* the glass sliding door from the master bedroom out to the balcony (x 64-82 on the y 200 wall): one leaf fixed, the other slides behind it as 쿠모 comes up */
       const gm = new THREE.MeshBasicMaterial({ color: 0xdfeef7, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide }), fr = lam(0x2b2c2e), W = 9 * SC, z0 = pz(200);
