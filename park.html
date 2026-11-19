@@ -4,7 +4,7 @@
 <script>window.KUMHO_PAGE = "park";</script>
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
 (function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
-  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
+  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
   window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); } catch (e) {} }; })();</script>
 <title>금호 아카이브</title>
 <script>document.documentElement.classList.add("easel")</script>
@@ -12516,5 +12516,81 @@ window.doorFx = (function () { const el = () => document.getElementById("doorFx"
     b.addEventListener("contextmenu", (e) => e.preventDefault()); };
   bind("rotL", 1); bind("rotR", -1);
   const pad = document.getElementById("rotPad"); pad.style.display = "none"; setInterval(() => { const P = window.__park; if (!P) return; const on = P.mode() === "outside"; pad.style.display = on ? "" : "none"; if (!on) dir = 0; }, 300); })();</script>
-</body>
+<div id="guideBox" hidden><div class="gcard" role="dialog" aria-label="쿠모의 집 안내">
+<button type="button" class="gx" aria-label="닫기">✕</button>
+<div class="ghead">
+  <img class="gmark" src="assets/kumoguide/artera.png" alt="ARTERA">
+  <div class="gtitle"><div class="gk">ARTERA 84㎡A · 확장옵션형</div><h2>쿠모의 집 안내</h2><p>전용 84.5600㎡ · 공급 115.1116㎡ · 계약 161.4727㎡ — 평면도에서 방을 누르면 아래에 그 공간 이야기와 선택 옵션이 나와요.</p></div>
+  <div class="gkumo" aria-hidden="true"><div class="gbub">안녕! 우리 집 구경해 볼래?</div>
+    <img class="gkimg" src="assets/kumoguide/kumo.png" alt=""></div>
+</div>
+<div class="gplan"><svg id="gPlanSvg" viewBox="10 30 319 209" role="img" aria-label="84㎡A 평면도"></svg></div>
+<div class="gdet" id="gDet"></div>
+<p class="gnote">집 안 가구와 소품은 연출이에요.</p>
+</div></div>
+<style>#guideBox{position:fixed;inset:0;z-index:42;background:rgba(10,14,28,.62);display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box}#guideBox[hidden]{display:none}
+#guideBox .gcard{position:relative;width:min(880px,100%);max-height:94vh;overflow:auto;background:#faf7f1;color:#22252b;border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.4);padding:18px 20px 14px;box-sizing:border-box;font-family:inherit;-webkit-overflow-scrolling:touch}
+#guideBox .gx{position:absolute;right:12px;top:12px;width:36px;height:36px;border-radius:50%;border:0;background:#1d2a5a;color:#fff;font-size:16px;cursor:pointer;z-index:2}
+#guideBox .ghead{display:flex;align-items:center;gap:14px;border-bottom:2px solid #f26a1f;padding:0 44px 10px 0}#guideBox .gmark{height:44px;width:auto;flex:none}
+#guideBox .gtitle{flex:1;min-width:0}#guideBox .gk{font-size:12px;font-weight:800;letter-spacing:.06em;color:#f26a1f}#guideBox h2{margin:2px 0;font-size:21px;color:#1d2a5a}#guideBox .gtitle p{margin:0;font-size:13px;color:#5a5f68}
+#guideBox .gkumo{position:relative;flex:none;display:flex;align-items:flex-end}#guideBox .gbub{position:absolute;right:58px;top:4px;white-space:nowrap;background:#fff;border:1.5px solid #1d2a5a;border-radius:12px;padding:5px 9px;font-size:12px;font-weight:700;color:#1d2a5a}
+#guideBox .gbub:after{content:"";position:absolute;right:-7px;top:12px;border:6px solid transparent;border-left-color:#1d2a5a}
+#guideBox .gkumo .gkimg{height:104px;width:auto;display:block;animation:gHop 2.4s ease-in-out infinite;filter:drop-shadow(0 3px 4px rgba(0,0,0,.15))}@keyframes gHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+#guideBox .gplan{margin-top:10px;background:#f1efeb;border:1px solid #e6dfd0;border-radius:14px;padding:10px}#guideBox .gplan svg{display:block;width:100%;height:auto}
+#gPlanSvg .rm{fill:rgba(255,255,255,0);stroke:rgba(29,42,90,0);stroke-width:1.2;cursor:pointer;transition:fill .18s,stroke .18s}#gPlanSvg .rm:hover{fill:rgba(242,106,31,.14);stroke:rgba(242,106,31,.7)}#gPlanSvg .rm.on{fill:rgba(242,106,31,.22);stroke:#f26a1f;stroke-width:1.8}
+#gPlanSvg .pill{cursor:pointer}#gPlanSvg .pill rect{fill:rgba(255,255,255,.92);stroke:rgba(29,42,90,.25);stroke-width:.4}#gPlanSvg .pill text{font-weight:800;fill:#1d2a5a;text-anchor:middle;dominant-baseline:middle;letter-spacing:.02em}
+#gPlanSvg .ring{fill:rgba(255,255,255,0);stroke:rgba(242,106,31,0);stroke-width:1.6;cursor:pointer}#gPlanSvg .ring:hover{stroke:rgba(242,106,31,.6)}#gPlanSvg .ring.on{stroke:#f26a1f;stroke-width:2}
+#gPlanSvg .pill.on rect{fill:#f26a1f;stroke:#f26a1f}#gPlanSvg .pill.on text{fill:#fff}
+#guideBox .gdet{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;margin-top:12px;align-items:start}
+#guideBox .gdet img{width:100%;border-radius:12px;display:block;aspect-ratio:991/566;object-fit:cover;background:#ddd}
+#guideBox .gdet h3{margin:0 0 4px;font-size:19px;color:#1d2a5a}#guideBox .gdet .gsub{font-size:12px;font-weight:700;color:#f26a1f;margin-bottom:8px}
+#guideBox .gdet ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6;color:#3d424b}#guideBox .gdet .gext{margin-top:10px;background:#1d2a5a;color:#f4ead2;border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.5}#guideBox .gdet .gext b{color:#f2a33a;margin-right:6px}
+#guideBox .gopt{margin-top:10px;border:1.5px solid #f26a1f;border-radius:10px;padding:8px 11px;background:#fff7f0}#guideBox .gopt .got{font-size:12.5px;font-weight:800;color:#c4501a;margin-bottom:4px}#guideBox .gopt ul{font-size:13px;line-height:1.55}
+#guideBox .gnote{margin:12px 0 0;font-size:11.5px;color:#8a8f98}
+@media (max-width:640px){#guideBox .gdet{grid-template-columns:1fr}#guideBox .gmark{height:32px}#guideBox h2{font-size:18px}#guideBox .gbub{display:none}#guideBox .gkumo .gkimg{height:74px}#guideBox .gcard{padding:14px 12px 12px}}</style>
+<script>(function () { const b = document.getElementById("guideBox"); if (!b) return; ["pointerdown", "pointerup", "wheel", "touchstart"].forEach((ev) => b.addEventListener(ev, (e) => e.stopPropagation(), { passive: true }));
+  const close = () => { b.hidden = true; }; b.querySelector(".gx").addEventListener("click", close); b.addEventListener("click", (e) => { if (e.target === b) close(); });
+  const R = [
+    ["entry", "현관", 232, 92, 278, 128, "들어서자마자 정돈되는 현관", ["양쪽 벽을 천장까지 채운 신발장, 가운데는 브론즈 유리 도어", "검은 반투명 유리 중문으로 현관과 거실을 나눠 아늑해요", "<b>현관창고</b>도 있어요. 유모차·캠핑용품·골프백처럼 큰 짐을 넣어 두기 좋아요"], "", ["개별 옵션", ["현관 중문: 3연동 중문(1FIX + 2DOOR) + 신발장 하부 간접조명", "슬라이딩 도어: 파우더룸 슬라이딩 도어", "침실2 슬라이딩 붙박이장 / 침실3 슬라이딩 붙박이장"]]],
+    ["living", "거실", 98, 155, 193, 232, "남향 4베이의 중심, 넓고 밝은 거실", ["간접조명이 들어간 천장과 대형 아트월, 벽걸이 TV", "가운데 큰 창은 고정, 좌우 창만 열려 시야가 시원해요", "소파 뒤 벽에는 액자를 걸 수 있는 여유 있는 벽면"], "발코니를 거실로 넓혀 창가까지 생활공간이 이어져요"],
+    ["kitchen", "주방", 100, 37, 188, 128, "창을 마주한 주방과 아일랜드", ["창 앞 일자형 싱크대, 쿡탑, 상부장 아래 간접조명", "넉넉한 아일랜드와 6인 식탁", "냉장고장과 식탁 옆 키 큰 수납장 속 커피 니치"], "주방 쪽 공간을 넓혀 작업대와 수납을 여유 있게 배치했어요", ["주방 마감재 · 엔지니어드 스톤", ["주방 벽·상판 엔지니어드 스톤", "상부장 하부 LED 조명", "무선 충전 매입 콘센트"]]],
+    ["pantry", "주방팬트리", 188, 55, 232, 100, "양문을 열면 나오는 식품 창고", ["벽을 따라 이어지는 L자 오픈 선반", "식재료·소형 가전·와인을 한눈에 보관", "주방 바로 옆이라 동선이 짧아요"], "", ["가변 공간 · 클리닝스테이션 옵션에 포함", ["팬트리 가구도어 + 시스템가구"]]],
+    ["cleaning", "클리닝스테이션", 188, 100, 232, 128, "청소 도구를 위한 작은 방", ["청소기 충전과 세제·소모품 수납을 한곳에", "타공판과 작업대, 간접조명이 들어간 선반", "문을 닫으면 깔끔하게 가려져요"], "", ["가변 공간 및 마감 특화 · 클리닝스테이션 세라믹타일", ["11자 주방가구 + 팬트리(가구도어 + 시스템가구)", "클리닝스테이션(가구도어 + 클리닝스테이션 가구) + 홈바", "거실 특화 + 주방 특화 포함"]]],
+    ["utility", "다용도실", 60, 37, 100, 80, "세탁을 위한 공간", ["세탁기와 건조기를 나란히 둘 수 있어요", "벽 선반과 수전, 환기용 창", "주방과 가까워 집안일 동선이 편해요"], ""],
+    ["bath2", "욕실2", 60, 80, 100, 128, "안방 전용 욕실", ["유리 샤워부스와 레인 샤워", "세면대와 거울 수납장, 비데 일체형 변기", "밝은 석재 타일로 마감"], "", ["욕실 스타일 업 · 욕실2(부부욕실)", ["욕실 벽 포세린타일(600×1200)", "샤워부스 무광 니켈 프레임, 캔버스 샤워수전", "디자인 욕실장 + 간접조명", "수전·악세서리 니켈 무광 마감, 복합 환풍기, 청소수전"]]],
+    ["dress", "드레스룸", 17, 58, 60, 128, "안방에 딸린 넓은 드레스룸", ["유리 미닫이문 안쪽에 양쪽 오픈 행거", "들어가자마자 왼쪽에 파우더(화장대) 공간", "가방·신발을 올려 두는 선반과 서랍"], "", ["드레스룸 특화 · 화장대 분리형", ["드레스룸 벽판넬 조명형 선반", "슬라이딩 도어는 별도 선택 가능"]]],
+    ["bed1", "침실1", 17, 128, 98, 200, "호텔처럼 꾸민 안방", ["조명이 들어간 헤드월과 대리석 선반", "침대 맞은편 벽걸이 TV와 낮은 수납장", "드레스룸과 안방 욕실로 바로 이어져요"], "발코니를 넓혀 침대 양쪽과 창가가 여유로워요"],
+    ["balcony", "발코니", 17, 200, 98, 232, "안방 앞 발코니", ["안방에서 유리 미닫이로 나가는 발코니", "실외기실이 따로 있어 깔끔해요", "작은 화분이나 의자를 두기 좋아요"], ""],
+    ["study", "침실2", 193, 155, 257, 232, "책과 음악이 있는 방", ["월넛 책장 벽과 조명이 들어간 선반", "음악 감상 의자와 작은 테이블", "창가 쪽 책상으로 공부방으로도 좋아요"], "발코니를 넓혀 책상과 의자를 놓을 자리가 넉넉해요"],
+    ["bed3", "침실3", 257, 155, 322, 232, "쿠모가 지내는 초록빛 방", ["초록 루버 벽과 조명 선반 아래 침대", "창가 쪽 책상과 3단 선반", "슬라이딩 붙박이장"], "발코니를 넓혀 침대와 책상이 함께 들어가요"],
+    ["bath11", "욕실1-1", 280, 128, 322, 155, "따로 쓰는 세면 공간", ["욕실과 분리된 세면대로 아침 준비가 동시에", "큰 거울 두 개와 하부장", "검은 유리문으로 복도와 구분"], "", ["욕실1 공간옵션", ["건식 세면대로 욕실과 세면 공간을 분리", "조명형 거울, 여닫이 욕실장(간접조명 없음)", "스윙도어"]]],
+    ["bath12", "욕실1-2", 287, 80, 322, 128, "욕조가 있는 공용 욕실", ["욕조와 슬라이드 샤워", "비데 일체형 변기와 거울 수납장", "밝은 석재 타일로 마감"], "", ["욕실1 공간옵션", ["욕실 스타일 업 적용", "벽 스톤보드 / 바닥 타일(600×600)", "여닫이 욕실장(간접조명 없음)"]]]];
+  const svg = document.getElementById("gPlanSvg"), NS = "http://www.w3.org/2000/svg", det = document.getElementById("gDet"), el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const OUTL = "17,58 60,58 60,37 190,37 190,55 232,55 232,92 278,92 278,65 322,65 322,232 17,232";   /* the plan drawn from the flat itself, seen from above, clipped to its outline */
+  const defs = el("defs", {}), cp = el("clipPath", { id: "gClip" }); cp.appendChild(el("polygon", { points: OUTL })); defs.appendChild(cp);
+  const sh = el("filter", { id: "gSh", x: "-10%", y: "-10%", width: "120%", height: "120%" }); sh.appendChild(el("feDropShadow", { dx: 0, dy: 1.6, stdDeviation: 2.2, "flood-color": "#1d2a5a", "flood-opacity": 0.28 })); defs.appendChild(sh); svg.appendChild(defs);
+  const im = el("image", { href: "assets/kumoguide/plan.jpg", x: 8.52, y: 7.73, width: 322.3, height: 237.7, preserveAspectRatio: "none" }); svg.appendChild(im);   /* the 84㎡A floor plan as given, laid over the plan units (4.53 px of it to one) */
+  const show = (k) => { const r = R.find((q) => q[0] === k); svg.querySelectorAll(".rm,.pill,.ring").forEach((e) => e.classList.toggle("on", e.dataset.k === k));
+    det.innerHTML = `<img src="assets/kumoguide/${r[0]}.jpg" alt="${r[1]} 사진" loading="lazy"><div><h3>${r[1]}</h3><div class="gsub">${r[6]}</div><ul>${r[7].map((t) => `<li>${t}</li>`).join("")}</ul>${r[8] ? `<div class="gext"><b>확장형</b>${r[8]}</div>` : ""}${r[9] ? `<div class="gopt"><div class="got">선택 옵션 · ${r[9][0]}</div><ul>${r[9][1].map((t) => `<li>${t}</li>`).join("")}</ul></div>` : ""}</div>`; };
+  const CIRC = { utility: [81, 59.9], kitchen: [134.4, 69], pantry: [206.8, 76], dress: [44.7, 92.1], bath2: [72.9, 105.2], bath12: [300.5, 106.3], entry: [251.3, 112.3], cleaning: [209.9, 114.2], bath11: [301.6, 141.6], bed1: [64, 163.5], bed3: [289.5, 188.9], living: [149.6, 189.9], study: [226, 189.9], balcony: [75, 217.1] };
+  const LB = el("g", {}); R.forEach(([k, n, x0, y0, x1, y1]) => { const g = el("rect", { class: "rm", x: x0 + 1.2, y: y0 + 1.2, width: x1 - x0 - 2.4, height: y1 - y0 - 2.4, rx: 2, "data-k": k }); g.addEventListener("click", () => show(k)); svg.appendChild(g);
+    const C = CIRC[k] || [(x0 + x1) / 2, (y0 + y1) / 2], fs = 4.6, w = n.length * fs * 0.92 + 5, cx = C[0], cy = C[1] + 6.4 + fs * 0.85, pg = el("g", { class: "pill", "data-k": k });   /* every name sits just under its room's round marker */
+    const ring = el("circle", { class: "ring", cx: C[0], cy: C[1], r: 7.4, "data-k": k }); ring.addEventListener("click", () => show(k)); LB.appendChild(ring);
+    pg.appendChild(el("rect", { x: cx - w / 2, y: cy - fs * 0.85, width: w, height: fs * 1.7, rx: fs * 0.85 })); const t = el("text", { x: cx, y: cy + 0.2, style: `font-size:${fs}px` }); t.textContent = n; pg.appendChild(t); pg.addEventListener("click", () => show(k)); LB.appendChild(pg); }); svg.appendChild(LB);
+  window.openGuide = () => { b.hidden = false; b.querySelector(".gcard").scrollTop = 0; show("living"); }; })();</script><button type="button" id="guideBtn" hidden>🏠 집 안내서</button>
+<div id="gGet" hidden><div class="gg"><div class="gr"></div><div class="gc"><img src="assets/kumoguide/artera.png" alt=""><b>쿠모의 집 안내서</b><span>ARTERA 84㎡A · 확장옵션형</span></div><p>쿠모의 집 안내서를 얻었어요!</p><small>이제 어디서든 오른쪽 위 ‘🏠 집 안내서’로 다시 볼 수 있어요</small></div></div>
+<style>#guideBtn{position:fixed;right:var(--gbR,16px);top:var(--gbT,152px);z-index:7;font:700 14px/1 inherit;font-family:inherit;color:#f4ead2;background:rgba(29,42,90,.94);border:1px solid rgba(201,168,106,.75);border-radius:999px;padding:9px 15px;cursor:pointer}#guideBtn[hidden]{display:none}
+#gGet{position:fixed;inset:0;z-index:100600;display:flex;align-items:center;justify-content:center;background:rgba(10,14,28,.55);animation:gF .3s ease}#gGet[hidden]{display:none}
+#gGet .gg{position:relative;text-align:center;color:#fff}#gGet .gr{position:absolute;left:50%;top:120px;width:420px;height:420px;margin:-210px 0 0 -210px;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,215,140,0),rgba(255,215,140,.55),rgba(255,215,140,0) 25%,rgba(255,215,140,.5) 50%,rgba(255,215,140,0) 75%,rgba(255,215,140,.55));filter:blur(6px);animation:gSpin 4s linear infinite}
+#gGet .gc{position:relative;width:200px;height:240px;margin:0 auto;border-radius:14px;background:linear-gradient(160deg,#25366e,#1d2a5a);border:3px solid #c9a86a;box-shadow:0 0 40px rgba(255,210,140,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;animation:gPop .7s cubic-bezier(.2,1.6,.4,1)}
+#gGet .gc img{width:110px;filter:brightness(0) invert(1)}#gGet .gc b{font-size:20px;color:#f4ead2}#gGet .gc span{font-size:12px;color:#c9a86a}
+#gGet p{position:relative;margin:22px 0 6px;font-size:22px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.5)}#gGet small{position:relative;font-size:13px;opacity:.9}
+@keyframes gSpin{to{transform:rotate(360deg)}}@keyframes gPop{0%{transform:scale(.2) rotate(-12deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}@keyframes gF{from{opacity:0}to{opacity:1}}</style>
+<script>(function () { const btn = document.getElementById("guideBtn"), gg = document.getElementById("gGet"); const has = () => { try { return sessionStorage.getItem("kumhoGuideGot") === "1"; } catch (e) { return false; } };
+  const sync = () => { btn.hidden = !has(); }; sync(); setInterval(sync, 600);
+  btn.addEventListener("click", (e) => { e.stopPropagation(); if (window.openGuide) openGuide(); }); ["pointerdown", "pointerup"].forEach((ev) => { btn.addEventListener(ev, (e) => e.stopPropagation()); gg.addEventListener(ev, (e) => e.stopPropagation()); });
+  let t = null; const done = () => { clearTimeout(t); gg.hidden = true; if (window.openGuide) openGuide(); };
+  window.kumhoGuideGet = () => { if (has()) { if (window.openGuide) openGuide(); return; } try { sessionStorage.setItem("kumhoGuideGot", "1"); } catch (e) {} sync(); gg.hidden = false; t = setTimeout(done, 2600); };   /* the first time: the pick-up moment, as with the heritage books; after that it simply opens */
+  gg.addEventListener("click", done); })();</script>
+<style>#guideBox{z-index:100500}:root{--gbR:24px;--gbT:262px}</style></body>
 </html>
