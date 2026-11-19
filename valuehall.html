@@ -3,7 +3,7 @@
 <head><meta charset="utf-8">
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
 (function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
-  if (reload || !(inSite || Date.now() - h < 120000)) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
+  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
   window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); } catch (e) {} }; })();</script>
 <title>금호 가치체계 전시관</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -4060,7 +4060,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   canvas.addEventListener("pointermove", (e) => { if (PT.has(e.pointerId)) PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch) { if (PT.size >= 2) { const d = pdist(); if (d > 10) { camera.fov = Math.max(35, Math.min(75, pinch.f0 * pinch.d0 / d)); camera.updateProjectionMatrix(); } } return; }
     if (!drag && TP.obj && e.pointerType === "mouse") canvas.style.cursor = onKumo(e.clientX, e.clientY) ? "grab" : "";
-    if (hold) { if (drag && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 24) { if (hold.t0 && performance.now() - hold.t0 < 450) { S.x = hold.sx; S.z = hold.sz; } hold = null; drag.moved = 99; drag.lx = e.clientX; drag.ly = e.clientY; } else { hold.x = e.clientX; hold.y = e.clientY; return; } }   /* pressed, then swept sideways: that is a look round, not a run */ if (!drag) return;
+    if (hold) { if (drag && hold.t0 && performance.now() - hold.t0 < 450 && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 24) { S.x = hold.sx; S.z = hold.sz; hold = null; drag.moved = 99; drag.lx = e.clientX; drag.ly = e.clientY; } else { hold.x = e.clientX; hold.y = e.clientY; return; } }   /* pressed, then swept sideways: that is a look round, not a run */ if (!drag) return;
     if (drag.tp) { const dx = e.clientX - drag.lx; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0)); if (drag.moved > 3) { TP.face += dx * 0.012; TP.dragging = true; canvas.style.cursor = "grabbing"; } drag.lx = e.clientX; drag.ly = e.clientY; return; }
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
     if (drag.moved > 6) { const k = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight; S.yaw += dx * k; S.pitch = Math.max(-0.5, Math.min(0.7, S.pitch + dy * k)); S.tx = null; }
@@ -4068,7 +4068,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const endP = (e) => { PT.delete(e.pointerId); if (pinch) { if (PT.size < 2) { pinch = null; drag = null; } return; }
     clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (d && d.tp) { TP.dragging = false; canvas.style.cursor = ""; if (d.moved <= 4) toast("안녕! 나는 쿠모야 👋 끌어서 돌려 봐"); return; } if (!d || d.moved > 6) return;
     const r = aim(e.clientX, e.clientY), hp = r.intersectObjects(PICK, false)[0], hf = r.intersectObjects(FLOORS, false)[0];
-    if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { const u = hp.object.userData; if (u.idx === "exit") return leave(); if (u.idx === "hero") return toast("THE KUMHO SPIRIT · 금호 가치체계");
+    if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { const u = hp.object.userData; if (u.idx === "exit") return askLeave(); if (u.idx === "hero") return toast("THE KUMHO SPIRIT · 금호 가치체계");
       if (u.idx === "panel" || u.idx === "value") return toast(`${u.p.title} · ${u.p.body ? u.p.body.split("\n")[0] : "새로 수립하는 가치체계가 곧 게시됩니다"}`); }
     if (hf) { const dx = hf.point.x - S.x, dz = hf.point.z - S.z, dd = Math.hypot(dx, dz), L = Math.min(dd, 7); if (dd > 0.3) { S.tx = S.x + dx / dd * L; S.tz = S.z + dz / dd * L; S.v = 0; } } };
   canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", (e) => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; clearTimeout(holdT); hold = null; drag = null; TP.dragging = false; });
@@ -4077,6 +4077,15 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function leave() { try { const g = JSON.parse(sessionStorage.getItem("kumhoVhCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "valueHall", t: Date.now() }))); } catch (e) {}
     doorFx.close(() => { freeGL(); kumhoHop(); location.replace("park.html"); }); }   // the doors swing shut behind, then the park
   $("exitBtn").addEventListener("click", leave);
+  function askLeave() { let el = $("leaveAsk"); if (!el) { const st = document.createElement("style"); st.textContent = "#leaveAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30;width:min(520px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#leaveAsk[hidden]{display:none}#leaveAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#leaveAsk button{margin:0 6px;padding:9px 24px;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#leaveAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
+      document.head.appendChild(st); el = document.createElement("div"); el.id = "leaveAsk"; el.hidden = true; el.innerHTML = '<div class="q">🚪 나가시겠습니까?</div><button type="button" class="y">예</button><button type="button" class="n">아니요</button>'; document.body.appendChild(el);
+      ["pointerdown", "pointerup"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation())); el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; el.hidden = true; if (b.classList.contains("y")) leave(); }); }
+    el.hidden = false; }
+  { /* walk into the way out and the question comes at once: 나가시겠습니까? (asked again only after stepping away from it) */
+    const EXD = PICK.filter((o) => o.userData && o.userData.idx === "exit"), bbx = new THREE.Box3(); let armed = true;
+    setInterval(() => { if (!EXD.length || document.hidden) return; let at = false, far = true;
+      EXD.forEach((o) => { bbx.setFromObject(o); const dx = Math.max(bbx.min.x - S.x, 0, S.x - bbx.max.x), dz = Math.max(bbx.min.z - S.z, 0, S.z - bbx.max.z), d = Math.hypot(dx, dz); if ((S.fy || 0) < bbx.max.y - 0.5) { if (d < 0.38) at = true; if (d < 1.1) far = false; } });
+      if (far) armed = true; const el = document.getElementById("leaveAsk"); if (at && armed && (!el || el.hidden)) { armed = false; S.tx = null; askLeave(); } }, 120); }
   try { const g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); if (g && g.valueHall) { sessionStorage.removeItem("kumhoPageGo"); sessionStorage.setItem("kumhoVhCarry", JSON.stringify({ ride: g.ride, sound: g.sound })); } } catch (e) {}
 
   // ---- music: the park's own tune (assets/park-bgm.mp3, composed for the site — nothing to license), on from the first moment unless it was switched off ----

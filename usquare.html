@@ -3,7 +3,7 @@
 <head><meta charset="utf-8">
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
 (function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
-  if (reload || !(inSite || Date.now() - h < 120000)) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoTicket"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
+  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoTicket"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
   window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); } catch (e) {} }; })();</script>
 <title>유·스퀘어</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -3897,7 +3897,7 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
 
 window.MeshoptDecoder=MeshoptDecoder;</script>
 <script>
-/* 쿠모네 집 — the ARTERA 84A flat in the tower by 아테라 타운 (three.js r128). Walk with the arrow keys / pad, drag to look, tap the floor to go there. */
+/* 쿠모의 집 — the ARTERA 84A flat in the tower by 아테라 타운 (three.js r128). Walk with the arrow keys / pad, drag to look, tap the floor to go there. */
 (function () {
   const $ = (id) => document.getElementById(id), FONT = '"Noto Sans KR", "Apple SD Gothic Neo", sans-serif';
   const prog = (f) => { const b = $("ldBar"), t = $("ldPct"); if (b) b.style.width = Math.round(f * 100) + "%"; if (t) t.textContent = Math.round(f * 100) + "%"; };
@@ -4066,10 +4066,10 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const cg = ga(new THREE.CylinderGeometry(4.6, 4.6, 0.06, 48), new THREE.MeshBasicMaterial({ color: 0xeef6f4, transparent: true, opacity: 0.55, depthWrite: false }), 0, 3.75, 0); cg.scale.z = 0.62;
     const rim = ga(new THREE.TorusGeometry(4.6, 0.06, 6, 64), steel, 0, 3.75, 0); rim.rotation.x = Math.PI / 2; rim.scale.y = 0.62;
     { /* one information stand by the taxi: a grey panel with a red edge, the founding taxi's story on it */
-      const st = new THREE.Group(); st.position.set(4.6, 0, -2.4); st.rotation.y = 0.5 + Math.PI; G.add(st); const t = new THREE.TextureLoader().load("assets/usqtaxisign.jpg"); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO;
+      const st = new THREE.Group(); st.position.set(-4.7, 0, -4.0); st.rotation.y = Math.atan2(5 - -4.7, -1.6 - -4.0); scene.add(st); block(-5.2, -4.2, -4.5, -3.5);   /* in front of the car, turned to whoever comes in */ const t = new THREE.TextureLoader().load("assets/usqtaxisign.jpg"); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO;
       const sb = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); st.add(o); return o; };
-      sb(0.8, 1.75, 0.1, lam(0x8e9196), 0, 0.875, 0); sb(0.06, 1.75, 0.11, lam(0xc8191f), 0.43, 0.875, 0); sb(1.0, 0.06, 0.4, lam(0x2a2b2d), 0, 0.03, 0);
-      const pn = new THREE.Mesh(new THREE.PlaneGeometry(0.74, 0.74 * 573 / 472), new THREE.MeshBasicMaterial({ map: t, toneMapped: false })); pn.position.set(0, 1.0, 0.052); st.add(pn); }
+      sb(0.8, 1.75, 0.1, lam(0x8a878a), 0, 0.875, 0); sb(0.06, 1.75, 0.11, lam(0xc8191f), 0.43, 0.875, 0); sb(1.0, 0.06, 0.4, lam(0x2a2b2d), 0, 0.03, 0);
+      const pn = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.75), new THREE.MeshBasicMaterial({ map: t, toneMapped: false })); pn.position.set(0, 0.875, 0.052);   /* the one picture covers the whole face, the plain grey of the board below the story */ st.add(pn); }
     const pk = ga(new THREE.BoxGeometry(4.6, 1.8, 2.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 1.2, 0); pk.userData = { idx: "taxi" }; PICK.push(pk);
     decodeTaxi().then(({ geometry, texture, surface, normal }) => { const mat = new THREE.MeshStandardMaterial({ map: texture, metalness: 1, roughness: 1, metalnessMap: surface, roughnessMap: surface, normalMap: normal, normalScale: new THREE.Vector2(0.65, 0.65), envMap: taxiEnvironment(), envMapIntensity: 0.9, side: THREE.DoubleSide });
       const m = new THREE.Mesh(geometry, mat), k = 4.15 / 1.90101; m.scale.setScalar(k); m.position.set(0, 0.379509 * k - 0.075 + 0.32, 0); G.add(m); }).catch(() => {});
@@ -4145,7 +4145,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // ---- 쿠모 (assets/character.glb, as in the park): walks the hall in third person, the camera behind him ----
   const TP = { obj: null, mixer: null, act: {}, face: null, px: null, pz: null, spd: 0, rw: 0, iw: 1, d: 3.4, started: false };
   if (THREE.GLTFLoader) { const L2 = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L2.setMeshoptDecoder) L2.setMeshoptDecoder(window.MeshoptDecoder);
-    L2.load("assets/character.glb", (g) => { const o = g.scene; o.scale.setScalar(0.96 * 0.85);   /* 쿠모 at 80 % indoors */
+    L2.load("assets/character.glb", (g) => { const o = g.scene; o.scale.setScalar(0.96 * 0.85);   /* 쿠모 at full size: the flat is drawn true to its plan, 1.3 times life size */
       o.traverse((m) => { if (m.isMesh) { const mp = m.material && m.material.map; m.material = new THREE.MeshLambertMaterial({ map: mp, skinning: true }); m.frustumCulled = false; } });
       const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.4)"); gr.addColorStop(0.6, "rgba(0,0,0,0.16)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
       TP.blob = new THREE.Mesh(new THREE.CircleGeometry(0.34, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); TP.blob.rotation.x = -Math.PI / 2; scene.add(TP.blob);
@@ -4201,7 +4201,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   canvas.addEventListener("pointermove", (e) => { if (PT.has(e.pointerId)) PT.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch) { if (PT.size >= 2) { const d = pdist(); if (d > 10) { camera.fov = Math.max(35, Math.min(75, pinch.f0 * pinch.d0 / d)); camera.updateProjectionMatrix(); } } return; }
     if (!drag && TP.obj && e.pointerType === "mouse") canvas.style.cursor = onKumo(e.clientX, e.clientY) ? "grab" : "";
-    if (hold) { if (drag && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 24) { if (hold.t0 && performance.now() - hold.t0 < 450) { S.x = hold.sx; S.z = hold.sz; } hold = null; drag.moved = 99; drag.lx = e.clientX; drag.ly = e.clientY; } else { hold.x = e.clientX; hold.y = e.clientY; return; } }   /* pressed, then swept sideways: that is a look round, not a run */ if (!drag) return;
+    if (hold) { if (drag && hold.t0 && performance.now() - hold.t0 < 450 && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 24) { S.x = hold.sx; S.z = hold.sz; hold = null; drag.moved = 99; drag.lx = e.clientX; drag.ly = e.clientY; } else { hold.x = e.clientX; hold.y = e.clientY; return; } }   /* pressed, then swept sideways: that is a look round, not a run */ if (!drag) return;
     if (drag.tp) { const dx = e.clientX - drag.lx; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0)); if (drag.moved > 3) { TP.face += dx * 0.012; TP.dragging = true; canvas.style.cursor = "grabbing"; } drag.lx = e.clientX; drag.ly = e.clientY; return; }
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly; drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
     if (drag.moved > 6) { const k = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight; S.yaw += dx * k; S.pitch = Math.max(-0.5, Math.min(0.7, S.pitch + dy * k)); S.tx = null; }   /* the view swings round 쿠모 and tilts; he keeps walking where he was going */
@@ -4274,6 +4274,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function leave() { try { const g = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "usquare", t: Date.now() }))); } catch (e) {}
     doorFx.close(() => { freeGL(); kumhoHop(); location.replace("park.html"); }); }   // the doors swing shut behind, then the park
   $("exitBtn").addEventListener("click", askLeave);
+  { /* walk into the way out and the question comes at once: 나가시겠습니까? (asked again only after stepping away from it) */
+    const EXD = PICK.filter((o) => o.userData && o.userData.idx === "exit"), bbx = new THREE.Box3(); let armed = true;
+    setInterval(() => { if (!EXD.length || document.hidden) return; let at = false, far = true;
+      EXD.forEach((o) => { bbx.setFromObject(o); const dx = Math.max(bbx.min.x - S.x, 0, S.x - bbx.max.x), dz = Math.max(bbx.min.z - S.z, 0, S.z - bbx.max.z), d = Math.hypot(dx, dz); if ((S.fy || 0) < bbx.max.y - 0.5) { if (d < 0.38) at = true; if (d < 1.1) far = false; } });
+      if (far) armed = true; const el = document.getElementById("leaveAsk"); if (at && armed && (!el || el.hidden)) { armed = false; S.tx = null; askLeave(); } }, 120); }
   try { const g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); if (g && g.home) { sessionStorage.removeItem("kumhoPageGo"); sessionStorage.setItem("kumhoHomeCarry", JSON.stringify({ ride: g.ride, sound: g.sound })); } } catch (e) {}
 
   // ---- music: the park's own tune (assets/park-bgm.mp3, composed for the site — nothing to license), on from the first moment unless it was switched off ----
