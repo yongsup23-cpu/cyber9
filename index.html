@@ -11971,6 +11971,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     return !$("intro").hidden || atEasel || ($("t3d") && !$("t3d").hidden) || ($("lb") && !$("lb").hidden) || ($("mapLB") && !$("mapLB").hidden) || ($("bookLB") && !$("bookLB").hidden) || (SR.el && !SR.el.hidden) || document.body.classList.contains("kioskOn");
   }
   function stepVK(dt) {
+    if (!VK.j) VK.jH = null;   /* let go of the stick: the next push picks its way afresh */
     if (AIR.on || AIR.out) { VK.v = 0; return; }
     if (VK.j && !busy && !vkBlocked()) {   // the stick: walk the way it points (from where the camera looks), any angle, and let the view follow a sideways push
       if (anim) anim = null; if (auto.on) setAuto(false);
@@ -11978,7 +11979,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       /* a diagonal push walks straight along the diagonal: the view no longer turns with a sideways push */
       const hx = -Math.sin(cam.yaw), hz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw), L = Math.hypot(f, sd) || 1;
       VK.v += (vs - VK.v) * Math.min(1, dt * 5);
-      [cam.x, cam.z] = clampXZ(cam.x + (hx * f + rx * sd) / L * VK.v * dt, cam.z + (hz * f + rz * sd) / L * VK.v * dt, 0.9);
+      const ja = Math.atan2(sd, f); if (VK.jH == null || Math.abs(wrapAngle(ja - VK.jA)) > 0.6) { VK.jH = cam.yaw - ja; VK.jA = ja; } const jx = -Math.sin(VK.jH), jz = -Math.cos(VK.jH); if (Math.abs(ja) < 0.8) cam.yaw += wrapAngle(VK.jH - cam.yaw) * Math.min(1, dt * 0.7);   /* the stick walks the way it points on screen, fixed when the push starts so the walk runs straight; only walking forward does the view drift slowly round behind 쿠모 — sideways and back it stays put; turning the view is for a drag or the turn buttons */
+      [cam.x, cam.z] = clampXZ(cam.x + jx * VK.v * dt, cam.z + jz * VK.v * dt, 0.9);
       cam.y += (EYE - cam.y) * Math.min(1, dt * 2.5); cam.pitch += (0 - cam.pitch) * Math.min(1, dt * 2); looked = true; return; }
     if (!(VK.f || VK.b || VK.l || VK.r || VK.fl || VK.fr) || busy || vkBlocked()) { VK.v = 0; return; }
     if (anim) anim = null;
