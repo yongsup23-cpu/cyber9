@@ -4286,8 +4286,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
 })();
 
 </script>
-<div id="rotPad"><button type="button" id="rotL" aria-label="왼쪽으로 돌기">⟲</button><button type="button" id="rotR" aria-label="오른쪽으로 돌기">⟳</button></div>
-<style>#rotPad{position:fixed;left:16px;bottom:16px;z-index:6;display:flex;gap:10px}#rotPad button{width:54px;height:54px;border-radius:50%;border:1px solid rgba(201,168,106,.6);background:rgba(20,22,24,.62);color:#f3e6c8;font-size:26px;line-height:1;padding:0;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:pointer}#rotPad button.on{background:rgba(201,168,106,.6);color:#1a1a18}@media (max-width:600px){#rotPad{left:12px;bottom:12px}#rotPad button{width:48px;height:48px;font-size:23px}}</style>
+<div id="rotPad"><button type="button" id="rotL" aria-label="왼쪽으로 돌기"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><g fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(64 0) scale(-1 1)"><path d="M44.5 25.5 A14 14 0 1 0 46 34"/><path d="M45.5 17.5 L45 26 L36.6 25"/></g></svg></button><button type="button" id="rotR" aria-label="오른쪽으로 돌기"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><g fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M44.5 25.5 A14 14 0 1 0 46 34"/><path d="M45.5 17.5 L45 26 L36.6 25"/></g></svg></button></div>
+<style>#rotPad{position:fixed;left:16px;bottom:16px;z-index:6;display:flex;gap:12px}#rotPad button{position:relative;width:65px;height:65px;border-radius:50%;border:0;background:transparent;padding:0;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));opacity:.8;transition:opacity .2s,transform .12s}#rotPad button svg{display:block;width:100%;height:100%;pointer-events:none}#rotPad button.on{opacity:1;transform:scale(.94)}#rotPad button.on svg circle{fill:rgba(255,255,255,.16)}@media (max-width:600px){#rotPad{left:12px;bottom:12px}#rotPad button{width:58px;height:58px}}</style>
 <script>(function () { let dir = 0, last = 0; const st = () => window.__vh || window.__lib;
   const loop = (t) => { if (!dir) return; const S = st(), dt = Math.min(0.05, (t - last) / 1000); last = t; if (S) { S.yaw += dir * 1.5 * dt; S.tx = null; S.yawTo = null; } requestAnimationFrame(loop); };
   const bind = (id, d) => { const b = document.getElementById(id);
@@ -4299,7 +4299,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
 <button type="button" class="gx" aria-label="닫기">✕</button>
 <div class="ghead">
   <img class="gmark" src="assets/kumoguide/artera.png" alt="ARTERA">
-  <div class="gtitle"><div class="gk">ARTERA 84㎡A · 확장옵션형</div><h2>쿠모의 집 안내</h2><p>전용 84.5600㎡ · 공급 115.1116㎡ · 계약 161.4727㎡ — 평면도에서 방을 누르면 아래에 그 공간 이야기와 선택 옵션이 나와요.</p></div>
+  <div class="gtitle"><div class="gk">ARTERA 84㎡A · 확장옵션형</div><h2>쿠모의 집 안내</h2><p>전용 84.5600㎡ · 공급 115.1116㎡ · 계약 161.4727㎡ — 평면도에서 방을 누르면 그 공간 이야기와 선택 옵션이 나와요.</p></div>
   <div class="gkumo" aria-hidden="true"><div class="gbub">안녕! 우리 집 구경해 볼래?</div>
     <img class="gkimg" src="assets/kumoguide/kumo.png" alt=""></div>
 </div>
@@ -4326,7 +4326,13 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
 #guideBox .gdet ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6;color:#3d424b}#guideBox .gdet .gext{margin-top:10px;background:#1d2a5a;color:#f4ead2;border-radius:10px;padding:8px 11px;font-size:13px;line-height:1.5}#guideBox .gdet .gext b{color:#f2a33a;margin-right:6px}
 #guideBox .gopt{margin-top:10px;border:1.5px solid #f26a1f;border-radius:10px;padding:8px 11px;background:#fff7f0}#guideBox .gopt .got{font-size:12.5px;font-weight:800;color:#c4501a;margin-bottom:4px}#guideBox .gopt ul{font-size:13px;line-height:1.55}
 #guideBox .gnote{margin:12px 0 0;font-size:11.5px;color:#8a8f98}
-@media (max-width:640px){#guideBox .gdet{grid-template-columns:1fr}#guideBox .gmark{height:32px}#guideBox h2{font-size:18px}#guideBox .gbub{display:none}#guideBox .gkumo .gkimg{height:74px}#guideBox .gcard{padding:14px 12px 12px}}</style>
+@media (max-width:640px){#guideBox .gdet{grid-template-columns:1fr}#guideBox .gmark{height:32px}#guideBox h2{font-size:18px}#guideBox .gbub{display:none}#guideBox .gkumo .gkimg{height:74px}#guideBox .gcard{padding:14px 12px 12px}}
+@media (min-width:700px) and (orientation:landscape){#guideBox .gcard{width:min(1240px,100%);height:min(94vh,94dvh);max-height:none;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;column-gap:16px;overflow:hidden;padding:14px 18px 10px}
+#guideBox .ghead{grid-column:1/-1;padding-bottom:8px}#guideBox .gkumo .gkimg{height:78px}#guideBox .gmark{height:38px}#guideBox h2{font-size:19px}
+#guideBox .gplan{grid-column:1;grid-row:2;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px}#guideBox .gplan svg{width:100%;height:100%;max-height:100%}
+#guideBox .gdet{grid-column:2;grid-row:2;grid-template-columns:1fr;gap:10px;min-height:0;overflow:auto;align-content:start;-webkit-overflow-scrolling:touch}#guideBox .gdet img{aspect-ratio:16/8}
+#guideBox .gnote{grid-column:1/-1;margin-top:6px}}
+@media (min-width:700px) and (orientation:portrait){#guideBox .gcard{max-height:min(96vh,96dvh);padding:16px 18px 12px}#guideBox .gplan svg{max-height:min(46vh,46dvh)}#guideBox .gdet{gap:12px}}</style>
 <script>(function () { const b = document.getElementById("guideBox"); if (!b) return; ["pointerdown", "pointerup", "wheel", "touchstart"].forEach((ev) => b.addEventListener(ev, (e) => e.stopPropagation(), { passive: true }));
   const close = () => { b.hidden = true; }; b.querySelector(".gx").addEventListener("click", close); b.addEventListener("click", (e) => { if (e.target === b) close(); });
   const R = [
