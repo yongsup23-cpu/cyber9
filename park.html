@@ -4773,7 +4773,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   let photoMeshes = [], atlasUsers = {}, dust = null, reflector = null, beams = [];
   const atlasTex = {};
   const cam = { x: 0, z: 1.2, yaw: 0, pitch: 0, y: 1.6 };
-  window.__park = { cam, mode: () => mode, turn: (d) => { anim = null; looked = true; cam.yaw += d; } };   /* for the turn buttons (bottom left), shown only out in 아테라 타운 */
+  window.__park = { cam, mode: () => mode, turn: (d) => { if (AIR.on) { if (AIR.t >= 1) AIR.a += d; return; } anim = null; looked = true; cam.yaw += d; } };   /* in the aerial view the turn buttons swing the flight round the park */   /* for the turn buttons (bottom left), shown only out in 아테라 타운 */
   let anim = null, looked = false;
 
   function clearWorld() {
@@ -7505,8 +7505,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           [[-9.5], [9.5]].forEach(([dx]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(2.2, 6.6, 3), wm); p.position.set(gx + dx, 3.3, gz); A.add(p); });
           const lt = new THREE.Mesh(new THREE.BoxGeometry(21.2, 1.5, 3), wm); lt.position.set(gx, 7.35, gz); A.add(lt);
           const ud = new THREE.Mesh(new THREE.BoxGeometry(16.8, 0.2, 2.6), dk); ud.position.set(gx, 6.5, gz); A.add(ud);
-          const sg = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.1), new THREE.MeshBasicMaterial({ map: canvasTex(512, 64, (g, W, H) => { g.fillStyle = "#f3f2ee"; g.fillRect(0, 0, W, H); g.fillStyle = "#2b3a6e"; g.font = `700 40px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; if ("letterSpacing" in g) g.letterSpacing = "12px"; g.fillText("ARTERA", W / 2, H / 2 + 2); }) }));
-          sg.position.set(gx, 7.35, gz + 1.52); sg.visible = false;   // (the name on the lintel: taken off, the gateway stays plain white)
+          const sg = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.1), new THREE.MeshBasicMaterial({ map: canvasTex(1024, 128, (g, W, H) => { g.fillStyle = "#f3f2ee"; g.fillRect(0, 0, W, H); g.fillStyle = "#2b3a6e"; g.font = `700 84px "Helvetica Neue", Arial, ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; if ("letterSpacing" in g) g.letterSpacing = "26px"; g.fillText("ARTERA", W / 2, H / 2 + 4); }) }));
+          sg.position.set(gx, 7.35, gz + 1.52); A.add(sg); const sb = sg.clone(); sb.position.z = gz - 1.52; sb.rotation.y = Math.PI; A.add(sb);   // ARTERA on the lintel, on both faces
           const drv = new THREE.Mesh(new THREE.PlaneGeometry(14, 30), lam(0x4b4d52)); drv.rotation.x = -Math.PI / 2; drv.position.set(gx, 0.06, gz - 8); A.add(drv);
           const cm = new THREE.Mesh(new THREE.BoxGeometry(16, 5, 7), new THREE.MeshLambertMaterial({ color: 0xf1efe9, emissive: 0x6b5a3a, emissiveIntensity: 0.25 })); cm.position.set(-226, 2.5, 22); A.add(cm);   // the low community hall, lit
           OUT.arteraMats.push(cm.material); }
@@ -11936,6 +11936,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (AIR.on) {
       const turn = (VK.r ? 1 : 0) + (VK.fr ? 0.7 : 0) - (VK.l ? 1 : 0) - (VK.fl ? 0.7 : 0), fw = (VK.f || VK.fl || VK.fr ? 1 : 0) - (VK.b ? 1 : 0);
       AIR.a += (turn ? turn * 0.6 : (drag && drag.moved > 6) ? 0 : 0.035) * dt * (AIR.t < 1 ? 0 : 1);
+      if (VK.j && AIR.t >= 1) { const jf = -VK.jy, js = VK.jx, sp = 26 * Math.min(1, Math.hypot(jf, js)) * dt, L = Math.hypot(jf, js) || 1, yw = cam.yaw, hx = -Math.sin(yw), hz = -Math.cos(yw), rx = Math.cos(yw), rz = -Math.sin(yw);   /* the stick slides the whole flight over the town, the way it points on screen */
+        AIR.cx = Math.max(-40, Math.min(150, AIR.cx + (hx * jf + rx * js) / L * sp)); AIR.cz = Math.max(-150, Math.min(-10, AIR.cz + (hz * jf + rz * js) / L * sp)); }
       if (fw && AIR.t >= 1) { const sp = 24 * fw * dt, yw = cam.yaw; AIR.cx = Math.max(-40, Math.min(150, AIR.cx - Math.sin(yw) * sp)); AIR.cz = Math.max(-150, Math.min(-10, AIR.cz - Math.cos(yw) * sp)); }   // ↑/↓ fly forward and back over the park
       const r = AIR.r * AIR.s, h = AIR.h * AIR.s;
       const ox = Math.sin(AIR.a) * AIR.rx * AIR.s, oz = Math.cos(AIR.a) * r;   // an oval round the park, so the tall Artera blocks at its sides are never flown through
@@ -11974,7 +11976,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (VK.j && !busy && !vkBlocked()) {   // the stick: walk the way it points (from where the camera looks), any angle, and let the view follow a sideways push
       if (anim) anim = null; if (auto.on) setAuto(false);
       const f = -VK.jy, sd = VK.jx, m = Math.min(1, Math.hypot(f, sd)), vs = (mode === "outside" ? 9.36 * (RIDE.on ? 1.44 : 1) : 6.5) * m;
-      cam.yaw -= sd * 1.1 * dt * (f > -0.3 ? 1 : 0);
+      /* a diagonal push walks straight along the diagonal: the view no longer turns with a sideways push */
       const hx = -Math.sin(cam.yaw), hz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw), L = Math.hypot(f, sd) || 1;
       VK.v += (vs - VK.v) * Math.min(1, dt * 5);
       [cam.x, cam.z] = clampXZ(cam.x + (hx * f + rx * sd) / L * VK.v * dt, cam.z + (hz * f + rz * sd) / L * VK.v * dt, 0.9);
@@ -12628,5 +12630,30 @@ window.doorFx = (function () { const el = () => document.getElementById("doorFx"
   let t = null; const done = () => { clearTimeout(t); gg.hidden = true; if (window.openGuide) openGuide(); };
   window.kumhoGuideGet = () => { if (has()) { if (window.openGuide) openGuide(); return; } try { sessionStorage.setItem("kumhoGuideGot", "1"); } catch (e) {} sync(); gg.hidden = false; t = setTimeout(done, 2600); };   /* the first time: the pick-up moment, as with the heritage books; after that it simply opens */
   gg.addEventListener("click", done); })();</script>
-<style>#guideBox{z-index:100500}:root{--gbR:24px;--gbT:262px}</style></body>
+<style>#guideBox{z-index:100500}:root{--gbR:24px;--gbT:262px}</style><style id="invCSS">/* the items 쿠모 has found, the same on every page: equal square slots, each a clear picture of the thing with its name under it */
+body #mapBtn,body #hbBtn,body #ezBtn,body #bookBtn,body #easyBtn,body #guideBtn,body #invMap,body #invHb,body #invEz{position:fixed!important;left:auto!important;bottom:auto!important;right:14px!important;width:66px!important;height:66px!important;min-width:0!important;padding:0!important;margin:0!important;border-radius:16px!important;background:rgba(18,20,24,.34) var(--ico) center 7px/40px 40px no-repeat!important;border:1px solid rgba(255,255,255,.42)!important;box-shadow:0 2px 10px rgba(0,0,0,.18)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:transparent!important;font-size:0!important;line-height:0!important;overflow:hidden!important;transform:none!important;z-index:45!important;cursor:pointer;transition:none!important}
+body #mapBtn::after,body #hbBtn::after,body #ezBtn::after,body #bookBtn::after,body #easyBtn::after,body #guideBtn::after,body #invMap::after,body #invHb::after,body #invEz::after{content:attr(data-cap);position:absolute;left:0;right:0;bottom:6px;font:700 10px/1 system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#fff;text-align:center;text-shadow:0 1px 2px rgba(0,0,0,.7);letter-spacing:-.02em}
+body #mapBtn{--ico:url(assets/items/map.png)}body #hbBtn,body #bookBtn{--ico:url(assets/items/heritage.png)}body #ezBtn,body #easyBtn{--ico:url(assets/items/easy.png)}body #guideBtn{--ico:url(assets/items/guide.png)}
+body #mapBtn[hidden],body #hbBtn[hidden],body #ezBtn[hidden],body #bookBtn[hidden],body #easyBtn[hidden],body #guideBtn[hidden],body #invMap[hidden],body #invHb[hidden],body #invEz[hidden]{display:none!important}
+@media (min-width:900px){body #mapBtn,body #hbBtn,body #ezBtn,body #bookBtn,body #easyBtn,body #guideBtn,body #invMap,body #invHb,body #invEz{right:24px!important}}body #invMap{--ico:url(assets/items/map.png)}body #invHb{--ico:url(assets/items/heritage.png)}body #invEz{--ico:url(assets/items/easy.png)}
+.invView{position:fixed;inset:0;z-index:100600;background:rgba(14,12,10,.95);display:flex;flex-direction:column}.invView[hidden]{display:none}.invView .bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;color:#efe4cf}.invView .bar .pg{font-size:13px;color:#c9a86a;margin-left:8px}.invView button{background:rgba(40,36,30,.9);color:#f2e7d2;border:1px solid rgba(201,168,106,.6);border-radius:999px;padding:8px 16px;font:600 14px/1.2 system-ui,sans-serif;cursor:pointer}.invView .st{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 12px}.invView .st img{max-width:100%;max-height:100%;border-radius:8px;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.6)}.invView .nav{display:flex;justify-content:center;gap:16px;padding:12px}.invView .x{position:absolute;top:12px;right:12px;z-index:2}
+</style>
+<script>(function () { const IDS = ["mapBtn", "invMap", "hbBtn", "bookBtn", "invHb", "ezBtn", "easyBtn", "invEz", "guideBtn"], CAP = { mapBtn: "지도", invMap: "지도", hbBtn: "헤리티지북", bookBtn: "헤리티지북", invHb: "헤리티지북", ezBtn: "쉬운 책", easyBtn: "쉬운 책", invEz: "쉬운 책", guideBtn: "집 안내서" };   /* stack whichever items are shown, one under another with no gaps, below the page's own buttons at the top right */
+  const $ = (id) => document.getElementById(id), got = (k) => { try { return sessionStorage.getItem(k) === "1"; } catch (e) { return false; } };
+  const stop = (el) => ["pointerdown", "pointerup", "wheel", "touchstart"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation(), { passive: true }));
+  const view = (id, html) => { let v = $(id); if (!v) { v = document.createElement("div"); v.id = id; v.className = "invView"; v.hidden = true; v.innerHTML = html; document.body.appendChild(v); stop(v); } return v; };
+  /* pages that have no button of their own for an item still show it, and open it in a plain viewer: the park map as a picture, the heritage book page by page, the easy book in its frame */
+  const HB = { i: 0, n: 54 }, hbShow = () => { const v = $("invHbV"); v.querySelector("img").src = "assets/heritage/p" + String(HB.i + 1).padStart(2, "0") + ".jpg"; v.querySelector(".pg").textContent = (HB.i + 1) + " / " + HB.n; };
+  const OPEN = { invMap: () => { const v = view("invMapV", '<div class="bar"><b>🗺 아테라 타운 안내도</b><button type="button">닫기 ✕</button></div><div class="st"><img alt="아테라 타운 안내도" src="assets/park-map.jpg"></div>'); v.querySelector("button").onclick = (e) => { e.stopPropagation(); v.hidden = true; }; v.hidden = false; },
+    invHb: () => { const v = view("invHbV", '<div class="bar"><b>금호 헤리티지북 <span class="pg"></span></b><button type="button" data-a="x">닫기 ✕</button></div><div class="st"><img alt="금호 헤리티지북 페이지"></div><div class="nav"><button type="button" data-a="p">◀ 이전</button><button type="button" data-a="n">다음 ▶</button></div>');
+      v.onclick = (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; if (b.dataset.a === "x") { v.hidden = true; return; } HB.i = Math.max(0, Math.min(HB.n - 1, HB.i + (b.dataset.a === "n" ? 1 : -1))); hbShow(); }; v.hidden = false; hbShow(); },
+    invEz: () => { const v = view("invEzV", '<button type="button" class="x">닫기 ✕</button><iframe title="쉽게 보는 금호 80년" style="width:100%;height:100%;border:0;background:#fff"></iframe>'); v.querySelector(".x").onclick = (e) => { e.stopPropagation(); v.hidden = true; v.querySelector("iframe").removeAttribute("src"); }; v.querySelector("iframe").src = "assets/easybook.html"; v.hidden = false; } };
+  const GEN = [["invMap", "kumhoMapGot", ["mapBtn"]], ["invHb", "kumhoHeritageGot", ["hbBtn", "bookBtn"]], ["invEz", "kumhoEasyGot", ["ezBtn", "easyBtn"]]];
+  const isPark = !!$("enterBtn");
+  const gen = () => { GEN.forEach(([id, key, nat]) => { if (isPark && id !== "invMap" ? false : isPark) return; if (nat.some((n) => $(n))) { const g = $(id); if (g) g.remove(); return; } let b = $(id); if (!got(key)) { if (b) b.hidden = true; return; }
+      if (!b) { b = document.createElement("button"); b.type = "button"; b.id = id; b.textContent = CAP[id]; document.body.appendChild(b); stop(b); b.addEventListener("click", (e) => { e.stopPropagation(); OPEN[id](); }); } b.hidden = false; }); };
+  const base = () => { if (isPark) return 130; let b = 70; ["exitBtn", "sndBtn", "viewBtn"].forEach((id) => { const e = $(id); if (!e || e.hidden || !e.getClientRects().length) return; const r = e.getBoundingClientRect(); if (r.right > innerWidth - 260 && r.bottom < innerHeight * 0.5) b = Math.max(b, r.bottom + 10); }); return b; };
+  const lay = () => { gen(); let y = base(); IDS.forEach((id) => { const e = $(id); if (!e) return; if (!e.dataset.cap) { e.dataset.cap = CAP[id]; e.setAttribute("aria-label", (e.textContent || CAP[id]).trim()); e.title = CAP[id]; } if (e.hidden || getComputedStyle(e).display === "none") return; e.style.setProperty("top", y + "px", "important"); y += 74; }); };
+  setInterval(lay, 400); addEventListener("resize", lay); setTimeout(lay, 50); })();</script>
+</body>
 </html>
