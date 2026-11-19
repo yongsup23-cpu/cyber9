@@ -3990,7 +3990,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const bal = tex(512, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = "#b8925a"; for (let x = 4; x < w; x += 32) g.fillRect(x, 0, 5, h); g.fillRect(0, h - 10, w, 10); g.fillRect(0, 0, w, 6); }, (X1 - X0) / 2.2, 1);
     const bm = new THREE.MeshLambertMaterial({ map: bal, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, emissive: 0x2a1a08 });
     add(new THREE.PlaneGeometry(X1 - X0 - 2.4, 1.05), bm, 1.2, MY + 0.52, MZ + 0.05); box(X1 - X0 - 2.4, 0.07, 0.1, bronzeL, 1.2, MY + 1.08, MZ + 0.05);
-    block(8 - 0.5, 8 + 0.5, -12, -11, MY, MY + 2); }
+    }   /* (the block left here from the old floating ring on the mezzanine is gone: the way across the middle is clear) */
   // ---- the stair up the left wall: 16 lit timber treads, bronze rails ----
   const SX0 = -15.6, SX1 = -13.6, SZ0 = 2, SZ1 = MZ, NS = 16, RS = MY / NS, TR = (SZ0 - SZ1) / NS;
   { const tread = lam(0x6e4b33), led = new THREE.MeshBasicMaterial({ color: 0xffcf8e });

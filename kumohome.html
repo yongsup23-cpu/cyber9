@@ -4297,15 +4297,15 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     F(314.6, 190.5, 317.5, 229, 1.08, 1.12, lam(0x6f5a44), false); F(314.8, 191, 317.5, 228.5, 1.07, 1.08, new THREE.MeshBasicMaterial({ color: 0xffe2b0 }), false);
     [[0x2e4a6a, 196, 0.2], [0xc9a26a, 197, 0.16], [0x7a2e2a, 198, 0.22]].forEach(([c, v, h]) => F(315.4, v, 317.2, v + 0.8, 1.12, 1.12 + h, lam(c), false)); add(new THREE.CylinderGeometry(0.06, 0.07, 0.14, 12), lam(0xe6dfd0), px(316.2), 1.19, pz(222)); add(new THREE.SphereGeometry(0.1, 10, 8), lam(0x6f8f55), px(316.2), 1.33, pz(222));
     [[pA, 203], [pB, 215]].forEach(([t, v]) => { const fr = add(new THREE.BoxGeometry(0.03, 0.62, 0.48), lam(0x2b2c2e), px(317.4) - 0.02, 1.62, pz(v)); const pl = add(new THREE.PlaneGeometry(0.43, 0.57), new THREE.MeshBasicMaterial({ map: t }), px(317.4) - 0.04, 1.62, pz(v)); pl.rotation.y = -Math.PI / 2; });
-    { /* the west wall, as you come in on the right: a long desk with a dark top and a drawer pedestal, three lit oak shelves on the wall above it, a chair */
+    { /* the west wall, as you come in on the right, down by the window: a long desk with a dark top and a drawer pedestal, three lit oak shelves on the wall above it, a chair */
       const oak = lam(0xc9a27a), dtop = lam(0x2e2f31), wl = lam(0xf4f2ee), glow = new THREE.MeshBasicMaterial({ color: 0xffe2b0 });
-      F(259, 176, 271, 208, 0.72, 0.76, dtop); F(259, 176, 271, 208, 0.69, 0.72, oak, false); F(270.2, 176.4, 270.9, 177.1, 0, 0.69, lam(0x1d1d1f), false);
-      F(259.2, 198, 270.6, 207.6, 0, 0.69, lam(0x2a2b2d)); [0.24, 0.46].forEach((y) => F(270.6, 198.3, 270.7, 207.3, y, y + 0.012, lam(0x5a5b5e), false)); block(px(259), px(271), pz(176), pz(208), 0, 0.8);
-      [1.28, 1.6, 1.92].forEach((y, i) => { F(259, 178 + i * 2, 265.5, 206 - i * 2, y, y + 0.035, oak, false); F(259.2, 178.5 + i * 2, 265.3, 205.5 - i * 2, y - 0.005, y, glow, false); });
-      [[0x2e4a6a, 181, 0.2], [0xc9a26a, 182.1, 0.17], [0x7a2e2a, 183, 0.22], [0x3e5a3a, 184, 0.19]].forEach(([c, v, h]) => F(260, v, 263.8, v + 0.8, 1.315, 1.315 + h, lam(c), false));
-      add(new THREE.CylinderGeometry(0.06, 0.07, 0.14, 12), lam(0x2b2c2e), px(262), 1.705, pz(196)); add(new THREE.SphereGeometry(0.11, 10, 8), lam(0x6f8f55), px(262), 1.84, pz(196)); F(260, 185, 264, 190, 1.955, 2.12, lam(0xd9c7a8), false);
-      F(261, 184, 268, 193, 0.76, 0.775, lam(0xe9e5dc), false); F(261.5, 190, 266, 196, 0.76, 0.82, lam(0x7a8a6a), false);
-      F(272, 186, 278, 195, 0.44, 0.49, lam(0xd9b98a), false); F(278, 186, 278.8, 195, 0.49, 0.92, lam(0xd9b98a), false); [[272.4, 186.4], [277.2, 186.4], [272.4, 194.2], [277.2, 194.2]].forEach(([u, v]) => F(u, v, u + 0.5, v + 0.5, 0, 0.44, lam(0x2b2c2e), false)); }
+      F(259, 196, 271, 228, 0.72, 0.76, dtop); F(259, 196, 271, 228, 0.69, 0.72, oak, false); F(270.2, 196.4, 270.9, 197.1, 0, 0.69, lam(0x1d1d1f), false);
+      F(259.2, 218, 270.6, 227.6, 0, 0.69, lam(0x2a2b2d)); [0.24, 0.46].forEach((y) => F(270.6, 218.3, 270.7, 227.3, y, y + 0.012, lam(0x5a5b5e), false)); block(px(259), px(271), pz(196), pz(228), 0, 0.8);
+      [1.28, 1.6, 1.92].forEach((y, i) => { F(259, 198 + i * 2, 265.5, 226 - i * 2, y, y + 0.035, oak, false); F(259.2, 198.5 + i * 2, 265.3, 225.5 - i * 2, y - 0.005, y, glow, false); });
+      [[0x2e4a6a, 201, 0.2], [0xc9a26a, 202.1, 0.17], [0x7a2e2a, 203, 0.22], [0x3e5a3a, 204, 0.19]].forEach(([c, v, h]) => F(260, v, 263.8, v + 0.8, 1.315, 1.315 + h, lam(c), false));
+      add(new THREE.CylinderGeometry(0.06, 0.07, 0.14, 12), lam(0x2b2c2e), px(262), 1.705, pz(216)); add(new THREE.SphereGeometry(0.11, 10, 8), lam(0x6f8f55), px(262), 1.84, pz(216)); F(260, 205, 264, 210, 1.955, 2.12, lam(0xd9c7a8), false);
+      F(261, 204, 268, 213, 0.76, 0.775, lam(0xe9e5dc), false); F(261.5, 210, 266, 216, 0.76, 0.82, lam(0x7a8a6a), false);
+      F(272, 206, 278, 215, 0.44, 0.49, lam(0xd9b98a), false); F(278, 206, 278.8, 215, 0.49, 0.92, lam(0xd9b98a), false); [[272.4, 206.4], [277.2, 206.4], [272.4, 214.2], [277.2, 214.2]].forEach(([u, v]) => F(u, v, u + 0.5, v + 0.5, 0, 0.44, lam(0x2b2c2e), false)); }
     add(new THREE.CylinderGeometry(0.004, 0.004, 0.75, 6), lam(0x222222), px(288), HT - 0.375, pz(226)); add(new THREE.SphereGeometry(0.09, 16, 12), new THREE.MeshBasicMaterial({ color: 0xd8d4cc }), px(288), HT - 0.8, pz(226)); }
   // 쿠모's nameplate by his door
   { const t = tex(256, 96, (g, w, h) => { g.fillStyle = "#1d2a5a"; g.fillRect(0, 0, w, h); g.fillStyle = "#f26a1f"; g.fillRect(0, h - 8, w, 8); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 44px ${FONT}`; g.fillText("쿠모 방", w / 2, 44); });
