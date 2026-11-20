@@ -3,7 +3,7 @@
 <head><meta charset="utf-8">
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
 (function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
-  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
+  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket"].forEach(function (k) { sessionStorage.removeItem(k); }); } catch (e) {}
   window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); } catch (e) {} }; })();</script>
 <title>금호 가치체계 전시관</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
