@@ -11785,14 +11785,17 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       /* like the mini bus: it drives up to 쿠모's right-hand side, and waits there to be tapped */
       const f = cam.yaw + Math.PI, fx = Math.sin(f), fz = Math.cos(f), rx = -Math.cos(f), rz = Math.sin(f); let x = cam.x + rx * 1.6, z = cam.z + rz * 1.6; if (!groundOK(x, z)) { x = cam.x - rx * 1.6; z = cam.z - rz * 1.6; }
       const T = RIDE.taxi; T.visible = true; T.rotation.y = f + Math.PI / 2; const x0 = x - fx * 7, z0 = z - fz * 7, y = (cam.fy || 0) + 0.02, t0 = performance.now(); T.position.set(x0, y, z0); RIDE.taxiCome = t0;
-      (function drive() { if (RIDE.taxiCome !== t0 || RIDE.on) return; const u = Math.min(1, (performance.now() - t0) / 1500), e = 1 - Math.pow(1 - u, 3); T.position.set(x0 + (x - x0) * e, y, z0 + (z - z0) * e); if (u < 1) requestAnimationFrame(drive); })();
+      const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0), o3 = new THREE.Vector3(), surf = (px, pz) => { o3.set(px, y + 1.2, pz); rc.set(o3, dn); rc.far = 1.8; let top = y - 0.02;   /* the real surface under each wheel spot (kerbs, paving, planters' rims): the taxi rides on it, never through it */
+        for (const h of rc.intersectObjects(world.children, true)) { let q = h.object, mine = false; while (q) { if (q === T || q === TP.obj) { mine = true; break; } q = q.parent; } if (mine || !h.object.visible || (h.object.material && h.object.material.transparent && h.object.material.opacity < 0.05)) continue; if (h.point.y <= y + 0.6) { top = Math.max(top, h.point.y); break; } } return top; };
+      const lift = (px, pz) => { const r = T.rotation.y, c = Math.cos(r), sn = Math.sin(r), L = MT_LEN * 0.36, W = MT_LEN * 0.18; let m = -1e9; [[L, W], [L, -W], [-L, W], [-L, -W], [0, 0]].forEach(([u, v]) => { m = Math.max(m, surf(px + u * c + v * sn, pz - u * sn + v * c)); }); return m + 0.02; };
+      (function drive() { if (RIDE.taxiCome !== t0 || RIDE.on) return; const u = Math.min(1, (performance.now() - t0) / 1500), e = 1 - Math.pow(1 - u, 3), px = x0 + (x - x0) * e, pz = z0 + (z - z0) * e; T.position.set(px, lift(px, pz), pz); if (u < 1) requestAnimationFrame(drive); })();
       taxiToast("🚕 미니택시가 왔어요! 택시를 누르면 탈 수 있어요", 2600);
     }).catch(() => taxiToast("택시 모델을 불러오지 못했어요", 2200));
   }
   function miniTaxiBoard() {   /* in: 쿠모 takes the back seat and drives off from where it stands */
     const T = RIDE.taxi; if (!T || RIDE.on || mode !== "outside") return; RIDE.taxiCome = 0; if (!TP.obj) tpLoad(); if (RIDE.kind !== "taxi" && RIDE.bus !== T) RIDE.busKeep = RIDE.bus; RIDE.miniWas = !!(COIN.mini && COIN.mini.visible);
     anim = null; hold = null; TP.sit = null; RIDE.on = true; RIDE.kind = "taxi"; RIDE.bus = T; T.visible = true;
-    cam.x = T.position.x; cam.z = T.position.z; TP.px = cam.x; TP.pz = cam.z; TP.face = T.rotation.y - Math.PI / 2; cam.yaw = TP.face + Math.PI; TP.gy = T.position.y - 0.02;
+    cam.x = T.position.x; cam.z = T.position.z; TP.px = cam.x; TP.pz = cam.z; TP.face = T.rotation.y - Math.PI / 2; cam.yaw = TP.face + Math.PI; TP.gy = cam.fy || 0;
     rideRider(); rideBtn().hidden = false; const ob = $("rideOff"); if (ob) ob.textContent = "🚕 미니택시에서 내리기"; taxiToast("🚕 미니택시 출발! 방향키(또는 화면 패드)로 자유롭게 달려 보세요", 2600); }
   const MT_ROT = 0;
   window.__miniTaxi = () => miniTaxi();
