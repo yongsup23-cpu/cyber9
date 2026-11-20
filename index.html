@@ -11753,7 +11753,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function rideEnd() {
     if (!RIDE.on) return; RIDE.on = false; if (RIDE.bus) RIDE.bus.visible = false; const b = $("rideOff"); if (b) b.hidden = true;
-    if (RIDE.kind === "taxi") { RIDE.kind = null; const T = RIDE.taxi; T.visible = true; RIDE.bus = RIDE.busKeep || null; if (COIN.mini && RIDE.miniWas) COIN.mini.visible = true; cam.x += Math.cos(TP.face) * 1.1; cam.z -= Math.sin(TP.face) * 1.1; TP.px = cam.x; TP.pz = cam.z; return; }   /* off the mini taxi: 쿠모 steps out beside it, and it stays parked there to be taken again */
+    if (RIDE.kind === "taxi") { RIDE.kind = null; RIDE.lyS = null; const T = RIDE.taxi; T.visible = true; RIDE.bus = RIDE.busKeep || null; if (COIN.mini && RIDE.miniWas) COIN.mini.visible = true; cam.x += Math.cos(TP.face) * 1.1; cam.z -= Math.sin(TP.face) * 1.1; TP.px = cam.x; TP.pz = cam.z; return; }   /* off the mini taxi: 쿠모 steps out beside it, and it stays parked there to be taken again */
     if (COIN.mini) { COIN.mini.visible = true; if (RIDE.bus) { COIN.mini.position.set(RIDE.bus.position.x, 0.02 + (cam.fy || 0), RIDE.bus.position.z); COIN.mini.rotation.y = RIDE.bus.rotation.y; } OUT.colDirty = true; }   // parked where you got off
     cam.x += Math.cos(TP.face) * 1.1; cam.z -= Math.sin(TP.face) * 1.1; TP.px = cam.x; TP.pz = cam.z;   // step out to the side
   }
@@ -11784,24 +11784,25 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       /* like the mini bus: it drives up to 쿠모's right-hand side, and waits there to be tapped */
       const f = cam.yaw + Math.PI, fx = Math.sin(f), fz = Math.cos(f), rx = -Math.cos(f), rz = Math.sin(f); let x = cam.x + rx * 1.6, z = cam.z + rz * 1.6; if (!groundOK(x, z)) { x = cam.x - rx * 1.6; z = cam.z - rz * 1.6; }
       const T = RIDE.taxi; T.visible = true; T.rotation.y = f + Math.PI / 2; const x0 = x - fx * 7, z0 = z - fz * 7, y = (cam.fy || 0) + 0.02, t0 = performance.now(); T.position.set(x0, y, z0); RIDE.taxiCome = t0;
-      const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0), o3 = new THREE.Vector3(), surf = (px, pz) => { o3.set(px, y + 1.2, pz); rc.set(o3, dn); rc.far = 1.8; let top = y - 0.02;   /* the real surface under each wheel spot (kerbs, paving, planters' rims): the taxi rides on it, never through it */
-        for (const h of rc.intersectObjects(world.children, true)) { let q = h.object, mine = false; while (q) { if (q === T || q === TP.obj) { mine = true; break; } q = q.parent; } if (mine || !h.object.visible || (h.object.material && h.object.material.transparent && h.object.material.opacity < 0.05)) continue; if (h.point.y <= y + 0.6) { top = Math.max(top, h.point.y); break; } } return top; };
+      const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0), o3 = new THREE.Vector3(), surf = (px, pz) => { o3.set(px, y + 1.2, pz); rc.set(o3, dn); rc.far = 1.8; rc.camera = camera; let top = y - 0.02; let hs = []; try { hs = rc.intersectObjects(world.children, true); } catch (e) { return top; }   /* sprites need the camera to be hit-tested; anything odd: stay on the level */   /* the real surface under each wheel spot (kerbs, paving, planters' rims): the taxi rides on it, never through it */
+        for (const h of hs) { if (h.object.isSprite || h.object.isPoints || h.object.isLine) continue; let q = h.object, mine = false; while (q) { if (q === T || q === TP.obj) { mine = true; break; } q = q.parent; } if (mine || !h.object.visible || (h.object.material && h.object.material.transparent && h.object.material.opacity < 0.05)) continue; if (h.point.y <= y + 0.6) { top = Math.max(top, h.point.y); break; } } return top; };
       const lift = (px, pz) => { const r = T.rotation.y, c = Math.cos(r), sn = Math.sin(r), L = MT_LEN * 0.36, W = MT_LEN * 0.18; let m = -1e9; [[L, W], [L, -W], [-L, W], [-L, -W], [0, 0]].forEach(([u, v]) => { m = Math.max(m, surf(px + u * c + v * sn, pz - u * sn + v * c)); }); return m + 0.02; };
+      RIDE.taxiLift = lift;
       (function drive() { if (RIDE.taxiCome !== t0 || RIDE.on) return; const u = Math.min(1, (performance.now() - t0) / 1500), e = 1 - Math.pow(1 - u, 3), px = x0 + (x - x0) * e, pz = z0 + (z - z0) * e; T.position.set(px, lift(px, pz), pz); if (u < 1) requestAnimationFrame(drive); })();
       taxiToast("🚕 미니택시가 왔어요! 택시를 누르면 탈 수 있어요", 2600);
-    }).catch(() => taxiToast("택시 모델을 불러오지 못했어요", 2200));
+    }).catch((err) => { console.error("미니택시", err); taxiToast(err && err.message && /모델|fetch|Failed/.test(err.message) ? "택시 모델을 불러오지 못했어요 · 새로고침해 보세요" : "미니택시를 부르지 못했어요 · 다시 눌러 보세요", 2400); });
   }
   function miniTaxiBoard() {   /* in: 쿠모 takes the back seat and drives off from where it stands */
     const T = RIDE.taxi; if (!T || RIDE.on || mode !== "outside") return; RIDE.taxiCome = 0; if (!TP.obj) tpLoad(); if (RIDE.kind !== "taxi" && RIDE.bus !== T) RIDE.busKeep = RIDE.bus; RIDE.miniWas = !!(COIN.mini && COIN.mini.visible);
     anim = null; hold = null; TP.sit = null; RIDE.on = true; RIDE.kind = "taxi"; RIDE.bus = T; T.visible = true;
-    cam.x = T.position.x; cam.z = T.position.z; TP.px = cam.x; TP.pz = cam.z; TP.face = T.rotation.y - Math.PI / 2; cam.yaw = TP.face + Math.PI; TP.gy = cam.fy || 0;
+    cam.x = T.position.x; cam.z = T.position.z; TP.px = cam.x; TP.pz = cam.z; TP.face = T.rotation.y - Math.PI / 2; cam.yaw = TP.face + Math.PI; TP.gy = cam.fy || 0; RIDE.ly = T.position.y; RIDE.lt = performance.now();
     rideRider(); rideBtn().hidden = false; const ob = $("rideOff"); if (ob) ob.textContent = "🚕 미니택시에서 내리기"; taxiToast("🚕 미니택시 출발! 방향키(또는 화면 패드)로 자유롭게 달려 보세요", 2600); }
   const MT_ROT = 0;
   window.__miniTaxi = () => miniTaxi();
   function rideRider() {   // the bus under 쿠모, and 쿠모 in its seat
     const o = TP.obj, B = RIDE.bus; if (!o || !B) return; const gy = TP.gy || 0, ry = TP.face + Math.PI / 2;
     if (COIN.mini && COIN.mini.visible && COIN.mini !== B) COIN.mini.visible = false;   // the parked one (and its label) stays hidden while you ride
-    B.position.set(cam.x, gy + 0.02, cam.z); B.rotation.y = ry; const th = TP.face; o.rotation.y = th; if (busModel.cutU) busModel.cutU.value = B.position.y + 0.5;   // the roof cut rides with the bus (on the raised plaza or the gallery the walls were cut away)
+    B.position.set(cam.x, gy + 0.02, cam.z); B.rotation.y = ry; const th = TP.face; o.rotation.y = th; if (busModel.cutU) busModel.cutU.value = B.position.y + 0.5; if (RIDE.kind === "taxi" && RIDE.taxiLift) { const nw = performance.now(); if (nw - (RIDE.lt || 0) > 250) { RIDE.lt = nw; try { RIDE.ly = RIDE.taxiLift(cam.x, cam.z); } catch (e) {} } RIDE.lyS = RIDE.lyS == null ? RIDE.ly : RIDE.lyS + (RIDE.ly - RIDE.lyS) * 0.25; B.position.y = RIDE.lyS; }   /* the mini taxi keeps to the ground under it, kerbs and paving included, easing over the edges */   // the roof cut rides with the bus (on the raised plaza or the gallery the walls were cut away)
     const fo = RIDE.kind === "taxi" ? 0.12 : 0.26, so = RIDE.kind === "taxi" ? 0 : 0.1;   /* in the mini taxi 쿠모 sits on the back seat, in the middle */ o.position.set(B.position.x + Math.sin(th) * fo - Math.cos(th) * so - Math.cos(ry) * 0.05, B.position.y + 0.04, B.position.z + Math.cos(th) * fo + Math.sin(th) * so + Math.sin(ry) * 0.05);   // 25 cm further toward the front than before
     TP.blob.position.set(cam.x, gy + 0.03, cam.z); TP.blob.scale.setScalar(2.2);
   }
