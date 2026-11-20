@@ -11179,6 +11179,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "outBus") { const si = stops.findIndex((t) => t.outBus); if (si >= 0 && si !== cur) { cur = si; showCard(); } if (OUT.kind === "taxi" && OUT.st === "come") { OUT.st = "idle"; OUT.x = 0; OUT.veh.position.x = 0; } outBusGo(); return; }   // the founding taxi too just pulls away and drives past (riding it is gone: it crashed on some devices)
     if (o.userData.idx === "outBench") { if (TP.on && TP.obj && TP.act.Sit) { seatSit({ x: 4.6, z: 6.08, top: 0.66, fx: 0, fz: -1 }); return; } moveTo({ x: 4.6, z: 6.1, yaw: 0, pitch: 0.03, y: 1.22 }); taxiCSS(); taxiToast("벤치에 앉았습니다 · 길 건너 풍경과 오가는 버스를 바라봅니다", 2800); return; }   /* third person: 쿠모 sits down on the bus-stop bench, like the park benches */
     if (o.userData.idx === "hoop") { hoopStart(o.userData.hoop); return; }
+    if (o.userData.idx === "miniTaxi") { miniTaxiBoard(); return; }
     if (o.userData.idx === "valueHall") { doorFront(o, () => { if (!busy) pageGo({ valueHall: true }); }); return; }
     if (o.userData.idx === "usqDoor") { doorFront(o, usqAsk); return; } if (o.userData.idx === "kumoHome") { doorFront(o, goHomeAsk); return; }   // 쿠모의 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { doorFront(o, () => { if (!busy) pageGo({ library: true }); }); return; }
@@ -11753,17 +11754,17 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   function rideEnd() {
     if (!RIDE.on) return; RIDE.on = false; if (RIDE.bus) RIDE.bus.visible = false; const b = $("rideOff"); if (b) b.hidden = true;
-    if (RIDE.kind === "taxi") { RIDE.kind = null; if (COIN.mini && RIDE.miniWas) COIN.mini.visible = true; cam.x += Math.cos(TP.face) * 0.9; cam.z -= Math.sin(TP.face) * 0.9; TP.px = cam.x; TP.pz = cam.z; return; }   /* off the mini taxi: it simply goes; the mini bus stays where it was */
+    if (RIDE.kind === "taxi") { RIDE.kind = null; const T = RIDE.taxi; T.visible = true; RIDE.bus = RIDE.busKeep || null; if (COIN.mini && RIDE.miniWas) COIN.mini.visible = true; cam.x += Math.cos(TP.face) * 1.1; cam.z -= Math.sin(TP.face) * 1.1; TP.px = cam.x; TP.pz = cam.z; return; }   /* off the mini taxi: 쿠모 steps out beside it, and it stays parked there to be taken again */
     if (COIN.mini) { COIN.mini.visible = true; if (RIDE.bus) { COIN.mini.position.set(RIDE.bus.position.x, 0.02 + (cam.fy || 0), RIDE.bus.position.z); COIN.mini.rotation.y = RIDE.bus.rotation.y; } OUT.colDirty = true; }   // parked where you got off
     cam.x += Math.cos(TP.face) * 1.1; cam.z -= Math.sin(TP.face) * 1.1; TP.px = cam.x; TP.pz = cam.z;   // step out to the side
   }
   /* the mini taxi: the founding Ford shrunk to a ride-on toy (1.9 m), its roof taken off by one level cut just under the roofline (a clean straight edge, the inside showing), driven like the mini bus; called from the ticket item */
-  const MT_LEN = 2.5;
+  const MT_LEN = 2.0;
   function miniTaxi() {
     taxiCSS(); if (mode !== "outside" || AIR.on || AIR.out) { taxiToast("🚕 아테라 타운에서 누르면 미니택시를 탈 수 있어요", 2400); return; }
     if ((cam.fy || 0) > 1) { taxiToast("🚕 미니택시는 1층에서 탈 수 있어요", 2200); return; }
     if (RIDE.on) { if (RIDE.kind === "taxi") return; rideEnd(); }
-    if (HOOP) hoopEnd(); taxiToast("🚕 미니택시를 부르는 중…", 1400);
+    if (HOOP) hoopEnd();
     decodeTaxi().then(({ geometry, texture, surface, normal }) => {
       if (mode !== "outside" || RIDE.on) return;
       if (!RIDE.taxi) { const g = new THREE.Group(), sc = MT_LEN / 1.90101;
@@ -11777,22 +11778,29 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           const sh = new THREE.Mesh(new THREE.PlaneGeometry(MT_LEN * 1.12, MT_LEN * 0.56), new THREE.MeshBasicMaterial({ map: sT, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })); sh.rotation.x = -Math.PI / 2; sh.position.y = -0.012; sh.renderOrder = 2; g.add(sh); }   /* a soft shadow under the body so it sits on the ground */
         const dk = new THREE.MeshLambertMaterial({ color: 0x2b2522 }), seatM = new THREE.MeshLambertMaterial({ color: 0x6b3a26 });
         const k = MT_LEN / 1.9, fl = new THREE.Mesh(new THREE.BoxGeometry(1.2 * k, 0.04, 0.62 * k), dk); fl.position.y = 0.16 * k; g.add(fl);
-        const st = new THREE.Mesh(new THREE.BoxGeometry(0.36 * k, 0.12 * k, 0.6 * k), seatM); st.position.set(0.05 * k, 0.26 * k, 0); g.add(st); const bk = new THREE.Mesh(new THREE.BoxGeometry(0.08 * k, 0.3 * k, 0.6 * k), seatM); bk.position.set(0.25 * k, 0.4 * k, 0); g.add(bk);
-        g.traverse((o) => { o.userData.noCol = true; o.castShadow = false; }); RIDE.taxi = g; }
-      if (RIDE.taxi.parent !== world) world.add(RIDE.taxi);
-      if (!TP.obj) tpLoad(); RIDE.miniWas = !!(COIN.mini && COIN.mini.visible);
-      anim = null; hold = null; TP.sit = null; RIDE.on = true; RIDE.kind = "taxi"; RIDE.bus = RIDE.taxi; RIDE.taxi.visible = true;
-      TP.px = cam.x; TP.pz = cam.z; TP.face = cam.yaw + Math.PI; TP.gy = (cam.fy || 0); rideRider(); rideBtn().hidden = false; const ob = $("rideOff"); if (ob) ob.textContent = "🚕 미니택시에서 내리기";
-      taxiToast("🚕 미니택시 출발! 방향키(또는 화면 패드)로 자유롭게 달려 보세요", 2600);
+        const st = new THREE.Mesh(new THREE.BoxGeometry(0.36 * k, 0.12 * k, 0.6 * k), seatM); st.position.set(-0.02 * k, 0.26 * k, 0); g.add(st); const bk = new THREE.Mesh(new THREE.BoxGeometry(0.08 * k, 0.3 * k, 0.6 * k), seatM); bk.position.set(0.2 * k, 0.4 * k, 0); g.add(bk);
+        g.traverse((o) => { o.userData.noCol = true; o.castShadow = false; }); RIDE.taxi = g;
+        const pk = new THREE.Mesh(new THREE.BoxGeometry(MT_LEN, 1.2, MT_LEN * 0.45), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.6; pk.userData.idx = "miniTaxi"; g.add(pk); RIDE.taxiPick = pk; }   /* tap the taxi to get in */
+      if (RIDE.taxi.parent !== world) world.add(RIDE.taxi); if (!pickables.includes(RIDE.taxiPick)) pickables.push(RIDE.taxiPick);
+      /* like the mini bus: it drives up to 쿠모's right-hand side, and waits there to be tapped */
+      const f = cam.yaw + Math.PI, fx = Math.sin(f), fz = Math.cos(f), rx = -Math.cos(f), rz = Math.sin(f); let x = cam.x + rx * 1.6, z = cam.z + rz * 1.6; if (!groundOK(x, z)) { x = cam.x - rx * 1.6; z = cam.z - rz * 1.6; }
+      const T = RIDE.taxi; T.visible = true; T.rotation.y = f + Math.PI / 2; const x0 = x - fx * 7, z0 = z - fz * 7, y = (cam.fy || 0) + 0.02, t0 = performance.now(); T.position.set(x0, y, z0); RIDE.taxiCome = t0;
+      (function drive() { if (RIDE.taxiCome !== t0 || RIDE.on) return; const u = Math.min(1, (performance.now() - t0) / 1500), e = 1 - Math.pow(1 - u, 3); T.position.set(x0 + (x - x0) * e, y, z0 + (z - z0) * e); if (u < 1) requestAnimationFrame(drive); })();
+      taxiToast("🚕 미니택시가 왔어요! 택시를 누르면 탈 수 있어요", 2600);
     }).catch(() => taxiToast("택시 모델을 불러오지 못했어요", 2200));
   }
+  function miniTaxiBoard() {   /* in: 쿠모 takes the back seat and drives off from where it stands */
+    const T = RIDE.taxi; if (!T || RIDE.on || mode !== "outside") return; RIDE.taxiCome = 0; if (!TP.obj) tpLoad(); if (RIDE.kind !== "taxi" && RIDE.bus !== T) RIDE.busKeep = RIDE.bus; RIDE.miniWas = !!(COIN.mini && COIN.mini.visible);
+    anim = null; hold = null; TP.sit = null; RIDE.on = true; RIDE.kind = "taxi"; RIDE.bus = T; T.visible = true;
+    cam.x = T.position.x; cam.z = T.position.z; TP.px = cam.x; TP.pz = cam.z; TP.face = T.rotation.y - Math.PI / 2; cam.yaw = TP.face + Math.PI; TP.gy = T.position.y - 0.02;
+    rideRider(); rideBtn().hidden = false; const ob = $("rideOff"); if (ob) ob.textContent = "🚕 미니택시에서 내리기"; taxiToast("🚕 미니택시 출발! 방향키(또는 화면 패드)로 자유롭게 달려 보세요", 2600); }
   const MT_ROT = 0;
   window.__miniTaxi = () => miniTaxi();
   function rideRider() {   // the bus under 쿠모, and 쿠모 in its seat
     const o = TP.obj, B = RIDE.bus; if (!o || !B) return; const gy = TP.gy || 0, ry = TP.face + Math.PI / 2;
     if (COIN.mini && COIN.mini.visible && COIN.mini !== B) COIN.mini.visible = false;   // the parked one (and its label) stays hidden while you ride
     B.position.set(cam.x, gy + 0.02, cam.z); B.rotation.y = ry; const th = TP.face; o.rotation.y = th; if (busModel.cutU) busModel.cutU.value = B.position.y + 0.5;   // the roof cut rides with the bus (on the raised plaza or the gallery the walls were cut away)
-    o.position.set(B.position.x + Math.sin(th) * 0.26 - Math.cos(th) * 0.1 - Math.cos(ry) * 0.05, B.position.y + 0.04, B.position.z + Math.cos(th) * 0.26 + Math.sin(th) * 0.1 + Math.sin(ry) * 0.05);   // 25 cm further toward the front than before
+    const fo = RIDE.kind === "taxi" ? 0.12 : 0.26, so = RIDE.kind === "taxi" ? 0 : 0.1;   /* in the mini taxi 쿠모 sits on the back seat, in the middle */ o.position.set(B.position.x + Math.sin(th) * fo - Math.cos(th) * so - Math.cos(ry) * 0.05, B.position.y + 0.04, B.position.z + Math.cos(th) * fo + Math.sin(th) * so + Math.sin(ry) * 0.05);   // 25 cm further toward the front than before
     TP.blob.position.set(cam.x, gy + 0.03, cam.z); TP.blob.scale.setScalar(2.2);
   }
   function hoopMsg(txt, good) { const m = $("hoopMsg"); if (!m) return; m.textContent = txt; m.style.color = good ? "#ffd36a" : "#e6e6e6"; m.classList.remove("on"); void m.offsetWidth; m.classList.add("on"); clearTimeout(m._t); m._t = setTimeout(() => m.classList.remove("on"), 1300); }
