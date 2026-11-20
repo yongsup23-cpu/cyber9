@@ -100,7 +100,7 @@ html.park #card{display:none!important}
 .film .reel span{font-family:"Noto Serif KR",serif;font-size:13px;line-height:1.3}
 .film .reel small{display:none;font-size:9px;color:var(--mute)}
 
-#mapLB{position:fixed;inset:0;z-index:13;background:rgba(10,11,10,.97);display:flex;flex-direction:column;padding:18px 22px 22px;gap:12px}
+#mapLB{position:fixed;inset:0;z-index:13;background:rgba(10,11,10,.97);display:flex;flex-direction:column;padding:18px 22px 22px;gap:12px;overflow:hidden}
 #mapLB[hidden]{display:none!important}
 #mapLB .mhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
 #mapLB .mhead .k{font-size:12px;letter-spacing:2px;color:var(--gold)}
@@ -10541,10 +10541,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     nInfo.setContent(`<div class="iwpin">${infoHtml(it, i)}</div>`); nInfo.open(nMap, m.getPosition()); fillInfoImage(it);
   }
   /* a click on a Naver map gives its box the focus, and the browser then scrolls the clipped frames round it to "show" it: the whole view slid up and only half the map stayed in sight. Clipped frames (overflow hidden) never scroll here, so any such scroll is put straight back */
-  document.addEventListener("scroll", (e) => { const t = e.target; if (t === document || t === document.documentElement || t === document.body) { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); if (document.body.scrollTop) document.body.scrollTop = 0; return; }
+  document.addEventListener("scroll", (e) => { const t = e.target; if (t === document || t === document.documentElement || t === document.body) { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); const de = document.documentElement, bd = document.body; if (bd.scrollTop || bd.scrollLeft) { bd.scrollTop = 0; bd.scrollLeft = 0; } if (de.scrollTop || de.scrollLeft) { de.scrollTop = 0; de.scrollLeft = 0; } return; }
     if (!t || !t.nodeType || t.nodeType !== 1 || (t.closest && t.closest("#nmap, #wallMap"))) return; const cs = getComputedStyle(t); if ((cs.overflowY === "hidden" || cs.overflowY === "clip") && (cs.overflowX === "hidden" || cs.overflowX === "clip")) { if (t.scrollTop) t.scrollTop = 0; if (t.scrollLeft) t.scrollLeft = 0; } }, true);
   function fitNaver(map, el) {   /* a Naver map drawn while its box was still hidden or growing kept that size (a quarter of the screen, top-left): follow the box and redraw at its real size */
-    if (!map || !el) return; el.__map = map; const fit = () => { if (el.__map !== map) return; const w = el.clientWidth, h = el.clientHeight; if (w > 10 && h > 10) { const sz = map.getSize && map.getSize(); if (!sz || Math.abs(sz.width - w) > 1 || Math.abs(sz.height - h) > 1) { const c = map.getCenter(); map.setSize(new naver.maps.Size(w, h)); map.setCenter(c); } } };
+    if (!map || !el) return; el.__map = map; const fit = () => { if (el.__map !== map) return; el.style.width = el.style.height = ""; const w = el.clientWidth, h = el.clientHeight; if (w > 10 && h > 10) { const sz = map.getSize && map.getSize(); if (!sz || Math.abs(sz.width - w) > 1 || Math.abs(sz.height - h) > 1) { const c = map.getCenter(); map.setSize(new naver.maps.Size(w, h)); map.setCenter(c); } } el.style.width = el.style.height = ""; };   /* the map's own resize pins a fixed pixel size on its box; take it off again so the box keeps following the layout (it had stuck at its first, too small, height) */
     el.__fit = fit; if (window.ResizeObserver && !el.__ro) { el.__ro = new ResizeObserver(() => { if (el.__fit) el.__fit(); }); el.__ro.observe(el); } [0, 80, 300, 700, 1500].forEach((t) => setTimeout(fit, t)); }   /* the observer always serves the map living in the box now (a hall's map is rebuilt on each visit; the old one used to keep the observer) */
   function createNaverMap() {
     if (nMap || nFailed) return;
