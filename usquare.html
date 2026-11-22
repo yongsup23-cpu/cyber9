@@ -4,10 +4,13 @@
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
 (function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
   var carry = null; try { carry = JSON.parse(sessionStorage.getItem("kumhoItemsCarry") || "null"); } catch (e) {}
-  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot"].forEach(function (k) { sessionStorage.removeItem(k); });
+  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].concat(["kumhoPz"]).forEach(function (k) { sessionStorage.removeItem(k); });
   if (carry && Date.now() - carry.t < 120000) (carry.k || []).forEach(function (k) { sessionStorage.setItem(k, "1"); }); } catch (e) {}   /* items handed over by the page just left are always kept, whatever the browser says about where we came from */
-  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
+  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
 <title>유·스퀘어</title>
+<script>/* the park tune starts the moment the page opens (before the 3D scene is built), unless it was switched off */
+(function () { try { var off = false; try { var g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"), c = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "null"); if (g ? g.sound === false : (c && c.sound === false)) off = true; } catch (e) {}
+  var au = window.__bgmAu = new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", ""); if (!off) { var p = au.play(); if (p && p.catch) p.catch(function () {}); } } catch (e) {} })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap">
 <style>
@@ -4195,7 +4198,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       for (let k = 0; k <= 4; k++) { const x = -1.24 + k * 0.62; b(0.03, 0.03, 0.42, steelA, x, 0.62, 0.02); b(0.03, 0.2, 0.03, steelA, x, 0.52, 0.22); }
       const c = Math.cos(ry), sn = Math.sin(ry), xs = [], zs = []; [[-1.3, -0.35], [1.3, -0.35], [-1.3, 0.3], [1.3, 0.3]].forEach(([u, v]) => { xs.push(cx + u * c + v * sn); zs.push(cz - u * sn + v * c); }); block(Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs), 0, 1); };
     row(17.0, -5.6, Math.PI); row(19.8, -5.6, Math.PI); row(17.0, -7.2, Math.PI); row(19.8, -7.2, Math.PI);   /* off to the east, clear of the way out and the ARTERA mark */
-    row(-14.5, -1.6, Math.PI); row(-11.7, -1.6, Math.PI); row(-36, -9, Math.PI); row(-42, -9, Math.PI); }
+    row(-14.5, -1.6, Math.PI); row(-11.7, -1.6, Math.PI); row(-36, -9, Math.PI); row(-42, -9, Math.PI);
+    [-7.2, -4.4, 4.4, 7.2].forEach((x) => { row(x, -18.4, Math.PI); row(x, -20.6, Math.PI); }); }   /* between the ticket hall and the bay doors: two lines of seats either side of a clear middle way, facing the doors */
   // silver round columns in the hall
   [[14.5, -19.5], [-14.5, -19.5]].forEach(([x, z]) => { const c = add(new THREE.CylinderGeometry(0.55, 0.55, HT, 28), lam(0xc3c7cc), x, HT / 2, z); block(x - 0.55, x + 0.55, z - 0.55, z + 0.55); WALLS.push(c); add(new THREE.CylinderGeometry(0.6, 0.6, 0.12, 28), steel, x, 0.06, z); });
   prog(0.7);
@@ -4377,7 +4381,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function tkGive() {   /* the ticket windows and the machines hand out the mini-taxi ticket: kept in this browser tab, it sits with the other items */
     if (tkHave()) { toast("🎫 승차권은 이미 받았어요 · 아테라 타운에서 오른쪽 위 ‘승차권’을 눌러 보세요"); return; }
     if (!busHave()) { npcSay(["🚌 미니택시 승차권은 미니버스 탑승권이 있어야 받을 수 있어요.", "아테라 타운에서 분수에 소원 동전을 모두 던지거나, 농구 3단계를 통과하거나, 사진 퍼즐 3개를 맞춰 미니버스부터 얻어 오세요!"]); const d = $("npcDlg"); if (d) d.querySelector(".nm").textContent = "무인발권기 안내"; return; }   /* the mini taxi comes after the mini bus */
-    try { sessionStorage.setItem("kumhoTicket", "1"); } catch (e) {} const g = $("tkGet"); g.hidden = false; g.onclick = () => { g.hidden = true; }; }
+    try { sessionStorage.setItem("kumhoTicket", "1"); sessionStorage.setItem("kumhoTaxiGot", "1"); } catch (e) {} const g = $("tkGet"), t0 = performance.now(); g.hidden = false; g.onclick = () => { if (performance.now() - t0 > 600) g.hidden = true; }; }   /* on a Galaxy Tab (Android) the tap that hands the ticket over sends a click a moment later onto the new screen: that one must not shut it at once */
   function npcSay(lines, done, ask) { const d = $("npcDlg"), tx = d.querySelector(".tx"), bt = d.querySelector(".bt"); let i = 0; NPC.talk = true; d.hidden = false; d.querySelector(".nm").textContent = "도서관 할아버지";
     const show = () => { tx.textContent = lines[i]; bt.innerHTML = ""; const last = i === lines.length - 1;
       if (last && ask) { [["YES", "y", ask.yes], ["NO", "n", ask.no]].forEach(([t, c, f]) => { const x = document.createElement("button"); x.type = "button"; x.textContent = t; x.className = c; x.onclick = (e) => { e.stopPropagation(); d.hidden = true; NPC.talk = false; f(); }; bt.appendChild(x); }); return; }
@@ -4408,7 +4412,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   try { const g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); if (g && g.home) { sessionStorage.removeItem("kumhoPageGo"); sessionStorage.setItem("kumhoHomeCarry", JSON.stringify({ ride: g.ride, sound: g.sound })); } } catch (e) {}
 
   // ---- music: the park's own tune (assets/park-bgm.mp3, composed for the site — nothing to license), on from the first moment unless it was switched off ----
-  { const au = window.__bgmAu = new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", "");
+  { const au = window.__bgmAu || (window.__bgmAu = new Audio("assets/park-bgm.mp3")); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", "");
     let on = true; try { const c = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "{}"); if (c.sound === false) on = false; } catch (e) {}
     const btn = $("sndBtn"), show = () => { btn.textContent = on ? "♪ 음악 켬" : "♪ 음악 끔"; btn.setAttribute("aria-pressed", String(on)); };
     const play = () => { if (on && au.paused) { const p = au.play(); if (p && p.catch) p.catch(() => {}); } };
@@ -4416,7 +4420,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     ["pointerdown", "keydown", "touchend"].forEach((ev) => addEventListener(ev, kick, true));   // browsers that hold sound back until the first touch start it then
     btn.addEventListener("click", (e) => { e.stopPropagation(); on = !on; if (on) play(); else au.pause(); show();
       try { const c = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "{}"); c.sound = on; sessionStorage.setItem("kumhoHomeCarry", JSON.stringify(c)); } catch (x) {} });
-    show(); play(); }
+    show(); if (on) play(); else au.pause(); }
   function freeGL() { if (freeGL.done) return; freeGL.done = true;   // leaving the page: hand back every texture, buffer and the GL context itself, so the next page (on an iPad above all) starts with the memory free
     try { if (window.__bgmAu) { window.__bgmAu.pause(); window.__bgmAu.removeAttribute("src"); } scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { for (const k in m) { const v = m[k]; if (v && v.isTexture) v.dispose(); } m.dispose(); }); });
       renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} }

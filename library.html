@@ -4,10 +4,13 @@
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
 (function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
   var carry = null; try { carry = JSON.parse(sessionStorage.getItem("kumhoItemsCarry") || "null"); } catch (e) {}
-  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot"].forEach(function (k) { sessionStorage.removeItem(k); });
+  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].concat(["kumhoPz"]).forEach(function (k) { sessionStorage.removeItem(k); });
   if (carry && Date.now() - carry.t < 120000) (carry.k || []).forEach(function (k) { sessionStorage.setItem(k, "1"); }); } catch (e) {}   /* items handed over by the page just left are always kept, whatever the browser says about where we came from */
-  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
+  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
 <title>금호 도서관</title>
+<script>/* the park tune starts the moment the page opens (before the 3D scene is built), unless it was switched off */
+(function () { try { var off = false; try { var g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"), c = JSON.parse(sessionStorage.getItem("kumhoLibCarry") || "null"); if (g ? g.sound === false : (c && c.sound === false)) off = true; } catch (e) {}
+  var au = window.__bgmAu = new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", ""); if (!off) { var p = au.play(); if (p && p.catch) p.catch(function () {}); } } catch (e) {} })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap">
 <style>
@@ -4221,7 +4224,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   try { const g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); if (g && g.library) { sessionStorage.removeItem("kumhoPageGo"); sessionStorage.setItem("kumhoLibCarry", JSON.stringify({ ride: g.ride, sound: g.sound })); } } catch (e) {}
 
   // ---- music: the park's own tune (assets/park-bgm.mp3, composed for the site — nothing to license), on from the first moment unless it was switched off ----
-  { const au = window.__bgmAu = new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", "");
+  { const au = window.__bgmAu || (window.__bgmAu = new Audio("assets/park-bgm.mp3")); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", "");
     let on = true; try { const c = JSON.parse(sessionStorage.getItem("kumhoLibCarry") || "{}"); if (c.sound === false) on = false; } catch (e) {}
     const btn = $("sndBtn"), show = () => { btn.textContent = on ? "♪ 음악 켬" : "♪ 음악 끔"; btn.setAttribute("aria-pressed", String(on)); };
     const play = () => { if (on && au.paused) { const p = au.play(); if (p && p.catch) p.catch(() => {}); } };
@@ -4229,7 +4232,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     ["pointerdown", "keydown", "touchend"].forEach((ev) => addEventListener(ev, kick, true));   // browsers that hold sound back until the first touch start it then
     btn.addEventListener("click", (e) => { e.stopPropagation(); on = !on; if (on) play(); else au.pause(); show();
       try { const c = JSON.parse(sessionStorage.getItem("kumhoLibCarry") || "{}"); c.sound = on; sessionStorage.setItem("kumhoLibCarry", JSON.stringify(c)); } catch (x) {} });
-    show(); play(); }
+    show(); if (on) play(); else au.pause(); }
   function freeGL() { if (freeGL.done) return; freeGL.done = true;   // leaving the page: hand back every texture, buffer and the GL context itself, so the next page (on an iPad above all) starts with the memory free
     try { if (window.__bgmAu) { window.__bgmAu.pause(); window.__bgmAu.removeAttribute("src"); } scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { for (const k in m) { const v = m[k]; if (v && v.isTexture) v.dispose(); } m.dispose(); }); });
       renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} }

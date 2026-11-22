@@ -4,10 +4,13 @@
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
 (function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
   var carry = null; try { carry = JSON.parse(sessionStorage.getItem("kumhoItemsCarry") || "null"); } catch (e) {}
-  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot"].forEach(function (k) { sessionStorage.removeItem(k); });
+  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].concat(["kumhoPz"]).forEach(function (k) { sessionStorage.removeItem(k); });
   if (carry && Date.now() - carry.t < 120000) (carry.k || []).forEach(function (k) { sessionStorage.setItem(k, "1"); }); } catch (e) {}   /* items handed over by the page just left are always kept, whatever the browser says about where we came from */
-  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
+  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
 <title>쿠모의 집</title>
+<script>/* the park tune starts the moment the page opens (before the 3D scene is built), unless it was switched off */
+(function () { try { var off = false; try { var g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"), c = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "null"); if (g ? g.sound === false : (c && c.sound === false)) off = true; } catch (e) {}
+  var au = window.__bgmAu = new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", ""); if (!off) { var p = au.play(); if (p && p.catch) p.catch(function () {}); } } catch (e) {} })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap">
 <style>
@@ -17,7 +20,7 @@ html,body{margin:0;height:100%;background:#141414;overflow:hidden;font-family:"N
 #viewBtn{position:fixed;right:16px;top:104px;z-index:6;background:rgba(23,24,21,.85);color:#e8dfcf;border:1px solid rgba(201,168,106,.6);border-radius:999px;padding:7px 14px;font:600 13px inherit;font-family:inherit;cursor:pointer}
 #plan{position:fixed;left:16px;top:74px;z-index:5;width:250px;background:rgba(20,22,24,.78);border:1px solid rgba(201,168,106,.5);border-radius:10px;padding:6px}#planCv{display:block;width:100%;height:auto;border-radius:6px;background:#efe9df}#planRooms{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}#planRooms button{font:600 10.5px inherit;font-family:inherit;padding:3px 6px;border-radius:5px;border:1px solid rgba(201,168,106,.45);background:rgba(40,42,44,.9);color:#e8dfcf;cursor:pointer}#planRooms button.on{background:#c9a86a;color:#1c1a18}
 #ktvBtn{position:absolute;left:50%;bottom:-58px;transform:translateX(-50%);z-index:41;white-space:nowrap;background:#c4161c;color:#fff;text-decoration:none;border-radius:999px;padding:9px 18px;font:700 14px inherit;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.35)}
-#tvBox{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center}#tvBox[hidden]{display:none}#tvBox .in{position:relative;width:min(1100px,94vw);aspect-ratio:16/9}#tvBox iframe{width:100%;height:100%;border:0;border-radius:8px;background:#000}#tvBox .x{position:absolute;right:0;top:-44px;background:#fff;color:#222;border:0;border-radius:999px;padding:8px 16px;font:700 14px inherit;font-family:inherit;cursor:pointer}
+#tvBox{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center}#tvBox[hidden]{display:none}#tvBox .in{position:relative;width:min(990px,84.6vw,calc((100vh - 160px) * 16 / 9));aspect-ratio:16/9}#tvBox iframe{width:100%;height:100%;border:0;border-radius:8px;background:#000}#tvBox .x{position:absolute;right:0;top:-44px;background:#fff;color:#222;border:0;border-radius:999px;padding:8px 16px;font:700 14px inherit;font-family:inherit;cursor:pointer}
 @media (max-width:700px){#plan{width:150px;top:58px;padding:4px}#planRooms button{font-size:9px;padding:2px 4px}#ktvBtn{font-size:12px;padding:7px 12px;bottom:-48px}}
 #hud h1{margin:0;font-size:26px;font-weight:700;color:#fbf6ee;text-shadow:0 2px 10px rgba(0,0,0,.6)}#hud div{font-size:12px;letter-spacing:.14em;color:#c9a86a;margin-top:2px}
 #exitBtn{position:fixed;right:16px;top:16px;z-index:6;background:rgba(23,24,21,.85);color:#e8dfcf;border:1px solid rgba(201,168,106,.6);border-radius:999px;padding:9px 16px;font:600 14px inherit;font-family:inherit;cursor:pointer}
@@ -3924,7 +3927,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const HK = 1.3, HV = 1.3, HN0 = scene.children.length,   /* one scale for plan and heights alike (1.3 times life size), so every room keeps the floor plan's true proportions; 쿠모 at full size beside it */ SC = 0.044 * HK, OX = 170, OY = 135, HT = 2.4,   // HK: the whole flat drawn 1.3 times life size, so it sits right with 쿠모 (who is a big lad)
    px = (v) => (v - OX) * SC, pz = (v) => (v - OY) * SC;
   const X0 = px(17), X1 = px(322), Z0 = pz(37), Z1 = pz(232);
-  const BEDS = [], PICK = [], BOX = [], FLOORS = [], OCC = [], WALLS = [], DSL = [], GDOORS = [], WSEG = [], TVSPOT = {};   // DSL: the dressing room's sliding glass leaves   // OCC: walls and tall pieces that fade when they stand between the camera and 쿠모
+  const BEDS = [], PICK = [], BOX = [], FLOORS = [], OCC = [], WALLS = [], DSL = [], GDOORS = [], WSEG = [], TVSPOT = {}, WATER = [], FRIDGE = [];   // DSL: the dressing room's sliding glass leaves   // OCC: walls and tall pieces that fade when they stand between the camera and 쿠모
   const block = (x0, x1, z0, z1, y0 = 0, y1 = 3) => BOX.push([Math.min(x0, x1), Math.max(x0, x1), Math.min(z0, z1), Math.max(z0, z1), y0, y1]);
   const grain = (base, line, w, h, n) => tex(w, h, (g) => { g.fillStyle = base; g.fillRect(0, 0, w, h); for (let i = 0; i < n; i++) { g.strokeStyle = line; g.globalAlpha = 0.08 + rnd() * 0.12; g.lineWidth = 1 + rnd() * 2; const y = rnd() * h; g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(w * 0.3, y + rnd() * 6 - 3, w * 0.7, y + rnd() * 6 - 3, w, y); g.stroke(); } g.globalAlpha = 1; });
   const woodT = tex(512, 512, (g, w, h) => { g.fillStyle = "#cdb89c"; g.fillRect(0, 0, w, h); for (let r = 0; r < 8; r++) { const y = r * 64, off = (r % 2) * 180; g.fillStyle = `rgba(${150 + rnd() * 30},${120 + rnd() * 25},${90 + rnd() * 20},.18)`; g.fillRect(0, y, w, 64);
@@ -4019,6 +4022,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // ---- furnishing, kept simple ----
   const white = lam(0xf3f1ec), greige = lam(0xd8d2c8), oakM = lam(0xb68d62), dark = lam(0x2b2c30), stone = lam(0xe9e5dc), green = lam(0x8fa77c), tan = lam(0xc9a27a), porcelain = lam(0xfbfbf9), steel = lam(0xb8bcc0);
   const F = (u0, v0, u1, v1, y0, y1, m, solid = true) => { const o = box((u1 - u0) * SC, y1 - y0, (v1 - v0) * SC, m, (px(u0) + px(u1)) / 2, (y0 + y1) / 2, (pz(v0) + pz(v1)) / 2); if (solid) block(px(u0), px(u1), pz(v0), pz(v1), y0, Math.max(y1, 0.6)); if (y1 > 1.3) OCC.push(o); return o; };
+  const water = (u, v, y0, y1, r) => {   /* a running tap: a thin, moving stream and a ring spreading where it lands, shown only while 쿠모 stands close */
+    const t = tex(16, 64, (g, w, h) => { g.clearRect(0, 0, w, h); for (let i = 0; i < 8; i++) { const gr = g.createLinearGradient(0, i * 8, 0, i * 8 + 8); gr.addColorStop(0, "rgba(255,255,255,.95)"); gr.addColorStop(0.5, "rgba(180,220,245,.5)"); gr.addColorStop(1, "rgba(255,255,255,.9)"); g.fillStyle = gr; g.fillRect(0, i * 8, w, 8); } }, 1, 3);
+    const s = add(new THREE.CylinderGeometry(0.011, 0.016, y1 - y0, 10, 1, true), new THREE.MeshBasicMaterial({ map: t, color: 0xd8efff, transparent: true, opacity: 0.75, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }), px(u), (y0 + y1) / 2, pz(v)); s.renderOrder = 6; s.visible = false;
+    const rp = add(new THREE.RingGeometry(0.03, 0.05, 24), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false, toneMapped: false }), px(u), y0 + 0.004, pz(v)); rp.rotation.x = -Math.PI / 2; rp.renderOrder = 6; rp.visible = false;
+    WATER.push({ s, rp, tex: t, x: px(u), z: pz(v), r: r || 1.3, k: 0, ph: 0 }); };
   // kitchen: the long counter under the window with its sink, the island, tall cabinets with the fridge on the west side
   { const TXK = (f, rx, ry) => { const t = new THREE.TextureLoader().load("assets/" + f); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = ANISO; return lam(0xffffff, { map: t }); };
     const flute = lam(0xffffff, { map: tex(256, 64, (g, w, h) => { g.fillStyle = "#ece8df"; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 8) { const gr = g.createLinearGradient(x, 0, x + 8, 0); gr.addColorStop(0, "rgba(0,0,0,.10)"); gr.addColorStop(0.5, "rgba(255,255,255,.18)"); gr.addColorStop(1, "rgba(0,0,0,.10)"); g.fillStyle = gr; g.fillRect(x, 0, 8, h); } }) }); flute.map.wrapS = THREE.RepeatWrapping; flute.map.repeat.set(4, 1);
@@ -4028,6 +4036,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     [124.2, 137, 150, 163, 175].forEach((u) => F(u, 53.95, u + 0.25, 54.15, 0.1, 0.84, lam(0xcfc9be), false));
     F(111.5, 40, 186.5, 54.6, 0.86, 0.9, topM, false); F(128, 42.5, 149, 51.5, 0.86, 0.902, sinkM, false); F(129, 43.3, 148, 50.7, 0.89, 0.904, sinkIn, false);
     add(new THREE.CylinderGeometry(0.018, 0.024, 0.3, 10), steel, px(138.5), 0.9 + 0.15, pz(41.6)); F(138, 41.6, 139, 45.5, 1.17, 1.19, steel, false); F(138.2, 45, 138.8, 45.6, 1.1, 1.18, steel, false);
+    water(138.5, 45.0, 0.905, 1.17);   /* walk up to the sink and the tap runs */
     F(160, 43, 177, 52, 0.9, 0.906, blk, false); [[164, 46], [173, 46], [168.5, 50]].forEach(([u, v]) => { const r = add(new THREE.RingGeometry(0.07, 0.085, 24), new THREE.MeshBasicMaterial({ color: 0x55585c }), px(u), 0.908, pz(v)); r.rotation.x = -Math.PI / 2; });
     /* the stone backsplash on either side of the window, the upper cabinets over it with a strip of light beneath, and a blind above the window */
     F(112, 40, 125, 40.6, 0.9, 1.45, splash, false); F(152, 40, 186, 40.6, 0.9, 1.45, splash, false); F(125, 40, 152, 40.6, 0.9, 0.95, splash, false);
@@ -4047,9 +4056,29 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     F(138, 84, 182, 96, 0, 0.88, TXI("islandbase.jpg", 2, 1)); F(136, 83, 184, 97, 0.88, 0.92, TXI("islandtop.jpg", 2, 0.6), false); }
   { const pan = (() => { const t = new THREE.TextureLoader().load("assets/kitpanel.jpg"); t.encoding = THREE.sRGBEncoding; return lam(0xffffff, { map: t }); })(), seam = lam(0x8f887d), blk = lam(0x1f1f22);
     /* west: the tall fridge and pantry run, flush greige panels from floor to ceiling with no handles, a fine seam between doors */
-    F(102, 82, 112, 128, 0, 2.3, pan); [90, 98, 106, 114, 121].forEach((v) => F(112, v - 0.15, 112.3, v + 0.15, 0.04, 2.28, seam, false));
-    { /* the built-in fridges in the tall run facing the dining table: long brushed steel bar handles either side of two meeting lines */ const st = lam(0xc9ccd0);
-      [96.9, 98.6, 112.9, 114.6].forEach((v) => { F(112.7, v, 113.0, v + 0.5, 0.7, 1.8, st, false); F(112.3, v + 0.1, 112.7, v + 0.4, 0.75, 0.79, st, false); F(112.3, v + 0.1, 112.7, v + 0.4, 1.71, 1.75, st, false); }); } F(112, 82, 112.3, 128, 0.0, 0.05, seam, false);
+    F(102, 82, 112, 90, 0, 2.3, pan); F(102, 121, 112, 128, 0, 2.3, pan); F(102, 90, 112, 121, 1.95, 2.3, pan, false); F(102, 90, 112, 121, 0, 0.04, pan, false); block(px(102), px(112), pz(82), pz(128), 0, 2.3);
+    [90, 121].forEach((v) => F(112, v - 0.15, 112.3, v + 0.15, 0.04, 2.28, seam, false)); F(112, 90, 112.3, 121, 1.94, 1.96, seam, false);
+    { /* the two built-in fridges in the tall run facing the dining table: flush doors with long steel bar handles at the meeting line; as 쿠모 comes up to one, its doors swing open on a lit inside with glass shelves of food and bottles in the door bins */
+      const st = lam(0xc9ccd0), inM = new THREE.MeshBasicMaterial({ color: 0xf3f7fa }), inS = lam(0xe4eaef), shelf = new THREE.MeshBasicMaterial({ color: 0xd6eef5, transparent: true, opacity: 0.55, depthWrite: false }), led = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const FOOD = [0xe8463c, 0xf2b134, 0x6fae4a, 0xfaf6ee, 0x3a6fb0, 0xd97a2b, 0x9b3a5a, 0x2e8b57];
+      [[90, 106], [106, 121]].forEach(([v0, v1]) => {
+        F(102, v0, 102.6, v1, 0.04, 1.94, inM, false); F(102, v0, 112, v0 + 0.35, 0.04, 1.94, inS, false); F(102, v1 - 0.35, 112, v1, 0.04, 1.94, inS, false); F(102, v0, 112, v1, 1.9, 1.94, inM, false); F(102, v0, 112, v1, 0.04, 0.1, inS, false);
+        F(102.7, v0 + 1, 103, v1 - 1, 1.86, 1.89, led, false);
+        [0.48, 0.86, 1.22, 1.56].forEach((y) => { F(102.6, v0 + 0.35, 110.4, v1 - 0.35, y, y + 0.012, shelf, false);
+          for (let v = v0 + 1.2; v < v1 - 1.5; v += 1.6 + rnd() * 1.4) { const c = FOOD[(rnd() * FOOD.length) | 0], k = rnd();
+            if (k < 0.35) add(new THREE.CylinderGeometry(0.035, 0.04, 0.2, 10), lam(c), px(104 + rnd() * 3), y + 0.112, pz(v));
+            else if (k < 0.7) F(103.2, v, 106 + rnd() * 2, v + 1 + rnd() * 0.8, y + 0.012, y + 0.08 + rnd() * 0.12, lam(c), false);
+            else add(new THREE.SphereGeometry(0.05, 10, 8), lam(c), px(105 + rnd() * 3), y + 0.062, pz(v)); } });
+        F(103, v0 + 1, 110, v1 - 1, 0.1, 0.4, new THREE.MeshBasicMaterial({ color: 0xcfe6ee, transparent: true, opacity: 0.6, depthWrite: false }), false);   /* the crisper drawer */
+        const mid = (v0 + v1) / 2, unit = { cx: px(113.5), cz: pz(mid), doors: [], t: 0, to: 0 };
+        [[v0, 1], [v1, -1]].forEach(([hv, sg]) => { const L = Math.abs(mid - hv) * SC - 0.006, g = new THREE.Group(); g.position.set(px(112) + 0.03, 0, pz(hv)); scene.add(g);
+          const bx = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); g.add(o); return o; };
+          bx(0.05, 1.89, L, pan, 0, 0.985, sg * L / 2); bx(0.008, 1.8, L - 0.06, inS, -0.029, 0.99, sg * L / 2);   /* the door and its pale inner liner */
+          [0.5, 0.95, 1.4].forEach((y) => { bx(0.07, 0.012, L - 0.1, shelf, -0.065, y, sg * L / 2); bx(0.006, 0.07, L - 0.1, shelf, -0.098, y + 0.035, sg * L / 2);
+            for (let k = 0; k < 3; k++) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.028, 0.16, 8), lam(FOOD[(rnd() * FOOD.length) | 0])); b.position.set(-0.065, y + 0.09, sg * (0.08 + k * (L - 0.16) / 2)); g.add(b); } });
+          const hz = sg * (L - 0.035); bx(0.02, 1.1, 0.025, st, 0.055, 1.25, hz); bx(0.03, 0.025, 0.02, st, 0.04, 0.72, hz); bx(0.03, 0.025, 0.02, st, 0.04, 1.78, hz);   /* the long bar handle by the meeting line */
+          unit.doors.push({ g, sg }); });
+        FRIDGE.push(unit); }); }
     /* east of the dining table, after the show flat: flush greige panels floor to ceiling; at the north end a coffee niche — low drawers under a white top lit along its edge, a dark back with a slim shelf, smoked glass wall cabinets lit beneath — and two tall doors beside it */
     { const iv = lam(0xd9d4ca), sm = lam(0x8a857c), wtop = lam(0xf4f2ee), bk = lam(0x232426), gl = new THREE.MeshBasicMaterial({ color: 0x3b4a55, transparent: true, opacity: 0.82 }), gw = new THREE.MeshBasicMaterial({ color: 0xfff1d8 });
       F(180, 116, 188, 130, 0, 2.3, iv); F(179.9, 122.9, 180, 123.1, 0.03, 2.27, sm, false);
@@ -4106,11 +4135,20 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       [["incheon", 0.96, 0.48, 1.42, "인천국제공항 여객터미널 · 2001"], ["abudhabi", 0.53, 0.66, 1.5, "아부다비 국제공항 관제탑 · 2010"], ["cheongju", 0.96, 0.6, 1.4, "아테라 첫 단지 · 청주테크노폴리스 아테라"]].forEach(([k, w, h, y, cap]) => {
         const cz = z + w / 2; z += w + 0.35; hang(XW, k, w, h, y, cap, cz); }); } F(180, 208, 182.5, 215, 0.44, 0.66, lam(0x5f6b52), false);
     /* the coffee table: black steel frame, a smoked-glass top and a walnut shelf below */
-    F(122, 172, 168, 216, 0.003, 0.012, lam(0xd9d0c0), false);
-    F(128, 178, 154, 210, 0.37, 0.385, glassT, false); block(px(128), px(154), pz(178), pz(210), 0, 0.6);
-    [[128, 178, 154, 179], [128, 209, 154, 210], [128, 178, 129, 210], [153, 178, 154, 210]].forEach(([a, b, c, d]) => { F(a, b, c, d, 0.36, 0.39, blk, false); F(a, b, c, d, 0.0, 0.02, blk, false); });
-    [[128, 178], [153, 178], [128, 209], [153, 209]].forEach(([u, v]) => F(u, v, u + 1, v + 1, 0, 0.39, blk, false));
-    F(129, 179, 153, 209, 0.12, 0.14, ledgeM, false);   /* the shelf under the glass in the chosen grey oak, as on the ledge */ }
+    { /* the rug under the table: leopard print — warm tan, dark broken rosettes round amber hearts, a few spots */
+      const lp = tex(512, 512, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w * 0.75); gr.addColorStop(0, "#e2b36e"); gr.addColorStop(1, "#c8924c"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(${rnd() < 0.5 ? "255,240,210" : "120,80,40"},${0.05 + rnd() * 0.06})`; g.fillRect(rnd() * w, rnd() * h, 1, 3 + rnd() * 4); }
+        const ros = (x, y, r) => { g.fillStyle = `rgba(${150 + rnd() * 30},${90 + rnd() * 20},${35 + rnd() * 15},.85)`; g.beginPath(); g.ellipse(x, y, r * 0.75, r * 0.6, rnd() * 3, 0, 7); g.fill(); g.fillStyle = "#2a1a10";
+          const n = 3 + ((rnd() * 3) | 0); for (let k = 0; k < n; k++) { const a0 = (k / n) * Math.PI * 2 + rnd() * 0.4, a1 = a0 + (Math.PI * 2 / n) * (0.55 + rnd() * 0.25); g.beginPath(); g.ellipse(x, y, r, r * 0.82, 0, a0, a1); g.ellipse(x, y, r * 0.66, r * 0.52, 0, a1, a0, true); g.closePath(); g.fill(); } };
+        for (let gy = 0; gy < 9; gy++) for (let gx = 0; gx < 9; gx++) { const x = (gx + 0.5 + (gy % 2) * 0.5) * w / 9 + (rnd() - 0.5) * 18, y = (gy + 0.5) * h / 9 + (rnd() - 0.5) * 18; ros(((x % w) + w) % w, y, 15 + rnd() * 9); }
+        g.fillStyle = "#2a1a10"; for (let i = 0; i < 70; i++) { g.beginPath(); g.ellipse(rnd() * w, rnd() * h, 2 + rnd() * 4, 2 + rnd() * 3, rnd() * 3, 0, 7); g.fill(); } }, 1.6, 1.6);
+      F(122, 172, 168, 216, 0.003, 0.012, lam(0xffffff, { map: lp }), false); F(121.6, 171.6, 168.4, 216.4, 0.002, 0.011, lam(0x3a2414), false); }
+    { /* the coffee table, now 90 % of its old size about the same middle: black steel frame, a smoked-glass top and a grey oak shelf below */
+      const K = 0.9, cu = 141, cv = 194, T = (u0, v0, u1, v1, y0, y1, m) => F(cu + (u0 - cu) * K, cv + (v0 - cv) * K, cu + (u1 - cu) * K, cv + (v1 - cv) * K, y0, y1, m, false);
+      T(128, 178, 154, 210, 0.37, 0.385, glassT); block(px(cu + (128 - cu) * K), px(cu + (154 - cu) * K), pz(cv + (178 - cv) * K), pz(cv + (210 - cv) * K), 0, 0.6);
+      [[128, 178, 154, 179], [128, 209, 154, 210], [128, 178, 129, 210], [153, 178, 154, 210]].forEach(([a, b, c, d]) => { T(a, b, c, d, 0.36, 0.39, blk); T(a, b, c, d, 0.0, 0.02, blk); });
+      [[128, 178], [153, 178], [128, 209], [153, 209]].forEach(([u, v]) => T(u, v, u + 1, v + 1, 0, 0.39, blk));
+      T(129, 179, 153, 209, 0.12, 0.14, ledgeM); }   /* the shelf under the glass in the chosen grey oak, as on the ledge */ }
   // master bedroom: the bed's head against the west wall, a TV on the east, the dressing room's shelves
   { /* the headboard wall, after the show flat: tall greige panels with fine seams, a band of marble with a lit marble ledge running the width of the wall and on as a floating bedside shelf, an upholstered headboard, a black floor lamp, a mushroom lamp and a plant, a sheer curtain by the balcony door */
     const marble = lam(0xffffff, { map: tex(512, 256, (g, w, h) => { g.fillStyle = "#e9e6e0"; g.fillRect(0, 0, w, h); for (let i = 0; i < 1400; i++) { const c = rnd(); g.fillStyle = c < 0.45 ? "rgba(40,40,42,.55)" : c < 0.8 ? "rgba(120,118,112,.45)" : "rgba(170,150,120,.4)"; const r = 1 + rnd() * 4; g.beginPath(); g.ellipse(rnd() * w, rnd() * h, r * (1 + rnd() * 2), r, rnd() * 3, 0, 7); g.fill(); } }, 2, 1) });
@@ -4134,7 +4172,13 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const sc = add(new THREE.PlaneGeometry((tw - 0.6) * SC, 0.8), new THREE.MeshBasicMaterial({ color: 0x1b1d22 }), px(WX - 0.92), ty, pz(cv)); sc.rotation.y = -Math.PI / 2;
       const hl = add(new THREE.PlaneGeometry(tw * 0.16 * SC, 0.12), new THREE.MeshBasicMaterial({ color: 0x3a3f48, transparent: true, opacity: 0.6 }), px(WX - 0.93), ty + 0.22, pz(cv - 4)); hl.rotation.y = -Math.PI / 2; }
     const pic = (v, c1, c2) => { F(WX - 3, v - 2.4, WX - 2.4, v + 2.4, 0.54, 0.86, lam(0xe9e3d3), false); F(WX - 3.05, v - 1.6, WX - 2.95, v + 1.6, 0.6, 0.8, lam(c1), false); F(WX - 3.07, v - 0.8, WX - 3.0, v + 0.8, 0.64, 0.76, lam(c2), false); };
-    pic(160, 0xb8a98c, 0x7a6a52); pic(167, 0xcfc6b2, 0x9a8f78);
+    { /* two photos of 쿠모 in standing frames on the console under the TV (assets/kumo_photo1.jpg, kumo_photo2.jpg) */
+      const fm = lam(0x2b2622), y0 = 0.54, fw = 0.46, pw = fw - 0.05, phh = pw * 9 / 16 / HV, fh = phh + 0.04;   /* the photos are 16:9; heights are drawn before the flat's height scale, so divided by it here */
+      [[158.6, 1], [167.6, 2]].forEach(([fv, n]) => { const fu = WX - 3.4, ph = new THREE.MeshBasicMaterial({ color: 0xe8e2d6, toneMapped: false });
+        new THREE.TextureLoader().load("assets/kumo_photo" + n + ".jpg", (t) => { t.encoding = THREE.sRGBEncoding; const a = t.image.width / t.image.height, b = pw / (phh * HV); if (a > b) { t.repeat.set(b / a, 1); t.offset.set((1 - b / a) / 2, 0); } else { t.repeat.set(1, a / b); t.offset.set(0, (1 - a / b) / 2); } ph.map = t; ph.color.set(0xffffff); ph.needsUpdate = true; }, undefined, () => {});
+        box(0.035, fh, fw, fm, px(fu), y0 + fh / 2, pz(fv)); const mt = add(new THREE.PlaneGeometry(fw - 0.03, fh - 0.02), lam(0xf6f3ec), px(fu) - 0.019, y0 + fh / 2, pz(fv)); mt.rotation.y = -Math.PI / 2;
+        const pp = add(new THREE.PlaneGeometry(pw, phh), ph, px(fu) - 0.021, y0 + fh / 2, pz(fv)); pp.rotation.y = -Math.PI / 2; pp.userData = { idx: "frame", cap: "📷 쿠모 사진" }; PICK.push(pp);
+        box(0.02, fh * 0.8, 0.03, fm, px(fu) + 0.06, y0 + fh * 0.4, pz(fv)); }); }
     { const u0 = WX - 6.5, u1 = WX - 1.5, v0 = 183, v1 = 192, y0 = 0.54, y1 = 0.8, e = 0.25;
       [[u0, v0], [u1 - e, v0], [u0, v1 - e], [u1 - e, v1 - e]].forEach(([u, v]) => F(u, v, u + e, v + e, y0, y1, blk, false)); [y0, y1 - 0.012].forEach((y) => { F(u0, v0, u1, v0 + e, y, y + 0.012, blk, false); F(u0, v1 - e, u1, v1, y, y + 0.012, blk, false); F(u0, v0, u0 + e, v1, y, y + 0.012, blk, false); F(u1 - e, v0, u1, v1, y, y + 0.012, blk, false); });
       const bw = add(new THREE.SphereGeometry(0.2, 20, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), lam(0x1f2022), px(WX - 4), 0.99, pz(187.5)); bw.material.side = THREE.DoubleSide; }
@@ -4181,7 +4225,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const cab = lam(0x3a3e44), led = lam(0xe9e2d4), glow = new THREE.MeshBasicMaterial({ color: 0xfff3dc }), mir = new THREE.MeshBasicMaterial({ color: 0xc7cfd3 });
     WC(100, 116);   /* the WC: the same shaped one as in the entrance bathroom */
     F(92, 97, 98, 108, 0.38, 0.8, cab); F(90.5, 96.5, 98, 108.5, 0.8, 0.9, porcelain); F(91.5, 98.5, 96, 106.5, 0.895, 0.902, lam(0xdfe3e6), false);
-    add(new THREE.CylinderGeometry(0.015, 0.02, 0.22, 10), steel, px(97), 1.01, pz(102.5)); F(95.4, 102.2, 97, 102.8, 1.1, 1.12, steel, false);
+    add(new THREE.CylinderGeometry(0.015, 0.02, 0.22, 10), steel, px(97), 1.01, pz(102.5)); F(95.4, 102.2, 97, 102.8, 1.1, 1.12, steel, false); water(95.8, 102.5, 0.903, 1.1, 1.2);
     F(96, 95, 98, 123, 1.02, 1.06, led, false); F(97.2, 95, 98, 123, 1.06, 1.85, lam(0xdcd6cc), false); F(97, 95.5, 97.2, 122.5, 1.08, 1.83, mir, false); F(96.8, 95.5, 97.6, 122.5, 1.85, 1.87, glow, false);
     /* the shower: glass screens on the south and west, a rail head on the east wall, a niche shelf */
     { const gs = (x0, z0, x1, z1) => { const w = Math.hypot(x1 - x0, z1 - z0), g = add(new THREE.PlaneGeometry(w, 2.0), glassM, (x0 + x1) / 2, 1.0, (z0 + z1) / 2); g.rotation.y = Math.atan2(-(z1 - z0), x1 - x0); g.renderOrder = 3; };
@@ -4191,20 +4235,20 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   { /* 욕실1-2 (x 278-322, y 65-128), after the show flat: the bath across the far (north) end with a slide-rail shower over it, the WC beside it on the east wall, a tray across the bath, a niche shelf */
     const inner = lam(0xe9edef), tray = lam(0xf6f6f4);
     F(278, 62, 322, 80, 0, HT, wallMat); F(278, 80, 287, 128, 0, HT, wallMat);   /* the plan's thick walls round the smaller bathroom (the old floor beyond it closed off) */
-    F(288, 81.5, 321, 95, 0, 0.5, porcelain); F(288, 81.5, 321, 95, 0.5, 0.53, lam(0xfdfdfb), false);
+    F(288, 81.5, 321, 98.5, 0, 0.5, porcelain); F(288, 81.5, 321, 98.5, 0.5, 0.53, lam(0xfdfdfb), false);   /* the bath made wider (deeper from the wall) */
     { const rr = (w, d, r) => { const sh = new THREE.Shape(), x = -w / 2, y = -d / 2; sh.moveTo(x + r, y); sh.lineTo(x + w - r, y); sh.quadraticCurveTo(x + w, y, x + w, y + r); sh.lineTo(x + w, y + d - r); sh.quadraticCurveTo(x + w, y + d, x + w - r, y + d); sh.lineTo(x + r, y + d); sh.quadraticCurveTo(x, y + d, x, y + d - r); sh.lineTo(x, y + r); sh.quadraticCurveTo(x, y, x + r, y); return sh; };   /* the soft-cornered basin of the bath: a sunk rounded hollow with a shadowed inside */
-      const bw = 29 * SC, bd = 10.5 * SC, bx = (px(290) + px(319)) / 2, bz = (pz(82.8) + pz(93.6)) / 2;
+      const bw = 29 * SC, bd = 14 * SC, bx = (px(290) + px(319)) / 2, bz = (pz(82.8) + pz(97.1)) / 2;
       const rim = add(new THREE.ShapeGeometry(rr(bw, bd, 0.32)), lam(0xdde2e4), bx, 0.532, bz); rim.rotation.x = -Math.PI / 2;
       const inn = add(new THREE.ShapeGeometry(rr(bw - 0.12, bd - 0.12, 0.28)), lam(0xc9d0d3), bx, 0.534, bz); inn.rotation.x = -Math.PI / 2;
-      add(new THREE.CylinderGeometry(0.025, 0.025, 0.005, 12), steel, px(293), 0.537, bz); } F(288.2, 94.9, 320.8, 95.1, 0.1, 0.48, lam(0xdedad3), false);
-    F(302, 81.8, 308, 94.8, 0.53, 0.56, tray, false); add(new THREE.CylinderGeometry(0.04, 0.05, 0.2, 12), lam(0x4a4a4c), px(304), 0.66, pz(85)); add(new THREE.SphereGeometry(0.13, 10, 8), lam(0x7d9a63), px(304), 0.86, pz(85));
+      add(new THREE.CylinderGeometry(0.025, 0.025, 0.005, 12), steel, px(293), 0.537, bz); } F(288.2, 98.4, 320.8, 98.6, 0.1, 0.48, lam(0xdedad3), false);
+    F(302, 81.8, 308, 98.3, 0.53, 0.56, tray, false); add(new THREE.CylinderGeometry(0.04, 0.05, 0.2, 12), lam(0x4a4a4c), px(304), 0.66, pz(85)); add(new THREE.SphereGeometry(0.13, 10, 8), lam(0x7d9a63), px(304), 0.86, pz(85));
     F(310, 80.6, 315, 81.8, 0.72, 0.8, steel, false); F(313.2, 81.6, 313.6, 85, 0.68, 0.72, steel, false); F(316.5, 80.6, 316.9, 81, 0.9, 2.0, steel, false); F(316, 80.8, 317.4, 82.4, 1.98, 2.0, steel, false);
     add(new THREE.CylinderGeometry(0.08, 0.08, 0.02, 16), steel, px(316.7), 2.0, pz(83)); add(new THREE.CylinderGeometry(0.008, 0.008, 1.3, 6), steel, px(315.5), 1.05, pz(81.6));
-    WC(321, 104);   /* the WC under the glass cabinet, close by the end of the bath */
+    WC(321, 111);   /* the WC nearer the door, right in the middle under the glass cabinet */
     /* the glass-fronted mirror cabinet high on the east wall, an open niche beneath it */
-    F(316.6, 96, 318.7, 116, 1.3, 1.36, lam(0xe9e2d4), false); F(316.4, 96, 318.7, 116, 1.36, 2.2, lam(0xe4ddd1), false);   /* stood clear of the tiled lining (it sat in the same plane and flickered) */
-    { const g = add(new THREE.PlaneGeometry(20 * SC - 0.04, 0.8), new THREE.MeshBasicMaterial({ color: 0xc9d3d7 }), px(316.4) - 0.006, 1.78, (pz(96) + pz(116)) / 2); g.rotation.y = -Math.PI / 2; F(316.3, 105.9, 316.38, 106.1, 1.38, 2.18, lam(0x9aa0a3), false); }
-    add(new THREE.CylinderGeometry(0.05, 0.05, 0.14, 12), lam(0xe6dfd0), px(317.6), 1.43, pz(100)); }
+    F(316.6, 101, 318.7, 121, 1.3, 1.36, lam(0xe9e2d4), false); F(316.4, 101, 318.7, 121, 1.36, 2.2, lam(0xe4ddd1), false);   /* stood clear of the tiled lining (it sat in the same plane and flickered) */
+    { const g = add(new THREE.PlaneGeometry(20 * SC - 0.04, 0.8), new THREE.MeshBasicMaterial({ color: 0xc9d3d7 }), px(316.4) - 0.006, 1.78, (pz(101) + pz(121)) / 2); g.rotation.y = -Math.PI / 2; F(316.3, 110.9, 316.38, 111.1, 1.38, 2.18, lam(0x9aa0a3), false); }
+    add(new THREE.CylinderGeometry(0.05, 0.05, 0.14, 12), lam(0xe6dfd0), px(317.6), 1.43, pz(105)); }
   /* the door between the vanity (욕실1-1) and the bath and WC (욕실1-2): shut by default so the two read as separate rooms; tap it to open or shut */
   /* room doors: a leaf hung in each doorway, shut to begin with; tap it to swing it open into the room or shut again */
   const DOORS = []; { const mk = (u, v, len, vert, sgn, name) => { const g = new THREE.Group(), L = len * SC; g.position.set(px(u), 0, pz(v)); scene.add(g);
@@ -4212,14 +4256,21 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const hd = new THREE.Mesh(new THREE.BoxGeometry(vert ? 0.07 : 0.03, 0.2, vert ? 0.03 : 0.07), steel); hd.position.set(vert ? 0 : L - 0.12, 1.0, vert ? L - 0.12 : 0); g.add(hd);
       OCC.push(leaf); const D = { g, t: 0, to: 0, sgn, name, blk: null, cx: vert ? px(u) : px(u + len / 2), cz: vert ? pz(v + len / 2) : pz(v) };   /* doors never block the way: they open as 쿠모 comes up and close behind him */ leaf.userData = { idx: "door", D }; PICK.push(leaf); DOORS.push(D); };
     F(278, 126.4, 290.4, 129.6, 0, HT, wallMat); F(307.6, 126.4, 322, 129.6, 0, HT, wallMat); F(290.4, 126.4, 307.6, 129.6, 2.1, HT, wallMat, false);   /* the partition between the corridor and the bathroom, made solid on both sides of its door */
-    mk(290.4, 128, 17.2, false, 1, "욕실"); W(280, 128, 280, 155, { door: [[133.4, 150.6]] }); mk(280, 133.4, 17.2, true, 1, "세면실"); mk(252.4, 128, 17.6, false, -1, "중문");
+    mk(290.4, 128, 17.2, false, 1, "욕실"); W(280, 128, 280, 155, { door: [[133.4, 150.6]] }); mk(280, 133.4, 17.2, true, 1, "세면실");
     { /* the entrance's inner door (중문) and the door into the vanity: smoked black glass in slim black frames, as in the show flat */
       const smoke = new THREE.MeshBasicMaterial({ color: 0x15171a, transparent: true, opacity: 0.58, depthWrite: false, side: THREE.DoubleSide }), bf = lam(0x111214);
       const glassy = (D, L, vert) => { const lf = D.g.children[0], hd = D.g.children[1]; lf.material = smoke; lf.renderOrder = 3; hd.material = bf; const W = L * SC, c = W / 2;
         const bar = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bf); m.position.set(x, y, z); D.g.add(m); };
         if (vert) { bar(0.05, 2.08, 0.04, 0, 1.04, 0.02); bar(0.05, 2.08, 0.04, 0, 1.04, W - 0.02); bar(0.05, 0.04, W, 0, 0.02, c); bar(0.05, 0.04, W, 0, 2.06, c); }
         else { bar(0.04, 2.08, 0.05, 0.02, 1.04, 0); bar(0.04, 2.08, 0.05, W - 0.02, 1.04, 0); bar(W, 0.04, 0.05, c, 0.02, 0); bar(W, 0.04, 0.05, c, 2.06, 0); } };
-      glassy(DOORS[DOORS.length - 2], 17.2, true); glassy(DOORS[DOORS.length - 1], 17.6, false);
+      glassy(DOORS[DOORS.length - 1], 17.2, true);
+      { /* 중문: a sliding leaf of the same smoked glass on the hall side — it slides west behind the fixed panel as 쿠모 comes up, and back once he has gone on */
+        const L = 17.6 * SC, G = new THREE.Group(), x0 = px(252.4) + L / 2; G.position.set(x0, 0, pz(128) + 0.07); scene.add(G);
+        const gp = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.06, 2.04), smoke); gp.position.y = 1.06; gp.renderOrder = 3; G.add(gp);
+        const bar = (w, h, d, x, y) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bf); m.position.set(x, y, 0); G.add(m); };
+        bar(0.04, 2.08, 0.05, -L / 2 + 0.02, 1.04); bar(0.04, 2.08, 0.05, L / 2 - 0.02, 1.04); bar(L, 0.04, 0.05, 0, 0.02); bar(L, 0.04, 0.05, 0, 2.06); bar(0.025, 0.55, 0.07, L / 2 - 0.12, 1.0);
+        F(239, 128.6, 271, 129.9, 2.08, 2.14, bf, false);   /* its track overhead */
+        GDOORS.push({ G, x0, dx: -(L - 1.7 * SC), t: 0, to: 0, cx: px(261), cz: pz(128) }); }
       const z = pz(128); F(239, 127.6, 239.6, 128.4, 0, HT, bf, false); F(251.9, 127.6, 252.5, 128.4, 0, 2.1, bf, false); F(269.9, 127.6, 270.5, 128.4, 0, HT, bf, false); F(239, 127.6, 270.5, 128.4, 2.08, 2.14, bf, false);
       { const g = add(new THREE.PlaneGeometry((251.9 - 239.6) * SC, 2.08), smoke, (px(239.6) + px(251.9)) / 2, 1.04, z); g.renderOrder = 3; block(px(239), px(252.5), z - 0.08, z + 0.08); }   /* the fixed side panel */
       { const g = add(new THREE.PlaneGeometry((269.9 - 239.6) * SC, HT - 2.14), smoke, (px(239.6) + px(269.9)) / 2, (2.14 + HT) / 2, z); g.renderOrder = 3; }   /* the glass over it to the ceiling */ } mk(236.4, 155, 17.2, false, -1, "서재"); mk(260.4, 155, 18.2, false, -1, "쿠모방"); mk(98, 133.4, 17.2, true, -1, "안방"); mk(60, 109.4, 16.2, true, 1, "안방 욕실");
@@ -4251,20 +4302,38 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     /* the sliding door in the bedroom wall (z 200, x 64-82): frame all round, the west leaf glazed and fixed, the east leaf slid open behind it */
     /* the opening from the bedroom to the balcony is left open: no door */
     /* the service room door (x 60, z 208-225), opened back against the balcony wall, and the room's ventilation unit under the ceiling */
-    F(30, 208, 46, 218, 1.95, 2.25, lam(0xf1f1ef), false); F(31, 210, 45, 216, 1.94, 1.95, lam(0xb9bcbf), false); F(36, 212, 40, 214, 2.25, 2.4, lam(0xc9cccf), false); }
+    { /* the little room off the balcony: a stainless folding drying rack (이동식 빨래 건조대) standing with its wings out, hung with towels, socks and 쿠모's T-shirt */
+      const G = new THREE.Group(), cx = px(38.5), cz = pz(216); G.position.set(cx, 0, cz); scene.add(G); const ss = new THREE.MeshPhongMaterial({ color: 0xd9dde0, shininess: 90, specular: 0xffffff }), pl = lam(0x9aa0a6);
+      const rod = (x1, y1, z1, x2, y2, z2, r = 0.008, m = ss) => { const a = new THREE.Vector3(x1, y1, z1), b = new THREE.Vector3(x2, y2, z2), d = b.clone().sub(a), o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d.length(), 8), m); o.position.copy(a).add(b).multiplyScalar(0.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); G.add(o); return o; };
+      const LX = 0.62, TY = 0.92, HW = 0.2, WW = 0.32;   /* half its length, the height of the top, half the width of the middle, the reach of each wing */
+      [-1, 1].forEach((e) => { rod(e * LX, 0, -0.3, e * LX, TY, HW, 0.011); rod(e * LX, 0, 0.3, e * LX, TY, -HW, 0.011); rod(e * LX, 0.02, -0.3, e * LX, 0.02, 0.3, 0.009);   /* the crossed legs at each end and a foot bar */
+        rod(e * LX, TY, -HW, e * LX, TY, HW, 0.01); rod(e * LX, TY, HW, e * LX, TY - 0.08, HW + WW, 0.009); rod(e * LX, TY, -HW, e * LX, TY - 0.08, -HW - WW, 0.009);   /* the top frame and the two wing arms */
+        rod(e * LX, TY * 0.5, 0, e * LX, TY - 0.08, HW + WW * 0.7, 0.006); rod(e * LX, TY * 0.5, 0, e * LX, TY - 0.08, -HW - WW * 0.7, 0.006);   /* the wing stays */
+        [0.02, TY * 0.5].forEach((y) => { const c = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 0.035), pl); c.position.set(e * LX, y, 0); G.add(c); }); });
+      for (let k = 0; k < 6; k++) rod(-LX, TY, -HW + k * (2 * HW / 5), LX, TY, -HW + k * (2 * HW / 5), 0.006);   /* the bars across the top */
+      [-1, 1].forEach((s) => { for (let k = 1; k <= 4; k++) { const f = k / 4; rod(-LX, TY - 0.08 * f, s * (HW + WW * f), LX, TY - 0.08 * f, s * (HW + WW * f), 0.006); } });   /* the bars of each wing */
+      const towel = (x, z, w, h, c, stripe) => { const t = tex(64, 96, (g, W, H) => { g.fillStyle = c; g.fillRect(0, 0, W, H); g.fillStyle = "rgba(255,255,255,.2)"; for (let y = 0; y < H; y += 3) g.fillRect(0, y, W, 1); g.fillStyle = "rgba(0,0,0,.06)"; g.fillRect(0, 0, 3, H); g.fillRect(W - 3, 0, 3, H); if (stripe) { g.fillStyle = stripe; g.fillRect(0, H * 0.8, W, 6); g.fillRect(0, H * 0.88, W, 3); } });
+        const m = lam(0xffffff, { map: t, side: THREE.DoubleSide }), a = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m), b = new THREE.Mesh(new THREE.PlaneGeometry(w, h * 0.78), m); a.position.set(x, TY - h / 2, z + 0.012); b.position.set(x, TY - h * 0.39, z - 0.012); G.add(a, b); };   /* folded over a bar, one side longer */
+      towel(-0.3, -0.12, 0.36, 0.5, "#f4f1ea", "#7b9ac0"); towel(0.18, -0.12, 0.3, 0.44, "#e9b9a3"); towel(0.3, 0.12, 0.34, 0.46, "#a8c6a0", "#ffffff"); towel(-0.34, 0.12, 0.26, 0.36, "#cfd8e6");
+      { const t = tex(128, 128, (g) => { g.clearRect(0, 0, 128, 128); g.fillStyle = "#3f6fb0"; g.beginPath(); g.moveTo(40, 8); g.lineTo(88, 8); g.lineTo(124, 30); g.lineTo(110, 52); g.lineTo(96, 44); g.lineTo(96, 124); g.lineTo(32, 124); g.lineTo(32, 44); g.lineTo(18, 52); g.lineTo(4, 30); g.closePath(); g.fill();
+          g.fillStyle = "#fff"; g.font = "800 17px sans-serif"; g.textAlign = "center"; g.fillText("ARTERA", 64, 76); g.strokeStyle = "rgba(0,0,0,.25)"; g.lineWidth = 3; g.beginPath(); g.moveTo(52, 8); g.quadraticCurveTo(64, 22, 76, 8); g.stroke(); });   /* 쿠모's ARTERA T-shirt on a hanger at the end of a wing */
+        const sh = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.42), new THREE.MeshLambertMaterial({ map: t, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide })); sh.position.set(0.3, TY - 0.08 - 0.25, HW + WW); G.add(sh); const hg = lam(0x6b4a2e);
+        rod(0.12, TY - 0.06, HW + WW, 0.3, TY - 0.02, HW + WW, 0.005, hg); rod(0.48, TY - 0.06, HW + WW, 0.3, TY - 0.02, HW + WW, 0.005, hg); rod(0.12, TY - 0.06, HW + WW, 0.48, TY - 0.06, HW + WW, 0.004, hg); }
+      [[-0.15, 0x8fb3d9], [-0.02, 0x8fb3d9], [0.12, 0xf2d06b]].forEach(([x, c]) => { const sk = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.16, 0.008), lam(c)); sk.position.set(x, TY - 0.08 - 0.09, -HW - WW); G.add(sk); const pg = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.03, 0.016), lam(0xf26a1f)); pg.position.set(x, TY - 0.08 - 0.005, -HW - WW); G.add(pg); });   /* socks pegged on the far wing */
+      block(cx - LX - 0.05, cx + LX + 0.05, cz - HW - WW - 0.05, cz + HW + WW + 0.05, 0, 1); } }
   // laundry: washer and dryer; pantry: open shelves; cleaning station: a counter; the entrance: tall shoe cabinets
   F(64, 40, 76, 52, 0, 0.9, porcelain); F(78, 40, 90, 52, 0, 0.9, porcelain);
   { const steel = lam(0x1d1e20), shelfM = lam(0xe9e5dd), jar = new THREE.MeshLambertMaterial({ color: 0xe8d9b8, transparent: true, opacity: 0.85 }), wood = lam(0x6b3f26), cream = lam(0xf2eee6), bronze = lam(0xb59a7a);
     /* the pantry: an L of open shelves on black steel uprights, the long run on the east wall and a short arm under the window on the north wall */
     const YS = [0.12, 0.5, 0.88, 1.26, 1.64, 2.02];
-    YS.forEach((y) => { F(222, 58, 231, 98, y, y + 0.025, shelfM, false); F(221.7, 58, 222, 98, y - 0.004, y + 0.03, steel, false); if (y < 0.9) { F(204, 57, 222, 65, y, y + 0.025, shelfM, false); F(204, 64.7, 222, 65, y - 0.004, y + 0.03, steel, false); } });
-    [58.5, 71.5, 84.5, 97.2].forEach((v) => F(221.6, v, 222.4, v + 0.8, 0, 2.3, steel, false)); [204, 213].forEach((u) => F(u, 64.4, u + 0.8, 65.2, 0, 0.92, steel, false));
-    block(px(222), px(231), pz(58), pz(98)); block(px(204), px(222), pz(57), pz(65), 0, 0.92);
+    YS.forEach((y) => { F(222, 58, 231, 98, y, y + 0.025, shelfM, false); F(221.7, 58, 222, 98, y - 0.004, y + 0.03, steel, false); F(198, 91, 222, 99.5, y, y + 0.025, shelfM, false); F(198, 91, 222, 91.3, y - 0.004, y + 0.03, steel, false); });   /* the short arm moved off the window wall to the wall across from it (south), full height like the long run */
+    [58.5, 71.5, 84.5, 97.2].forEach((v) => F(221.6, v, 222.4, v + 0.8, 0, 2.3, steel, false)); [198, 205.5, 213].forEach((u) => F(u, 90.6, u + 0.8, 91.4, 0, 2.3, steel, false));
+    block(px(222), px(231), pz(58), pz(98)); block(px(198), px(222), pz(90.6), pz(100), 0, 2.4);
     const cyl = (u, v, r, h, y, m) => add(new THREE.CylinderGeometry(r, r, h, 16), m, px(u), y + h / 2, pz(v));
     cyl(226, 62, 0.12, 0.3, 0.145, jar); cyl(226, 67, 0.12, 0.3, 0.145, jar); F(223.5, 76, 229.5, 88, 0.145, 0.38, wood, false);
     F(223.5, 60, 229.5, 70, 0.525, 0.72, cream, false); cyl(226, 80, 0.07, 0.24, 0.525, lam(0x2a2f2a)); cyl(226, 84, 0.07, 0.24, 0.525, lam(0x3b2a2a));
     cyl(226, 62, 0.09, 0.22, 0.905, bronze); F(224, 66, 228.5, 71, 0.905, 1.12, cream, false); F(223.5, 76, 229.5, 92, 0.905, 0.98, wood, false);
-    cyl(226, 64, 0.16, 0.12, 1.285, wood); cyl(226, 74, 0.1, 0.18, 1.285, jar); cyl(212, 61, 0.1, 0.28, 0.145, jar); cyl(216, 61, 0.1, 0.28, 0.145, jar); F(207, 59, 211, 63, 0.525, 0.7, wood, false); }
+    cyl(226, 64, 0.16, 0.12, 1.285, wood); cyl(226, 74, 0.1, 0.18, 1.285, jar); cyl(212, 95.5, 0.1, 0.28, 0.145, jar); cyl(216, 95.5, 0.1, 0.28, 0.145, jar); F(207, 93, 211, 98, 0.525, 0.7, wood, false); F(200, 92.5, 206, 98.5, 0.905, 1.1, cream, false); cyl(203, 95.5, 0.08, 0.2, 1.285, bronze); cyl(209, 95.5, 0.1, 0.18, 1.285, jar); F(213, 92.5, 220, 98.5, 1.665, 1.8, wood, false); }
   { /* the cleaning station off the hall (looked into, not walked into): greige handle-less cabinets with a lit plinth, a pale stone counter, a pegboard with little shelves and spray bottles, a hanging rail with a shirt, uppers lit from beneath, oval wooden boxes */
     const cab = lam(0xd9d2c6), seamC = lam(0xa49c90), glow = new THREE.MeshBasicMaterial({ color: 0xfff1d8 }), peg = lam(0xffffff, { map: tex(128, 128, (g, w, h) => { g.fillStyle = "#e9e1d2"; g.fillRect(0, 0, w, h); g.fillStyle = "#9c917f"; for (let x = 8; x < w; x += 16) for (let y = 8; y < h; y += 16) { g.beginPath(); g.arc(x, y, 2.2, 0, 7); g.fill(); } }, 4, 2) }), wood = lam(0x8a5a32), blk = lam(0x1c1c1e);
     F(190, 101, 225, 112, 0.08, 0.88, cab); F(190, 101.5, 225, 111.6, 0, 0.08, lam(0x8f887d), false); F(190, 111.6, 225, 111.8, 0.06, 0.08, glow, false); [195.5, 201, 206.5, 212, 218.5].forEach((u) => F(u - 0.12, 111.95, u + 0.12, 112.05, 0.1, 0.86, seamC, false));
@@ -4301,7 +4370,6 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const walD = lam(0x3d281b), glow = new THREE.MeshBasicMaterial({ color: 0xffd9a0 }), brass = lam(0xb8954f), blk = lam(0x1d1d1f), back = lam(0x2a2320);
     F(195, 157.5, 196, 229, 0, 2.4, wal, false); for (let v = 163; v < 229; v += 6) F(196, v - 0.1, 196.1, v + 0.1, 0, 2.4, walD, false);
     F(196, 168, 203, 218, 0.24, 0.5, wal); F(196.5, 168.5, 202.5, 217.5, 0.23, 0.24, glow, false);   /* the floating credenza, lit from beneath */
-    { const iv = lam(0xefebe2), sm = lam(0x9a9284); F(204, 156, 234, 166.5, 0, 2.3, iv); F(218.8, 166.4, 219.2, 166.7, 0.05, 2.25, sm, false); [213, 225].forEach((u) => F(u, 166.5, u + 0.5, 167.1, 1.0, 1.3, lam(0x5d5a55), false)); }   /* a sliding built-in wardrobe along the north wall, as in 쿠모's room */
     const BK = [0x7a2e2a, 0x2e4a6a, 0xc9b48a, 0x3e5a3a, 0x8a6a3a, 0x1f2a3a, 0xd8d0c0, 0x6a3a5a];
     [[178, 208, 0.75, 1.85, [1.12, 1.48]], [161, 174, 0.7, 2.0, [1.02, 1.34, 1.66]], [212, 225, 0.7, 2.0, [1.02, 1.34, 1.66]]].forEach(([a, b, y0, y1, sh]) => {
       F(196.1, a, 196.3, b, y0, y1, back, false); F(196.1, a - 0.5, 199.5, a, y0, y1, walD, false); F(196.1, b, 199.5, b + 0.5, y0, y1, walD, false); F(196.1, a - 0.5, 199.5, b + 0.5, y1, y1 + 0.03, walD, false);
@@ -4351,7 +4419,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     add(new THREE.PlaneGeometry(0.9, 0.22), new THREE.MeshBasicMaterial({ map: sg, toneMapped: false }), DXP, 2.24, DZP + 0.1);
     const door = box(1.0, 2.2, 0.5, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), DXP, 1.1, DZP + 0.25); door.userData.idx = "exit"; PICK.push(door); block(px(247), px(267), DZP - 0.3, DZP + 0.05); }
   scene.children.slice(HN0).forEach((o) => { if (o.isLight) return; o.position.y *= HV; if (!o.rotation.x && !o.rotation.z) o.scale.y *= HV; });   // heights grow with the plan
-  { OCC.length = 0; const bb = new THREE.Box3(), fl = new Set(FLOORS); scene.children.slice(HN0).forEach((o) => { if (!o.isMesh || fl.has(o) || o.userData.view) return; bb.setFromObject(o); if (bb.max.y - bb.min.y > 0.9 && bb.max.y > 1.4) OCC.push(o); else if (bb.min.y > HT * HV - 0.2) o.visible = false; });   /* things up at the ceiling (the light coves and downlights) would float in the air seen from above: hidden */ DOORS.forEach((D) => D.g.children.forEach((m) => OCC.push(m))); DSL.forEach((d) => d.G.children.forEach((m) => OCC.push(m))); }   // everything tall enough to hide 쿠모 can fade
+  { OCC.length = 0; const bb = new THREE.Box3(), fl = new Set(FLOORS); scene.children.slice(HN0).forEach((o) => { if (!o.isMesh || fl.has(o) || o.userData.view) return; bb.setFromObject(o); if (bb.max.y - bb.min.y > 0.9 && bb.max.y > 1.4) OCC.push(o); else if (bb.min.y > HT * HV - 0.2) o.visible = false; });   /* things up at the ceiling (the light coves and downlights) would float in the air seen from above: hidden */ DOORS.forEach((D) => D.g.children.forEach((m) => OCC.push(m))); DSL.forEach((d) => d.G.children.forEach((m) => OCC.push(m))); GDOORS.forEach((d) => d.G.children.forEach((m) => OCC.push(m))); }   // everything tall enough to hide 쿠모 can fade
   BOX.forEach((b) => { b[4] *= HV; b[5] *= HV; });
   prog(0.85);
   scene.traverse((o) => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; for (const m of ms) { if (m.__lin) continue; m.__lin = true; if (m.color && !m.map) m.color.convertSRGBToLinear(); if (m.emissive) m.emissive.convertSRGBToLinear(); } });
@@ -4450,6 +4518,23 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function leave() { try { const g = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "home", t: Date.now() }))); } catch (e) {}
     doorFx.close(() => { freeGL(); kumhoHop(); location.replace("park.html"); }); }   // the doors swing shut behind, then the park
   $("exitBtn").addEventListener("click", askLeave);
+  { /* as 쿠모 walks into a room he says where he is: a speech bubble over his head, a name and a line about the room */
+    const RM = [["entry", 232, 92, 278, 128, "여기는 현관이야!", "양쪽에 신발장, 유리 중문은 다가가면 스르륵 열려."], ["living", 98, 155, 193, 232, "여기는 거실!", "소파에 앉아 금호건설TV를 볼 수 있어."],
+      ["kitchen", 100, 37, 188, 128, "여기는 주방이야!", "냉장고 앞에 가면 문이 열리고, 싱크대에선 물이 나와."], ["pantry", 188, 55, 232, 100, "여기는 팬트리!", "식재료를 선반에 차곡차곡 보관해."],
+      ["cleaning", 188, 100, 232, 128, "여기는 클리닝룸!", "청소 도구를 한곳에 모아 두는 곳이야."], ["utility", 60, 37, 100, 80, "여기는 다용도실!", "세탁기랑 건조기가 나란히 있어."],
+      ["bath2", 60, 80, 100, 128, "여기는 안방 욕실!", "세면대에 다가가면 물이 나와."], ["dress", 17, 58, 60, 128, "여기는 드레스룸!", "옷이 가득하고 화장대도 있어."],
+      ["bed1", 17, 128, 98, 200, "여기는 안방이야!", "TV 아래 액자에 내 사진이 있어."], ["service", 17, 200, 60, 232, "여기는 발코니 옆 작은 방!", "빨래 건조대에 내 티셔츠가 말라 가고 있어."],
+      ["balcony", 60, 200, 98, 232, "여기는 발코니!", "창밖으로 아테라 타운이 보여."], ["study", 193, 155, 257, 232, "여기는 서재야!", "책과 음악이 가득한 조용한 방이야."],
+      ["bed3", 257, 155, 322, 232, "여기는 내 방!", "초록 벽 아래 내 침대, 창가엔 내 책상이 있어."], ["bath11", 280, 128, 322, 155, "여기는 세면실!", "아침마다 여기서 세수하고 양치해."],
+      ["bath12", 287, 80, 322, 128, "여기는 욕실이야!", "넓은 욕조에서 목욕하면 최고야."]];
+    const st = document.createElement("style"); st.textContent = '#kBub{position:fixed;z-index:25;left:-999px;top:0;transform:translate(-50%,-100%);pointer-events:none;width:max-content;max-width:min(300px,72vw);background:#fff;color:#1d2a5a;border:2.5px solid #1d2a5a;border-radius:18px;padding:8px 15px 9px;box-shadow:0 6px 18px rgba(0,0,0,.25);font-family:inherit;text-align:center;opacity:0;transition:opacity .3s}#kBub.on{opacity:1}#kBub b{display:block;color:#f26a1f;font-size:16px;font-weight:800;line-height:1.4}#kBub small{display:block;font-size:13.5px;font-weight:600;line-height:1.45;color:#2f3a5e}#kBub::after{content:"";position:absolute;left:50%;bottom:-11px;margin-left:-9px;border:9px solid transparent;border-top-color:#1d2a5a;border-bottom:0}#kBub::before{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-top-color:#fff;border-bottom:0;z-index:1}';
+    document.head.appendChild(st); const el = document.createElement("div"); el.id = "kBub"; document.body.appendChild(el);
+    let cur = null, cand = null, candT = 0, hideT = 0; const said = {}, v3 = new THREE.Vector3();
+    const where = () => { const u = S.x / SC + OX, v = S.z / SC + OY; for (const r of RM) if (u >= r[1] && u <= r[3] && v >= r[2] && v <= r[4]) return r; return null; };
+    setInterval(() => { if (!TP.obj || document.hidden) return; const r = where(), k = r ? r[0] : null; if (k !== cand) { cand = k; candT = performance.now(); return; } if (k === cur || performance.now() - candT < 350) return; cur = k;
+      if (!r || (said[k] && performance.now() - said[k] < 9000)) return; said[k] = performance.now(); el.innerHTML = "<b>" + r[5] + "</b><small>" + r[6] + "</small>"; el.classList.add("on"); clearTimeout(hideT); hideT = setTimeout(() => el.classList.remove("on"), 3800); }, 120);   /* a room counts once 쿠모 has been in it a moment; the same room again only after a little while */
+    (function pos() { if (freeGL.done) return; requestAnimationFrame(pos); if (!el.classList.contains("on")) return; const rc = canvas.getBoundingClientRect(); v3.set(S.x, (S.fy || 0) + 1.7, S.z).project(camera); if (v3.z > 1) return;
+      const w = el.offsetWidth, h = el.offsetHeight; let x = rc.left + (v3.x + 1) / 2 * rc.width, y = rc.top + (1 - v3.y) / 2 * rc.height - 6; x = Math.max(w / 2 + 10, Math.min(innerWidth - w / 2 - 10, x)); y = Math.max(h + 64, Math.min(innerHeight - 24, y)); el.style.left = x + "px"; el.style.top = y + "px"; })(); }
   { /* walk into the way out and the question comes at once: 나가시겠습니까? (asked again only after stepping away from it) */
     const EXD = PICK.filter((o) => o.userData && o.userData.idx === "exit"), bbx = new THREE.Box3(); let armed = true;
     setInterval(() => { if (!EXD.length || document.hidden) return; let at = false, far = true;
@@ -4458,7 +4543,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   try { const g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); if (g && g.home) { sessionStorage.removeItem("kumhoPageGo"); sessionStorage.setItem("kumhoHomeCarry", JSON.stringify({ ride: g.ride, sound: g.sound })); } } catch (e) {}
 
   // ---- music: the park's own tune (assets/park-bgm.mp3, composed for the site — nothing to license), on from the first moment unless it was switched off ----
-  { const au = window.__bgmAu = new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", "");
+  { const au = window.__bgmAu || (window.__bgmAu = new Audio("assets/park-bgm.mp3")); au.loop = true; au.preload = "auto"; au.volume = 0.55; au.setAttribute("playsinline", "");   /* made at the very top of the page and already playing (see the head), so the tune is there from the first moment */
     let on = true; try { const c = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "{}"); if (c.sound === false) on = false; } catch (e) {}
     const btn = $("sndBtn"), show = () => { btn.textContent = on ? "♪ 음악 켬" : "♪ 음악 끔"; btn.setAttribute("aria-pressed", String(on)); };
     const play = () => { if (on && au.paused) { const p = au.play(); if (p && p.catch) p.catch(() => {}); } };
@@ -4466,7 +4551,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     ["pointerdown", "keydown", "touchend"].forEach((ev) => addEventListener(ev, kick, true));   // browsers that hold sound back until the first touch start it then
     btn.addEventListener("click", (e) => { e.stopPropagation(); on = !on; if (on) play(); else au.pause(); show();
       try { const c = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "{}"); c.sound = on; sessionStorage.setItem("kumhoHomeCarry", JSON.stringify(c)); } catch (x) {} });
-    show(); play(); }
+    show(); if (on) play(); else au.pause(); }
   function freeGL() { if (freeGL.done) return; freeGL.done = true;   // leaving the page: hand back every texture, buffer and the GL context itself, so the next page (on an iPad above all) starts with the memory free
     try { if (window.__bgmAu) { window.__bgmAu.pause(); window.__bgmAu.removeAttribute("src"); } scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach((m) => { for (const k in m) { const v = m[k]; if (v && v.isTexture) v.dispose(); } m.dispose(); }); });
       renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} }
@@ -4499,7 +4584,12 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     { const near = (x, z, r) => Math.hypot(S.x - x, S.z - z) < r;   /* automatic doors: open when 쿠모 comes within a step, shut again once he has gone on (a door opened by hand stays as left) */
       DOORS.forEach((D) => { if (D.cx == null) return; if (near(D.cx, D.cz, 1.3)) { if (!D.to) { D.to = 1; D.auto = true; } } else if (D.auto && !near(D.cx, D.cz, 2.2)) { D.to = 0; D.auto = false; } });
       if (DSL.length) { const d0 = Math.hypot(S.x - px(37), S.z - pz(128)); if (d0 < 1.5 && DSL[0].to) DSL.forEach((d) => { d.to = 0; d.auto = true; }); else if (d0 > 2.3 && DSL[0].auto && !DSL[0].to) DSL.forEach((d) => { d.to = 1; d.auto = false; }); }
-      GDOORS.forEach((d) => { const dd = Math.hypot(S.x - d.cx, S.z - d.cz); if (dd < 1.5) d.to = 1; else if (dd > 2.3) d.to = 0; if (Math.abs(d.t - d.to) > 1e-3) { d.t += Math.sign(d.to - d.t) * Math.min(Math.abs(d.to - d.t), dt * 1.4); const e = d.t * d.t * (3 - 2 * d.t); d.G.position.x = d.x0 + d.dx * e; } }); }
+      GDOORS.forEach((d) => { const dd = Math.hypot(S.x - d.cx, S.z - d.cz); if (dd < 1.5) d.to = 1; else if (dd > 2.3) d.to = 0; if (Math.abs(d.t - d.to) > 1e-3) { d.t += Math.sign(d.to - d.t) * Math.min(Math.abs(d.to - d.t), dt * 1.4); const e = d.t * d.t * (3 - 2 * d.t); d.G.position.x = d.x0 + d.dx * e; } });
+      { let nf = null; FRIDGE.forEach((f) => { f.d = Math.hypot(S.x - f.cx, S.z - f.cz); if (!nf || f.d < nf.d) nf = f; });   /* the fridge 쿠모 walks up to opens; only the nearer of the two at a time */
+        FRIDGE.forEach((f) => { if (f === nf && f.d < 1.5) f.to = 1; else if (f !== nf || f.d > 2.1) f.to = 0;
+          if (Math.abs(f.t - f.to) > 1e-3) { f.t += Math.sign(f.to - f.t) * Math.min(Math.abs(f.to - f.t), dt * 1.5); const e = f.t * f.t * (3 - 2 * f.t); f.doors.forEach((d) => { d.g.rotation.y = d.sg * e * 1.75; }); } }); }
+      WATER.forEach((w) => { const on = Math.hypot(S.x - w.x, S.z - w.z) < w.r; w.k += ((on ? 1 : 0) - w.k) * Math.min(1, dt * 6); const vis = w.k > 0.02; w.s.visible = w.rp.visible = vis;
+        if (vis) { w.s.scale.x = w.s.scale.z = w.k; w.s.material.opacity = 0.75 * w.k; w.tex.offset.y -= dt * 2.6; w.ph = (w.ph + dt * 1.8) % 1; w.rp.scale.set(0.5 + 1.6 * w.ph, 0.5 + 1.6 * w.ph, 1); w.rp.material.opacity = 0.6 * (1 - w.ph) * w.k; } }); }
     DSL.forEach((d) => { if (Math.abs(d.t - d.to) < 1e-3) return; d.t += Math.sign(d.to - d.t) * Math.min(Math.abs(d.to - d.t), dt * 1.4); const e = d.t * d.t * (3 - 2 * d.t); d.G.position.x = d.x0 + (d.x1 - d.x0) * e; });
     DOORS.forEach((D) => { if (Math.abs(D.t - D.to) < 1e-3) return; D.t += Math.sign(D.to - D.t) * Math.min(Math.abs(D.to - D.t), dt * 1.8); D.g.rotation.y = D.sgn * D.t * D.t * (3 - 2 * D.t) * Math.PI / 2 * 0.95; });   // each swings in, into its room
     WINS.forEach((sl) => { if (Math.abs(sl.t - sl.to) < 1e-3) return; sl.t += Math.sign(sl.to - sl.t) * Math.min(Math.abs(sl.to - sl.t), dt * 1.6); const e = sl.t * sl.t * (3 - 2 * sl.t);
