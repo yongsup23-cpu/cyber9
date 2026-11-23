@@ -7436,7 +7436,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const roof = new THREE.Mesh(new THREE.BoxGeometry(W * 0.4, 2.6, D * 0.5), top); roof.position.set(x + W * 0.1, y0 + H + 1.3, z); A.add(roof); };
       { // right: 화성동탄2A106BL (동탄 아테라), after the photographs — 15-storey slabs in grey panels on white joints, a pair of beige pilasters with a column of
         // light and dark slit windows, the lowest four floors in darker grey stone, a white parapet; at the front, the dark-granite gateway with its ARTERA wall and guard house
-        const FH2 = 2.9, DZ = 58, DX2 = 32, HY = 0, FLD = 15;   // DZ: 8 m further back, clear of U-square
+        const FH2 = 2.9, DZ = -8, DX2 = 32, HY = 0, FLD = 15;   // DZ: one whole block further back (where the 에코델타 copy stood), leaving the block behind U-square to its coach yard
         const dtFace = (accent, seed) => { const draw = (lit) => canvasTex(512, 768, (g, W, H) => { const rh = H / (FLD + 0.6), top = rh * 0.6, cols = 8, cw = W / cols; let q = seed; const rr = () => (q = (q * 16807) % 2147483647) / 2147483647;
             g.fillStyle = lit ? "#000" : "#a4a7ab"; g.fillRect(0, 0, W, H);
             if (!lit) { g.fillStyle = "#8b8e92"; g.fillRect(0, top + rh * (FLD - 4), W, rh * 4); g.fillStyle = "#f2f2f0"; g.fillRect(0, 0, W, top); g.fillStyle = "#dcdcda"; for (let x = 6; x < W; x += 22) g.fillRect(x, 3, 3, top - 6); }
@@ -7545,7 +7545,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const ledF = new THREE.Mesh(new THREE.BoxGeometry(11, 6.5, 0.6), new THREE.MeshLambertMaterial({ color: 0x3a3f47 })); ledF.position.set(XA - 50, HB + 3.2, ZA + 29.65); A.add(ledF); OUT.arteraMats.push(ledF.material);
         const gate = new THREE.Mesh(new THREE.BoxGeometry(16, 1.2, 3), new THREE.MeshLambertMaterial({ color: 0x3a3f47 })); gate.position.set(XA - 22, HB + 6.2, ZA + 36); A.add(gate); OUT.arteraMats.push(gate.material);   // the entrance gate
         [-7, 7].forEach((o) => { const c = new THREE.Mesh(new THREE.BoxGeometry(1.4, 6, 1.4), new THREE.MeshLambertMaterial({ color: 0x9c7d5c })); c.position.set(XA - 22 + o, HB + 3, ZA + 36); A.add(c); OUT.arteraMats.push(c.material); }); };
-        site(244, -2, 0); site(-305, 2, 0); }   // the right one moved east with the 동탄 complex
+        site(-305, 2, 0); }   // (the right-hand copy behind the 동탄 complex: taken away, the 동탄 complex now stands in its place)
     }
     // ---- the city around the archive, after an architect's white model: blocks of offices and flats with drawn windows,
     // a cluster of glass towers, a park in front of the Artera complex, a stadium, crossings and signals on the street.
@@ -8582,6 +8582,20 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           // (the coach park behind: gone; the street runs there)   // the coach park behind the terminal
           }   // behind the terminal: an empty lot now (the parked coaches and their bays taken away, so U-square stands clear of the 동탄 complex)
       }
+      { // the coach yard on the block behind U-square, across the street from its bay doors: asphalt with bay lines, a kerbed platform under a canopy along the street side, five Kumho coaches drawn up nose to the street (one model, drawn five times)
+        const Y = new THREE.Group(); Y.name = "usqYard"; world.add(Y); const x0 = 177, x1 = 303, z0 = -140, z1 = -92;
+        const pl = (w, d, m, x, z, y) => { const o = new THREE.Mesh(new THREE.PlaneGeometry(w, d), m); o.rotation.x = -Math.PI / 2; o.position.set(x, y, z); o.receiveShadow = true; Y.add(o); return o; };
+        pl(x1 - x0, z1 - z0, lam(0x5b5e62), (x0 + x1) / 2, (z0 + z1) / 2, 0.05); pl(x1 - x0, 3.4, lam(0xc9c6bf), (x0 + x1) / 2, z1 - 1.7, 0.07); pl(x1 - x0, 0.2, new THREE.MeshBasicMaterial({ color: 0xf2c230 }), (x0 + x1) / 2, z1 - 3.5, 0.08);
+        const wl = new THREE.MeshBasicMaterial({ color: 0xf0f0ec }), BX = [195, 217, 240, 263, 285]; for (let i = 0; i <= 5; i++) pl(0.15, 14, wl, (i ? (i < 5 ? (BX[i - 1] + BX[i]) / 2 : 296.5) : 183.5), z1 - 11, 0.08); pl(296.5 - 183.5, 0.15, wl, 240, z1 - 18, 0.08);
+        const can = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0 - 4, 0.15, 3.8), lam(0xf4f4f2)); can.position.set(240, 3.4, z1 - 1.8); can.castShadow = true; Y.add(can); const fas = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0 - 4, 0.3, 0.1), lam(0x3f8f3a)); fas.position.set(240, 3.3, z1 - 3.7); Y.add(fas);
+        for (let x = x0 + 4; x <= x1 - 4; x += 12) { const po = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 3.4, 8), lam(0xb9bdc2)); po.position.set(x, 1.7, z1 - 3.4); Y.add(po); }
+        const L = gltfLoader || (THREE.GLTFLoader ? (gltfLoader = new THREE.GLTFLoader()) : null); if (L && window.MeshoptDecoder && !L.meshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder); const ow = world;
+        if (L) (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => L.load("assets/lite-bus.glb", (g) => { if (world !== ow) return; const root = g.scene; root.updateMatrixWorld(true);
+          const bb = new THREE.Box3().setFromObject(root), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3()), k = 12 / Math.max(bs.x, bs.z), alongX = bs.x >= bs.z;
+          let src = null; root.traverse((o) => { if (o.isMesh && !src) src = o; }); if (!src) return; const m0 = Array.isArray(src.material) ? src.material[0] : src.material;
+          const im = new THREE.InstancedMesh(src.geometry, new THREE.MeshLambertMaterial({ map: m0.map || null }), BX.length); im.castShadow = true; Y.add(im);
+          const fix = new THREE.Matrix4().makeTranslation(-bc.x, -bb.min.y, -bc.z), sc = new THREE.Matrix4().makeScale(k, k, k), ro = new THREE.Matrix4().makeRotationY(Math.PI / 2 + (alongX ? 0 : Math.PI / 2)), tr = new THREE.Matrix4(), M = new THREE.Matrix4();
+          BX.forEach((x, i) => { tr.makeTranslation(x, 0.06, z1 - 11); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); }); im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere && im.computeBoundingSphere(); im.frustumCulled = false; }, undefined, () => {})); }
       if (OUT.mergeU) OUT.mergeU();
       { // low clipped hedges, plain green, wherever the walk stops: down the park's right-hand edge, along the city side past the park (open at the side streets and U-square's plaza),
         // along the archive side of the street, and across the far end of the walk
@@ -11410,7 +11424,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const CG = { on: false, run: false, list: [], meshes: {}, beam: null, t: 0, got: 0, cd: 0, tmp: new THREE.Object3D(), ac: null, warn: 0 };
   const CG_N = 100, CG_GOAL = 80, CG_T = 300, CG_R = 0.95, CG_HIT = 2.0;
   const cgFmt = (t) => { t = +t; const m = Math.floor(t / 60), r = t - m * 60; return m ? m + "분 " + r.toFixed(2).padStart(5, "0") + "초" : t.toFixed(2) + "초"; };
-  const CG_X5 = 5, CG_X10 = [[-16, 45], [214, -67], [22, -181], [-70, -20]];   /* the four ×10 coins: behind the archive, behind 유·스퀘어, at 쿠모's front door, in front of 가치체계관 */
+  const CG_X5 = 5, CG_X10 = [[-16, 45], [214, -67], [22, -166.5], [-70, -20]];   /* the four ×10 coins: behind the archive, behind 유·스퀘어, in front of 쿠모's 아테라 complex (on the park side of the road), in front of 가치체계관 */
   const CG_K = { 1: { c: ["#fff4c0", "#f3c84e", "#cf951f", "#8f5c0a"], ring: "#a8700f", ink: "#7a4606", big: "80", rim: ["#d9a12c", "#9a6a12"], emi: 0x4a3000, spec: 0xfff0b0, beam: 0xffc94a, s: 1 },
     5: { c: ["#ffffff", "#e3ecf6", "#9fb3ca", "#566a82"], ring: "#6d8199", ink: "#24344c", big: "×5", rim: ["#c8d4e2", "#7b8da4"], emi: 0x18222f, spec: 0xffffff, beam: 0x8fd4ff, s: 1.15 },
     10: { c: ["#ffd6d6", "#ff5d5d", "#c4161c", "#650a0d"], ring: "#860c11", ink: "#fff3df", big: "×10", rim: ["#dc3a40", "#760b10"], emi: 0x3a0004, spec: 0xffd6d6, beam: 0xff5a5a, s: 1.3 } };
@@ -11458,6 +11472,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function cgPlace() { let sd = (Date.now() % 99991) + 11; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647, pts = [], far = (x, z, d) => pts.every((p) => Math.hypot(p[0] - x, p[1] - z) > d);
     const near = (x, z) => { for (let d = 0; d <= 9; d += 0.5) for (let k = 0; k < (d ? 16 : 1); k++) { const a = x + Math.cos(k * 0.3927) * d, b = z + Math.sin(k * 0.3927) * d; if (cgOK(a, b)) return [a, b]; } return [x, z]; };
     CG_X10.forEach(([x, z]) => { const [a, b] = near(x, z); pts.push([a, b, 0, 10]); });
+    for (let i = 0, n = 0; i < 40 && n < 10; i++) { const an = (i + 0.5) * Math.PI / 5 + Math.floor(i / 10) * 0.31, rr = 1 + Math.floor(i / 10) * 0.18, [a, b] = near(-16.5 + Math.cos(an) * 21 * rr, 26 + Math.sin(an) * 19 * rr); if (cgOK(a, b) && far(a, b, 4)) { pts.push([a, b, 0, 1]); n++; } }   /* ten more in a ring round the archive building */
     [[-26, 42], [2, 44], [27, 42], [-106, -164], [294, -164], [-106, 36], [160, -166], [60, -160], [-104, -70], [290, 30]].forEach(([x, z]) => {   /* the hidden ones: behind the archive, in the far corners and along the edges of the town */
       for (let k = 0; k < 60; k++) { const s = 4 + k * 0.4, a = x + (r() - 0.5) * s, b = z + (r() - 0.5) * s; if (cgOK(a, b) && far(a, b, 6)) { pts.push([a, b, 1, 1]); break; } } });
     for (let tries = 0; pts.length < CG_N && tries < 24000; tries++) { const a = -100 + r() * 232, b = -152 + r() * 147; if (cgOK(a, b) && far(a, b, Math.max(4, 10 - tries / 2500))) pts.push([a, b, 0, 1]); }
@@ -11527,7 +11542,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   window.__kumhoCG = { panel: () => cgPanel(), start: () => cgStart(), end: () => cgEnd(), st: () => ({ on: CG.on, run: CG.run, n: CG.list.length, got: CG.got, k: [1, 5, 10].map((v) => CG.list.filter((c) => c.v === v).length), x10: CG.list.filter((c) => c.v === 10).map((c) => [+c.x.toFixed(1), +c.z.toFixed(1)]), ride: RIDE.on, kind: RIDE.kind, taxi: !!RIDE.taxi, inW: !!(RIDE.taxi && RIDE.taxi.parent === world), c: CG.list.slice(0, 3).map((c) => [c.x, c.z]) }) };
   function cgTalk() {   /* the grandpa, once 쿠모 has the mini taxi (and the park map): the game if everything else is done, else what is still left to do */
     if (!cgTaxi() || !mapGot) return false; const left = cgReq().filter((q) => !q[1]).map((q) => q[0]);
-    if (!left.length) { npcSay(["오, 쿠모! 미니택시까지 얻었구나. 아이템도 다 모으고, 농구도 퍼즐도 소원 동전도 모두 해냈다니 정말 대단하구나!", "그럼 할아버지가 특별한 게임을 하나 알려 주마. 이름하여 ‘80주화 챌린지’!", "금호 80주년을 기념하는 80주화 100개를 아테라 타운 곳곳에 뿌려 두었단다. 은빛 ×5 동전은 5개분, 빨간 ×10 동전은 10개분이지.", "빨간 동전은 아카이브관 뒤, 유·스퀘어 뒤, 쿠모네 집 앞, 가치체계관 앞에 하나씩 숨겨 놨단다.", "미니택시를 타고 80개분을 누가 가장 빨리 모으나 겨루는 타임어택이란다. 5분이 지나면 끝이니 서두르렴. 빠르면 이니셜이 명예의 전당에 남는단다!"], cgPanel); return true; }
+    if (!left.length) { npcSay(["오, 쿠모! 미니택시까지 얻었구나. 아이템도 다 모으고, 농구도 퍼즐도 소원 동전도 모두 해냈다니 정말 대단하구나!", "그럼 할아버지가 특별한 게임을 하나 알려 주마. 이름하여 ‘80주화 챌린지’!", "금호 80주년을 기념하는 80주화 100개를 아테라 타운 곳곳에 뿌려 두었단다. 은빛 ×5 동전은 5개분, 빨간 ×10 동전은 10개분이지.", "미니택시를 타고 80개분을 누가 가장 빨리 모으나 겨루는 타임어택이란다. 5분이 지나면 끝이니 서두르렴. 빠르면 이니셜이 명예의 전당에 남는단다!"], cgPanel); return true; }
     npcSay(["미니택시를 얻었구나, 쿠모! 그 택시로 할 수 있는 아주 특별한 게임이 있단다.", "그런데 먼저 이것들을 다 해내야 해 — " + left.join(" · ") + ".", "다 해내고 다시 오면 할아버지가 그 게임을 알려 주마!"]); return true; }
   const SIGN_LINKS = [   /* the fingerpost across from the archive: name, address, colour, which way the arrow points */
     { n: "금호건설", url: "https://www.kumhoenc.com/", c: "#1d2a5a", yaw: 0.35 },

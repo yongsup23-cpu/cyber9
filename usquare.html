@@ -3974,6 +3974,10 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   scene.add(new THREE.AmbientLight(0xffffff, 0.06));
   const SECT = [];   // curved obstacles [r0, r1, a0, a1] about the hall's centre (0,0): a is measured from east (+x) round to the north (−z)
   const polar = (r, a) => [r * Math.cos(a), -r * Math.sin(a)], D2R = Math.PI / 180;
+  const GA = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (42 + 76 * (i + 0.5) / 9) * D2R), GDO = [], YR = RA + 21.5, XY1 = 50, ZY0 = -RA - 23;   /* the nine green (직행) bay doors, the only ones that open: out through them to the coach yard, walled at YR */
+  const YBUS = [0, 2, 4, 6, 8].map((i) => ({ a: GA[i], rc: RA + 9.4 }));   /* five coaches nose on to the doors, one at every other door */
+  const yard = (r, a) => { if (r < RA + 1.4) return GA.some((g) => Math.abs(a - g) * RA < 1.1); const ad = a / D2R; if (r > YR || ad < 41 || ad > 119) return false;
+    for (const b of YBUS) { const da = a - b.a, t = r * Math.sin(da), q = r * Math.cos(da) - b.rc; if (Math.abs(t) < 1.55 && Math.abs(q) < 6.4) return false; } return true; };
   const arcMesh = (r, a0, a1, y0, y1, m, inward = true) => { const g = new THREE.CylinderGeometry(r, r, y1 - y0, 48, 1, true, Math.PI / 2 + a0, a1 - a0); const o = add(g, m, 0, (y0 + y1) / 2, 0); if (inward) o.material.side = THREE.DoubleSide; return o; };
   const ringTop = (r0, r1, a0, a1, y, m) => { const g = new THREE.RingGeometry(r0, r1, 48, 1, a0, a1 - a0); const o = add(g, m, 0, y, 0); o.rotation.x = -Math.PI / 2; return o; };
   // ---- floors: grey granite with dark bands, white tiles in the wing ----
@@ -3998,7 +4002,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const tick = () => { const g = ck.getContext("2d"), d = new Date(); g.fillStyle = "#0c0606"; g.fillRect(0, 0, 320, 96); g.fillStyle = "#ff2a1a"; g.font = `700 76px monospace`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"), 160, 52); ckT.needsUpdate = true; };
   tick(); setInterval(tick, 20000);
   // ---- the outer arc: a solid wall with the bay doors set in it, as at U-square — 도착하는 곳 on the left (west), 직행(시외)버스 타는 곳 in the middle (green frames), 고속버스 타는 곳 on the right (east, orange frames) ----
-  { const AW = (180 - Math.asin(14.2 / RA) / D2R) * D2R; arcMesh(RA + 0.35, 0, AW, 0, HT, wallMat); SECT.push([RA - 0.2, RA + 1, 0, AW]);   /* west of AW the hall runs on into the shop wing */
+  { const AW = (180 - Math.asin(14.2 / RA) / D2R) * D2R; { const hw = 1.45 / (RA + 0.35); let a0 = 0; GA.forEach((g) => { arcMesh(RA + 0.35, a0, g - hw, 0, 2.52, wallMat); a0 = g + hw; }); arcMesh(RA + 0.35, a0, AW, 0, 2.52, wallMat); arcMesh(RA + 0.35, 0, AW, 2.52, HT, wallMat); } SECT.push([RA - 0.2, RA + 1, 0, AW]);   /* west of AW the hall runs on into the shop wing */
     const BAND = [[0, 42, "#f08a1c"], [42, 118, "#3f8f3a"], [118, AW / D2R, "#8a6fae"]];
     BAND.forEach(([a0, a1, c]) => arcMesh(RA + 0.3, a0 * D2R, a1 * D2R, HT - 0.5, HT - 0.2, new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide })));
     const yard = tex(512, 512, (g, w, h) => {   /* what one sees through a bay door: the coach yard, a coach drawn up, trees beyond */
@@ -4020,13 +4024,15 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const doorGl = new THREE.MeshBasicMaterial({ map: glT, transparent: true, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }), fr2 = lam(0xb9bdc2), blk = lam(0x1b1c1e);
     const label = (w, h, t1, t2, bg = "#1b1c1e") => basic(tex(Math.round(256 * w / h), 128, (g, W, H) => { g.fillStyle = bg; g.fillRect(0, 0, W, H); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 ${H * 0.36}px ${FONT}`; g.fillText(t1, W / 2, H * (t2 ? 0.36 : 0.52)); if (t2) { g.font = `600 ${H * 0.2}px ${FONT}`; g.fillText(t2, W / 2, H * 0.76); } }));
     const numT = (n) => basic(tex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = "#fff"; g.font = `800 104px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.shadowColor = "rgba(0,0,0,.45)"; g.shadowBlur = 6; g.fillText(String(n), 64, 70); }));
-    const unit = (aDeg, col, head, d1, d2, nL, nR) => { const [x, z] = polar(RA + 0.12, aDeg * D2R), G = new THREE.Group(); G.position.set(x, 0, z); G.lookAt(0, 0, 0); scene.add(G);
+    const unit = (aDeg, col, head, d1, d2, nL, nR) => { const gr = col === 0x3f8f3a, [x, z] = polar(RA + 0.12, aDeg * D2R), G = new THREE.Group(); G.position.set(x, 0, z); G.lookAt(0, 0, 0); scene.add(G);
       const b = (w, h, d, m, px, py, pz) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(px, py, pz); G.add(o); return o; };
       const p = (w, h, m, px, py, pz) => { const o = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); o.position.set(px, py, pz); G.add(o); return o; };
       const cl = lam(col); b(1.1, HT - 0.5, 0.24, cl, -1.95, (HT - 0.5) / 2, 0); b(1.1, HT - 0.5, 0.24, cl, 1.95, (HT - 0.5) / 2, 0); b(5.0, 0.62, 0.24, cl, 0, HT - 0.81, 0);
-      p(2.8, 2.45, BAYM[BAYSEQ[bayN++ % BAYSEQ.length]], 0, 1.225, -0.1);   /* the yard beyond the glass, never a wall */
-      b(2.86, 0.08, 0.14, fr2, 0, 2.47, 0.02); b(0.08, 2.47, 0.14, fr2, -1.41, 1.235, 0.02); b(0.08, 2.47, 0.14, fr2, 1.41, 1.235, 0.02); b(0.06, 2.45, 0.1, fr2, 0, 1.225, 0.04);
-      [-0.7, 0.7].forEach((dx) => { p(1.32, 2.4, doorGl, dx, 1.2, 0.05).renderOrder = 4; b(0.03, 0.5, 0.04, fr2, dx - Math.sign(dx) * 0.5, 1.15, 0.1); });
+      if (!gr) p(2.8, 2.45, BAYM[BAYSEQ[bayN++ % BAYSEQ.length]], 0, 1.225, -0.1);   /* the yard beyond the glass, never a wall */
+      b(2.86, 0.08, 0.14, fr2, 0, 2.47, 0.02); b(0.08, 2.47, 0.14, fr2, -1.41, 1.235, 0.02); b(0.08, 2.47, 0.14, fr2, 1.41, 1.235, 0.02); if (!gr) b(0.06, 2.45, 0.1, fr2, 0, 1.225, 0.04);
+      const LV = []; [-0.7, 0.7].forEach((dx) => { const lg = new THREE.Group(); G.add(lg); LV.push(lg); const q = new THREE.Mesh(new THREE.PlaneGeometry(1.32, 2.4), doorGl); q.position.set(dx, 1.2, 0.05); q.renderOrder = 4; lg.add(q);
+        const h = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.5, 0.04), fr2); h.position.set(dx - Math.sign(dx) * 0.5, 1.15, 0.1); lg.add(h); if (gr) { const e = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.4, 0.06), fr2); e.position.set(dx - Math.sign(dx) * 0.64, 1.2, 0.05); lg.add(e); } });
+      if (gr) GDO.push({ L: LV[0], R: LV[1], x, z, t: 0 });   /* the green doors slide apart as 쿠모 comes up, either side */
       b(5.0, 0.62, 0.12, blk, 0, 2.82, 0.08); const hw = 1.25;
       p(hw, 0.56, label(hw, 0.56, head[0], head[1]), -1.88, 2.82, 0.145); p(hw, 0.56, label(hw, 0.56, d1[0], d1[1]), -0.62, 2.82, 0.145); p(hw, 0.56, label(hw, 0.56, d2[0], d2[1]), 0.62, 2.82, 0.145); p(hw, 0.56, label(hw, 0.56, head[0], head[1]), 1.88, 2.82, 0.145);
       if (nL != null) { p(0.62, 0.62, numT(nL), -1.95, 3.55, 0.13).material.transparent = true; p(0.62, 0.62, numT(nR), 1.95, 3.55, 0.13).material.transparent = true;
@@ -4041,6 +4047,32 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     run(118, AW / D2R, 3, (a) => unit(a, 0x8a6fae, ["도착하는 곳", "Arrivals"], ["어서 오세요", "Welcome"], ["유·스퀘어", "U-square"], null, null));
     [[21, "고속버스 타는 곳  1 – 10", "#f08a1c"], [80, "직행(시외)버스 타는 곳  16 – 33", "#3f8f3a"], [(118 + AW / D2R) / 2, "도착하는 곳 · 들어오는 곳", "#8a6fae"]].forEach(([a, t, c]) => { const [x, z] = polar(RA - 0.6, a * D2R);
       const m = sign(5.2, 0.5, (g, w, h) => { g.fillStyle = "#16181b"; g.fillRect(0, 0, w, h); g.fillStyle = c; g.fillRect(0, 0, h * 0.4, h); g.fillRect(w - h * 0.4, 0, h * 0.4, h); g.fillStyle = "#fff"; g.font = `700 ${h * 0.5}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(t, w / 2, h / 2); }, x, 4.0, z); m.lookAt(0, 4.0, 0); }); }
+  // ---- the coach yard beyond the green doors: a kerbed platform under a canopy, the asphalt with its bay lines, five Kumho coaches drawn up nose on, a low wall and a row of trees closing it ----
+  { const A0 = 38 * D2R, A1 = 122 * D2R, asph = lam(0x5b5e62), kerb = lam(0xc9c6bf), yel = new THREE.MeshBasicMaterial({ color: 0xf2c230 }), wht = new THREE.MeshBasicMaterial({ color: 0xf2f2ee }), conc = lam(0xd6d2ca), canM = lam(0xf4f4f2), grn = lam(0x3f8f3a);
+    ringTop(RA + 0.36, RA + 3.3, A0, A1, 0.006, kerb); ringTop(RA + 3.3, YR + 0.6, A0, A1, 0.004, asph); ringTop(RA + 3.05, RA + 3.25, A0, A1, 0.01, yel);
+    ringTop(YR + 0.6, YR + 30, A0 - 0.05, A1 + 0.05, 0.003, lam(0x8fa070));
+    const rline = (a, r0, r1, w, m) => { const [x0, z0] = polar(r0, a), [x1, z1] = polar(r1, a), L = r1 - r0, o = add(new THREE.PlaneGeometry(w, L), m, (x0 + x1) / 2, 0.012, (z0 + z1) / 2); o.rotation.order = "YXZ"; o.rotation.y = a - Math.PI / 2; o.rotation.x = -Math.PI / 2; return o; };
+    for (let i = 0; i <= 9; i++) { const a = i === 0 ? GA[0] - (GA[1] - GA[0]) / 2 : i === 9 ? GA[8] + (GA[1] - GA[0]) / 2 : (GA[i - 1] + GA[i]) / 2; rline(a, RA + 3.4, RA + 17, 0.15, wht); }
+    ringTop(RA + 16.85, RA + 17, GA[0] - (GA[1] - GA[0]) / 2, GA[8] + (GA[1] - GA[0]) / 2, 0.012, wht);
+    /* the canopy over the platform: a thin white roof on slim posts, a green fascia */
+    { const c = ringTop(RA + 0.36, RA + 3.6, A0 + 0.02, A1 - 0.02, 3.35, canM); c.material = canM; canM.side = THREE.DoubleSide; arcMesh(RA + 3.6, A0 + 0.02, A1 - 0.02, 3.15, 3.45, grn);
+      for (let i = 0; i <= 9; i++) { const a = i === 0 ? GA[0] - (GA[1] - GA[0]) / 2 : i === 9 ? GA[8] + (GA[1] - GA[0]) / 2 : (GA[i - 1] + GA[i]) / 2, [x, z] = polar(RA + 3.3, a); add(new THREE.CylinderGeometry(0.08, 0.08, 3.35, 10), lam(0xb9bdc2), x, 1.675, z); } }
+    /* the low wall round the yard, and trees beyond it */
+    arcMesh(YR + 0.5, A0, A1, 0, 1.3, conc); arcMesh(YR + 0.5, A0, A1, 1.3, 1.4, kerb);
+    [A0, A1].forEach((a) => { const r0 = RA + 0.6, r1 = YR + 0.5, [x0, z0] = polar(r0, a), [x1, z1] = polar(r1, a), w = add(new THREE.BoxGeometry(r1 - r0, 1.3, 0.3), conc, (x0 + x1) / 2, 0.65, (z0 + z1) / 2); w.rotation.y = a; });
+    const tg = new THREE.SphereGeometry(1, 10, 8), tm = [lam(0xc8552e), lam(0xd9a03a), lam(0x6f9a4a), lam(0xb8742e)], tk = lam(0x6a5038);
+    for (let a = A0 + 0.03; a < A1; a += 0.055) { const r = YR + 2.4 + ((a * 97) % 1.4), [x, z] = polar(r, a), k = Math.floor(a * 53) % 4; add(new THREE.CylinderGeometry(0.15, 0.2, 2.6, 6), tk, x, 1.3, z); const t = add(tg, tm[k], x, 3.9, z); t.scale.set(1.9, 2.2, 1.9); }
+    /* the coaches: one model, drawn five times in one go */
+    if (THREE.GLTFLoader) { const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L.setMeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
+      (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => L.load("assets/lite-bus.glb", (g) => { if (freeGL.done) return; const root = g.scene; root.updateMatrixWorld(true);
+        const bb = new THREE.Box3().setFromObject(root), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3()), k = 12 / Math.max(bs.x, bs.z), alongX = bs.x >= bs.z;
+        let src = null; root.traverse((o) => { if (o.isMesh && !src) src = o; }); if (!src) return;
+        const m0 = Array.isArray(src.material) ? src.material[0] : src.material, mat = new THREE.MeshLambertMaterial({ map: m0.map || null, color: 0xffffff });
+        const im = new THREE.InstancedMesh(src.geometry, mat, YBUS.length); im.frustumCulled = false; scene.add(im);
+        const fix = new THREE.Matrix4().makeTranslation(-bc.x, -bb.min.y, -bc.z), sc = new THREE.Matrix4().makeScale(k, k, k), ro = new THREE.Matrix4(), tr = new THREE.Matrix4(), M = new THREE.Matrix4();
+        YBUS.forEach((b, i) => { const [x, z] = polar(b.rc, b.a); ro.makeRotationY(b.a + (alongX ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.02, z); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); });
+        im.instanceMatrix.needsUpdate = true; }, undefined, () => {})); }
+    (function gd() { if (freeGL.done) return; requestAnimationFrame(gd); const S = window.__vh; if (!S) return; GDO.forEach((d) => { const to = Math.hypot(S.x - d.x, S.z - d.z) < 4.2 ? 1 : 0; if (Math.abs(d.t - to) < 1e-3) return; d.t += Math.sign(to - d.t) * Math.min(Math.abs(to - d.t), 0.04); const e = d.t * d.t * (3 - 2 * d.t); d.L.position.x = -1.25 * e; d.R.position.x = 1.25 * e; }); })(); }
   // ---- the light-box pillars ① – ⑥ in the waiting area along the bays ----
   { const ads = [["#1b1f2a", "#f26a1f", "금호고속", "프리미엄 고속버스"], ["#f4f1ea", "#1d2a5a", "ARTERA", "당신의 삶을 비추는 아름다움"], ["#c4161c", "#ffffff", "유·스퀘어", "당신의 광장 · 젊음의 광장"], ["#f4f1ea", "#c4161c", "금호건설", "대지 위의 예술"]];
     const adT = ads.map(([bg, fg, a, b]) => tex(256, 512, (g, w, h) => { g.fillStyle = bg; g.fillRect(0, 0, w, h); const gr = g.createRadialGradient(w / 2, h * 0.42, 10, w / 2, h * 0.42, w * 0.9); gr.addColorStop(0, "rgba(255,255,255,.25)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
@@ -4210,7 +4242,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   { const D = 140, L = new THREE.TextureLoader();
     [["s", 0, 0, D, Math.PI, 0], ["n", 0, 0, -D, 0, 0], ["e", D, 0, 0, -Math.PI / 2, 0], ["w", -D, 0, 0, Math.PI / 2, 0], ["u", 0, D, 0, 0, Math.PI / 2], ["d", 0, -D, 0, 0, -Math.PI / 2]].forEach(([k, x, y, z, ry]) => {
       const mat = new THREE.MeshBasicMaterial({ color: k === "d" ? 0x9aa39a : 0xbcd6ea, toneMapped: false, depthWrite: false, fog: false });
-      L.load("assets/usqview/" + k + ".jpg", (t) => { t.encoding = THREE.sRGBEncoding; mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
+      L.load("assets/usqview/" + k + ("new".includes(k) ? "2" : "") + ".jpg", (t) => { t.encoding = THREE.sRGBEncoding; mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
       const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * D, 2 * D), mat); m.position.set(x - 10, 2 + y, z - 12);
       if (k === "u") { m.rotation.x = Math.PI / 2; m.rotateZ(Math.PI); } else if (k === "d") { m.rotation.x = -Math.PI / 2; m.rotateZ(Math.PI); } else m.rotation.y = ry; m.renderOrder = -10; m.userData.view = true; scene.add(m); }); }
   // ---- the way back out: the archive's own door, as on the library and the hall in 아테라 타운 — a stone surround, dark stained-oak double leaves with bronze edges and long bronze pulls, a dark canopy, the bronze-framed plaque ----
@@ -4257,13 +4289,13 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
 
   // ---- walking ----
   const S = window.__vh = { x: 5, z: -1.6, fy: 0, yaw: 0.3, pitch: -0.04, R: 11, tilt: 0.95, view: "quarter",   /* starts high, from the bathroom's corner, as far out as it goes */ tx: null, tz: null }, keys = {}, EYE = 1.62 * 0.85;
-  const free = (x, z, fy) => { if (x < X0 + 0.2 || x > X1 - 0.2 || z < Z0 + 0.2 || z > Z1 - 0.2) return false; if (x > -20 || z < -14.2) { const r = Math.hypot(x, z), a = Math.atan2(-z, x); if ((x > -20 || z < -14.2) && r > RA - 0.5) return false; for (const q of SECT) if (q && r > q[0] - 0.2 && r < q[1] + 0.2 && a > q[2] && a < q[3]) return false; } for (const [ex, ez, er] of ESC) { const dx = x - ex, dz = z - ez, u = dx * Math.cos(er) - dz * Math.sin(er), v = dx * Math.sin(er) + dz * Math.cos(er); if (Math.abs(u) < 1.5 && v > 0.8 && v < 3.9) return false; }   /* under the escalator's high end there is head room: only its low end, near the floor, is in the way */
+  const free = (x, z, fy) => { if (x < X0 + 0.2 || x > XY1 - 0.2 || z < ZY0 + 0.2 || z > Z1 - 0.2) return false; if (x > -20 || z < -14.2) { const r = Math.hypot(x, z), a = Math.atan2(-z, x); if (r > RA - 0.5) { if (!yard(r, a)) return false; } else for (const q of SECT) if (q && r > q[0] - 0.2 && r < q[1] + 0.2 && a > q[2] && a < q[3]) return false; } for (const [ex, ez, er] of ESC) { const dx = x - ex, dz = z - ez, u = dx * Math.cos(er) - dz * Math.sin(er), v = dx * Math.sin(er) + dz * Math.cos(er); if (Math.abs(u) < 1.5 && v > 0.8 && v < 3.9) return false; }   /* under the escalator's high end there is head room: only its low end, near the floor, is in the way */
     for (const b of BOX) if (x > b[0] - 0.15 && x < b[1] + 0.15 && z > b[2] - 0.15 && z < b[3] + 0.15 && fy + 1 > b[4] && fy + 0.2 < b[5]) return false; return true; };
   // tap to go: find a way round the walls and through the doors (a 20 cm grid over the flat, breadth-first), then walk it corner to corner
-  let GRID = null; const GS = 0.2, GW = Math.ceil((X1 - X0) / GS), GH = Math.ceil((Z1 - Z0) / GS);
-  const cellXZ = (i, j) => [X0 + (i + 0.5) * GS, Z0 + (j + 0.5) * GS];
+  let GRID = null; const GS = 0.2, GW = Math.ceil((XY1 - X0) / GS), GH = Math.ceil((Z1 - ZY0) / GS);
+  const cellXZ = (i, j) => [X0 + (i + 0.5) * GS, ZY0 + (j + 0.5) * GS];
   function grid() { if (GRID) return GRID; GRID = new Uint8Array(GW * GH); for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const [x, z] = cellXZ(i, j); GRID[j * GW + i] = free(x, z, 0) ? 1 : 0; } return GRID; }
-  const nearOpen = (x, z) => { const G = grid(); let ci = Math.round((x - X0) / GS - 0.5), cj = Math.round((z - Z0) / GS - 0.5);
+  const nearOpen = (x, z) => { const G = grid(); let ci = Math.round((x - X0) / GS - 0.5), cj = Math.round((z - ZY0) / GS - 0.5);
     for (let r = 0; r < 12; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) { if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue; const i = ci + di, j = cj + dj; if (i >= 0 && j >= 0 && i < GW && j < GH && G[j * GW + i]) return j * GW + i; } return -1; };
   const clear = (ax, az, bx, bz) => { const d = Math.hypot(bx - ax, bz - az), n = Math.ceil(d / 0.08); for (let k = 1; k <= n; k++) if (!free(ax + (bx - ax) * k / n, az + (bz - az) * k / n, 0)) return false; return true; };
   function goTo(tx, tz) { S.bestD = null; S.stuck = 0; const G = grid(), a = nearOpen(S.x, S.z), b = nearOpen(tx, tz); if (a < 0 || b < 0) return;
@@ -4464,7 +4496,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       if (mv > 0.6) TP.face += wrapA(Math.atan2(dx, dz) - TP.face) * Math.min(1, dt * 10); else if (!TP.dragging && TP.ly != null && Math.abs(wrapA(S.yaw - TP.ly)) > 1e-4) TP.face += wrapA(S.yaw + Math.PI - TP.face) * Math.min(1, dt * 10);
       TP.ly = S.yaw; TP.face = wrapA(TP.face);
       TP.obj.position.set(S.x, 0.012, S.z); TP.obj.rotation.y = TP.face; TP.blob.position.set(S.x, 0.02, S.z);
-      let d = 1.4; for (const t of [5.4, 4.6, 3.8, 3.0, 2.2, 1.4]) { let ok = true; for (let k = 0.6; k <= t; k += 0.3) { const bx = S.x + Math.sin(S.yaw) * k, bz = S.z + Math.cos(S.yaw) * k; if (bx < X0 + 0.25 || bx > X1 - 0.25 || bz < Z0 + 0.25 || bz > Z1 - 0.25) { ok = false; break; }
+      let d = 1.4; for (const t of [5.4, 4.6, 3.8, 3.0, 2.2, 1.4]) { let ok = true; for (let k = 0.6; k <= t; k += 0.3) { const bx = S.x + Math.sin(S.yaw) * k, bz = S.z + Math.cos(S.yaw) * k; if (bx < X0 + 0.25 || bx > XY1 - 0.25 || bz < ZY0 + 0.25 || bz > Z1 - 0.25) { ok = false; break; }
           for (const b of BOX) if (bx > b[0] - 0.15 && bx < b[1] + 0.15 && bz > b[2] - 0.15 && bz < b[3] + 0.15 && 1.9 > b[4] && 1.9 < b[5]) { ok = false; break; } if (!ok) break; } if (ok) { d = t; break; } }
       TP.d += (d - TP.d) * Math.min(1, dt * 8);
       camera.position.x += Math.sin(S.yaw) * TP.d; camera.position.z += Math.cos(S.yaw) * TP.d; camera.position.y += 0.3 + TP.d * 0.16; camera.rotation.x -= 0.1 + TP.d * 0.025;
