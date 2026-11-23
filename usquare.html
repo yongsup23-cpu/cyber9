@@ -4261,7 +4261,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   { const D = 140, L = new THREE.TextureLoader();
     [["s", 0, 0, D, Math.PI, 0], ["n", 0, 0, -D, 0, 0], ["e", D, 0, 0, -Math.PI / 2, 0], ["w", -D, 0, 0, Math.PI / 2, 0], ["u", 0, D, 0, 0, Math.PI / 2], ["d", 0, -D, 0, 0, -Math.PI / 2]].forEach(([k, x, y, z, ry]) => {
       const mat = new THREE.MeshBasicMaterial({ color: k === "d" ? 0x9aa39a : 0xbcd6ea, toneMapped: false, depthWrite: false, fog: false });
-      L.load("assets/usqview/" + k + ("new".includes(k) ? "2" : "") + ".jpg", (t) => { t.encoding = THREE.sRGBEncoding; mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
+      L.load("assets/usqview/" + k + ("new".includes(k) ? "3" : "") + ".jpg", (t) => { t.encoding = THREE.sRGBEncoding; mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
       const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * D, 2 * D), mat); m.position.set(x - 10, 2 + y, z - 12);
       if (k === "u") { m.rotation.x = Math.PI / 2; m.rotateZ(Math.PI); } else if (k === "d") { m.rotation.x = -Math.PI / 2; m.rotateZ(Math.PI); } else m.rotation.y = ry; m.renderOrder = -10; m.userData.view = true; scene.add(m); }); }
   // ---- the way back out: the archive's own door, as on the library and the hall in 아테라 타운 — a stone surround, dark stained-oak double leaves with bronze edges and long bronze pulls, a dark canopy, the bronze-framed plaque ----

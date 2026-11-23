@@ -7108,8 +7108,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     { // U-square's trees, drawn as the park's own (they were plain balls on sticks): two at the plaza front, screens down both sides, a row along the back
       const CX = 240, CZ = -36 + UZ, RO = 38, PZ = CZ - RO - 15;
       for (const x of [CX - 17, CX + 17]) trees.push([x, CZ + 17, 4.4, 0.6]);
-      for (let z = CZ - 4; z >= -73; z -= 4.6) for (const x of [CX - 56, CX - 49, CX + 47, CX + 54]) trees.push([x + ((Math.round(z) * 7) % 3 - 1) * 0.6, z, 6.2 + rnd() * 0.8, 0.82]);
-      for (let x = CX - 44; x <= CX + 44; x += 5.5) trees.push([x, CZ - RO - 2, 5.8 + rnd() * 0.8, 0.8]); }
+      const inYard = (x, z) => { const r = Math.hypot(x - CX, z - CZ), a = Math.atan2(-(z - CZ), x - CX) / Math.PI * 180; return r > RO - 1 && a > -3 && a < 126; };   /* the coach yard behind the bay doors takes the back and the east side */
+      for (let z = CZ - 4; z >= -73; z -= 4.6) for (const x of [CX - 56, CX - 49, CX + 47, CX + 54]) { const xx = x + ((Math.round(z) * 7) % 3 - 1) * 0.6; if (!inYard(xx, z)) trees.push([xx, z, 6.2 + rnd() * 0.8, 0.82]); }
+      { const RAp = 38.8, YR = RAp + 30, A0 = 1.5 * Math.PI / 180, A1 = 122 * Math.PI / 180, pp = (r, a) => [CX + r * Math.cos(a), CZ - r * Math.sin(a)];   /* the yard's trees beyond its wall, two rows, as in U-square itself */
+        for (let a = A0 + 0.02; a < A1 - 0.01; a += 0.075) { const [x, z] = pp(YR + 3.2 + rnd() * 1.6, a); if (x < 304) trees.push([x, z, 5.8 + rnd() * 0.9, 0.8]); }
+        for (let a = A0 + 0.06; a < A1 - 0.03; a += 0.11) { const [x, z] = pp(YR + 8.5 + rnd() * 2, a); if (x < 304) trees.push([x, z, 6.4 + rnd(), 0.9]); } } }
     OUT.treeCols = trees.map(([x, z]) => [x - 0.4, x + 0.4, z - 0.4, z + 0.4]); OUT.colDirty = true;   // trunks are solid (the instanced trees are not seen by the collider scan)
     const LOBES = (i) => i < NBELT && Math.abs(trees[i][0]) < 64 ? 60 : 22;   // the street trees in front of the archive in detail, all the rest lighter
     let NL = 0; trees.forEach((t, i) => { NL += LOBES(i); });
@@ -8578,24 +8581,38 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         { const PZ = CZ - RO - 15;
           // (the screens of trees down both sides: planted with the park's)   // a screen of trees down both sides, so the coach park is out of sight from the street and the plaza
           // (and the row along the back: planted with the park's)
-          { const hm = grass.material, L = (CZ - 2) - (-75.5);   /* the clipped hedges: the lawn's own grass texture */ for (const x of [CX - 52.5, CX + 50.5]) ub(1.4, 2.6, L, x, 1.3, (CZ - 2 - 75.5) / 2, hm); }   // a clipped hedge under the trees, so no coach shows between the trunks
+          { const hm = grass.material, L = (CZ - 2) - (-75.5);   /* the clipped hedges: the lawn's own grass texture */ for (const x of [CX - 52.5]) ub(1.4, 2.6, L, x, 1.3, (CZ - 2 - 75.5) / 2, hm); }   // a clipped hedge under the trees, so no coach shows between the trunks
           // (the coach park behind: gone; the street runs there)   // the coach park behind the terminal
           }   // behind the terminal: an empty lot now (the parked coaches and their bays taken away, so U-square stands clear of the 동탄 complex)
       }
-      { // the coach yard on the block behind U-square, across the street from its bay doors: asphalt with bay lines, a kerbed platform under a canopy along the street side, five Kumho coaches drawn up nose to the street (one model, drawn five times)
-        const Y = new THREE.Group(); Y.name = "usqYard"; world.add(Y); const x0 = 177, x1 = 303, z0 = -140, z1 = -92;
-        const pl = (w, d, m, x, z, y) => { const o = new THREE.Mesh(new THREE.PlaneGeometry(w, d), m); o.rotation.x = -Math.PI / 2; o.position.set(x, y, z); o.receiveShadow = true; Y.add(o); return o; };
-        pl(x1 - x0, z1 - z0, lam(0x5b5e62), (x0 + x1) / 2, (z0 + z1) / 2, 0.05); pl(x1 - x0, 3.4, lam(0xc9c6bf), (x0 + x1) / 2, z1 - 1.7, 0.07); pl(x1 - x0, 0.2, new THREE.MeshBasicMaterial({ color: 0xf2c230 }), (x0 + x1) / 2, z1 - 3.5, 0.08);
-        const wl = new THREE.MeshBasicMaterial({ color: 0xf0f0ec }), BX = [195, 217, 240, 263, 285]; for (let i = 0; i <= 5; i++) pl(0.15, 14, wl, (i ? (i < 5 ? (BX[i - 1] + BX[i]) / 2 : 296.5) : 183.5), z1 - 11, 0.08); pl(296.5 - 183.5, 0.15, wl, 240, z1 - 18, 0.08);
-        const can = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0 - 4, 0.15, 3.8), lam(0xf4f4f2)); can.position.set(240, 3.4, z1 - 1.8); can.castShadow = true; Y.add(can); const fas = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0 - 4, 0.3, 0.1), lam(0x3f8f3a)); fas.position.set(240, 3.3, z1 - 3.7); Y.add(fas);
-        for (let x = x0 + 4; x <= x1 - 4; x += 12) { const po = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 3.4, 8), lam(0xb9bdc2)); po.position.set(x, 1.7, z1 - 3.4); Y.add(po); }
+      { // the coach yard behind U-square, just as one finds it going out through the bay doors inside: a kerbed platform under a canopy along the outer wall, the asphalt with its bay lines,
+        // five Kumho coaches nose on to the green (직행) doors, empty bays beyond the orange (고속) ones, a low wall round it all and the park's trees beyond; the street that ran behind is gone
+        const Y = new THREE.Group(); Y.name = "usqYard"; world.add(Y); const CX = 240, CZ = -36 + UZ, RAp = 38.8, YR = RAp + 30, D2 = Math.PI / 180, A0 = 1.5 * D2, A1 = 122 * D2;
+        const GA = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (42 + 76 * (i + 0.5) / 9) * D2), OA = [0, 1, 2, 3, 4].map((i) => (42 * (i + 0.5) / 5) * D2), pp = (r, a) => [CX + r * Math.cos(a), CZ - r * Math.sin(a)];
+        const ring = (r0, r1, a0, a1, y, m) => { const o = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 64, 1, a0, a1 - a0), m); o.rotation.x = -Math.PI / 2; o.position.set(CX, y, CZ); o.receiveShadow = true; Y.add(o); return o; };
+        const arc = (r, a0, a1, y0, y1, m) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, y1 - y0, 64, 1, true, Math.PI / 2 + a0, a1 - a0), m); o.position.set(CX, (y0 + y1) / 2, CZ); m.side = THREE.DoubleSide; Y.add(o); return o; };
+        { const pv = new THREE.Mesh(new THREE.PlaneGeometry(140, 15), lam(0xd3cfc6)); pv.rotation.x = -Math.PI / 2; pv.position.set(240, 0.03, -84); Y.add(pv); }   /* the street behind, paved over */
+        const asph = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x5a5d62).convertSRGBToLinear() }), kerb = lam(0xc9c6bf), wht = new THREE.MeshBasicMaterial({ color: 0xf2f2ee }), conc = lam(0xd6d2ca);
+        ring(RAp - 1.2, RAp + 3.3, A0, A1, 0.06, kerb); ring(RAp + 3.3, YR + 0.6, A0, A1, 0.055, asph); ring(RAp + 3.05, RAp + 3.25, A0, A1, 0.065, new THREE.MeshBasicMaterial({ color: 0xf2c230 })); ring(YR + 0.6, YR + 30, A0 - 0.05, A1 + 0.05, 0.05, grass.material);
+        const rline = (a, r0, r1) => { const [x0, z0] = pp(r0, a), [x1, z1] = pp(r1, a), o = new THREE.Mesh(new THREE.PlaneGeometry(0.15, r1 - r0), wht); o.position.set((x0 + x1) / 2, 0.07, (z0 + z1) / 2); o.rotation.order = "YXZ"; o.rotation.y = a - Math.PI / 2; o.rotation.x = -Math.PI / 2; Y.add(o); };
+        [GA, OA].forEach((L) => { const st = L[1] - L[0]; for (let i = 0; i <= L.length; i++) rline(i === 0 ? L[0] - st / 2 : i === L.length ? L[L.length - 1] + st / 2 : (L[i - 1] + L[i]) / 2, RAp + 3.4, RAp + 17); ring(RAp + 16.85, RAp + 17, L[0] - st / 2, L[L.length - 1] + st / 2, 0.07, wht); });
+        { const cm = lam(0xf4f4f2); ring(RAp - 0.2, RAp + 3.6, A0 + 0.02, A1 - 0.02, 3.35, cm).material.side = THREE.DoubleSide; arc(RAp + 3.6, A0 + 0.02, A1 - 0.02, 3.15, 3.45, lam(0x3f8f3a));
+          const AO = OA.concat(GA), PO = [A0 + 0.03]; for (let i = 1; i < AO.length; i++) PO.push((AO[i - 1] + AO[i]) / 2); PO.push(A1 - 0.03); const pm = lam(0xb9bdc2);
+          PO.forEach((a) => { const [x, z] = pp(RAp + 3.3, a), o = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.35, 8), pm); o.position.set(x, 1.675, z); Y.add(o); }); }
+        { /* the bay doors on the building's outer wall, as inside: orange 고속 doors, green 직행 doors, then the frosted 도착 doors; a coloured band over each run */
+          const AWd = 180 - Math.asin(14.2 / 39.5) / D2, AR = [0, 1, 2].map((i) => (118 + (AWd - 118) * (i + 0.5) / 3) * D2), dk = lam(0x3d4a52), fr = lam(0xb9bdc2), fro = lam(0xdfe3e6), lb = lam(0x1b1c1e);
+          [[OA, 0xf08a1c, dk], [GA, 0x3f8f3a, dk], [AR, 0x8a6fae, fro]].forEach(([L, c, gm]) => { const cm = new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() }); L.forEach((a) => { const [x, z] = pp(38.15, a), G = new THREE.Group(); G.position.set(x, 0, z); G.rotation.y = a + Math.PI / 2; Y.add(G);
+              const b = (w, h, d, m, px, py) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(px, py, 0); G.add(o); };
+              b(1.1, 4.1, 0.24, cm, -1.95, 2.05); b(1.1, 4.1, 0.24, cm, 1.95, 2.05); b(5.0, 0.62, 0.24, cm, 0, 3.79); b(2.8, 2.45, 0.06, gm, 0, 1.225); b(0.06, 2.45, 0.1, fr, 0, 1.225); b(2.9, 0.08, 0.12, fr, 0, 2.47); b(5.0, 0.6, 0.12, lb, 0, 2.82); }); }); }
+        arc(YR + 0.5, A0, A1, 0, 1.3, conc); arc(YR + 0.5, A0, A1, 1.3, 1.4, lam(0xc9c6bf));
+        [A0, A1].forEach((a) => { const [x0, z0] = pp(RAp + 0.6, a), [x1, z1] = pp(YR + 0.5, a), w = new THREE.Mesh(new THREE.BoxGeometry(YR - RAp, 1.3, 0.3), conc); w.position.set((x0 + x1) / 2, 0.65, (z0 + z1) / 2); w.rotation.y = a; Y.add(w); });
         const L = gltfLoader || (THREE.GLTFLoader ? (gltfLoader = new THREE.GLTFLoader()) : null); if (L && window.MeshoptDecoder && !L.meshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder); const ow = world;
         if (L) (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => L.load("assets/lite-bus.glb", (g) => { if (world !== ow) return; const root = g.scene; root.updateMatrixWorld(true);
           const bb = new THREE.Box3().setFromObject(root), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3()), k = 12 / Math.max(bs.x, bs.z), alongX = bs.x >= bs.z;
           let src = null; root.traverse((o) => { if (o.isMesh && !src) src = o; }); if (!src) return; const m0 = Array.isArray(src.material) ? src.material[0] : src.material;
-          const im = new THREE.InstancedMesh(src.geometry, new THREE.MeshLambertMaterial({ map: m0.map || null }), BX.length); im.castShadow = true; Y.add(im);
-          const fix = new THREE.Matrix4().makeTranslation(-bc.x, -bb.min.y, -bc.z), sc = new THREE.Matrix4().makeScale(k, k, k), ro = new THREE.Matrix4().makeRotationY(Math.PI / 2 + (alongX ? 0 : Math.PI / 2)), tr = new THREE.Matrix4(), M = new THREE.Matrix4();
-          BX.forEach((x, i) => { tr.makeTranslation(x, 0.06, z1 - 11); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); }); im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere && im.computeBoundingSphere(); im.frustumCulled = false; }, undefined, () => {})); }
+          const BA = [0, 2, 4, 6, 8].map((i) => GA[i]), im = new THREE.InstancedMesh(src.geometry, new THREE.MeshLambertMaterial({ map: m0.map || null }), BA.length); im.castShadow = true; im.frustumCulled = false; Y.add(im);
+          const fix = new THREE.Matrix4().makeTranslation(-bc.x, -bb.min.y, -bc.z), sc = new THREE.Matrix4().makeScale(k, k, k), ro = new THREE.Matrix4(), tr = new THREE.Matrix4(), M = new THREE.Matrix4();
+          BA.forEach((a, i) => { const [x, z] = pp(RAp + 9.4, a); ro.makeRotationY(a + (alongX ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.07, z); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); }); im.instanceMatrix.needsUpdate = true; }, undefined, () => {})); }
       if (OUT.mergeU) OUT.mergeU();
       { // low clipped hedges, plain green, wherever the walk stops: down the park's right-hand edge, along the city side past the park (open at the side streets and U-square's plaza),
         // along the archive side of the street, and across the far end of the walk
