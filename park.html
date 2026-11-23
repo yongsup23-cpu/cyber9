@@ -11407,14 +11407,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }
   // ===== the mini bus: unlocked by throwing every wish coin or clearing the hoop game's third level; then 쿠모 drives it anywhere on foot paths =====
   // ===== 80주화 챌린지 (the grandpa's game once 쿠모 has the mini taxi and has done everything else): 80 gold 80-coins as big as the taxi scattered over 아테라 타운, some tucked out of sight; 80 seconds in the mini taxi to touch as many as he can; the best ten kept with their initials =====
-  const CG = { on: false, run: false, list: [], mesh: null, beam: null, t: 0, got: 0, cd: 0, tmp: new THREE.Object3D(), ac: null, warn: 0 };
-  const CG_N = 100, CG_GOAL = 80, CG_T = 120, CG_R = 0.95, CG_HIT = 2.0;
-  const cgFmt = (t) => (+t).toFixed(2) + "초";
+  const CG = { on: false, run: false, list: [], meshes: {}, beam: null, t: 0, got: 0, cd: 0, tmp: new THREE.Object3D(), ac: null, warn: 0 };
+  const CG_N = 100, CG_GOAL = 80, CG_T = 300, CG_R = 0.95, CG_HIT = 2.0;
+  const cgFmt = (t) => { t = +t; const m = Math.floor(t / 60), r = t - m * 60; return m ? m + "분 " + r.toFixed(2).padStart(5, "0") + "초" : t.toFixed(2) + "초"; };
+  const CG_X5 = 5, CG_X10 = [[-16, 45], [214, -67], [22, -181], [-70, -20]];   /* the four ×10 coins: behind the archive, behind 유·스퀘어, at 쿠모's front door, in front of 가치체계관 */
+  const CG_K = { 1: { c: ["#fff4c0", "#f3c84e", "#cf951f", "#8f5c0a"], ring: "#a8700f", ink: "#7a4606", big: "80", rim: ["#d9a12c", "#9a6a12"], emi: 0x4a3000, spec: 0xfff0b0, beam: 0xffc94a, s: 1 },
+    5: { c: ["#ffffff", "#e3ecf6", "#9fb3ca", "#566a82"], ring: "#6d8199", ink: "#24344c", big: "×5", rim: ["#c8d4e2", "#7b8da4"], emi: 0x18222f, spec: 0xffffff, beam: 0x8fd4ff, s: 1.15 },
+    10: { c: ["#ffd6d6", "#ff5d5d", "#c4161c", "#650a0d"], ring: "#860c11", ink: "#fff3df", big: "×10", rim: ["#dc3a40", "#760b10"], emi: 0x3a0004, spec: 0xffd6d6, beam: 0xff5a5a, s: 1.3 } };
   const cgFlag = (k) => { try { return sessionStorage.getItem(k) === "1"; } catch (e) { return false; } };
   const cgTaxi = () => cgFlag("kumhoTicket") || cgFlag("kumhoTaxiGot");
   function cgReq() { return [["헤리티지북", cgFlag("kumhoHeritageGot")], ["지도", mapGot || cgFlag("kumhoMapGot")], ["쉽게 읽는 책", cgFlag("kumhoEasyGot")], ["미니버스", cgFlag("kumhoBusGot")], ["미니택시", cgTaxi()],
     ["농구 3단계", cgFlag("kumhoHoopDone")], [`사진 퍼즐 ${PZ_SET.length}개`, pzDone().length >= PZ_SET.length], ["소원 동전 모으기", cgFlag("kumhoCoinDone")]]; }
-  const CG_API = "https://script.google.com/macros/s/AKfycbxsuP_6jIrgQJFGzpr8voKNeF8bTLMr3yMobdXzLAwc1k5woSJDxwGwd2bfxVe4b5QPyA/exec";   /* the shared hall of fame: a Google Sheet behind an Apps Script web app (action=top for the best ten, action=add&n=&t= to enter a time); every visitor sees the same list */
+  const CG_API = "https://script.google.com/macros/s/AKfycbwGcS6P1f81IqcM8VMZ2SaCoZbHzMVBHXHmharL4JEEeXvanlnCTtYx476pGSoq-RGPbQ/exec";   /* the shared hall of fame: a Google Sheet behind an Apps Script web app (action=top for the best ten, action=add&n=&t= to enter a time); every visitor sees the same list */
   function cgLocal() { try { const r = JSON.parse(localStorage.getItem("kumhoCoinRankT") || "[]"); return Array.isArray(r) ? r.slice(0, 10) : []; } catch (e) { return []; } }
   function cgLocalSave(n, t) { const r = cgLocal(), me = { n, t, d: Date.now() }; r.push(me); r.sort((a, b) => a.t - b.t || a.d - b.d); const top = r.slice(0, 10); try { localStorage.setItem("kumhoCoinRankT", JSON.stringify(top)); } catch (e) {} return { top, rank: top.indexOf(me) }; }
   function cgRank() { return CG.top || cgLocal(); }
@@ -11444,7 +11448,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function cgTable(top, me) { if (!top.length) return '<div class="no">아직 기록이 없어요 · 첫 번째 주인공이 되어 보세요!</div>';
     return "<table><tr><th>순위</th><th>이니셜</th><th>기록</th></tr>" + top.map((r, i) => `<tr${i === me ? ' class="me"' : ""}><td class="r">${i + 1}</td><td>${cgEsc(r.n)}</td><td>${cgFmt(r.t)}</td></tr>`).join("") + "</table>"; }
   function cgPanel() { const el = cgBox(`<div class="k">KUMHO 80 CHALLENGE</div><h3>80주화 미니택시 챌린지</h3><div class="coin"><b>80</b><i>주화</i></div>
-      <div class="ds">아테라 타운 곳곳에 미니택시만 한 황금 <b>80주화 ${CG_N}개</b>!<br>몇 개는 잘 안 보이는 곳에 숨어 있어요.<br><b>타임어택</b> · 미니택시로 <b>${CG_GOAL}개</b>를 가장 빨리 모아 보세요.<br><small>${CG_T}초가 지나면 게임이 끝나요</small></div>
+      <div class="ds">아테라 타운 곳곳에 미니택시만 한 <b>80주화 ${CG_N}개</b>!<br>황금 = 1개분 · <b style="color:#6d8199">은빛 ×5</b> = 5개분(${CG_X5}개) · <b style="color:#c4161c">빨간 ×10</b> = 10개분(${CG_X10.length}개)<br>몇 개는 잘 안 보이는 곳에 숨어 있어요<br><b>타임어택</b> · 미니택시로 <b>${CG_GOAL}개분</b>을 가장 빨리 모아 보세요.<br><small>${CG_T / 60}분이 지나면 게임이 끝나요</small></div>
       <div style="font-weight:800;color:#1d2a5a;margin-top:6px">🏆 명예의 전당 · 빠른 기록 TOP 10</div><div class="tb">${CG.top ? cgTable(CG.top, -1) : '<div class="no">순위를 불러오는 중…</div>'}</div><div class="row"><button class="go">🚕 시작하기</button><button class="x">나중에</button></div>`);
     cgPull().then((top) => { const tb = el.querySelector(".tb"); if (tb) tb.innerHTML = cgTable(top, -1); });
     el.querySelector(".go").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgStart(); }; el.querySelector(".x").onclick = (e) => { e.stopPropagation(); el.hidden = true; }; }
@@ -11452,30 +11456,36 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const hit = (x, z) => { const inB = (w) => x > w[0] - m && x < w[1] + m && z > w[2] - m && z < w[3] + m; return (OUT.bldRects || []).some(inB) || (OUT.walls || []).some(inB) || !!(OUT.mazeHit && OUT.mazeHit(x, z)) || !!(G && (G.get(Math.floor(x / 8) + "," + Math.floor(z / 8)) || []).some(inB)); };
     return ![[0, 0], [1.3, 0], [-1.3, 0], [0, 1.3], [0, -1.3]].some(([dx, dz]) => hit(a + dx, b + dz) || floorAt(a + dx, b + dz, 0) !== 0); }
   function cgPlace() { let sd = (Date.now() % 99991) + 11; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647, pts = [], far = (x, z, d) => pts.every((p) => Math.hypot(p[0] - x, p[1] - z) > d);
+    const near = (x, z) => { for (let d = 0; d <= 9; d += 0.5) for (let k = 0; k < (d ? 16 : 1); k++) { const a = x + Math.cos(k * 0.3927) * d, b = z + Math.sin(k * 0.3927) * d; if (cgOK(a, b)) return [a, b]; } return [x, z]; };
+    CG_X10.forEach(([x, z]) => { const [a, b] = near(x, z); pts.push([a, b, 0, 10]); });
     [[-26, 42], [2, 44], [27, 42], [-106, -164], [294, -164], [-106, 36], [160, -166], [60, -160], [-104, -70], [290, 30]].forEach(([x, z]) => {   /* the hidden ones: behind the archive, in the far corners and along the edges of the town */
-      for (let k = 0; k < 60; k++) { const s = 4 + k * 0.4, a = x + (r() - 0.5) * s, b = z + (r() - 0.5) * s; if (cgOK(a, b) && far(a, b, 6)) { pts.push([a, b, 1]); break; } } });
-    for (let tries = 0; pts.length < CG_N && tries < 24000; tries++) { const a = -100 + r() * 232, b = -152 + r() * 147; if (cgOK(a, b) && far(a, b, Math.max(4, 10 - tries / 2500))) pts.push([a, b, 0]); }
-    for (let tries = 0; pts.length < CG_N && tries < 8000; tries++) { const a = -110 + r() * 400, b = -168 + r() * 210; if (cgOK(a, b) && far(a, b, 3)) pts.push([a, b, 0]); }
+      for (let k = 0; k < 60; k++) { const s = 4 + k * 0.4, a = x + (r() - 0.5) * s, b = z + (r() - 0.5) * s; if (cgOK(a, b) && far(a, b, 6)) { pts.push([a, b, 1, 1]); break; } } });
+    for (let tries = 0; pts.length < CG_N && tries < 24000; tries++) { const a = -100 + r() * 232, b = -152 + r() * 147; if (cgOK(a, b) && far(a, b, Math.max(4, 10 - tries / 2500))) pts.push([a, b, 0, 1]); }
+    for (let tries = 0; pts.length < CG_N && tries < 8000; tries++) { const a = -110 + r() * 400, b = -168 + r() * 210; if (cgOK(a, b) && far(a, b, 3)) pts.push([a, b, 0, 1]); }
+    const five = [];   /* five of the open ones turn silver ×5, well apart */
+    for (let k = 0; k < 4000 && five.length < CG_X5; k++) { const p = pts[Math.floor(r() * pts.length)]; if (p[3] === 1 && !p[2] && five.every((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) > 40 - k / 100)) { p[3] = 5; five.push(p); } }
     return pts; }
-  function cgBuild() { cgClear(); const face = (flip) => { const t = canvasTex(256, 256, (g, W, H) => { const gr = g.createRadialGradient(W * 0.38, H * 0.32, 10, W / 2, H / 2, W / 2); gr.addColorStop(0, "#fff4c0"); gr.addColorStop(0.45, "#f3c84e"); gr.addColorStop(0.8, "#cf951f"); gr.addColorStop(1, "#8f5c0a"); g.fillStyle = gr; g.fillRect(0, 0, W, H);
-        g.strokeStyle = "#a8700f"; g.lineWidth = 10; g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 18, 0, 7); g.stroke(); g.strokeStyle = "rgba(255,240,190,.8)"; g.lineWidth = 3; g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 28, 0, 7); g.stroke();
-        g.save(); if (flip) { g.translate(0, H); g.scale(1, -1); } g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#7a4606"; g.font = `900 112px "Helvetica Neue", Arial, ${FONT}`; g.fillText("80", W / 2, H / 2 - 8); g.font = `900 34px ${FONT}`; g.fillText("주화", W / 2, H / 2 + 62);
-        g.font = `800 17px "Helvetica Neue", Arial, ${FONT}`; g.fillText("KUMHO 1946 · 2026", W / 2, H / 2 - 82); g.restore(); }); t.center.set(0.5, 0.5); t.rotation = Math.PI / 2; return t; };   /* the caps' own mapping turns the picture a quarter: turned back upright, on both faces */
+  function cgBuild() { cgClear(); const face = (K) => { const t = canvasTex(256, 256, (g, W, H) => { const gr = g.createRadialGradient(W * 0.38, H * 0.32, 10, W / 2, H / 2, W / 2); K.c.forEach((c, i) => gr.addColorStop([0, 0.45, 0.8, 1][i], c)); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+        g.strokeStyle = K.ring; g.lineWidth = 10; g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 18, 0, 7); g.stroke(); g.strokeStyle = "rgba(255,245,215,.8)"; g.lineWidth = 3; g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 28, 0, 7); g.stroke();
+        g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = K.ink; const sm = K.big.length > 2; g.font = `900 ${sm ? 96 : 112}px "Helvetica Neue", Arial, ${FONT}`; g.fillText(K.big, W / 2, H / 2 - 8); g.font = `900 ${K.big === "80" ? 34 : 28}px ${FONT}`; g.fillText(K.big === "80" ? "주화" : "80주화", W / 2, H / 2 + 62);
+        g.font = `800 17px "Helvetica Neue", Arial, ${FONT}`; g.fillText("KUMHO 1946 · 2026", W / 2, H / 2 - 82); }); t.center.set(0.5, 0.5); t.rotation = Math.PI / 2; return t; };
       const geo = new THREE.CylinderGeometry(CG_R, CG_R, 0.18, 40); geo.rotateX(Math.PI / 2);
-      const rim = canvasTex(256, 16, (g, W, H) => { g.fillStyle = "#d9a12c"; g.fillRect(0, 0, W, H); g.fillStyle = "#9a6a12"; for (let x = 0; x < W; x += 6) g.fillRect(x, 0, 2, H); });
-      const pm = (map) => new THREE.MeshPhongMaterial({ map, color: 0xffffff, specular: 0xfff0b0, shininess: 70, emissive: 0x4a3000 });
-      const pts = cgPlace(); CG.list = pts.map(([x, z, hid], i) => ({ x, z, hid, ph: i * 0.77, got: false, t: 0 }));
-      CG.mesh = new THREE.InstancedMesh(geo, [pm(rim), pm(face(false)), pm(face(false))], CG.list.length); CG.mesh.frustumCulled = false; world.add(CG.mesh);
-      const bg = new THREE.CylinderGeometry(0.22, 0.5, 26, 10, 1, true); bg.translate(0, 13, 0);   /* a faint gold light standing over each coin out in the open, so they can be found from afar (the hidden ones have none) */
-      CG.beam = new THREE.InstancedMesh(bg, new THREE.MeshBasicMaterial({ color: 0xffc94a, transparent: true, opacity: 0.16, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }), CG.list.length); CG.beam.frustumCulled = false; world.add(CG.beam);
+      const pm = (map, K) => new THREE.MeshPhongMaterial({ map, color: 0xffffff, specular: K.spec, shininess: 70, emissive: K.emi });
+      const pts = cgPlace(); CG.list = pts.map(([x, z, hid, v], i) => ({ x, z, hid, v: v || 1, ph: i * 0.77, got: false, t: 0 }));
+      CG.meshes = {}; [1, 5, 10].forEach((v) => { const L = CG.list.filter((c) => c.v === v); if (!L.length) return; const K = CG_K[v];   /* one instanced mesh per kind: gold, silver ×5, red ×10 */
+        const rim = canvasTex(256, 16, (g, W, H) => { g.fillStyle = K.rim[0]; g.fillRect(0, 0, W, H); g.fillStyle = K.rim[1]; for (let x = 0; x < W; x += 6) g.fillRect(x, 0, 2, H); }), fc = face(K);
+        const m = new THREE.InstancedMesh(geo, [pm(rim, K), pm(fc, K), pm(fc, K)], L.length); m.frustumCulled = false; world.add(m); CG.meshes[v] = m; L.forEach((c, i) => { c.ii = i; }); });
+      const bg = new THREE.CylinderGeometry(0.22, 0.5, 26, 10, 1, true); bg.translate(0, 13, 0);   /* a faint light standing over each coin out in the open, in its own colour, so they can be found from afar (the hidden ones have none) */
+      CG.beam = new THREE.InstancedMesh(bg, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.16, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }), CG.list.length); CG.beam.frustumCulled = false; world.add(CG.beam);
+      const col = new THREE.Color(); CG.list.forEach((c, i) => { col.setHex(CG_K[c.v].beam); CG.beam.setColorAt(i, col); }); if (CG.beam.instanceColor) CG.beam.instanceColor.needsUpdate = true;
       cgPose(0); }
-  function cgPose(t) { const o = CG.tmp; CG.list.forEach((c, i) => { let s = 1, y = 1.3 + Math.sin(t * 2.2 + c.ph) * 0.14, ry = t * 1.6 + c.ph;
-      if (c.got) { const u = Math.min(1, c.t / 0.5); s = u < 0.3 ? 1 + u : Math.max(0.001, 1.3 * (1 - (u - 0.3) / 0.7)); y += u * 3; ry += c.t * 30; }
-      o.position.set(c.x, y, c.z); o.rotation.set(0, ry, 0); o.scale.setScalar(c.got && c.t >= 0.5 ? 0.001 : s); o.updateMatrix(); CG.mesh.setMatrixAt(i, o.matrix);
-      o.position.set(c.x, 0, c.z); o.rotation.set(0, 0, 0); o.scale.setScalar(c.hid || c.got ? 0.001 : 1); o.updateMatrix(); CG.beam.setMatrixAt(i, o.matrix); });
-    CG.mesh.instanceMatrix.needsUpdate = true; CG.beam.instanceMatrix.needsUpdate = true; }
-  function cgClear() { [CG.mesh, CG.beam].forEach((m) => { if (!m) return; if (m.parent) m.parent.remove(m); m.geometry.dispose(); (Array.isArray(m.material) ? m.material : [m.material]).forEach((q) => { if (q.map) q.map.dispose(); q.dispose(); }); });
-    CG.mesh = CG.beam = null; CG.list = []; CG.on = CG.run = false; const h = $("cgHud"); if (h) h.hidden = true; const c = $("cgCd"); if (c) c.hidden = true; }
+  function cgPose(t) { const o = CG.tmp; CG.list.forEach((c, i) => { const K = CG_K[c.v]; let s = K.s, y = 1.3 * K.s + Math.sin(t * 2.2 + c.ph) * 0.14, ry = t * 1.6 + c.ph;
+      if (c.got) { const u = Math.min(1, c.t / 0.5); s = K.s * (u < 0.3 ? 1 + u : Math.max(0.001, 1.3 * (1 - (u - 0.3) / 0.7))); y += u * 3; ry += c.t * 30; }
+      o.position.set(c.x, y, c.z); o.rotation.set(0, ry, 0); o.scale.setScalar(c.got && c.t >= 0.5 ? 0.001 : s); o.updateMatrix(); CG.meshes[c.v].setMatrixAt(c.ii, o.matrix);
+      o.position.set(c.x, 0, c.z); o.rotation.set(0, 0, 0); o.scale.setScalar(c.hid || c.got ? 0.001 : c.v > 1 ? 1.5 : 1); o.updateMatrix(); CG.beam.setMatrixAt(i, o.matrix); });
+    Object.values(CG.meshes).forEach((m) => { m.instanceMatrix.needsUpdate = true; }); CG.beam.instanceMatrix.needsUpdate = true; }
+  function cgClear() { [...Object.values(CG.meshes || {}), CG.beam].forEach((m) => { if (!m) return; if (m.parent) m.parent.remove(m); m.geometry.dispose(); (Array.isArray(m.material) ? m.material : [m.material]).forEach((q) => { if (q.map) q.map.dispose(); q.dispose(); }); });
+    CG.meshes = {}; CG.beam = null; CG.list = []; CG.on = CG.run = false; const h = $("cgHud"); if (h) h.hidden = true; const c = $("cgCd"); if (c) c.hidden = true; }
   function cgClink() { try { let ctx = SND.ctx && SND.ctx.state === "running" ? SND.ctx : null; if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; ctx = CG.ac || (CG.ac = new AC()); if (ctx.state === "suspended") ctx.resume(); }
       const t = ctx.currentTime + 0.01, out = ctx.createGain(); out.gain.value = 0.5; out.connect(ctx.destination);   /* 땡그랑: a bright struck coin, a second ring a beat later */
       [[2637, 0, 0.5, 0.5], [3951, 0, 0.22, 0.3], [5274, 0, 0.12, 0.18], [2093, 0.085, 0.42, 0.55], [3136, 0.085, 0.2, 0.4], [6272, 0.085, 0.08, 0.15]].forEach(([f, d, a, len]) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t + d); g.gain.linearRampToValueAtTime(a, t + d + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + d + len); o.connect(g); g.connect(out); o.start(t + d); o.stop(t + d + len + 0.05); }); } catch (e) {} }
@@ -11487,13 +11497,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     (function wait() { if (!CG.on) return; if (RIDE.on && RIDE.kind === "taxi") { cgGo(); return; } if (RIDE.taxi && RIDE.taxi.parent === world && !RIDE.on && (!RIDE.taxiCome || performance.now() - RIDE.taxiCome > 1550)) miniTaxiBoard();   /* in, once it has pulled up */
       if (performance.now() - t0 > 25000) { CG.on = false; taxiToast("🚕 미니택시를 부르지 못했어요 · 할아버지께 다시 말을 걸어 보세요", 2800); return; } setTimeout(wait, 120); })(); }
   function cgGo() { cgBuild(); CG.on = true; CG.run = false; CG.got = 0; CG.t = 0; CG.cd = 3.6; CG.c0 = performance.now(); const h = cgHud(); h.querySelector(".n b").textContent = "0"; h.querySelector(".tm b").textContent = "0.0"; h.querySelector(".tm").classList.remove("low");
-    taxiToast(`🪙 80주화 ${CG_N}개가 뿌려졌어요! ${CG_GOAL}개를 가장 빨리 모으세요 · 금빛 기둥을 찾아 달려요`, 3600); }
+    taxiToast(`🪙 80주화 ${CG_N}개가 뿌려졌어요! 은빛 ×5 · 빨간 ×10 동전도 있어요 · ${CG_GOAL}개분을 가장 빨리 모으세요`, 3800); }
   function cgEnd() { if (!CG.on) return; const wasRun = CG.run; CG.run = false; CG.on = false; const n = CG.got, win = n >= CG_GOAL, tm = Math.round(Math.min(CG.t, CG_T) * 100) / 100; const h = $("cgHud"); if (h) h.hidden = true;
-    if (!win) { const el = cgBox(`<div class="k">${wasRun && CG.t >= CG_T ? "TIME OVER" : "GAME OVER"}</div><h3>${wasRun && CG.t >= CG_T ? "⏱ " + CG_T + "초가 지났어요!" : "게임을 멈췄어요"}</h3><div class="sc">${n}<small> / ${CG_GOAL}개</small></div>
+    if (!win) { const el = cgBox(`<div class="k">${wasRun && CG.t >= CG_T ? "TIME OVER" : "GAME OVER"}</div><h3>${wasRun && CG.t >= CG_T ? "⏱ " + CG_T / 60 + "분이 지났어요!" : "게임을 멈췄어요"}</h3><div class="sc">${Math.min(n, CG_GOAL)}<small> / ${CG_GOAL}개</small></div>
         <div class="ds">${CG_GOAL}개를 모아야 기록이 남아요 · 다시 도전해 보세요!</div><div class="tb">${cgTable(cgRank(), -1)}</div><div class="row"><button class="again go">다시 하기</button><button class="x">닫기</button></div>`);
       cgPull().then((top) => { const tb = el.querySelector(".tb"); if (tb) tb.innerHTML = cgTable(top, -1); });
       el.querySelector(".again").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgStart(); }; el.querySelector(".x").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgClear(); }; return; }
-    const el = cgBox(`<div class="k">CLEAR!</div><h3>🎉 80주화 ${CG_GOAL}개를 모았어요!</h3><div class="sc">${tm.toFixed(2)}<small> 초</small></div>
+    const el = cgBox(`<div class="k">CLEAR!</div><h3>🎉 80주화 ${CG_GOAL}개를 모았어요!</h3><div class="sc" style="font-size:38px">${cgFmt(tm)}</div>
       <div class="ds">이니셜을 남기면 명예의 전당(TOP 10)에 기록돼요.</div><div class="ini"><input maxlength="3" placeholder="ABC" autocomplete="off" spellcheck="false" aria-label="이니셜 3글자"><button class="go sv">등록</button></div><div class="tb">${cgTable(cgRank(), -1)}</div>
       <div class="row"><button class="again">다시 하기</button><button class="x">닫기</button></div>`);
     const inp = el.querySelector("input"), sv = el.querySelector(".sv"); inp.addEventListener("input", () => { inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9가-힣]/g, "").slice(0, 3); });
@@ -11503,21 +11513,21 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     sv.onclick = (e) => { e.stopPropagation(); save(); }; inp.addEventListener("keydown", (e) => { if (e.key === "Enter") save(); });
     el.querySelector(".again").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgStart(); }; el.querySelector(".x").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgClear(); };
     setTimeout(() => { try { inp.focus(); } catch (e) {} }, 300); }
-  function cgStep(dt) { if (!CG.mesh) return; if (mode !== "outside" || CG.mesh.parent !== world) { const b = $("cgBox"); if (b) b.hidden = true; cgClear(); return; }
+  function cgStep(dt) { if (!CG.beam) return; if (mode !== "outside" || CG.beam.parent !== world) { const b = $("cgBox"); if (b) b.hidden = true; cgClear(); return; }
     const now = performance.now() / 1000; CG.list.forEach((c) => { if (c.got) c.t += dt; }); cgPose(now);
     if (!CG.on) return; const cd = $("cgCd") || (() => { cgCSS(); const d = document.createElement("div"); d.id = "cgCd"; document.body.appendChild(d); return d; })();
     if (!CG.run) { const prev = Math.ceil(CG.cd); CG.cd = 3.6 - (performance.now() - CG.c0) / 1000; const k = Math.ceil(CG.cd);   /* counted on the clock, not by frames, so a slow device still gets exactly 3-2-1 and 80 seconds */ if (k !== prev || cd.hidden) { cd.hidden = false; cd.textContent = k > 0 ? String(k) : "GO!"; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); }
       if (CG.cd <= -0.6) { cd.hidden = true; CG.run = true; CG.r0 = performance.now(); } return; }
     CG.t = Math.min(CG_T, (performance.now() - CG.r0) / 1000); const h = $("cgHud"); if (h) { h.querySelector(".tm b").textContent = CG.t.toFixed(1); h.querySelector(".tm").classList.toggle("low", CG.t > CG_T - 10); }
     const T = RIDE.on && RIDE.kind === "taxi" ? RIDE.taxi : null;
-    if (T) { const px = T.position.x, pz = T.position.z; CG.list.forEach((c) => { if (c.got || Math.abs(c.x - px) > CG_HIT + 1 || Math.abs(c.z - pz) > CG_HIT + 1) return; if (Math.hypot(c.x - px, c.z - pz) < CG_HIT) { c.got = true; c.t = 0; CG.got++; cgClink();
-        if (h) { const nb = h.querySelector(".n"); nb.querySelector("b").textContent = String(CG.got); nb.classList.remove("bump"); void nb.offsetWidth; nb.classList.add("bump"); } if (c.hid) taxiToast("✨ 숨은 80주화를 찾았어요!", 1600); } }); }
+    if (T) { const px = T.position.x, pz = T.position.z; CG.list.forEach((c) => { const hr = CG_HIT + (CG_K[c.v].s - 1) * 1.5; if (c.got || Math.abs(c.x - px) > hr + 1 || Math.abs(c.z - pz) > hr + 1) return; if (Math.hypot(c.x - px, c.z - pz) < hr) { c.got = true; c.t = 0; CG.got += c.v; cgClink(); if (c.v > 1) setTimeout(cgClink, 120);
+        if (h) { const nb = h.querySelector(".n"); nb.querySelector("b").textContent = String(Math.min(CG.got, CG_GOAL)); nb.classList.remove("bump"); void nb.offsetWidth; nb.classList.add("bump"); } if (c.v > 1) taxiToast(c.v === 10 ? "❤️ 빨간 ×10 80주화! +10개" : "🤍 은빛 ×5 80주화! +5개", 1700); else if (c.hid) taxiToast("✨ 숨은 80주화를 찾았어요!", 1600); } }); }
     else if (now - CG.warn > 4) { CG.warn = now; taxiToast("🚕 80주화는 미니택시로만 모을 수 있어요 · 택시를 눌러 다시 타세요", 2200); }
     if (CG.t >= CG_T || CG.got >= CG_GOAL) cgEnd(); }
-  window.__kumhoCG = { panel: () => cgPanel(), start: () => cgStart(), end: () => cgEnd(), st: () => ({ on: CG.on, run: CG.run, n: CG.list.length, got: CG.got, ride: RIDE.on, kind: RIDE.kind, taxi: !!RIDE.taxi, inW: !!(RIDE.taxi && RIDE.taxi.parent === world), c: CG.list.slice(0, 3).map((c) => [c.x, c.z]) }) };
+  window.__kumhoCG = { panel: () => cgPanel(), start: () => cgStart(), end: () => cgEnd(), st: () => ({ on: CG.on, run: CG.run, n: CG.list.length, got: CG.got, k: [1, 5, 10].map((v) => CG.list.filter((c) => c.v === v).length), x10: CG.list.filter((c) => c.v === 10).map((c) => [+c.x.toFixed(1), +c.z.toFixed(1)]), ride: RIDE.on, kind: RIDE.kind, taxi: !!RIDE.taxi, inW: !!(RIDE.taxi && RIDE.taxi.parent === world), c: CG.list.slice(0, 3).map((c) => [c.x, c.z]) }) };
   function cgTalk() {   /* the grandpa, once 쿠모 has the mini taxi (and the park map): the game if everything else is done, else what is still left to do */
     if (!cgTaxi() || !mapGot) return false; const left = cgReq().filter((q) => !q[1]).map((q) => q[0]);
-    if (!left.length) { npcSay(["오, 쿠모! 미니택시까지 얻었구나. 아이템도 다 모으고, 농구도 퍼즐도 소원 동전도 모두 해냈다니 정말 대단하구나!", "그럼 할아버지가 특별한 게임을 하나 알려 주마. 이름하여 ‘80주화 챌린지’!", "금호 80주년을 기념하는 황금 80주화 100개를 아테라 타운 곳곳에 뿌려 두었단다. 몇 개는 잘 안 보이는 곳에 꼭꼭 숨겨 놨지.", "미니택시를 타고 80개를 누가 가장 빨리 모으나 겨루는 타임어택이란다. 120초가 지나면 끝이니 서두르렴. 빠르면 이니셜이 명예의 전당에 남는단다!"], cgPanel); return true; }
+    if (!left.length) { npcSay(["오, 쿠모! 미니택시까지 얻었구나. 아이템도 다 모으고, 농구도 퍼즐도 소원 동전도 모두 해냈다니 정말 대단하구나!", "그럼 할아버지가 특별한 게임을 하나 알려 주마. 이름하여 ‘80주화 챌린지’!", "금호 80주년을 기념하는 80주화 100개를 아테라 타운 곳곳에 뿌려 두었단다. 은빛 ×5 동전은 5개분, 빨간 ×10 동전은 10개분이지.", "빨간 동전은 아카이브관 뒤, 유·스퀘어 뒤, 쿠모네 집 앞, 가치체계관 앞에 하나씩 숨겨 놨단다.", "미니택시를 타고 80개분을 누가 가장 빨리 모으나 겨루는 타임어택이란다. 5분이 지나면 끝이니 서두르렴. 빠르면 이니셜이 명예의 전당에 남는단다!"], cgPanel); return true; }
     npcSay(["미니택시를 얻었구나, 쿠모! 그 택시로 할 수 있는 아주 특별한 게임이 있단다.", "그런데 먼저 이것들을 다 해내야 해 — " + left.join(" · ") + ".", "다 해내고 다시 오면 할아버지가 그 게임을 알려 주마!"]); return true; }
   const SIGN_LINKS = [   /* the fingerpost across from the archive: name, address, colour, which way the arrow points */
     { n: "금호건설", url: "https://www.kumhoenc.com/", c: "#1d2a5a", yaw: 0.35 },
