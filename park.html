@@ -11408,23 +11408,24 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   // ===== the mini bus: unlocked by throwing every wish coin or clearing the hoop game's third level; then 쿠모 drives it anywhere on foot paths =====
   // ===== 80주화 챌린지 (the grandpa's game once 쿠모 has the mini taxi and has done everything else): 80 gold 80-coins as big as the taxi scattered over 아테라 타운, some tucked out of sight; 80 seconds in the mini taxi to touch as many as he can; the best ten kept with their initials =====
   const CG = { on: false, run: false, list: [], mesh: null, beam: null, t: 0, got: 0, cd: 0, tmp: new THREE.Object3D(), ac: null, warn: 0 };
-  const CG_N = 80, CG_T = 80, CG_R = 0.95, CG_HIT = 2.0;
+  const CG_N = 100, CG_GOAL = 80, CG_T = 120, CG_R = 0.95, CG_HIT = 2.0;
+  const cgFmt = (t) => (+t).toFixed(2) + "초";
   const cgFlag = (k) => { try { return sessionStorage.getItem(k) === "1"; } catch (e) { return false; } };
   const cgTaxi = () => cgFlag("kumhoTicket") || cgFlag("kumhoTaxiGot");
   function cgReq() { return [["헤리티지북", cgFlag("kumhoHeritageGot")], ["지도", mapGot || cgFlag("kumhoMapGot")], ["쉽게 읽는 책", cgFlag("kumhoEasyGot")], ["미니버스", cgFlag("kumhoBusGot")], ["미니택시", cgTaxi()],
     ["농구 3단계", cgFlag("kumhoHoopDone")], [`사진 퍼즐 ${PZ_SET.length}개`, pzDone().length >= PZ_SET.length], ["소원 동전 모으기", cgFlag("kumhoCoinDone")]]; }
-  const CG_API = "https://script.google.com/macros/s/AKfycbzPv-ajjJAnS_aR_qyPe6HWwPxtGNjxidYiMKd7q_gghYThJu0HiGkR3vNMRbbUa7oMog/exec";   /* the shared hall of fame: a Google Sheet behind an Apps Script web app (action=top for the best ten, action=add&n=&s= to enter a score); every visitor sees the same list */
-  function cgLocal() { try { const r = JSON.parse(localStorage.getItem("kumhoCoinRank") || "[]"); return Array.isArray(r) ? r.slice(0, 10) : []; } catch (e) { return []; } }
-  function cgLocalSave(n, s) { const r = cgLocal(), me = { n, s, d: Date.now() }; r.push(me); r.sort((a, b) => b.s - a.s || a.d - b.d); const top = r.slice(0, 10); try { localStorage.setItem("kumhoCoinRank", JSON.stringify(top)); } catch (e) {} return { top, rank: top.indexOf(me) }; }
+  const CG_API = "https://script.google.com/macros/s/AKfycbxsuP_6jIrgQJFGzpr8voKNeF8bTLMr3yMobdXzLAwc1k5woSJDxwGwd2bfxVe4b5QPyA/exec";   /* the shared hall of fame: a Google Sheet behind an Apps Script web app (action=top for the best ten, action=add&n=&t= to enter a time); every visitor sees the same list */
+  function cgLocal() { try { const r = JSON.parse(localStorage.getItem("kumhoCoinRankT") || "[]"); return Array.isArray(r) ? r.slice(0, 10) : []; } catch (e) { return []; } }
+  function cgLocalSave(n, t) { const r = cgLocal(), me = { n, t, d: Date.now() }; r.push(me); r.sort((a, b) => a.t - b.t || a.d - b.d); const top = r.slice(0, 10); try { localStorage.setItem("kumhoCoinRankT", JSON.stringify(top)); } catch (e) {} return { top, rank: top.indexOf(me) }; }
   function cgRank() { return CG.top || cgLocal(); }
   function cgFetch(q) { const ctl = window.AbortController ? new AbortController() : null, tm = setTimeout(() => { if (ctl) ctl.abort(); }, 9000);
-    return fetch(CG_API + "?" + q + "&t=" + Date.now(), { cache: "no-store", signal: ctl ? ctl.signal : undefined }).then((r) => r.json()).then((j) => { clearTimeout(tm); if (!j || !j.ok || !Array.isArray(j.top)) throw new Error("rank"); CG.top = j.top.slice(0, 10); return CG.top; }, (e) => { clearTimeout(tm); throw e; }); }
-  function cgPend(add) { let p = []; try { p = JSON.parse(localStorage.getItem("kumhoCoinPend") || "[]"); } catch (e) {} if (add) { p.push(add); try { localStorage.setItem("kumhoCoinPend", JSON.stringify(p.slice(-20))); } catch (e) {} } return p; }
-  function cgFlush() { const p = cgPend(); if (!p.length) return Promise.resolve(); try { localStorage.removeItem("kumhoCoinPend"); } catch (e) {}   /* scores entered while offline go up once the sheet can be reached */
-    return p.reduce((q, x) => q.then(() => cgFetch("action=add&n=" + encodeURIComponent(x.n) + "&s=" + x.s).catch(() => cgPend(x))), Promise.resolve()); }
+    return fetch(CG_API + "?" + q + "&_=" + Date.now(), { cache: "no-store", signal: ctl ? ctl.signal : undefined }).then((r) => r.json()).then((j) => { clearTimeout(tm); if (!j || !j.ok || !Array.isArray(j.top)) throw new Error("rank"); CG.top = j.top.slice(0, 10); return CG.top; }, (e) => { clearTimeout(tm); throw e; }); }
+  function cgPend(add) { let p = []; try { p = JSON.parse(localStorage.getItem("kumhoCoinPendT") || "[]"); } catch (e) {} if (add) { p.push(add); try { localStorage.setItem("kumhoCoinPendT", JSON.stringify(p.slice(-20))); } catch (e) {} } return p; }
+  function cgFlush() { const p = cgPend(); if (!p.length) return Promise.resolve(); try { localStorage.removeItem("kumhoCoinPendT"); } catch (e) {}   /* scores entered while offline go up once the sheet can be reached */
+    return p.reduce((q, x) => q.then(() => cgFetch("action=add&n=" + encodeURIComponent(x.n) + "&t=" + x.t).catch(() => cgPend(x))), Promise.resolve()); }
   function cgPull() { return cgFlush().then(() => cgFetch("action=top")).catch(() => cgRank()); }
-  function cgSave(n, s) { return cgFetch("action=add&n=" + encodeURIComponent(n) + "&s=" + s).then((top) => { let rank = -1, best = -1; top.forEach((r, i) => { if (r.n === n && r.s === s && (r.d || 0) > best) { best = r.d || 0; rank = i; } }); return { top, rank }; })
-      .catch(() => { cgPend({ n, s }); const L = cgLocalSave(n, s); return { top: L.top, rank: L.rank, off: true }; }); }
+  function cgSave(n, t) { return cgFetch("action=add&n=" + encodeURIComponent(n) + "&t=" + t).then((top) => { let rank = -1, best = -1; top.forEach((r, i) => { if (r.n === n && Math.abs(+r.t - t) < 0.006 && (r.d || 0) > best) { best = r.d || 0; rank = i; } }); return { top, rank }; })
+      .catch(() => { cgPend({ n, t }); const L = cgLocalSave(n, t); return { top: L.top, rank: L.rank, off: true }; }); }
   const cgEsc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   function cgCSS() { if ($("cgCSS")) return; const st = document.createElement("style"); st.id = "cgCSS";
     st.textContent = `#cgBox{position:fixed;inset:0;z-index:100480;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(70,48,10,.6),rgba(8,6,4,.9) 72%);font-family:inherit}#cgBox[hidden]{display:none}
@@ -11441,10 +11442,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function cgBox(html) { cgCSS(); let el = $("cgBox"); if (!el) { el = document.createElement("div"); el.id = "cgBox"; document.body.appendChild(el); ["pointerdown", "pointerup", "wheel", "touchstart", "keydown"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation(), { passive: ev !== "keydown" })); }
     el.innerHTML = '<div class="in">' + html + "</div>"; el.hidden = false; return el; }
   function cgTable(top, me) { if (!top.length) return '<div class="no">아직 기록이 없어요 · 첫 번째 주인공이 되어 보세요!</div>';
-    return "<table><tr><th>순위</th><th>이니셜</th><th>80주화</th></tr>" + top.map((r, i) => `<tr${i === me ? ' class="me"' : ""}><td class="r">${i + 1}</td><td>${cgEsc(r.n)}</td><td>${r.s}개</td></tr>`).join("") + "</table>"; }
+    return "<table><tr><th>순위</th><th>이니셜</th><th>기록</th></tr>" + top.map((r, i) => `<tr${i === me ? ' class="me"' : ""}><td class="r">${i + 1}</td><td>${cgEsc(r.n)}</td><td>${cgFmt(r.t)}</td></tr>`).join("") + "</table>"; }
   function cgPanel() { const el = cgBox(`<div class="k">KUMHO 80 CHALLENGE</div><h3>80주화 미니택시 챌린지</h3><div class="coin"><b>80</b><i>주화</i></div>
-      <div class="ds">아테라 타운 곳곳에 미니택시만 한 황금 <b>80주화 80개</b>!<br>몇 개는 잘 안 보이는 곳에 숨어 있어요.<br>미니택시로 <b>80초</b> 안에 최대한 많이 부딪혀 모아 보세요.</div>
-      <div style="font-weight:800;color:#1d2a5a;margin-top:6px">🏆 명예의 전당 (TOP 10)</div><div class="tb">${CG.top ? cgTable(CG.top, -1) : '<div class="no">순위를 불러오는 중…</div>'}</div><div class="row"><button class="go">🚕 시작하기</button><button class="x">나중에</button></div>`);
+      <div class="ds">아테라 타운 곳곳에 미니택시만 한 황금 <b>80주화 ${CG_N}개</b>!<br>몇 개는 잘 안 보이는 곳에 숨어 있어요.<br><b>타임어택</b> · 미니택시로 <b>${CG_GOAL}개</b>를 가장 빨리 모아 보세요.<br><small>${CG_T}초가 지나면 게임이 끝나요</small></div>
+      <div style="font-weight:800;color:#1d2a5a;margin-top:6px">🏆 명예의 전당 · 빠른 기록 TOP 10</div><div class="tb">${CG.top ? cgTable(CG.top, -1) : '<div class="no">순위를 불러오는 중…</div>'}</div><div class="row"><button class="go">🚕 시작하기</button><button class="x">나중에</button></div>`);
     cgPull().then((top) => { const tb = el.querySelector(".tb"); if (tb) tb.innerHTML = cgTable(top, -1); });
     el.querySelector(".go").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgStart(); }; el.querySelector(".x").onclick = (e) => { e.stopPropagation(); el.hidden = true; }; }
   function cgOK(a, b) { if (floorAt(a, b, 0) !== 0) return false; if (OUT.colDirty) colBuild(); const G = OUT.colGrid, m = 0.4;
@@ -11459,7 +11460,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function cgBuild() { cgClear(); const face = (flip) => { const t = canvasTex(256, 256, (g, W, H) => { const gr = g.createRadialGradient(W * 0.38, H * 0.32, 10, W / 2, H / 2, W / 2); gr.addColorStop(0, "#fff4c0"); gr.addColorStop(0.45, "#f3c84e"); gr.addColorStop(0.8, "#cf951f"); gr.addColorStop(1, "#8f5c0a"); g.fillStyle = gr; g.fillRect(0, 0, W, H);
         g.strokeStyle = "#a8700f"; g.lineWidth = 10; g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 18, 0, 7); g.stroke(); g.strokeStyle = "rgba(255,240,190,.8)"; g.lineWidth = 3; g.beginPath(); g.arc(W / 2, H / 2, W / 2 - 28, 0, 7); g.stroke();
         g.save(); if (flip) { g.translate(0, H); g.scale(1, -1); } g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#7a4606"; g.font = `900 112px "Helvetica Neue", Arial, ${FONT}`; g.fillText("80", W / 2, H / 2 - 8); g.font = `900 34px ${FONT}`; g.fillText("주화", W / 2, H / 2 + 62);
-        g.font = `800 17px "Helvetica Neue", Arial, ${FONT}`; g.fillText("KUMHO 1946 · 2026", W / 2, H / 2 - 82); g.restore(); }); t.center.set(0.5, 0.5); t.rotation = Math.PI / 2; return t; };   /* the caps' own mapping turns the picture a quarter: turned back upright, on both faces
+        g.font = `800 17px "Helvetica Neue", Arial, ${FONT}`; g.fillText("KUMHO 1946 · 2026", W / 2, H / 2 - 82); g.restore(); }); t.center.set(0.5, 0.5); t.rotation = Math.PI / 2; return t; };   /* the caps' own mapping turns the picture a quarter: turned back upright, on both faces */
       const geo = new THREE.CylinderGeometry(CG_R, CG_R, 0.18, 40); geo.rotateX(Math.PI / 2);
       const rim = canvasTex(256, 16, (g, W, H) => { g.fillStyle = "#d9a12c"; g.fillRect(0, 0, W, H); g.fillStyle = "#9a6a12"; for (let x = 0; x < W; x += 6) g.fillRect(x, 0, 2, H); });
       const pm = (map) => new THREE.MeshPhongMaterial({ map, color: 0xffffff, specular: 0xfff0b0, shininess: 70, emissive: 0x4a3000 });
@@ -11478,23 +11479,27 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function cgClink() { try { let ctx = SND.ctx && SND.ctx.state === "running" ? SND.ctx : null; if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; ctx = CG.ac || (CG.ac = new AC()); if (ctx.state === "suspended") ctx.resume(); }
       const t = ctx.currentTime + 0.01, out = ctx.createGain(); out.gain.value = 0.5; out.connect(ctx.destination);   /* 땡그랑: a bright struck coin, a second ring a beat later */
       [[2637, 0, 0.5, 0.5], [3951, 0, 0.22, 0.3], [5274, 0, 0.12, 0.18], [2093, 0.085, 0.42, 0.55], [3136, 0.085, 0.2, 0.4], [6272, 0.085, 0.08, 0.15]].forEach(([f, d, a, len]) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t + d); g.gain.linearRampToValueAtTime(a, t + d + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + d + len); o.connect(g); g.connect(out); o.start(t + d); o.stop(t + d + len + 0.05); }); } catch (e) {} }
-  function cgHud() { cgCSS(); let el = $("cgHud"); if (!el) { el = document.createElement("div"); el.id = "cgHud"; el.innerHTML = '<span class="n">🪙 <b>0</b> / ' + CG_N + '</span><span class="tm">⏱ <b>80.0</b></span><button type="button">그만하기</button>'; document.body.appendChild(el);
+  function cgHud() { cgCSS(); let el = $("cgHud"); if (!el) { el = document.createElement("div"); el.id = "cgHud"; el.innerHTML = '<span class="n">🪙 <b>0</b> / ' + CG_GOAL + '</span><span class="tm">⏱ <b>0.0</b></span><button type="button">그만하기</button>'; document.body.appendChild(el);
       ["pointerdown", "pointerup"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation())); el.querySelector("button").onclick = (e) => { e.stopPropagation(); if (CG.run) cgEnd(); else cgClear(); }; }
     el.hidden = false; return el; }
   function cgStart() { if (mode !== "outside") return; cgClear(); CG.on = true; taxiCSS();
     const t0 = performance.now(); if (!(RIDE.on && RIDE.kind === "taxi")) miniTaxi();
     (function wait() { if (!CG.on) return; if (RIDE.on && RIDE.kind === "taxi") { cgGo(); return; } if (RIDE.taxi && RIDE.taxi.parent === world && !RIDE.on && (!RIDE.taxiCome || performance.now() - RIDE.taxiCome > 1550)) miniTaxiBoard();   /* in, once it has pulled up */
       if (performance.now() - t0 > 25000) { CG.on = false; taxiToast("🚕 미니택시를 부르지 못했어요 · 할아버지께 다시 말을 걸어 보세요", 2800); return; } setTimeout(wait, 120); })(); }
-  function cgGo() { cgBuild(); CG.on = true; CG.run = false; CG.got = 0; CG.t = CG_T; CG.cd = 3.6; CG.c0 = performance.now(); const h = cgHud(); h.querySelector(".n b").textContent = "0"; h.querySelector(".tm b").textContent = CG_T.toFixed(1); h.querySelector(".tm").classList.remove("low");
-    taxiToast("🪙 80주화 80개가 아테라 타운에 뿌려졌어요! 금빛 기둥을 찾아 달려요 · 숨은 동전은 기둥이 없어요", 3600); }
-  function cgEnd() { if (!CG.on) return; CG.run = false; CG.on = false; const n = CG.got, all = n >= CG_N; const h = $("cgHud"); if (h) h.hidden = true;
-    const el = cgBox(`<div class="k">${all ? "PERFECT!" : "TIME UP"}</div><h3>${all ? "🎉 80주화를 모두 모았어요!" : "⏱ 시간 종료!"}</h3><div class="sc">${n}<small> / ${CG_N}개</small></div>
+  function cgGo() { cgBuild(); CG.on = true; CG.run = false; CG.got = 0; CG.t = 0; CG.cd = 3.6; CG.c0 = performance.now(); const h = cgHud(); h.querySelector(".n b").textContent = "0"; h.querySelector(".tm b").textContent = "0.0"; h.querySelector(".tm").classList.remove("low");
+    taxiToast(`🪙 80주화 ${CG_N}개가 뿌려졌어요! ${CG_GOAL}개를 가장 빨리 모으세요 · 금빛 기둥을 찾아 달려요`, 3600); }
+  function cgEnd() { if (!CG.on) return; const wasRun = CG.run; CG.run = false; CG.on = false; const n = CG.got, win = n >= CG_GOAL, tm = Math.round(Math.min(CG.t, CG_T) * 100) / 100; const h = $("cgHud"); if (h) h.hidden = true;
+    if (!win) { const el = cgBox(`<div class="k">${wasRun && CG.t >= CG_T ? "TIME OVER" : "GAME OVER"}</div><h3>${wasRun && CG.t >= CG_T ? "⏱ " + CG_T + "초가 지났어요!" : "게임을 멈췄어요"}</h3><div class="sc">${n}<small> / ${CG_GOAL}개</small></div>
+        <div class="ds">${CG_GOAL}개를 모아야 기록이 남아요 · 다시 도전해 보세요!</div><div class="tb">${cgTable(cgRank(), -1)}</div><div class="row"><button class="again go">다시 하기</button><button class="x">닫기</button></div>`);
+      cgPull().then((top) => { const tb = el.querySelector(".tb"); if (tb) tb.innerHTML = cgTable(top, -1); });
+      el.querySelector(".again").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgStart(); }; el.querySelector(".x").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgClear(); }; return; }
+    const el = cgBox(`<div class="k">CLEAR!</div><h3>🎉 80주화 ${CG_GOAL}개를 모았어요!</h3><div class="sc">${tm.toFixed(2)}<small> 초</small></div>
       <div class="ds">이니셜을 남기면 명예의 전당(TOP 10)에 기록돼요.</div><div class="ini"><input maxlength="3" placeholder="ABC" autocomplete="off" spellcheck="false" aria-label="이니셜 3글자"><button class="go sv">등록</button></div><div class="tb">${cgTable(cgRank(), -1)}</div>
       <div class="row"><button class="again">다시 하기</button><button class="x">닫기</button></div>`);
     const inp = el.querySelector("input"), sv = el.querySelector(".sv"); inp.addEventListener("input", () => { inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9가-힣]/g, "").slice(0, 3); });
     cgPull().then((top) => { const tb = el.querySelector(".tb"); if (tb && el.querySelector(".ini")) tb.innerHTML = cgTable(top, -1); });
     const save = () => { const v = inp.value.trim(); if (!v || sv.disabled) { inp.focus(); return; } sv.disabled = true; inp.disabled = true; sv.textContent = "저장 중…";
-      cgSave(v, n).then(({ top, rank, off }) => { el.querySelector(".tb").innerHTML = cgTable(top, rank) + (rank < 0 ? '<div class="no">아쉽게도 TOP 10 밖이에요 · 다시 도전해 보세요!</div>' : "") + (off ? '<div class="no">인터넷 연결이 없어 이 기기에 먼저 저장했어요 · 연결되면 순위표에 올라가요</div>' : ""); const ini = el.querySelector(".ini"); if (ini) ini.remove(); }); };
+      cgSave(v, tm).then(({ top, rank, off }) => { el.querySelector(".tb").innerHTML = cgTable(top, rank) + (rank < 0 ? '<div class="no">아쉽게도 TOP 10 밖이에요 · 다시 도전해 보세요!</div>' : "") + (off ? '<div class="no">인터넷 연결이 없어 이 기기에 먼저 저장했어요 · 연결되면 순위표에 올라가요</div>' : ""); const ini = el.querySelector(".ini"); if (ini) ini.remove(); }); };
     sv.onclick = (e) => { e.stopPropagation(); save(); }; inp.addEventListener("keydown", (e) => { if (e.key === "Enter") save(); });
     el.querySelector(".again").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgStart(); }; el.querySelector(".x").onclick = (e) => { e.stopPropagation(); el.hidden = true; cgClear(); };
     setTimeout(() => { try { inp.focus(); } catch (e) {} }, 300); }
@@ -11503,16 +11508,16 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!CG.on) return; const cd = $("cgCd") || (() => { cgCSS(); const d = document.createElement("div"); d.id = "cgCd"; document.body.appendChild(d); return d; })();
     if (!CG.run) { const prev = Math.ceil(CG.cd); CG.cd = 3.6 - (performance.now() - CG.c0) / 1000; const k = Math.ceil(CG.cd);   /* counted on the clock, not by frames, so a slow device still gets exactly 3-2-1 and 80 seconds */ if (k !== prev || cd.hidden) { cd.hidden = false; cd.textContent = k > 0 ? String(k) : "GO!"; cd.classList.remove("pop"); void cd.offsetWidth; cd.classList.add("pop"); }
       if (CG.cd <= -0.6) { cd.hidden = true; CG.run = true; CG.r0 = performance.now(); } return; }
-    CG.t = Math.max(0, CG_T - (performance.now() - CG.r0) / 1000); const h = $("cgHud"); if (h) { h.querySelector(".tm b").textContent = CG.t.toFixed(1); h.querySelector(".tm").classList.toggle("low", CG.t < 10); }
+    CG.t = Math.min(CG_T, (performance.now() - CG.r0) / 1000); const h = $("cgHud"); if (h) { h.querySelector(".tm b").textContent = CG.t.toFixed(1); h.querySelector(".tm").classList.toggle("low", CG.t > CG_T - 10); }
     const T = RIDE.on && RIDE.kind === "taxi" ? RIDE.taxi : null;
     if (T) { const px = T.position.x, pz = T.position.z; CG.list.forEach((c) => { if (c.got || Math.abs(c.x - px) > CG_HIT + 1 || Math.abs(c.z - pz) > CG_HIT + 1) return; if (Math.hypot(c.x - px, c.z - pz) < CG_HIT) { c.got = true; c.t = 0; CG.got++; cgClink();
         if (h) { const nb = h.querySelector(".n"); nb.querySelector("b").textContent = String(CG.got); nb.classList.remove("bump"); void nb.offsetWidth; nb.classList.add("bump"); } if (c.hid) taxiToast("✨ 숨은 80주화를 찾았어요!", 1600); } }); }
     else if (now - CG.warn > 4) { CG.warn = now; taxiToast("🚕 80주화는 미니택시로만 모을 수 있어요 · 택시를 눌러 다시 타세요", 2200); }
-    if (CG.t <= 0 || CG.got >= CG_N) cgEnd(); }
+    if (CG.t >= CG_T || CG.got >= CG_GOAL) cgEnd(); }
   window.__kumhoCG = { panel: () => cgPanel(), start: () => cgStart(), end: () => cgEnd(), st: () => ({ on: CG.on, run: CG.run, n: CG.list.length, got: CG.got, ride: RIDE.on, kind: RIDE.kind, taxi: !!RIDE.taxi, inW: !!(RIDE.taxi && RIDE.taxi.parent === world), c: CG.list.slice(0, 3).map((c) => [c.x, c.z]) }) };
   function cgTalk() {   /* the grandpa, once 쿠모 has the mini taxi (and the park map): the game if everything else is done, else what is still left to do */
     if (!cgTaxi() || !mapGot) return false; const left = cgReq().filter((q) => !q[1]).map((q) => q[0]);
-    if (!left.length) { npcSay(["오, 쿠모! 미니택시까지 얻었구나. 아이템도 다 모으고, 농구도 퍼즐도 소원 동전도 모두 해냈다니 정말 대단하구나!", "그럼 할아버지가 특별한 게임을 하나 알려 주마. 이름하여 ‘80주화 챌린지’!", "금호 80주년을 기념하는 황금 80주화 80개를 아테라 타운 곳곳에 뿌려 두었단다. 몇 개는 잘 안 보이는 곳에 꼭꼭 숨겨 놨지.", "미니택시를 타고 80초 안에 최대한 많이 모아 보렴. 잘하면 이니셜이 명예의 전당에 남는단다!"], cgPanel); return true; }
+    if (!left.length) { npcSay(["오, 쿠모! 미니택시까지 얻었구나. 아이템도 다 모으고, 농구도 퍼즐도 소원 동전도 모두 해냈다니 정말 대단하구나!", "그럼 할아버지가 특별한 게임을 하나 알려 주마. 이름하여 ‘80주화 챌린지’!", "금호 80주년을 기념하는 황금 80주화 100개를 아테라 타운 곳곳에 뿌려 두었단다. 몇 개는 잘 안 보이는 곳에 꼭꼭 숨겨 놨지.", "미니택시를 타고 80개를 누가 가장 빨리 모으나 겨루는 타임어택이란다. 120초가 지나면 끝이니 서두르렴. 빠르면 이니셜이 명예의 전당에 남는단다!"], cgPanel); return true; }
     npcSay(["미니택시를 얻었구나, 쿠모! 그 택시로 할 수 있는 아주 특별한 게임이 있단다.", "그런데 먼저 이것들을 다 해내야 해 — " + left.join(" · ") + ".", "다 해내고 다시 오면 할아버지가 그 게임을 알려 주마!"]); return true; }
   const SIGN_LINKS = [   /* the fingerpost across from the archive: name, address, colour, which way the arrow points */
     { n: "금호건설", url: "https://www.kumhoenc.com/", c: "#1d2a5a", yaw: 0.35 },
