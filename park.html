@@ -7475,7 +7475,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           add(new THREE.BoxGeometry(0.9, 6.4, 10), wm, gx - 15.05, 3.2, gz); add(new THREE.BoxGeometry(0.9, 6.4, 1.2), wm, gx + 15.05, 3.2, gz + 4.4);   // the white frame down to the ground
           const gw = granite(5.6, 6.3, true, null); add(new THREE.BoxGeometry(5.6, 6.3, 4), [gw, gw, dk, dk, gw, gw], gx - 11.6, 3.15, gz + 1.5);   // the ARTERA wall
           const gh = granite(9, 3.8, false, "INFORMATION"); add(new THREE.BoxGeometry(9, 3.8, 5.5), [gh, gh, dk, dk, gh, gh], gx + 9.5, 1.9, gz + 0.5);   // the guard house
-          add(new THREE.PlaneGeometry(4.2, 1.3), new THREE.MeshBasicMaterial({ color: 0xd9e3ea }), gx + 9.5, 1.7, gz + 3.27);   // its window
+          { const gT = canvasTex(512, 160, (g, W, H) => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, "#5d7280"); gr.addColorStop(0.55, "#2f3d47"); gr.addColorStop(1, "#1d262d"); g.fillStyle = gr; g.fillRect(0, 0, W, H);   /* tinted glass: the sky caught in its top, dark below */
+            g.fillStyle = "rgba(255,236,200,.18)"; g.fillRect(W * 0.12, H * 0.5, W * 0.3, H * 0.5); g.fillStyle = "rgba(40,30,24,.55)"; g.fillRect(W * 0.08, H * 0.74, W * 0.84, H * 0.26);   /* a warm light and the counter seen through it */
+            g.fillStyle = "rgba(255,255,255,.16)"; [[0.18, 0.1], [0.3, 0.05], [0.66, 0.12], [0.8, 0.05]].forEach(([x, w]) => { g.beginPath(); g.moveTo(W * x, 0); g.lineTo(W * (x + w), 0); g.lineTo(W * (x + w - 0.12), H); g.lineTo(W * (x - 0.12), H); g.fill(); });   /* diagonal reflections */
+            g.fillStyle = "#8e959b"; g.fillRect(0, 0, W, 7); g.fillRect(0, H - 7, W, 7); g.fillRect(0, 0, 7, H); g.fillRect(W - 7, 0, 7, H); g.fillRect(W / 2 - 3, 0, 6, H); });   /* a thin metal frame and a mullion */
+            add(new THREE.PlaneGeometry(4.2, 1.3), new THREE.MeshBasicMaterial({ map: gT }), gx + 9.5, 1.7, gz + 3.27); }   // its window: tinted glass
           const nm = new THREE.Mesh(new THREE.PlaneGeometry(16, 1.6), new THREE.MeshBasicMaterial({ transparent: true, map: canvasTex(1024, 104, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "#f3f2ee"; g.font = `600 64px ${FONT}`; g.textAlign = "left"; g.textBaseline = "middle"; if ("letterSpacing" in g) g.letterSpacing = "6px"; g.fillText("동탄 아테라 파밀리에", 8, H / 2 + 4); }) }));
           nm.visible = false;   // (the complex's name on the roof: taken off)
           const rd = new THREE.Mesh(new THREE.PlaneGeometry(14, 34), lam(0x48494d)); rd.rotation.x = -Math.PI / 2; rd.position.set(gx, 0.07, gz - 8); A.add(rd);
@@ -8185,7 +8189,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const roof = new THREE.Mesh(new THREE.BoxGeometry(L, 0.2, W), new THREE.MeshLambertMaterial({ color: 0xe9e8e4 })); roof.position.y = H - 0.1; S.add(roof);
         const par = new THREE.MeshLambertMaterial({ color: 0xd8302c }); [W / 2, -W / 2].forEach((z) => { const p = new THREE.Mesh(new THREE.BoxGeometry(L + 0.4, 0.8, 0.4), par); p.position.set(0, H + 0.4, z); S.add(p); });
         [L / 2, -L / 2].forEach((x) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.8, W), par); p.position.set(x, H + 0.4, 0); S.add(p); });   // a red parapet, as the coach's red roof edge
-        const core = new THREE.Mesh(new THREE.BoxGeometry(L - 0.2, H - 0.2, W - 0.2), new THREE.MeshLambertMaterial({ color: 0xdedcd6 })); core.position.y = H / 2; core.castShadow = true; S.add(core); }
+        const core = new THREE.Mesh(new THREE.BoxGeometry(L - 1.6, H - 0.8, W - 1.6), new THREE.MeshLambertMaterial({ color: 0xdedcd6 })); core.position.y = (H - 0.8) / 2;   /* the solid core stands well back (0.8 m) from the painted walls: at 0.1 m, seen from afar its grey shimmered through them */ core.castShadow = true; S.add(core); }
         { // the entrance on the park side: a glazed door under a canopy, and the sign 금호 도서관; tap it to go in (to the archive)
           const ex = -62.6 + 0.35, ez = -113, E = new THREE.Group(); E.position.set(ex, 0, ez); E.rotation.y = Math.PI / 2; world.add(E);
           const mk = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; E.add(o); return o; };
@@ -8618,6 +8622,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           let src = null; root.traverse((o) => { if (o.isMesh && !src) src = o; }); if (!src) return; const m0 = Array.isArray(src.material) ? src.material[0] : src.material;
           const BA = [0, 2, 4, 6, 8].map((i) => GA[i]), im = new THREE.InstancedMesh(src.geometry, new THREE.MeshLambertMaterial({ map: m0.map || null }), BA.length); im.castShadow = true; im.frustumCulled = false; Y.add(im);
           const fix = new THREE.Matrix4().makeTranslation(-bc.x, -bb.min.y, -bc.z), sc = new THREE.Matrix4().makeScale(k, k, k), ro = new THREE.Matrix4(), tr = new THREE.Matrix4(), M = new THREE.Matrix4();
+          OUT.walls = OUT.walls || []; BA.forEach((a) => { for (let k = -2; k <= 2; k++) { const [x, z] = pp(RAp + 9.4 + k * 2.4, a); OUT.walls.push([x - 1.1, x + 1.1, z - 1.1, z + 1.1]); } });   /* the coaches are solid: you walk round them, not through them */
           BA.forEach((a, i) => { const [x, z] = pp(RAp + 9.4, a); ro.makeRotationY(a + (alongX ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.07, z); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); }); im.instanceMatrix.needsUpdate = true;
           { /* the 금호고속 lettering on both sides, drawn the right way round as on the coach at the archive (the model's own lettering read backwards on its left side) */ const s = 12 / 11.5, lm = new THREE.Mesh(src.geometry, new THREE.MeshBasicMaterial()); lm.matrixAutoUpdate = false; lm.matrix.makeRotationY(alongX ? 0 : Math.PI / 2).multiply(sc).multiply(fix).multiply(src.matrixWorld); lm.updateMatrixWorld(true);
           const dm = (w, h, draw) => { const c = document.createElement("canvas"); c.width = Math.round(w * 200); c.height = Math.round(h * 200); draw(c.getContext("2d"), c.width, c.height); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; return new THREE.MeshLambertMaterial({ map: t, polygonOffset: true, polygonOffsetFactor: -2 }); };
@@ -9953,6 +9958,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function kioskStep(d) { const NH = Math.min(5, DATA.length); let { h, i } = KLB; i += d;
     if (i >= DATA[h].items.length) { h = (h + 1) % NH; i = 0; } else if (i < 0) { h = (h + NH - 1) % NH; i = DATA[h].items.length - 1; }
     kioskLB(h, i); }
+  if (IS_PARK) { /* the coach yard behind U-square: walk up to an open bay door (the orange 고속 or green 직행 ones) and 쿠모 goes in, just inside that same door */
+    let armed = false; setInterval(() => { if (mode !== "outside" || busy || RIDE.on || AIR.on || AIR.out || (cam.fy || 0) > 1 || window.__pageLeaving || document.hidden) return;
+      const dx = cam.x - 240, dz = cam.z - (-36 + UZ), r = Math.hypot(dx, dz), a = Math.atan2(-dz, dx), D2 = Math.PI / 180, DA = [0, 1, 2, 3, 4].map((i) => (42 * (i + 0.5) / 5) * D2).concat([0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (42 + 76 * (i + 0.5) / 9) * D2)), g = DA.find((q) => Math.abs(a - q) * 39 < 1.3);
+      if (g == null || r > 42.3) { armed = true; return; } if (!armed || r > 41.3) return;   /* armed again once 쿠모 has stepped away from the doorway he came out of */
+      armed = false; const ri = 39.5 - 2.3; pageGo({ usquare: true, usqAt: [Math.cos(g) * ri, -Math.sin(g) * ri, Math.atan2(Math.cos(g), -Math.sin(g))] }); }, 150); }
   function pageGo(to) {
     window.__pageLeaving = true; busy = true;
     try { if (RIDE.ok) sessionStorage.setItem("kumhoBusGot", "1"); } catch (e) {}

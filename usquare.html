@@ -4292,6 +4292,11 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       L.load("assets/usqview/" + k + ("news".includes(k) ? "3" : "") + ".jpg", (t) => { t.encoding = THREE.sRGBEncoding; mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
       const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * D, 2 * D), mat); m.position.set(x - 10, 2 + y, z - 12);
       if (k === "u") { m.rotation.x = Math.PI / 2; m.rotateZ(Math.PI); } else if (k === "d") { m.rotation.x = -Math.PI / 2; m.rotateZ(Math.PI); } else m.rotation.y = ry; m.renderOrder = -10; m.userData.view = true; scene.add(m); }); }
+  { /* seen through the front glass: one wide picture of the lawn across the street, taken all the way round from the pavement in 아테라 타운 and hung on a half-ring outside, so the view no longer breaks where the sides of the far backdrop meet; shown only from inside the hall */
+    const R = 70, VF = 35 * Math.PI / 180, mat = new THREE.MeshBasicMaterial({ color: 0xbcd6ea, side: THREE.BackSide, toneMapped: false, depthWrite: false, fog: false });
+    new THREE.TextureLoader().load("assets/usqview/front.jpg", (tx) => { tx.encoding = THREE.sRGBEncoding; tx.wrapS = THREE.RepeatWrapping; tx.repeat.x = -1; mat.map = tx; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
+    const fr = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 2 * R * Math.tan(VF), 96, 1, true, -Math.PI / 2, Math.PI), mat); fr.position.set((X0 + X1) / 2, 1.8, 0.3); fr.renderOrder = -9; scene.add(fr);
+    (function fv() { if (freeGL.done) return; requestAnimationFrame(fv); const s = window.__vh; if (s) fr.visible = s.x < -20 || Math.hypot(s.x, s.z) < RA + 0.4; })(); }
   // ---- the way back out: the archive's own door, as on the library and the hall in 아테라 타운 — a stone surround, dark stained-oak double leaves with bronze edges and long bronze pulls, a dark canopy, the bronze-framed plaque ----
   { const DW = 2.6, DH = 2.9, Z = 0.12, stone = lam(0xd9d2c4), dark = lam(0x2f3134), bronze = lam(0x8f6c3a), pullM = new THREE.MeshBasicMaterial({ color: 0xb48a4e });
     F(DXP - 2.1, Z - 0.35, DXP - DW / 2, 0.45, 0, 3.5, stone, false); F(DXP + DW / 2, Z - 0.35, DXP + 2.1, 0.45, 0, 3.5, stone, false); F(DXP - 2.1, Z - 0.35, DXP + 2.1, 0.45, DH, 3.5, stone, false);   /* the stone surround, proud of the glass front */
@@ -4483,11 +4488,13 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function leave() { try { const g = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "usquare", t: Date.now() }))); } catch (e) {}
     doorFx.close(() => { freeGL(); kumhoHop(); location.replace("park.html"); }); }   // the doors swing shut behind, then the park
   $("exitBtn").addEventListener("click", askLeave);
-  { /* out of the coach yard on foot: down the road through the trees, and on into 아테라 타운 at the same spot of its own copy of the yard */
-    let gone = false; setInterval(() => { if (gone || document.hidden || !window.__vh) return; const s = window.__vh; if (!(s.z < -YR - 5 && Math.abs(s.x) < YXW + 0.5)) return; gone = true;
-      try { const g = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "usqYard", x: 240 + s.x, z: -33.5 + s.z - 1.5, yaw: s.yaw, t: Date.now() }))); } catch (e) {}
-      toast("🌳 아테라 타운으로 나가요"); const f = document.createElement("div"); f.style.cssText = "position:fixed;inset:0;z-index:40;background:#000;opacity:0;transition:opacity .6s;pointer-events:none"; document.body.appendChild(f); requestAnimationFrame(() => { f.style.opacity = "1"; });
-      setTimeout(() => { freeGL(); kumhoHop(); location.replace("park.html"); }, 650); }, 150); }
+  { /* through a bay door and out: the coach yard is 아테라 타운's own, so 쿠모 steps straight out into it there, at the same door (the yard drawn here is only what one sees through the glass) */
+    let gone = false; setInterval(() => { if (gone || document.hidden || !window.__vh) return; const s = window.__vh, r = Math.hypot(s.x, s.z); if (!(r > RA + 1.9 && s.z < 0 && s.x > -20)) return; gone = true; const k = (RA + 2.1) / r;   /* out on the platform just past the door, short of the coach drawn up at it */
+      try { const g = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "{}"); sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({}, g, { park: true, from: "usqYard", x: 240 + s.x * k, z: -33.5 + s.z * k, yaw: s.yaw, t: Date.now() }))); } catch (e) {}
+      const f = document.createElement("div"); f.style.cssText = "position:fixed;inset:0;z-index:40;background:#000;opacity:0;transition:opacity .45s;pointer-events:none"; document.body.appendChild(f); requestAnimationFrame(() => { f.style.opacity = "1"; });
+      setTimeout(() => { freeGL(); kumhoHop(); location.replace("park.html"); }, 480); }, 120); }
+  { /* in from the coach yard in 아테라 타운: 쿠모 stands just inside the door he came through, facing the hall */
+    try { const g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"); if (g && g.usquare && Array.isArray(g.usqAt) && Date.now() - (g.t || 0) < 60000) { let [x, z, yaw] = g.usqAt; if (!free(x, z, 0)) { const c = nearOpen(x, z); if (c >= 0) [x, z] = cellXZ(c % GW, Math.floor(c / GW)); } S.x = x; S.z = z; S.yaw = yaw; S.tx = null; } } catch (e) {} }
   { /* walk into the way out and the question comes at once: 나가시겠습니까? (asked again only after stepping away from it) */
     const EXD = PICK.filter((o) => o.userData && o.userData.idx === "exit"), bbx = new THREE.Box3(); let armed = true;
     setInterval(() => { if (!EXD.length || document.hidden) return; let at = false, far = true;
@@ -4524,12 +4531,12 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     const move = (hx, hz, d) => { if (!tryMove(S.x + hx * d, S.z + hz * d)) { if (doorSlide(hx, hz, d)) return true; if (!tryMove(S.x + hx * d, S.z)) tryMove(S.x, S.z + hz * d); return false; } return true; };
     const fw = (keys.ArrowUp || keys.w || keys.W ? 1 : 0) - (keys.ArrowDown || keys.s || keys.S ? 1 : 0), tu = (keys.ArrowLeft || keys.a || keys.A ? 1 : 0) - (keys.ArrowRight || keys.d || keys.D ? 1 : 0);
     if (Math.hypot(JOY.x, JOY.y) <= 0.12) S.jH = null;   /* let go of the stick: the next push picks its way afresh */
-    if (hold) { const rr = aim(hold.x, hold.y).ray, ro = rr.origin, rd = rr.direction; let d = rd; if (rd.y < -0.05) { const t = (S.fy || 0) - ro.y, gx = ro.x + rd.x * t / rd.y - S.x, gz = ro.z + rd.z * t / rd.y - S.z; d = Math.hypot(gx, gz) > 0.25 ? { x: gx, z: gz } : { x: 0, z: 0 }; } const hl = Math.hypot(d.x, d.z); if (hl > 1e-3) {   /* toward the spot on the floor under the finger, from where 쿠모 stands (in the quarter view the ray alone would always point away from the camera) */ hold.v = Math.min(hold.t0 && performance.now() - hold.t0 > 900 ? 7.2 : 3.46, hold.v + dt * 6); move(d.x / hl, d.z / hl, hold.v * dt); } }
+    if (hold) { const rr = aim(hold.x, hold.y).ray, ro = rr.origin, rd = rr.direction; let d = rd; if (rd.y < -0.05) { const t = (S.fy || 0) - ro.y, gx = ro.x + rd.x * t / rd.y - S.x, gz = ro.z + rd.z * t / rd.y - S.z; d = Math.hypot(gx, gz) > 0.25 ? { x: gx, z: gz } : { x: 0, z: 0 }; } const hl = Math.hypot(d.x, d.z); if (hl > 1e-3) {   /* toward the spot on the floor under the finger, from where 쿠모 stands (in the quarter view the ray alone would always point away from the camera) */ hold.v = Math.min(14.3, hold.v + dt * 21.7);   /* run as fast as in 아테라 타운 */ move(d.x / hl, d.z / hl, hold.v * dt); } }
     else if (Math.hypot(JOY.x, JOY.y) > 0.12) {   // the stick: walk the way it points, any angle; a sideways push turns the view a little too
       S.tx = null; const f = -JOY.y, sd = JOY.x, m = Math.min(1, Math.hypot(f, sd)), L = Math.hypot(f, sd); 
-      S.v = (S.v || 0) + ((m > 0.62 ? 7.0 : 3.46) * m - (S.v || 0)) * Math.min(1, dt * 5); const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw);
+      S.v = (S.v || 0) + (9.36 * m - (S.v || 0)) * Math.min(1, dt * 5); const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw);
       S.yaw -= sd * 0.6 * dt * (f > -0.3 ? 1 : 0); S.yawTo = null;   /* the stick walks the way it points from where the view looks; a sideways push turns the view gently with it */ move((hx * f + rx * sd) / L, (hz * f + rz * sd) / L, S.v * dt); }
-    else if (fw || tu) { S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 6.5 - (S.v || 0)) * Math.min(1, dt * 5); if (Math.abs(S.v) > 0.02) move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt); }
+    else if (fw || tu) { S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 9.36 - (S.v || 0)) * Math.min(1, dt * 5); if (Math.abs(S.v) > 0.02) move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt); }
     else if (S.tx != null) { const dx = S.tx - S.x, dz = S.tz - S.z, d = Math.hypot(dx, dz);
       if (d < 0.12 && S.path && S.path.length) { [S.tx, S.tz] = S.path.shift(); } else if (d < 0.05) { S.tx = null; S.v = 0; if (S.faceTo != null) { S.yawTo = S.faceTo; S.faceTo = null; } } else { S.v = Math.min((S.v || 0) + dt * 6, 3.46, d * 2.2); move(dx / d, dz / d, Math.min(d, S.v * dt)); } }
     else S.v = 0;   /* let go and 쿠모 stops where he is, facing as he was */
