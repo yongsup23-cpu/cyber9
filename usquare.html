@@ -4254,9 +4254,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // silver round columns in the hall
   [[14.5, -19.5], [-14.5, -19.5]].forEach(([x, z]) => { const c = add(new THREE.CylinderGeometry(0.55, 0.55, HT, 28), lam(0xc3c7cc), x, HT / 2, z); block(x - 0.55, x + 0.55, z - 0.55, z + 0.55); WALLS.push(c); add(new THREE.CylinderGeometry(0.6, 0.6, 0.12, 28), steel, x, 0.06, z); });
   prog(0.7);
-  // ---- the south front: glass with mullions onto the street (the town as seen from U-square beyond), GATE 1 – 6 ----
-  { const g = add(new THREE.PlaneGeometry(X1 - X0, HT), new THREE.MeshBasicMaterial({ color: 0xcfe4ee, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }), (X0 + X1) / 2, HT / 2, 0.3); g.renderOrder = 3; block(X0, X1, 0.25, 0.6);
-    for (let x = X0; x <= X1; x += 2) F(x - 0.05, 0.25, x + 0.05, 0.45, 0, HT, frameM, false); [1.2, 3.0].forEach((y) => F(X0, 0.25, X1, 0.45, y, y + 0.06, frameM, false));
+  // ---- the south front: a plain wall (once glass onto the street), the way out set in it ----
+  { F(X0, 0.3, X1, 0.55, 0, HT + 0.8, wallMat, false); block(X0, X1, 0.25, 0.6);   /* the south front: now a plain wall like the rest of the hall (it was glass onto the street) */
     if (0) [[20, "GATE 1"], [8, "GATE 2"], [-8, "GATE 3"], [-20, "GATE 4"], [-34, "GATE 5"], [-48, "GATE 6"]].forEach(([x, t]) => { const m = sign(1.6, 0.36, (g, w, h) => { g.fillStyle = "#16181b"; g.fillRect(0, 0, w, h); g.fillStyle = "#ff4a3a"; g.beginPath(); g.arc(h * 0.5, h / 2, h * 0.22, 0, 7); g.fill(); g.fillStyle = "#fff"; g.font = `800 ${h * 0.5}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(t, w * 0.56, h / 2); }, x, 2.75, 0.2, Math.PI); }); }
   { const D = 140, L = new THREE.TextureLoader();
     [["s", 0, 0, D, Math.PI, 0], ["n", 0, 0, -D, 0, 0], ["e", D, 0, 0, -Math.PI / 2, 0], ["w", -D, 0, 0, Math.PI / 2, 0], ["u", 0, D, 0, 0, Math.PI / 2], ["d", 0, -D, 0, 0, -Math.PI / 2]].forEach(([k, x, y, z, ry]) => {
