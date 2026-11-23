@@ -7111,8 +7111,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const inYard = (x, z) => { const r = Math.hypot(x - CX, z - CZ), a = Math.atan2(-(z - CZ), x - CX) / Math.PI * 180; return r > RO - 1 && a > -3 && a < 126; };   /* the coach yard behind the bay doors takes the back and the east side */
       for (let z = CZ - 4; z >= -73; z -= 4.6) for (const x of [CX - 56, CX - 49, CX + 47, CX + 54]) { const xx = x + ((Math.round(z) * 7) % 3 - 1) * 0.6; if (!inYard(xx, z)) trees.push([xx, z, 6.2 + rnd() * 0.8, 0.82]); }
       { const RAp = 38.8, YR = RAp + 30, A0 = 1.5 * Math.PI / 180, A1 = 122 * Math.PI / 180, pp = (r, a) => [CX + r * Math.cos(a), CZ - r * Math.sin(a)];   /* the yard's trees beyond its wall, two rows, as in U-square itself */
-        for (let a = A0 + 0.02; a < A1 - 0.01; a += 0.075) { const [x, z] = pp(YR + 3.2 + rnd() * 1.6, a); if (x < 304) trees.push([x, z, 5.8 + rnd() * 0.9, 0.8]); }
-        for (let a = A0 + 0.06; a < A1 - 0.03; a += 0.11) { const [x, z] = pp(YR + 8.5 + rnd() * 2, a); if (x < 304) trees.push([x, z, 6.4 + rnd(), 0.9]); } } }
+        for (let a = A0 + 0.02; a < A1 - 0.01; a += 0.075) { const [x, z] = pp(YR + 3.2 + rnd() * 1.6, a); if (x < 304 && Math.abs(x - 240) > 11) trees.push([x, z, 5.8 + rnd() * 0.9, 0.8]); }   /* none on the road out of the yard */
+        for (let a = A0 + 0.06; a < A1 - 0.03; a += 0.11) { const [x, z] = pp(YR + 8.5 + rnd() * 2, a); if (x < 304 && Math.abs(x - 240) > 11) trees.push([x, z, 6.4 + rnd(), 0.9]); } } }
     OUT.treeCols = trees.map(([x, z]) => [x - 0.4, x + 0.4, z - 0.4, z + 0.4]); OUT.colDirty = true;   // trunks are solid (the instanced trees are not seen by the collider scan)
     const LOBES = (i) => i < NBELT && Math.abs(trees[i][0]) < 64 ? 60 : 22;   // the street trees in front of the archive in detail, all the rest lighter
     let NL = 0; trees.forEach((t, i) => { NL += LOBES(i); });
@@ -8541,7 +8541,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           const SY = 14.6, SH = 6.2, R0 = RI + 5, R1 = RO - 1.4, T0 = Math.PI - 0.6, TL = 1.2;   // cylinder angle: 0 at +z, so the back of the ring is at π
           sT.wrapS = THREE.RepeatWrapping; sT.repeat.x = -1;   // seen from inside the curve, so the lettering is laid on mirrored
           const face = new THREE.Mesh(new THREE.CylinderGeometry(R0, R0, SH, 48, 1, true, T0, TL), new THREE.MeshBasicMaterial({ map: sT, side: THREE.BackSide })); face.position.set(CX, SY + SH / 2, CZ); U.add(face);
-          const outer = new THREE.Mesh(new THREE.CylinderGeometry(R1, R1, SH, 48, 1, true, T0, TL), white); outer.position.set(CX, SY + SH / 2, CZ); U.add(outer);
+          const sT2 = sT.clone(); sT2.repeat.x = 1; sT2.needsUpdate = true; const outer = new THREE.Mesh(new THREE.CylinderGeometry(R1, R1, SH, 48, 1, true, T0, TL), new THREE.MeshBasicMaterial({ map: sT2 }));   /* the back, toward the coach yard, carries the same sign on its rounded face */ outer.position.set(CX, SY + SH / 2, CZ); U.add(outer);
           for (const y of [SY + SH, SY]) { const cap = new THREE.Mesh(new THREE.RingGeometry(R0 - 0.05, R1 + 0.05, 48, 1, T0 - Math.PI / 2, TL), y > SY ? roofM : white); cap.rotation.x = -Math.PI / 2; cap.position.set(CX, y + 0.01, CZ); U.add(cap); }
           for (const t of [T0, T0 + TL]) { const e = ub(R1 - R0, SH, 0.3, CX + Math.sin(t) * (R0 + R1) / 2, SY + SH / 2, CZ + Math.cos(t) * (R0 + R1) / 2, white, t + Math.PI / 2); e.castShadow = false; }
           const trim = new THREE.Mesh(new THREE.CylinderGeometry(R0 - 0.02, R0 - 0.02, 0.35, 48, 1, true, T0, TL), new THREE.MeshLambertMaterial({ color: 0xa3a8ae, side: THREE.BackSide })); trim.position.set(CX, SY + SH + 0.1, CZ); U.add(trim); }
@@ -8604,7 +8604,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           [[OA, 0xf08a1c, dk], [GA, 0x3f8f3a, dk], [AR, 0x8a6fae, fro]].forEach(([L, c, gm]) => { const cm = new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() }); L.forEach((a) => { const [x, z] = pp(38.15, a), G = new THREE.Group(); G.position.set(x, 0, z); G.rotation.y = a + Math.PI / 2; Y.add(G);
               const b = (w, h, d, m, px, py) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(px, py, 0); G.add(o); };
               b(1.1, 4.1, 0.24, cm, -1.95, 2.05); b(1.1, 4.1, 0.24, cm, 1.95, 2.05); b(5.0, 0.62, 0.24, cm, 0, 3.79); b(2.8, 2.45, 0.06, gm, 0, 1.225); b(0.06, 2.45, 0.1, fr, 0, 1.225); b(2.9, 0.08, 0.12, fr, 0, 2.47); b(5.0, 0.6, 0.12, lb, 0, 2.82); }); }); }
-        arc(YR + 0.5, A0, A1, 0, 1.3, conc); arc(YR + 0.5, A0, A1, 1.3, 1.4, lam(0xc9c6bf));
+        { /* the low wall stands open on the yard's axis: the coaches' way out, a road with a pavement either side running on through the trees to the street before the Artera blocks (walk out of the yard that way, or in from the street) */
+          const EH = 7.8 / (YR + 0.5), AE = Math.PI / 2, cm = lam(0xc9c6bf); [[A0, AE - EH], [AE + EH, A1]].forEach(([a0, a1]) => { arc(YR + 0.5, a0, a1, 0, 1.3, conc); arc(YR + 0.5, a0, a1, 1.3, 1.4, cm); });
+          [AE - EH, AE + EH].forEach((a) => { const [x, z] = pp(YR + 0.5, a), o = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.6, 0.6), conc); o.position.set(x, 0.8, z); Y.add(o); });
+          const RD = new THREE.Group(); RD.name = "usqRoad"; world.add(RD); const z0 = CZ - YR + 0.4, z1 = -132.2, L = z0 - z1, zc = (z0 + z1) / 2, pl = (w, x, y, m) => { const o = new THREE.Mesh(new THREE.PlaneGeometry(w, L), m); o.rotation.x = -Math.PI / 2; o.position.set(x, y, zc); o.receiveShadow = true; RD.add(o); return o; };
+          const off = (m) => { m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2; return m; };
+          pl(12.4, 240, 0.06, off(asph.clone())); [-1, 1].forEach((s) => pl(1.9, 240 + s * 7.15, 0.09, off(lam(0xcfcac1))));
+          for (let z = z0 - 2; z > z1 + 1; z -= 5) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 2.6), wht); d.rotation.x = -Math.PI / 2; d.position.set(240, 0.11, z - 1.3); RD.add(d); } }
         [A0, A1].forEach((a) => { const [x0, z0] = pp(RAp + 0.6, a), [x1, z1] = pp(YR + 0.5, a), w = new THREE.Mesh(new THREE.BoxGeometry(YR - RAp, 1.3, 0.3), conc); w.position.set((x0 + x1) / 2, 0.65, (z0 + z1) / 2); w.rotation.y = a; Y.add(w); });
         const L = gltfLoader || (THREE.GLTFLoader ? (gltfLoader = new THREE.GLTFLoader()) : null); if (L && window.MeshoptDecoder && !L.meshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder); const ow = world;
         if (L) (window.MeshoptDecoder ? window.MeshoptDecoder.ready : Promise.resolve()).then(() => L.load("assets/lite-bus.glb", (g) => { if (world !== ow) return; const root = g.scene; root.updateMatrixWorld(true);
@@ -8612,7 +8618,17 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           let src = null; root.traverse((o) => { if (o.isMesh && !src) src = o; }); if (!src) return; const m0 = Array.isArray(src.material) ? src.material[0] : src.material;
           const BA = [0, 2, 4, 6, 8].map((i) => GA[i]), im = new THREE.InstancedMesh(src.geometry, new THREE.MeshLambertMaterial({ map: m0.map || null }), BA.length); im.castShadow = true; im.frustumCulled = false; Y.add(im);
           const fix = new THREE.Matrix4().makeTranslation(-bc.x, -bb.min.y, -bc.z), sc = new THREE.Matrix4().makeScale(k, k, k), ro = new THREE.Matrix4(), tr = new THREE.Matrix4(), M = new THREE.Matrix4();
-          BA.forEach((a, i) => { const [x, z] = pp(RAp + 9.4, a); ro.makeRotationY(a + (alongX ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.07, z); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); }); im.instanceMatrix.needsUpdate = true; }, undefined, () => {})); }
+          BA.forEach((a, i) => { const [x, z] = pp(RAp + 9.4, a); ro.makeRotationY(a + (alongX ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.07, z); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); }); im.instanceMatrix.needsUpdate = true;
+          { /* the 금호고속 lettering on both sides, drawn the right way round as on the coach at the archive (the model's own lettering read backwards on its left side) */ const s = 12 / 11.5, lm = new THREE.Mesh(src.geometry, new THREE.MeshBasicMaterial()); lm.matrixAutoUpdate = false; lm.matrix.makeRotationY(alongX ? 0 : Math.PI / 2).multiply(sc).multiply(fix).multiply(src.matrixWorld); lm.updateMatrixWorld(true);
+          const dm = (w, h, draw) => { const c = document.createElement("canvas"); c.width = Math.round(w * 200); c.height = Math.round(h * 200); draw(c.getContext("2d"), c.width, c.height); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; return new THREE.MeshLambertMaterial({ map: t, polygonOffset: true, polygonOffsetFactor: -2 }); };
+          const bigM = dm(2.36, 0.72, (c, W, H) => { c.fillStyle = "#ff0c14"; c.fillRect(0, 0, W, H); c.fillStyle = "#fff"; c.textAlign = "center"; c.textBaseline = "middle"; c.font = `800 ${H * 0.44}px ${FONT}`; c.fillText("금 호 고 속", W * 0.42, H * 0.33); c.font = `700 ${H * 0.17}px ${FONT}`; c.fillText("우등", W * 0.79, H * 0.38); c.font = `700 ${H * 0.25}px ${FONT}`; c.fillText("KUMHO BUSLINES", W * 0.42, H * 0.76); });
+          const smallM = dm(0.8, 0.36, (c, W, H) => { c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, H); c.fillStyle = "#55575a"; c.textAlign = "center"; c.textBaseline = "middle"; c.font = `600 ${H * 0.5}px ${FONT}`; c.fillText("금호고속", W / 2, H * 0.42); });
+          const whiteM = dm(0.5, 0.5, (c, W, H) => { c.fillStyle = "#ffffff"; c.fillRect(0, 0, W, H); });
+          const rc = new THREE.Raycaster(), DG = new THREE.Group();
+          [[3.97, 1.7, 2.36, 0.72, bigM], [-4.03, 1.57, 0.8, 0.36, smallM], [-3.92, 1.84, 0.5, 0.12, whiteM], [-3.08, 1.6, 0.5, 0.5, whiteM, -1]].forEach(([x, y, w, h, mt, only]) => [1, -1].forEach((sd) => { if (only && sd !== only) return;
+            rc.set(new THREE.Vector3(x * s, y * s, sd * 4), new THREE.Vector3(0, 0, -sd)); const hit = rc.intersectObject(lm, false)[0]; if (!hit) return;
+            const d = new THREE.Mesh(new THREE.PlaneGeometry(w * s, h * s), mt); d.position.set(hit.point.x, hit.point.y, hit.point.z + sd * 0.012); d.rotation.y = sd > 0 ? 0 : Math.PI; DG.add(d); }));
+            BA.forEach((a) => { const [x, z] = pp(RAp + 9.4, a), g = DG.clone(); g.position.set(x, 0.07, z); g.rotation.y = a; Y.add(g); }); } }, undefined, () => {})); }
       if (OUT.mergeU) OUT.mergeU();
       { // low clipped hedges, plain green, wherever the walk stops: down the park's right-hand edge, along the city side past the park (open at the side streets and U-square's plaza),
         // along the archive side of the street, and across the far end of the walk
@@ -10676,6 +10692,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
 
   /* ---------- sound: everything synthesised with Web Audio (no audio files) ---------- */
   const SND = { ctx: null, on: false };
+  if (IS_PARK) { try { const au = new Audio(); au.preload = "auto"; au.loop = true; au.setAttribute("playsinline", ""); au.src = "assets/park-bgm.mp3"; au.load(); SND.parkEl = au; } catch (e) {} }   /* the park's tune starts downloading as the page opens, so the first tap plays it at once */
   // iPhone/iPad: route the page's sound as media playback so the silent switch does not mute it (Safari 16.4+),
   // and on older iOS play a short silent <audio> inside the tap, which does the same
   function iosUnlock() {
@@ -10687,16 +10704,16 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const p = a.play(); if (p && p.catch) p.catch(() => {}); SND.silent = a;
     } catch (e) {}
   }
-  ["touchend", "click"].forEach((ev) => document.addEventListener(ev, () => { iosUnlock(); if (SND.on && SND.ctx && SND.ctx.state !== "running") SND.ctx.resume(); if (SND.on && SND.bgmEl && SND.bgmEl.paused) { const p = SND.bgmEl.play(); if (p && p.catch) p.catch(() => {}); } }, { passive: true }));
+  ["touchend", "click", "pointerdown", "keydown"].forEach((ev) => document.addEventListener(ev, () => { iosUnlock(); if (SND.on && SND.ctx && SND.ctx.state !== "running") SND.ctx.resume(); if (SND.on && SND.bgmEl && SND.bgmEl.paused) { const p = SND.bgmEl.play(); if (p && p.catch) p.catch(() => {}); } }, { passive: true }));
   document.addEventListener("visibilitychange", () => { if (!document.hidden && SND.on && SND.ctx && SND.ctx.state !== "running") SND.ctx.resume(); });
   function sndInit() {
     if (SND.ctx) return SND.ctx;
     iosUnlock();
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
-    const ctx = (SND.ctx = new AC());
+    let ctx; try { ctx = (SND.ctx = new AC(IS_PARK ? { latencyHint: "playback" } : undefined)); } catch (e) { ctx = (SND.ctx = new AC()); }   /* in the park, larger audio buffers: the tune plays without taking time from the drawing */
     SND.master = ctx.createGain(); SND.master.gain.value = 0; SND.master.connect(ctx.destination);
-    const len = Math.floor(ctx.sampleRate * 2.8), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    const len = Math.floor(ctx.sampleRate * (IS_PARK ? 1.2 : 2.8)), ir = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
     const conv = ctx.createConvolver(); conv.buffer = ir;
     SND.rev = ctx.createGain(); SND.rev.gain.value = 0.55; SND.rev.connect(conv); conv.connect(SND.master);
@@ -10713,7 +10730,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       .then((buf) => { SND.bgm = buf; SND.bgmPending = false; startBgm(); })
       .catch(() => { if (++tries < 6) setTimeout(() => loadBgm(false), 3000 * tries); else SND.bgmPending = false; });
     if (IS_PARK) {   // the park's own tune (sunrise), streamed from assets/park-bgm.mp3 through the mixer: starts at once and keeps memory low (rendering it in the page crashed iPads)
-      SND.bgmPending = false; const au = new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.setAttribute("playsinline", ""); SND.bgmEl = au;
+      SND.bgmPending = false; const au = SND.parkEl || new Audio("assets/park-bgm.mp3"); au.loop = true; au.preload = "auto"; au.setAttribute("playsinline", ""); SND.bgmEl = au;
       try { ctx.createMediaElementSource(au).connect(SND.bgmGain); } catch (e) { au.volume = 0.5; }
       const t = ctx.currentTime; SND.bgmGain.gain.setValueAtTime(bgmLevel(false), t); const p = au.play(); if (p && p.catch) p.catch(() => {}); }
     else loadBgm(true);
@@ -11721,6 +11738,15 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     b.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);top:76px;z-index:45;font:14px/1 inherit;font-family:inherit;color:#f0e2c4;background:rgba(23,24,21,.86);border:1px solid rgba(201,168,106,.55);border-radius:999px;padding:9px 16px;cursor:pointer";
     document.body.appendChild(b); ["pointerdown", "pointerup"].forEach((ev) => b.addEventListener(ev, (e) => e.stopPropagation())); b.addEventListener("click", (e) => { e.stopPropagation(); busCall(); }); return b;
   }
+  /* the ground under the mini bus: paving, kerbs and planters' rims each measured once (to a third of a metre), so the bus rides on them and never sinks into them */
+  function rideGnd() { if (rideGnd.w === world) return rideGnd.L; rideGnd.w = world; rideGnd.C = new Map(); const L = (rideGnd.L = []), bb = new THREE.Box3(); world.updateMatrixWorld(true);
+    world.traverse((o) => { if (!o.isMesh || o.isInstancedMesh || !o.visible || o.isSkinnedMesh || o.userData.noCol) return; const m = o.material; if (!m || Array.isArray(m) || (m.transparent && m.opacity < 0.5)) return; let q = o; while (q) { if (q === COIN.mini || q === RIDE.bus || q === RIDE.taxi) return; q = q.parent; }
+      bb.setFromObject(o); if (bb.max.y > 1.2 || bb.max.y < -0.2) return; L.push([o, bb.min.x, bb.max.x, bb.min.z, bb.max.z, bb.max.y]); }); return L; }
+  const RG = { rc: new THREE.Raycaster(), dn: new THREE.Vector3(0, -1, 0), o: new THREE.Vector3() };
+  function rideTop(px, pz) { const L = rideGnd(), key = Math.round(px * 3) * 100003 + Math.round(pz * 3), c = rideGnd.C.get(key); if (c !== undefined) return c; let top = 0; RG.o.set(px, 1.4, pz); RG.rc.set(RG.o, RG.dn); RG.rc.far = 1.8;
+    for (const [o, x0, x1, z0, z1, ty] of L) { if (px < x0 || px > x1 || pz < z0 || pz > z1 || ty <= top || ty > 0.6) continue; const h = RG.rc.intersectObject(o, false).find((k) => k.point.y <= 0.6); if (h) top = Math.max(top, h.point.y); }
+    if (rideGnd.C.size > 30000) rideGnd.C.clear(); rideGnd.C.set(key, top); return top; }
+  function busLift(px, pz, ry) { const c = Math.cos(ry), s = Math.sin(ry), Lh = 0.62, W = 0.32; let m = 0; [[Lh, W], [Lh, -W], [-Lh, W], [-Lh, -W], [0, 0]].forEach(([u, v]) => { m = Math.max(m, rideTop(px + u * c + v * s, pz - u * s + v * c)); }); return m + 0.06; }
   function busCall() {
     const M = COIN.mini; taxiCSS(); if (!M || mode !== "outside") return; if ((cam.fy || 0) > 1) { taxiToast("버스는 1층에서 불러 주세요", 2200); return; }
     const f = TP.face != null ? TP.face : cam.yaw + Math.PI, rx = -Math.cos(f), rz = Math.sin(f);   // 쿠모's right-hand side (the model faces +z, so its right is local -x)
@@ -11728,7 +11754,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     { const T = RIDE.taxi; if (T && T.visible && T.parent === world && RIDE.bus !== T && Math.hypot(T.position.x - x, T.position.z - z) < 5) {   /* the mini taxi is parked there: the bus pulls up on its far side instead of on top of it */
         const sz = new THREE.Box3().setFromObject(M).getSize(new THREE.Vector3()), tfc = T.rotation.y - Math.PI / 2, lx = -Math.cos(tfc), lz = Math.sin(tfc), sd = ((T.position.x - cam.x) * lx + (T.position.z - cam.z) * lz) >= 0 ? 1 : -1, off = Math.min(sz.x, sz.z) / 2 + MT_LEN * 0.25 + 0.5, nx = T.position.x + lx * sd * off, nz = T.position.z + lz * sd * off;
         if (groundOK(nx, nz)) { x = nx; z = nz; } } }
-    M.visible = true; M.userData.arrive = { t: 0, x, z, fx: Math.sin(f), fz: Math.cos(f) }; M.rotation.y = f + Math.PI / 2; OUT.colDirty = true;
+    M.visible = true; M.rotation.y = f + Math.PI / 2; let y = 0.02; try { y = busLift(x, z, M.rotation.y); } catch (e) {} M.userData.arrive = { t: 0, x, z, y, fx: Math.sin(f), fz: Math.cos(f) }; OUT.colDirty = true;
     taxiToast("🚌 미니버스가 왔어요! 버스를 누르면 탈 수 있어요", 2600);
   }
   // ===== the big screen in the park: a bronze-framed LED board on two posts, between the ARTERA planting and the fountain, facing the street.
@@ -11936,20 +11962,20 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function busCallStep(dt) {
     const show = mode === "outside" && busUnlocked();   /* the pass stays in its slot all the while, on the mini taxi or the bus too */ if (show || $("invBus")) { if (!$("invBus")) busItem(); const b = $("invBus"); if (b.hidden === show) b.hidden = !show; }   /* the pass sits with the other items; a tap calls the bus */
     const M = COIN.mini, A = M && M.userData.arrive; if (!A) return; A.t += dt; const u = Math.min(1, A.t / 1.1), e = 1 - (1 - u) * (1 - u) * (1 - u);   // drives in from behind and pulls up alongside
-    M.position.set(A.x - A.fx * 12 * (1 - e), 0.02, A.z - A.fz * 12 * (1 - e)); if (u >= 1) { M.userData.arrive = null; OUT.colDirty = true; }
+    { const px = A.x - A.fx * 12 * (1 - e), pz = A.z - A.fz * 12 * (1 - e); let y = A.y != null ? A.y : 0.02; try { y = busLift(px, pz, M.rotation.y); } catch (er) {} if (A.ys == null) A.ys = y; A.ys += (y - A.ys) * 0.35; M.position.set(px, u >= 1 ? A.y : A.ys, pz); }   /* over the road and up onto the kerb as it drives in */ if (u >= 1) { M.userData.arrive = null; OUT.colDirty = true; }
   }
   function rideAsk() {
     taxiCSS(); if (!busUnlocked()) { taxiToast("🚌 미니버스는 소원 동전을 모두 분수에 던지거나, 농구 3단계를 통과하거나, 사진 퍼즐 3개를 맞추면 탈 수 있어요", 3600); return; }
     if (RIDE.on) return; const M = COIN.mini; if (!M) return;
     if (!TP.obj) tpLoad(); if (!RIDE.bus || RIDE.bus.parent !== world || RIDE.bus.userData.glb !== !!OUT.busProto) { if (RIDE.bus && RIDE.bus.parent) RIDE.bus.parent.remove(RIDE.bus); RIDE.bus = busModel(TOY, true); RIDE.bus.traverse((o) => { o.userData.noCol = true; }); world.add(RIDE.bus); }
-    anim = null; hold = null; TP.sit = null; RIDE.on = true; RIDE.kind = "bus"; RIDE.bus.visible = true; M.visible = false;
+    anim = null; hold = null; TP.sit = null; RIDE.on = true; RIDE.kind = "bus"; RIDE.bus.visible = true; M.visible = false; RIDE.ly = M.position.y; RIDE.lyS = null; RIDE.lt = 0;
     M.userData.arrive = null; cam.x = M.position.x; cam.z = M.position.z; TP.px = cam.x; TP.pz = cam.z; TP.face = M.rotation.y - Math.PI / 2; cam.yaw = TP.face + Math.PI;   // aboard, looking where the bus points
     TP.gy = M.position.y - 0.02; rideRider(); rideBtn().hidden = false; rideBtn().textContent = "🚌 미니버스에서 내리기"; taxiToast("🚌 미니버스 출발! 방향키(또는 화면 패드)로 자유롭게 달려 보세요", 2600);
   }
   function rideEnd() {
-    if (!RIDE.on) return; RIDE.on = false; if (RIDE.bus) RIDE.bus.visible = false; const b = $("rideOff"); if (b) b.hidden = true;
+    if (!RIDE.on) return; RIDE.on = false; const byE = RIDE.bus ? RIDE.bus.position.y : null; if (RIDE.bus) RIDE.bus.visible = false; const b = $("rideOff"); if (b) b.hidden = true;
     if (RIDE.kind === "taxi") { RIDE.kind = null; RIDE.lyS = null; const T = RIDE.taxi; T.visible = true; RIDE.bus = RIDE.busKeep || null; if (COIN.mini && RIDE.miniWas) COIN.mini.visible = true; cam.x += Math.cos(TP.face) * 1.1; cam.z -= Math.sin(TP.face) * 1.1; TP.px = cam.x; TP.pz = cam.z; return; }   /* off the mini taxi: 쿠모 steps out beside it, and it stays parked there to be taken again */
-    if (COIN.mini) { COIN.mini.visible = true; if (RIDE.bus) { COIN.mini.position.set(RIDE.bus.position.x, 0.02 + (cam.fy || 0), RIDE.bus.position.z); COIN.mini.rotation.y = RIDE.bus.rotation.y; } OUT.colDirty = true; }   // parked where you got off
+    if (COIN.mini) { COIN.mini.visible = true; if (RIDE.bus) { COIN.mini.position.set(RIDE.bus.position.x, byE != null && (cam.fy || 0) < 1 ? byE : 0.02 + (cam.fy || 0), RIDE.bus.position.z); COIN.mini.rotation.y = RIDE.bus.rotation.y; } OUT.colDirty = true; }   // parked where you got off
     cam.x += Math.cos(TP.face) * 1.1; cam.z -= Math.sin(TP.face) * 1.1; TP.px = cam.x; TP.pz = cam.z;   // step out to the side
   }
   /* the mini taxi: the founding Ford shrunk to a ride-on toy (1.9 m), its roof taken off by one level cut just under the roofline (a clean straight edge, the inside showing), driven like the mini bus; called from the ticket item */
@@ -11985,7 +12011,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const rc = new THREE.Raycaster(), dn = new THREE.Vector3(0, -1, 0), o3 = new THREE.Vector3();
       if (miniTaxi.gw !== world) { miniTaxi.gw = world; miniTaxi.gnd = []; const bb = new THREE.Box3();   /* once per scene: the low solid surfaces (paving, kerbs, rims) the taxi could roll over, each with its own box, so a height check only touches the one or two under a wheel */
         world.updateMatrixWorld(true); world.traverse((o) => { if (!o.isMesh || !o.visible || o.isSkinnedMesh || o.userData.noCol) return; const m = o.material; if (!m || Array.isArray(m) || (m.transparent && m.opacity < 0.5)) return; let q = o; while (q) { if (q === T) return; q = q.parent; } bb.setFromObject(o); if (bb.max.y > 1.2 || bb.max.y < -0.2) return; miniTaxi.gnd.push([o, bb.min.x, bb.max.x, bb.min.z, bb.max.z, bb.max.y]); }); }
-      const surf = (px, pz) => { let top = y - 0.02; o3.set(px, y + 1.2, pz); rc.set(o3, dn); rc.far = 1.8;   /* the real surface under each wheel spot (kerbs, paving, planters' rims): the taxi rides on it, never through it */
+      const SC = new Map(), surf = (px, pz) => { const key = Math.round(px * 3) * 100003 + Math.round(pz * 3); const c = SC.get(key); if (c !== undefined) return c; const v = surf0(px, pz); if (SC.size > 20000) SC.clear(); SC.set(key, v); return v; };   /* each spot of ground measured once (to a third of a metre), so driving about costs no fresh ray tests */
+      const surf0 = (px, pz) => { let top = y - 0.02; o3.set(px, y + 1.2, pz); rc.set(o3, dn); rc.far = 1.8;   /* the real surface under each wheel spot (kerbs, paving, planters' rims): the taxi rides on it, never through it */
         for (const [o, x0, x1, z0, z1, ty] of miniTaxi.gnd) { if (px < x0 || px > x1 || pz < z0 || pz > z1 || ty <= top || ty > y + 0.6) continue; const h = rc.intersectObject(o, false)[0]; if (h && h.point.y <= y + 0.6) top = Math.max(top, h.point.y); } return top; };
       const lift = (px, pz) => { const r = T.rotation.y, c = Math.cos(r), sn = Math.sin(r), L = MT_LEN * 0.36, W = MT_LEN * 0.18; let m = -1e9; [[L, W], [L, -W], [-L, W], [-L, -W], [0, 0]].forEach(([u, v]) => { m = Math.max(m, surf(px + u * c + v * sn, pz - u * sn + v * c)); }); return m + 0.02; };
       RIDE.taxiLift = lift;
@@ -12003,7 +12030,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function rideRider() {   // the bus under 쿠모, and 쿠모 in its seat
     const o = TP.obj, B = RIDE.bus; if (!o || !B) return; const gy = TP.gy || 0, ry = TP.face + Math.PI / 2;
     if (COIN.mini && COIN.mini.visible && COIN.mini !== B) COIN.mini.visible = false;   // the parked one (and its label) stays hidden while you ride
-    B.position.set(cam.x, gy + 0.02, cam.z); B.rotation.y = ry; const th = TP.face; o.rotation.y = th; if (busModel.cutU) busModel.cutU.value = B.position.y + 0.5; if (RIDE.kind === "taxi" && RIDE.taxiLift) { const nw = performance.now(); if (nw - (RIDE.lt || 0) > 250) { RIDE.lt = nw; try { RIDE.ly = RIDE.taxiLift(cam.x, cam.z); } catch (e) {} } RIDE.lyS = RIDE.lyS == null ? RIDE.ly : RIDE.lyS + (RIDE.ly - RIDE.lyS) * 0.25; B.position.y = RIDE.lyS; }   /* the mini taxi keeps to the ground under it, kerbs and paving included, easing over the edges */   // the roof cut rides with the bus (on the raised plaza or the gallery the walls were cut away)
+    B.position.set(cam.x, gy + 0.02, cam.z); B.rotation.y = ry; const th = TP.face; o.rotation.y = th; if (busModel.cutU) busModel.cutU.value = B.position.y + 0.5; const LF = RIDE.kind === "taxi" ? RIDE.taxiLift : gy < 1 ? (px, pz) => busLift(px, pz, ry) : null; if (LF) { const nw = performance.now(); if (nw - (RIDE.lt || 0) > 250) { RIDE.lt = nw; try { RIDE.ly = LF(cam.x, cam.z); } catch (e) {} } if (RIDE.ly != null) { RIDE.lyS = RIDE.lyS == null ? RIDE.ly : RIDE.lyS + (RIDE.ly - RIDE.lyS) * 0.25; B.position.y = RIDE.lyS; } }   /* the mini bus too keeps to the ground under it */   /* the mini taxi keeps to the ground under it, kerbs and paving included, easing over the edges */   // the roof cut rides with the bus (on the raised plaza or the gallery the walls were cut away)
     const fo = RIDE.kind === "taxi" ? 0.12 : 0.26, so = RIDE.kind === "taxi" ? 0 : 0.1;   /* in the mini taxi 쿠모 sits on the back seat, in the middle */ o.position.set(B.position.x + Math.sin(th) * fo - Math.cos(th) * so - Math.cos(ry) * 0.05, B.position.y + 0.04, B.position.z + Math.cos(th) * fo + Math.sin(th) * so + Math.sin(ry) * 0.05);   // 25 cm further toward the front than before
     TP.blob.position.set(cam.x, gy + 0.03, cam.z); TP.blob.scale.setScalar(2.2);
   }
@@ -12198,6 +12225,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     cam.x = f.x + (to.x - f.x) * e; cam.z = f.z + (to.z - f.z) * e; cam.y = f.y + (to.y - f.y) * e;
     cam.yaw = f.yaw + wrapAngle(to.yaw - f.yaw) * e; cam.pitch = f.pitch + (to.pitch - f.pitch) * e;
     if (AIR.on && AIR.t >= 1) AIR.from = to;   // once up there, follow the circling directly
+    { const nn = Math.max(1.5, Math.min(24, (cam.y - 3) * 0.22)); if (Math.abs(camera.near - nn) > 0.25) { camera.near = nn; camera.updateProjectionMatrix(); } }   /* the higher the flight, the further the near plane: phones keep a coarse depth buffer, and the ground's thin layers flickered against each other far below */
     if (AIR.out && AIR.t >= 1) { AIR.out = false; Object.assign(cam, AIR.back); if (AIR.near) { camera.near = AIR.near; camera.updateProjectionMatrix(); AIR.near = 0; } airBtn(); }
   }
   /* tilt-to-walk: with 기울여 보기 on, tipping the top of the device down walks forward (back for backwards) */
@@ -12238,7 +12266,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (AIR.on || AIR.out) { VK.v = 0; return; }
     if (VK.j && !busy && !vkBlocked()) {   // the stick: walk the way it points (from where the camera looks), any angle, and let the view follow a sideways push
       if (anim) anim = null; if (auto.on) setAuto(false);
-      const f = -VK.jy, sd = VK.jx, m = Math.min(1, Math.hypot(f, sd)), vs = (mode === "outside" ? 9.36 * (RIDE.on ? 1.44 : 1) : 6.5) * m;
+      const f = -VK.jy, sd = VK.jx, m = Math.min(1, Math.hypot(f, sd)), vs = (mode === "outside" ? 9.36 * (RIDE.on ? (RIDE.kind === "taxi" ? 1.728 : 1.44) : 1) : 6.5) * m;
       const hx = -Math.sin(cam.yaw), hz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw), L = Math.hypot(f, sd) || 1;
       VK.v += (vs - VK.v) * Math.min(1, dt * 5);
       cam.yaw -= sd * 0.6 * dt * (f > -0.3 ? 1 : 0);   /* a sideways push turns the view gently along with the walk */
@@ -12251,7 +12279,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const turn = (VK.l ? 1 : 0) - (VK.r ? 1 : 0) + (VK.fl ? 0.7 : 0) - (VK.fr ? 0.7 : 0);
     if (turn) cam.yaw += turn * 1.5 * dt;
     const dir = (VK.f || VK.fl || VK.fr ? 1 : 0) - (VK.b ? 1 : 0);
-    const vs = mode === "outside" ? 9.36 * (RIDE.on ? 1.44 : 1) : 6.5;   // outside, quicker (the distances are long); the mini bus 44% faster
+    const vs = mode === "outside" ? 9.36 * (RIDE.on ? (RIDE.kind === "taxi" ? 1.728 : 1.44) : 1) : 6.5;   // outside, quicker (the distances are long); the mini bus 44% faster
     VK.v += ((dir > 0 ? vs : dir < 0 ? -vs : 0) - VK.v) * Math.min(1, dt * 5);
     if (Math.abs(VK.v) > 0.02) {
       const hx = -Math.sin(cam.yaw), hz = -Math.cos(cam.yaw);
@@ -12284,7 +12312,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const d = ray.ray.direction, hl = Math.hypot(d.x, d.z);
     if (hl < 1e-3) return;
     const hx = d.x / hl, hz = d.z / hl;
-    hold.v = Math.min(mode === "outside" ? 14.3 * (RIDE.on ? 1.44 : 1) : 9.94, hold.v + dt * (mode === "outside" ? 21.7 : 15.1));
+    hold.v = Math.min(mode === "outside" ? 14.3 * (RIDE.on ? (RIDE.kind === "taxi" ? 1.728 : 1.44) : 1) : 9.94, hold.v + dt * (mode === "outside" ? 21.7 : 15.1));
     const m = 0.9;
     [cam.x, cam.z] = clampXZ(cam.x + hx * hold.v * dt, cam.z + hz * hold.v * dt, m);
     cam.y += (EYE - cam.y) * Math.min(1, dt * 2.5);
@@ -12635,7 +12663,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   camera.rotation.order = "YXZ";
   function frame(now) {
     if (freeGL.done) return;
-    const dt = Math.min(0.05, lastNow ? (now - lastNow) / 1000 : 0.016); lastNow = now;
+    const dt = Math.min(RIDE.on ? 0.1 : 0.05, lastNow ? (now - lastNow) / 1000 : 0.016); lastNow = now;   /* aboard the mini bus or taxi a slow frame still covers its full distance, so both keep the same pace on any device */
     stepHold(dt); stepTilt(dt); stepVK(dt); doorBump(dt); stepAir(dt); stepHoop(dt); stepSwing(dt); stepThumbs(dt); stepCoins(dt); npcStep(dt); cgStep(dt); if (mapGot && $("mapBtn")) $("mapBtn").hidden = mode !== "outside"; if ((NPC.bt = (NPC.bt || 0) + dt) > 0.5) { NPC.bt = 0; bookBtns(); } busCallStep(dt); screenStep(dt); pzStep(dt); tpStep(dt); placeVK();
     const taxiControls = document.getElementById("taxiControls");
     taxiControls.hidden = true;
@@ -12764,7 +12792,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (IS_PARK && arrive && arrive.sound !== false) { try { setSound(true); } catch (e) {} }   /* the park's tune starts as the page opens, not only once every model has loaded */
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usqYard" && isFinite(arrive.x) && isFinite(arrive.z)) moveTo({ x: arrive.x, z: arrive.z, yaw: isFinite(arrive.yaw) ? arrive.yaw : 0, pitch: 0.04, fy: 0, y: EYE }, true);   /* out of U-square's coach yard on foot: on the same spot of the road out, in the park's own copy of the yard */ else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
         if ((arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home" || arrive.from === "usquare" || arrive.from === "bus") && window.doorFx) { doorFx.closed(); setTimeout(() => doorFx.open(), 700); }   /* out through the doors: they open on the park */   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }
