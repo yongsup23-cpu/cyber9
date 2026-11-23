@@ -7040,7 +7040,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const bk = new THREE.Mesh(new THREE.BoxGeometry(6.56, 1.36, 0.12), lam(0x6f5c3c)); bk.position.set(0, 6.1, HZ - 0.02); world.add(bk);
       [sg, bk].forEach((m) => { m.userData.idx = "outGate"; pickables.push(m); }); }   // the name board: a click brings the visitor to the door
     // the bus stop: a glass shelter on the pavement just past the bus, with a bench, a lit route board and the Kumho stop sign
-    { const S = new THREE.Group(); S.position.set(4.2, 0.15, 5.6); world.add(S);   // beside the bus where it stops
+    { const S = new THREE.Group(); S.position.set(2.6, 0.15, 5.6); world.add(S);   // beside the bus where it stops (moved 1.6 m left, as seen from the archive door, to give the fingerpost room)
       const frame = lam(0x2f3236), roofM = lam(0x3a3d42), wood = WOOD_M;
       const glass = new THREE.MeshBasicMaterial({ color: 0xcfe0e6, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide });
       const W = 5.4, D = 1.9, H = 2.6;
@@ -7065,7 +7065,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     // street lamps on both pavements
     const poleM = lam(0x3a3a3c), lampM = basic(0xfff2d6);
-    for (const x of [-396, -372, -348, -324, -300, -276, -252, -228, -204, -180, -156, -132, -108, -84, -60, -36, -12, 12, 36]) [[4.3, 1], [-5.2, -1]].forEach(([z, s]) => {   // none in front of the bus shelter
+    for (const x of [-396, -372, -348, -324, -300, -276, -252, -228, -204, -180, -156, -132, -108, -84, -60, -36, -12, 36]) [[4.3, 1], [-5.2, -1]].forEach(([z, s]) => {   // none in front of the bus shelter, none at the zebra crossing beside it (the pair at x 12 taken away)
       const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 7, 10), poleM); p.position.set(x, 3.5, z); world.add(p);
       const a = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 1.6), poleM); a.position.set(x, 6.95, z - s * 0.8); world.add(a);
       const l = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.3), lampM); l.position.set(x, 6.86, z - s * 1.55); world.add(l); });
@@ -8392,24 +8392,24 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const pk = mk(new THREE.BoxGeometry(DW + 1.2, DH + 0.8, 1.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, (DH + 0.8) / 2, 0.6); pk.castShadow = false; pk.userData.idx = "valueHall"; pickables.push(pk);
             }   // no separate door step: the apron already paves it (two pavings on top of each other flickered)
         }
-      { /* the fingerpost on the archive's pavement, right of the 금호아카이브 bus stop, between the shelter and the zebra crossing: four arrows to the group's own sites, facing the street — tap one and that site opens in a new window */
-        const SX = 9.3, SZ = 5.4, G = new THREE.Group(); G.position.set(SX, 0.15, SZ); G.rotation.y = Math.PI; world.add(G); OUT.signPos = [SX, SZ];
+      { /* the fingerpost in the park between the photo puzzle and the big screen: four arrows to the group's own sites — tap one and that site opens in a new window */
+        const SX = 61.5, SZ = -27.5, G = new THREE.Group(); G.position.set(SX, 0.02, SZ); world.add(G);   /* in the park, half way between the photo puzzle and the big screen, its arrows facing the front walk */ OUT.signPos = [SX, SZ];
         const navy = new THREE.MeshLambertMaterial({ color: 0x1d2a5a }), gold = new THREE.MeshLambertMaterial({ color: 0xc9a86a });
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 3.2, 14), navy); pole.position.y = 1.6; pole.castShadow = true; G.add(pole);
         const top = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 10), gold); top.position.y = 3.26; G.add(top); const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.12, 18), navy); ft.position.y = 0.06; G.add(ft);
-        const L = 2.15, H = 0.42, TIP = 0.34, shp = new THREE.Shape(); shp.moveTo(0.06, -H / 2); shp.lineTo(L - TIP, -H / 2); shp.lineTo(L, 0); shp.lineTo(L - TIP, H / 2); shp.lineTo(0.06, H / 2); shp.closePath();
+        const L = 1.7, H = 0.4, TIP = 0.3, shp = new THREE.Shape(); shp.moveTo(0.06, -H / 2); shp.lineTo(L - TIP, -H / 2); shp.lineTo(L, 0); shp.lineTo(L - TIP, H / 2); shp.lineTo(0.06, H / 2); shp.closePath();
         const edge = new THREE.ExtrudeGeometry(shp, { depth: 0.05, bevelEnabled: false }); edge.translate(0, 0, -0.025); const face = new THREE.ShapeGeometry(shp);
         SIGN_LINKS.forEach((lk, i) => { const y = 2.85 - i * 0.52, B = new THREE.Group(); B.position.y = y; B.rotation.y = lk.yaw; G.add(B);
-          const paint = (mirror) => { const t = canvasTex(512, 100, (g, W, Hh) => { g.save(); if (mirror) { g.translate(W, 0); g.scale(-1, 1); } g.fillStyle = lk.c; g.fillRect(0, 0, W, Hh); g.fillStyle = "rgba(255,255,255,.16)"; g.fillRect(0, 0, W, 6);   /* the back is drawn mirrored as a whole, so from behind it reads the right way round */
-              g.fillStyle = "#fff"; g.textBaseline = "middle"; g.font = `800 40px ${FONT}`; g.textAlign = "left"; g.fillText(lk.n, 30, Hh / 2 + 2);
-              g.fillStyle = lk.c2 || "#ffd36a"; g.font = `700 22px ${FONT}`; g.textAlign = "right"; g.fillText("바로가기", W - 92, Hh / 2 + 2); g.restore(); });
+          const paint = (mirror) => { const t = canvasTex(408, 100, (g, W, Hh) => { const tipX = W * (1 - TIP / L), nameX = (24 + tipX - 78) / 2; g.save(); if (mirror) { g.translate(W, 0); g.scale(-1, 1); } g.fillStyle = lk.c; g.fillRect(0, 0, W, Hh); g.fillStyle = "rgba(255,255,255,.16)"; g.fillRect(0, 0, W, 6);   /* the back is drawn mirrored as a whole, so from behind it reads the right way round */
+              g.fillStyle = "#fff"; g.textBaseline = "middle"; g.font = `800 40px ${FONT}`; g.textAlign = "center"; g.fillText(lk.n, nameX, Hh / 2 + 2);   /* the name in the middle of the board, clear of the post */
+              g.fillStyle = lk.c2 || "#ffd36a"; g.font = `700 22px ${FONT}`; g.textAlign = "right"; g.fillText("바로가기", tipX - 6, Hh / 2 + 2); g.restore(); });
             t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.repeat.set(1 / L, 1 / H); t.offset.set(0, 0.5); return t; };
           const ed = new THREE.Mesh(edge, new THREE.MeshLambertMaterial({ color: 0xf4efe4 })); B.add(ed);
           const fr = new THREE.Mesh(face, new THREE.MeshBasicMaterial({ map: paint(false), toneMapped: false })); fr.position.z = 0.027; B.add(fr);
           const bk = new THREE.Mesh(face, new THREE.MeshBasicMaterial({ map: paint(true), side: THREE.BackSide, toneMapped: false })); bk.position.z = -0.027; B.add(bk);
           const pk = new THREE.Mesh(new THREE.BoxGeometry(L, H + 0.12, 0.3), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.x = L / 2; pk.userData.idx = "signLink"; pk.userData.link = lk; B.add(pk); pickables.push(pk); });
         { const pt = canvasTex(256, 128, (g, W, Hh) => { g.fillStyle = "#f6efe0"; g.fillRect(0, 0, W, Hh); g.strokeStyle = "#1d2a5a"; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, Hh - 6); g.fillStyle = "#1d2a5a"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 30px ${FONT}`; g.fillText("홈페이지 이정표", W / 2, 46); g.fillStyle = "#c4161c"; g.font = `700 21px ${FONT}`; g.fillText("화살표를 눌러 보세요", W / 2, 88); });
-          const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.31), new THREE.MeshBasicMaterial({ map: pt, toneMapped: false })); pl.position.set(0, 0.55, 0.1); G.add(pl); const pb = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.35, 0.04), navy); pb.position.set(0, 0.55, 0.07); G.add(pb); }
+          const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.31), new THREE.MeshBasicMaterial({ map: pt, toneMapped: false })); pl.position.set(0, 0.55, -0.1); pl.rotation.y = Math.PI; G.add(pl); const pb = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.35, 0.04), navy); pb.position.set(0, 0.55, -0.07);   /* the little plate on the other face of the post, toward the archive */ G.add(pb); }
         OUT.walls && OUT.walls.push([SX - 0.3, SX + 0.3, SZ - 0.3, SZ + 0.3]); }
       // on the street: zebra crossings either side of the archive and a pair of signal poles
       { const zebra = canvasTex(256, 64, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "#f1f0ea"; for (let i = 0; i < 8; i++) g.fillRect(i * 32 + 4, 0, 20, H); });
@@ -8589,18 +8589,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         run(152.8, -12.8, 161, -12.8); run(175, -12.8 + UZ, 205.5, -12.8 + UZ); run(274.5, -12.8 + UZ, 300.5, -12.8 + UZ);
         run(59, 9.7, 300.5, 9.7); run(300.5, -12.8, 300.5, 9.7); }
       { // the street along the park's left side runs on through the tree belt and meets the main road
-        const sr = new THREE.Mesh(new THREE.BoxGeometry(8, 0.21, 9.2), asphM()); sr.position.set(-50, 0.105, -8.1); world.add(sr);
-        for (let z = -5.2; z > -12.6; z -= 5) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 2.5), basic(0xf2f2ee)); d.rotation.x = -Math.PI / 2; d.position.set(-48, 0.215, z); world.add(d); } }
+        const sr = new THREE.Mesh(new THREE.PlaneGeometry(8, 5.2), asphM()); sr.rotation.x = -Math.PI / 2; sr.position.set(-50, 0.03, -10.1); world.add(sr);   /* laid flat on the ground, not a raised slab (its edges stood up like a step); the pavement runs on across it unbroken */
+        for (let z = -9.5; z > -12.6; z -= 5) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 2.5), basic(0xf2f2ee)); d.rotation.x = -Math.PI / 2; d.position.set(-48, 0.035, z); world.add(d); } }
       for (const x of [168, 312, 384]) {   // the city's cross streets on the right run on through the paved strip and the pavement to meet the main road
-        const sr = new THREE.Mesh(new THREE.BoxGeometry(12, 0.21, 24.2), asphM()); sr.position.set(x, 0.105, -15.6); world.add(sr);
-        for (let z = -6; z > -27; z -= 5) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 2.5), basic(0xf2f2ee)); d.rotation.x = -Math.PI / 2; d.position.set(x, 0.215, z); world.add(d); } }
+        const sr = new THREE.Mesh(new THREE.PlaneGeometry(12, 20.2), asphM()); sr.rotation.x = -Math.PI / 2; sr.position.set(x, 0.03, -17.6); world.add(sr);   /* flat on the ground, no raised slab with stepped edges; the pavement along the main road runs on across it */
+        for (let z = -10; z > -27; z -= 5) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 2.5), basic(0xf2f2ee)); d.rotation.x = -Math.PI / 2; d.position.set(x, 0.035, z); world.add(d); } }
       { const pt = canvasTex(256, 256, (g) => { g.fillStyle = "#8f8c84"; g.fillRect(0, 0, 256, 256); let sd = 9; const r = () => (sd = sd * 16807 % 2147483647) / 2147483647;
           for (let j = 0; j < 6000; j++) { const v = Math.round(110 + r() * 50); g.fillStyle = "rgba(" + v + "," + v + "," + v + ",0.4)"; g.fillRect(r() * 256, r() * 256, 1 + r() * 2, 1); }
           g.strokeStyle = "#5f5d57"; g.lineWidth = 2; for (let y = 0; y < 256; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); for (let x = (y / 64 % 2) * 64; x < 256; x += 128) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 64); g.stroke(); } } });
         pt.wrapS = pt.wrapT = THREE.RepeatWrapping;
         [[-420, -54], [152, 420]].forEach(([a, b]) => { const t = pt.clone(); t.needsUpdate = true; t.repeat.set((b - a) / 5, 16 / 5);
           const p = new THREE.Mesh(new THREE.PlaneGeometry(b - a, 16), new THREE.MeshLambertMaterial({ map: t })); p.rotation.x = -Math.PI / 2; p.position.set((a + b) / 2, 0.025, -19.5); world.add(p);
-          const kb = new THREE.Mesh(new THREE.BoxGeometry(b - a, 0.14, 0.25), lam(0xbdb8ad)); kb.position.set((a + b) / 2, 0.07, -27.4); world.add(kb); }); }   // with a kerb where the side road begins
+          { let s0 = a; [168, 312, 384].filter((x) => x > a && x < b).concat([b + 6]).forEach((x) => { const e = Math.min(b, x - 6); if (e > s0) { const kb = new THREE.Mesh(new THREE.BoxGeometry(e - s0, 0.14, 0.25), lam(0xbdb8ad)); kb.position.set((s0 + e) / 2, 0.07, -27.4); world.add(kb); } s0 = x + 6; }); } }); }   // with a kerb where the side road begins, left open where a cross street passes   // with a kerb where the side road begins
       // spring: cherry petals drifting down across the street
       { const NP = matchMedia("(pointer: coarse)").matches ? 500 : 900, pp = new Float32Array(NP * 3), ph = new Float32Array(NP);
         for (let i = 0; i < NP; i++) { pp.set([(CR() - 0.5) * 60, CR() * 12, (CR() - 0.5) * 40], i * 3); ph[i] = CR() * 6.28; }
@@ -11203,14 +11203,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       looked = true; moveTo(focusPose(P.side, P.u, P.cy, P.w, P.h)); return;
     }
     if (o.userData.idx === "outBus") { const si = stops.findIndex((t) => t.outBus); if (si >= 0 && si !== cur) { cur = si; showCard(); } if (OUT.kind === "taxi" && OUT.st === "come") { OUT.st = "idle"; OUT.x = 0; OUT.veh.position.x = 0; } outBusGo(); return; }   // the founding taxi too just pulls away and drives past (riding it is gone: it crashed on some devices)
-    if (o.userData.idx === "outBench") { if (TP.on && TP.obj && TP.act.Sit) { seatSit({ x: 4.6, z: 6.08, top: 0.66, fx: 0, fz: -1 }); return; } moveTo({ x: 4.6, z: 6.1, yaw: 0, pitch: 0.03, y: 1.22 }); taxiCSS(); taxiToast("벤치에 앉았습니다 · 길 건너 풍경과 오가는 버스를 바라봅니다", 2800); return; }   /* third person: 쿠모 sits down on the bus-stop bench, like the park benches */
+    if (o.userData.idx === "outBench") { if (TP.on && TP.obj && TP.act.Sit) { seatSit({ x: 3.0, z: 6.08, top: 0.66, fx: 0, fz: -1 }); return; } moveTo({ x: 3.0, z: 6.1, yaw: 0, pitch: 0.03, y: 1.22 }); taxiCSS(); taxiToast("벤치에 앉았습니다 · 길 건너 풍경과 오가는 버스를 바라봅니다", 2800); return; }   /* third person: 쿠모 sits down on the bus-stop bench, like the park benches */
     if (o.userData.idx === "hoop") { hoopStart(o.userData.hoop); return; }
     if (o.userData.idx === "miniTaxi") { miniTaxiBoard(); return; }
     if (o.userData.idx === "valueHall") { doorFront(o, () => { if (!busy) pageGo({ valueHall: true }); }); return; }
     if (o.userData.idx === "usqDoor") { doorFront(o, usqAsk); return; } if (o.userData.idx === "kumoHome") { doorFront(o, goHomeAsk); return; }   // 쿠모의 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { doorFront(o, () => { if (!busy) pageGo({ library: true }); }); return; }
     if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }   // 도서관 할아버지 on his walk
-    if (o.userData.idx === "signLink") { const lk = o.userData.link, P0 = OUT.signPos || [0, 0], FP = { x: P0[0] - 0.6, z: P0[1] - 3.6, yaw: Math.PI, pitch: 0.12 };   /* first tap from afar: walk up in front of the fingerpost; then a tap on an arrow opens its site */
+    if (o.userData.idx === "signLink") { const lk = o.userData.link, P0 = OUT.signPos || [0, 0], FP = { x: P0[0] + 0.6, z: P0[1] + 3.6, yaw: 0, pitch: 0.12 };   /* first tap from afar: walk up in front of the fingerpost; then a tap on an arrow opens its site */
       if (Math.hypot(cam.x - P0[0], cam.z - P0[1]) > 7 && !RIDE.on) { moveTo(FP); return; } taxiCSS(); taxiToast(`🔗 ${lk.n} 홈페이지를 새 창으로 열어요`, 2200); try { window.open(lk.url, "_blank", "noopener"); } catch (e) {} return; }
     if (o.userData.idx === "brand") { const B = OUT.brandPos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 };   // first tap: stand square in front of that post (on whichever side 쿠모 is)
       if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - FP.yaw)) > 0.25) { moveTo(FP); return; } brandShow(o.userData.i); return; }   // a residential-brand post: that brand, large
