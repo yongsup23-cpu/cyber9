@@ -12952,20 +12952,41 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       .then((ab) => new Promise((res, rej) => { const oc = new OAC(2, 44100, 44100); oc.decodeAudioData(ab, res, rej); }));
     return bgmPre.catch(() => {});
   }
+  // the park made ready behind the "moving" card, so nothing stalls once it shows: every Artera garden built, the models still
+  // downloading (bus, taxi, coaches, character) arrived and in place, then one frame drawn with everything in it (every part, near or far,
+  // in view or not), which compiles every shader and sends every texture and shape to the GPU. At most 5 s of waiting, whatever happens.
+  const LDM = { n: 0 };
+  { const M = THREE.DefaultLoadingManager, s = M.itemStart, e = M.itemEnd; M.itemStart = function (u) { LDM.n++; return s.call(this, u); }; M.itemEnd = function (u) { LDM.n = Math.max(0, LDM.n - 1); return e.call(this, u); }; }   // files the loaders are still fetching
+  function warmOutside(done) {
+    const t0 = performance.now(); let last = -1, still = t0, fin = false;
+    if (OUT.artQ) while (OUT.artQ.length) { OUT.artQ.shift()(); OUT.colDirty = true; }
+    const count = () => { let n = 0; scene.traverse((o) => { if (o.isMesh) n++; }); return n; };
+    const finish = () => { if (fin) return; fin = true;
+      try { const Z = OUT.artZones || [], zv = Z.map((z) => z.g.visible), off = [];
+        Z.forEach((z) => { z.g.visible = true; }); scene.traverse((o) => { if ((o.isMesh || o.isPoints || o.isLine || o.isSprite) && o.frustumCulled) { o.frustumCulled = false; off.push(o); } });
+        renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera);   // behind the card: every part drawn once
+        off.forEach((o) => { o.frustumCulled = true; }); Z.forEach((z, i) => { z.g.visible = zv[i]; }); renderer.shadowMap.needsUpdate = true; } catch (e) { console.warn("warm", e); }
+      if (window.__archiveProgress) window.__archiveProgress(1); done(); };
+    const tick = () => { if (fin) return; const now = performance.now(), n = count(); if (n !== last) { last = n; still = now; }
+      if ((LDM.n === 0 && now - still > 600) || now - t0 > 5000) finish(); else setTimeout(tick, 200); };   /* nothing left to fetch and nothing new added for a moment */
+    setTimeout(tick, 200);
+  }
   function preloadEssentials() {
     const keys = PACKS ? Object.keys(PACKS.map).filter((k) => k.startsWith("wall/")) : [];
     DATA.forEach((h) => { const f = h.door || (h.items[0] && h.items[0].file); if (f) keys.push(f); });
     const packs = PACKS ? [...new Set(keys.map((k) => PACKS.map[k]).filter((n) => n !== undefined))] : [];
     const ext = [ATL(6)];
     DATA.forEach((h) => { const f = h.door || ""; if (f.startsWith("special/")) ext.push(f); });
-    const total = packs.length + ext.length + 1; let done = 0;
+    const glbs = IS_PARK ? ["assets/character.glb", "assets/lite-bus.glb", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
+    const total = packs.length + ext.length + glbs.length + 1; let done = 0;
     // the bar eases toward the real progress and takes at least ~4.5 s, so everything is warm when it reaches 100%
     const t0 = performance.now(), MIN = 4500; let shown = Math.max(0, +((document.getElementById("introBar") || {}).style || {}).width?.replace("%", "") / 100 || 0);
     const target = () => Math.min(0.3 + 0.7 * done / total, 0.15 + 0.85 * (performance.now() - t0) / MIN);
     const tick = () => { done++; };
     const jobs = packs.map((n) => loadPack(n).catch(() => {}).then(tick))
       .concat(ext.map((u) => new Promise((res) => { const im = new Image(); im.onload = im.onerror = () => res(); im.src = R(u); }).then(tick)))
-      .concat([predecodeBgm().then(tick)]);
+      .concat([predecodeBgm().then(tick)])
+      .concat(glbs.map((u) => fetch(u).then((r) => r.arrayBuffer()).catch(() => {}).then(tick)));
     const loaded = Promise.race([Promise.all(jobs), new Promise((r) => setTimeout(r, 45000))]).then(() => { done = total; });
     return new Promise((resolve) => {
       let last = performance.now();
@@ -12986,10 +13007,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
       if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usqYard" && isFinite(arrive.x) && isFinite(arrive.z)) moveTo({ x: arrive.x, z: arrive.z, yaw: isFinite(arrive.yaw) ? arrive.yaw : 0, pitch: 0.04, fy: 0, y: EYE }, true);   /* out of U-square's coach yard on foot: on the same spot of the road out, in the park's own copy of the yard */ else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
-        if ((arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home" || arrive.from === "usquare" || arrive.from === "bus") && window.doorFx) { doorFx.closed(); setTimeout(() => doorFx.open(), 700); }   /* out through the doors: they open on the park */   /* out of the hall's right-hand door, facing the street */   /* out of the library door, facing the park */ requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); }
+        const viaDoor = (arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home" || arrive.from === "usquare" || arrive.from === "bus") && window.doorFx; if (viaDoor) doorFx.closed();   /* out through the doors: they open on the park */
+        warmOutside(() => { if (viaDoor) setTimeout(() => doorFx.open(), 700); requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); setTimeout(() => document.documentElement.classList.add("arrived"), 350); }); }   /* the cover stays up until the park is fully ready (warmOutside) */
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }
-      setTimeout(() => document.documentElement.classList.add("arrived"), 350);   // the scene is up: the moving card fades
+      if (!IS_PARK) setTimeout(() => document.documentElement.classList.add("arrived"), 350);   // the scene is up: the moving card fades (the park: once warmOutside is done)
       if (arrive.sound === false) setSound(false);
       else { const kick = () => { if (SND.on && SND.ctx && SND.ctx.state !== "running") SND.ctx.resume(); }; ["pointerdown", "keydown", "touchstart"].forEach((e) => window.addEventListener(e, kick, { passive: true })); } });   // a phone may hold the sound until the first touch
   };
