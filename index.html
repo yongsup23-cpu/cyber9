@@ -4708,7 +4708,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); bb.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld); if (bb.min.y < 0.3 && !o.userData.idx && !(o.material && o.material.opacity === 0) && (bb.max.x - bb.min.x) * (bb.max.z - bb.min.z) > 1.5) GL.push([o, bb.min.x, bb.max.x, bb.min.z, bb.max.z]); });
     OUT.groundList = GL;   // floors, paving and lawns: what the character stands on
   }
-  // static parts of the park merged into one mesh per material, per 40 m square and per height band: far fewer draw calls. Each part's outline
+  // static parts of the park merged into one mesh per material, per 40 m square and per height band, as the park is built (behind the loading
+  // fade, so nothing stalls once it is on screen): far fewer draw calls. Each part's outline
   // is kept first (OUT.colExtra) so you still stop at it; low parts (up to 1.2 m) are merged apart from tall ones, so the mini bus, the taxi and
   // the character still stand on paving and kerbs; anything that moves, hides, is clicked or is held by name in OUT is left as it is.
   function mergeStatic(roots, skip) {
@@ -4741,23 +4742,17 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     }
     return [n0, n1];
   }
-  function parkMerge(zones) {   // from the frame loop: lists what to merge (the park once it has stood still a moment, then the Artera gardens once all are built); mergeStep does it a little a frame
-    const skip = new Set(), skipM = new Set(), seen = new Set(), NO = { groundList: 1, colGrid: 1, colExtra: 1, mgSnap: 1, mgQ: 1, treeCols: 1, bldRects: 1, walls: 1 };
-    const scan = (v, dp) => { if (!v || typeof v !== "object" || dp > 5 || seen.has(v)) return; seen.add(v); if (v.isMaterial) { skipM.add(v); return; } if (v.isObject3D) { skip.add(v); return; } if (!Array.isArray(v) && Object.getPrototypeOf(v) !== Object.prototype) return;   /* only plain objects and lists: never into page elements, which lead on to the whole page */ for (const k in v) { if (dp === 0 && NO[k]) continue; try { scan(v[k], dp + 1); } catch (e) {} } };
-    scan(OUT, 0); world.updateMatrixWorld(true);
-    if (OUT.mgSnap) OUT.mgSnap.forEach((m, o) => { if (!m.equals(o.matrixWorld)) skip.add(o); });   // anything that moved since the snapshot stays apart
-    OUT.mgSnap = null; const roots = [];
-    if (zones) (OUT.artZones || []).forEach((z) => { skip.delete(z.g); roots.push(z.g); });
-    else { world.children.forEach((g) => { if (g.isGroup && g !== OUT.uGroup && !skip.has(g)) roots.push(g); });
-      const W = world.children.filter((o) => o.isMesh && !o.isInstancedMesh).sort((a, b) => a.position.x - b.position.x); for (let i = 0; i < W.length; i += 40) roots.push([world, new Set(W.slice(i, i + 40))]); }   // the loose parts in batches of 40, west to east
-    OUT.mgQ = { roots, skip, skipM, zones, n: [0, 0] };
-  }
-  function mergeStep() {   // a few groups a frame (about 3 ms), so stepping outside never stalls; the outlines, ground lists and shadows are refreshed once at the end
-    const Q = OUT.mgQ, t0 = performance.now();
-    while (Q.roots.length && performance.now() - t0 < 3) { const R = Q.roots.shift(); try { const r = mergeStatic([R], Q.skip); Q.n[0] += r[0]; Q.n[1] += r[1]; } catch (e) { console.warn("merge", e); } }
-    if (Q.roots.length) return; OUT.mgQ = null; if (Q.zones) OUT.mgZ = Q.n; else OUT.mgN = Q.n;
-    if (!Q.zones) { const use = new Map(); world.traverse((o) => { if (o.isMesh) for (const m of Array.isArray(o.material) ? o.material : [o.material]) { if (!use.has(m)) use.set(m, true); if (!o.userData.idx) use.set(m, false); } });   // click-boxes no one sees: not drawn (the click still finds them)
-      use.forEach((only, m) => { if (only && m.transparent && m.opacity === 0 && !Q.skipM.has(m)) m.visible = false; }); }
+  function buildMerge() {   // the last step of buildOutside: small parts stop casting shadows, then the static parts are merged (mergeStatic)
+    const skip = new Set(), skipM = new Set(), seen = new Set(), NO = { groundList: 1, colGrid: 1, colExtra: 1, treeCols: 1, bldRects: 1, walls: 1 };
+    const scan = (v, dp) => { if (!v || typeof v !== "object" || dp > 5 || seen.has(v)) return; seen.add(v); if (v.isMaterial) { skipM.add(v); return; } if (v.isObject3D) { skip.add(v); return; } if (!Array.isArray(v) && Object.getPrototypeOf(v) !== Object.prototype) return; for (const k in v) { if (dp === 0 && NO[k]) continue; try { scan(v[k], dp + 1); } catch (e) {} } };   /* everything held by name (it moves, fades or swaps later) stays as it is; only plain objects and lists are followed, never page elements */
+    [OUT, COIN, RIDE, TP].forEach((o) => scan(o, 0)); world.updateMatrixWorld(true); const bb = new THREE.Box3();
+    if (renderer.shadowMap.enabled) world.traverse((o) => { if (!o.isMesh || !o.castShadow || o.isInstancedMesh) return; for (let q = o.parent; q && q !== world; q = q.parent) if (skip.has(q)) return; if (skip.has(o)) return;   // small parts (sign boards, kerb posts, flowers, fittings): no shadow of their own
+      bb.setFromObject(o); if (Math.max(bb.max.x - bb.min.x, bb.max.y - bb.min.y, bb.max.z - bb.min.z) < 0.8) o.castShadow = false; });
+    const roots = []; world.children.forEach((g) => { if (g.isGroup && g !== OUT.uGroup && !skip.has(g)) roots.push(g); });
+    const W = world.children.filter((o) => o.isMesh && !o.isInstancedMesh).sort((a, b) => a.position.x - b.position.x); for (let i = 0; i < W.length; i += 40) roots.push([world, new Set(W.slice(i, i + 40))]);
+    try { OUT.mgN = mergeStatic(roots, skip); } catch (e) { console.warn("merge", e); }
+    const use = new Map(); world.traverse((o) => { if (o.isMesh) for (const m of Array.isArray(o.material) ? o.material : [o.material]) { if (!use.has(m)) use.set(m, true); if (!o.userData.idx) use.set(m, false); } });   // click-boxes no one sees: not drawn (the click still finds them)
+    use.forEach((only, m) => { if (only && m.transparent && m.opacity === 0 && !skipM.has(m)) m.visible = false; });
     OUT.colDirty = true; rideGnd.w = null; miniTaxi.gw = null; renderer.shadowMap.needsUpdate = true;
   }
   // where you can walk outside: from the convenience-store row on the left to U-square on the right, from the lawn behind the archive to the
@@ -4847,7 +4842,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
           if (t.__fab) { const F = t.__fab, i = F.clones.indexOf(t); if (i >= 0) F.clones.splice(i, 1); t.dispose(); }
           else if (!t.__keep && typeof HTMLCanvasElement !== "undefined" && t.image instanceof HTMLCanvasElement) t.dispose(); } });
       if (mode === "lobby" && taxiDecoded) for (const t of [taxiDecoded.texture, taxiDecoded.surface, taxiDecoded.normal]) if (t) t.dispose(); }   // the lobby taxi's three maps leave the graphics card too (sent again when you come back)
-    renderer.shadowMap.enabled = false; scene.fog = null; OUT.artAnim = null; OUT.artZones = null; OUT.artQ = null; OUT.mgSt = 0; OUT.mgSnap = null; OUT.colExtra = null; OUT.mgQ = null; OUT.artGlow = null; OUT.artFloorGlow = null; OUT.sunPrev = null; OUT.bus = null; OUT.dog = null; OUT.pets = null; OUT.parkGlow = null; OUT.nightSign = null; OUT.fount = null; OUT.fWater = null; OUT.cars = null; OUT.cityLit = null; OUT.shopAt = null; OUT.sky = null; OUT.aptMats = null; OUT.arteraMats = null; OUT.petals = null; OUT.bigTree = null; OUT.bugs = null; OUT.blobs = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.mazeHit = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); { const gb = document.getElementById("taxiGo"); if (gb) gb.hidden = true; } if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
+    renderer.shadowMap.enabled = false; scene.fog = null; OUT.artAnim = null; OUT.artZones = null; OUT.artQ = null; OUT.colExtra = null; OUT.artGlow = null; OUT.artFloorGlow = null; OUT.sunPrev = null; OUT.bus = null; OUT.dog = null; OUT.pets = null; OUT.parkGlow = null; OUT.nightSign = null; OUT.fount = null; OUT.fWater = null; OUT.cars = null; OUT.cityLit = null; OUT.shopAt = null; OUT.sky = null; OUT.aptMats = null; OUT.arteraMats = null; OUT.petals = null; OUT.bigTree = null; OUT.bugs = null; OUT.blobs = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.mazeHit = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); { const gb = document.getElementById("taxiGo"); if (gb) gb.hidden = true; } if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
@@ -8880,6 +8875,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     stops.push({ kind: "art", outside: true, outBus: true, epi: true, data: OUT_EPILOGUE, pose: () => ({ x: 1, z: 11.5, yaw: -0.04, pitch: 0.02 }) });
     stops.push({ kind: "art", outside: true, outApt: true, epi: true, data: OUT_EPILOGUE, pose: () => ({ x: 4, z: 12.8, yaw: -0.06, pitch: 0.22 }) });
     stops.push({ kind: "door", side: 2, u: 0, cy: 1.8, w: 4.2, h: 4.4, target: back, label: lbl });
+    buildMerge();
     buildChips(); updateHud(); setNav();
     setZoom(0.8); zoom = zoomTarget; camera.fov = baseFov / zoom; camera.updateProjectionMatrix();
     cur = 0; moveTo(main(), true); showCard();
@@ -9024,13 +9020,6 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (OUT.artGlow) { const n = Math.max(0, 1 - u.uDay.value * 1.5); OUT.artGlow.opacity = 0.32 * n; OUT.artFloorGlow.opacity = 0.85 * n; }
     if (OUT.artQ && OUT.artQ.length && cam.z < -4) { OUT.artQ.shift()(); renderer.shadowMap.needsUpdate = true; OUT.colDirty = true; }   // one space a frame, once you are across the road
     if (OUT.artZones) for (const Z of OUT.artZones) { const d = Math.hypot(cam.x - Z.x, cam.z - Z.z), on = (AIR.on || AIR.out) ? true : Z.on ? d < 150 : d < 135; if (on !== Z.on) { Z.on = on; Z.g.visible = on; renderer.shadowMap.needsUpdate = true; } }
-    { const now = performance.now();   // merging the park's static parts (mergeStatic): a still moment to see what moves, then the park, then the gardens
-      if (!OUT.mgSt) { OUT.mgSt = 1; OUT.mgT = now + 1500; }
-      else if (OUT.mgSt === 1 && now > OUT.mgT && !RIDE.on) { OUT.mgSt = 2; OUT.mgT = now + 1500; world.updateMatrixWorld(true); OUT.mgSnap = new Map(); world.traverse((o) => { if (o.isMesh) OUT.mgSnap.set(o, o.matrixWorld.clone()); }); }
-      else if (OUT.mgSt === 2 && now > OUT.mgT && !RIDE.on) { OUT.mgSt = 3; parkMerge(false); }
-      else if (OUT.mgSt === 3 && !OUT.mgQ && OUT.artQ && !OUT.artQ.length && !RIDE.on) { OUT.mgSt = 4; parkMerge(true); }
-      if (OUT.mgQ && !RIDE.on) mergeStep();
-    }
     if (OUT.artAnim) { const A = OUT.artAnim, tt = performance.now() / 1000;   // ARTSIS: water jets rising and falling, ripples and the stream moving
       let fb = 0; if (OUT.fBoost > 0) { OUT.fBoost = Math.max(0, OUT.fBoost - dt); const q = 1 - OUT.fBoost / 3.2; fb = Math.sin(Math.PI * Math.min(1, q * 1.15)) ** 0.7; }   // a click: one great surge, then back
       for (const j of A.jets) j.m.scale.y = j.base * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(tt * 1.5 + j.ph))) * (1 + fb * (j.big ? 3.2 : 0.8));
