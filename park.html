@@ -7460,33 +7460,44 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
            on the right, half grey with beige vertical strips, half a white grid over grey-beige panels, a two-storey open pilotis. Through the gateway the drive runs to a little roundabout with a pine on its island,
            and on to the car park's way in under the white podium (the same car park as the left slab's); MOM'S STATION stands to its right, and beyond it the right-hand slab */
         const NF = 15, FHd = 2.9, HD = NF * FHd + 1.2, glam = (h) => new THREE.MeshLambertMaterial({ color: new THREE.Color(h).convertSRGBToLinear() });   /* greens and timber in true colour (plain lam() reads pale out here) */
-        const mkFace = (kind, Wm) => { const draw = (lit) => canvasTex(1024, 1024, (g, W, H) => { const top = H * 0.035, rh = (H - top) / NF, bays = Math.round(Wm / 3.6), bw = W / bays; let q = kind === "L" ? 31 : 37; const rr = () => (q = (q * 16807) % 2147483647) / 2147483647;
-            const win = (x, y, w, h) => { if (lit) { if (rr() < 0.5) { g.fillStyle = `rgb(255,${220 + Math.floor(rr() * 30)},${160 + Math.floor(rr() * 50)})`; g.fillRect(x, y, w, h); } return; }
-              const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, "#9fb2bb"); gr.addColorStop(1, "#56666f"); g.fillStyle = gr; g.fillRect(x, y, w, h); g.fillStyle = "rgba(30,34,38,.85)"; g.fillRect(x, y + h * 0.62, w, 2); g.fillRect(x, y + h * 0.82, w, 2); for (let k = x + 6; k < x + w; k += 7) g.fillRect(k, y + h * 0.62, 1, h * 0.38); g.fillStyle = "#2b2f33"; g.fillRect(x + w / 2 - 1, y, 2, h); };
-            g.fillStyle = lit ? "#000" : kind === "L" ? "#5e6165" : "#6f7276"; g.fillRect(0, 0, W, H);
-            if (kind === "L") {   /* dark grey field, a window in every bay with a beige panel beside it, white pilasters every third bay rising into open frames on the roof */
-              for (let r = 0; r < NF; r++) { const y = top + r * rh, low = r >= NF - 3; if (!lit && low) { g.fillStyle = "#d3cfc8"; g.fillRect(0, y, W, rh); g.fillStyle = "rgba(0,0,0,.08)"; g.fillRect(0, y, W, 2); }
-                for (let b = 0; b < bays; b++) { const x = b * bw; if (!lit && !low && b % 3 !== 1) { g.fillStyle = "#b9a37c"; g.fillRect(x + bw * 0.72, y + rh * 0.12, bw * 0.2, rh * 0.74); }
-                  win(x + bw * 0.16, y + rh * 0.12, bw * (b % 3 === 1 ? 0.68 : 0.52), rh * 0.74); } }
-              if (!lit) { g.fillStyle = "#f3f3f1"; for (let b = 0; b <= bays; b += 3) g.fillRect(b * bw - bw * 0.1, 0, bw * 0.2, H * (1 - 3 / (NF + 0.4)));
-                for (let b = 0; b < bays; b += 3) { g.fillRect(b * bw, 0, bw * 3, top * 0.45); }   /* the open frames on the roofline */ g.fillStyle = "#e9e9e6"; g.fillRect(0, 0, W, 4); } }
-            else {   /* left part grey with beige strips, right part a white grid over grey-beige panels; lower floors darker stone; a pilotis */
-              const split = Math.round(bays * 0.55) * bw;
-              for (let r = 0; r < NF; r++) { const y = top + r * rh, low = r >= NF - 4;
-                if (!lit) { g.fillStyle = low ? "#7c7f83" : "#a9a7a3"; g.fillRect(split, y, W - split, rh); if (low) { g.fillStyle = "#7c7f83"; g.fillRect(0, y, split, rh); } }
-                for (let b = 0; b < bays; b++) { const x = b * bw; if (r >= NF - 2 && x >= bw * 1.5 && x < bw * 4.5) continue; win(x + bw * 0.2, y + rh * 0.14, bw * 0.6, rh * 0.7); } }
-              if (!lit) { g.fillStyle = "#c6ae85"; [0.9, 1.9, 3.4, 4.4].forEach((k) => { if (k * bw < split) g.fillRect(k * bw, top, bw * 0.16, rh * (NF - 4)); });   /* the beige vertical strips */
-                g.fillStyle = "#f2f2f0"; for (let r = 0; r <= NF; r++) g.fillRect(split, top + r * rh - 2, W - split, 4); for (let b = Math.round(split / bw); b <= bays; b++) g.fillRect(b * bw - 3, top, 6, H - top);   /* the white grid */
-                g.fillStyle = "rgba(255,255,255,.35)"; for (let r = NF - 4; r <= NF; r++) g.fillRect(0, top + r * rh - 1, split, 2); for (let b = 0; b * bw < split; b++) g.fillRect(b * bw, top + rh * (NF - 4), 2, rh * 4);
-                g.fillStyle = "#1e2124"; g.fillRect(bw * 1.5, top + rh * (NF - 2), bw * 3, rh * 2); g.fillStyle = "#d8d6d0"; g.fillRect(bw * 1.5, top + rh * (NF - 2) - 6, bw * 3, 8); g.fillRect(bw * 2.9, top + rh * (NF - 2), bw * 0.2, rh * 2);   /* the open pilotis */
-                g.fillStyle = "#f2f2f0"; g.fillRect(0, 0, W, top); g.fillStyle = "#cfcfcc"; for (let x = 8; x < W; x += 30) g.fillRect(x, 4, 4, top - 8); } } });
+        const mkFace = (kind, Wm) => { const draw = (lit) => canvasTex(1024, 1024, (g, W, H) => { const top = H * 0.045, rh = (H - top) / NF; let q = kind === "L" ? 31 : 37; const rr = () => (q = (q * 16807) % 2147483647) / 2147483647;
+            /* a balcony window: blue-grey glass with the sky in its top, a dark frame, a slim railing across its lower part; at night some of them lit */
+            const win = (x, y, w, h, rail) => { if (lit) { if (rr() < 0.5) { g.fillStyle = `rgb(255,${220 + Math.floor(rr() * 30)},${160 + Math.floor(rr() * 50)})`; g.fillRect(x, y, w, h); } return; }
+              g.fillStyle = "#3a3f44"; g.fillRect(x - 1.5, y - 1.5, w + 3, h + 3); const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, "#a9bcc6"); gr.addColorStop(0.45, "#7d939f"); gr.addColorStop(1, "#4d5e68"); g.fillStyle = gr; g.fillRect(x, y, w, h);
+              g.fillStyle = "rgba(255,255,255,.18)"; g.fillRect(x + w * 0.08, y, w * 0.12, h); g.fillStyle = "#2f3439"; g.fillRect(x + w / 2 - 1, y, 2, h);
+              if (rail) { g.fillStyle = "rgba(40,44,48,.9)"; g.fillRect(x, y + h * 0.6, w, 2); g.fillRect(x, y + h - 2, w, 2); for (let k = x + 4; k < x + w; k += 5) g.fillRect(k, y + h * 0.6, 1, h * 0.4); } };
+            const rows = (fn) => { for (let r = 0; r < NF; r++) fn(top + r * rh, r); };
+            g.fillStyle = lit ? "#000" : "#f2f2f0"; g.fillRect(0, 0, W, H);
+            if (kind === "L") {   /* after the left photograph: a white-framed wing at the left; then dark grey panels with pairs of tall white pilasters, each pair framing a column of wide balcony windows over beige spandrels and rising into an open frame above the roof; the lowest floors in pale stone */
+              const wingR = W * 0.16, PAIRS = [[0.25, 0.37], [0.5, 0.62], [0.76, 0.88]], pw = W * 0.032;
+              if (!lit) { g.fillStyle = "#6e7073"; g.fillRect(wingR, top, W - wingR, H - top); g.fillStyle = "#c9c6c0"; g.fillRect(0, top, wingR, H - top); }
+              rows((y, r) => { const low = r >= NF - 3;
+                if (!lit && low) { g.fillStyle = "#d6d2cb"; g.fillRect(wingR, y, W - wingR, rh); g.fillStyle = "rgba(0,0,0,.07)"; g.fillRect(wingR, y, W - wingR, 2); }
+                [0.02, 0.085].forEach((u) => win(W * u, y + rh * 0.16, W * 0.055, rh * 0.68, true));   /* the wing's two windows a floor, in white frames */
+                PAIRS.forEach(([a, b]) => { const x0 = W * a + pw, x1 = W * b - pw; if (!lit && !low) { g.fillStyle = "#b8a07a"; g.fillRect(x0, y + rh * 0.78, x1 - x0, rh * 0.18); } win(x0 + 4, y + rh * 0.1, x1 - x0 - 8, rh * 0.66, true); });
+                let x = wingR + W * 0.02; const gaps = [[wingR, W * 0.25], [W * 0.37, W * 0.5], [W * 0.62, W * 0.76], [W * 0.88, W]];
+                gaps.forEach(([a, b]) => { const n = Math.max(1, Math.round((b - a) / (W * 0.05))), cw = (b - a) / n; for (let k = 0; k < n; k++) { const xx = a + k * cw; if (!lit && !low && (k + r) % 2 === 0) { g.fillStyle = "#b29a74"; g.fillRect(xx + cw * 0.62, y + rh * 0.16, cw * 0.26, rh * 0.66); } win(xx + cw * 0.14, y + rh * 0.18, cw * 0.44, rh * 0.62, k % 2 === 0); } }); });
+              if (!lit) { g.fillStyle = "#f4f4f2"; rows((y) => g.fillRect(0, y - 2, wingR, 5)); [0, 0.075, 0.15].forEach((u) => g.fillRect(W * u, top, W * 0.012, H - top));   /* the wing's white frame */
+                PAIRS.forEach(([a, b]) => { g.fillRect(W * a, 0, pw, H * (1 - 3 / (NF + 0.5))); g.fillRect(W * b - pw, 0, pw, H * (1 - 3 / (NF + 0.5))); g.fillRect(W * a, 0, W * (b - a), top * 0.55); });   /* white pilasters, joined over the roof */
+                g.fillStyle = "#e4e4e1"; g.fillRect(0, 0, wingR, top * 0.55); g.fillStyle = "#9a9da1"; g.fillRect(wingR, top * 0.55, W - wingR, top * 0.45); } }
+            else {   /* after the right photograph: a white-framed strip at the left; grey panels with two pairs of beige vertical strips; a dark slot of narrow windows; then a white grid over pale grey panels; darker stone on the lowest floors; a two-storey pilotis with a balcony over it */
+              const SPLIT = W * 0.6, cols = 16, cw = W / cols, low4 = NF - 4;
+              if (!lit) { g.fillStyle = "#7a7c80"; g.fillRect(0, top, SPLIT, H - top); g.fillStyle = "#b5b2ad"; g.fillRect(SPLIT, top, W - SPLIT, H - top); g.fillStyle = "#8c8e91"; g.fillRect(0, top + rh * low4, SPLIT, rh * 4); g.fillStyle = "#c9c6c0"; g.fillRect(0, top, cw * 1.7, H - top); }
+              rows((y, r) => { for (let c = 0; c < cols; c++) { const x = c * cw, inPil = r >= NF - 2 && c >= 3 && c <= 6;
+                  if (inPil) continue; if (!lit && x < SPLIT && x > cw * 1.7 && (c === 5 || c === 8)) continue;
+                  if (c === 9) { if (!lit) { g.fillStyle = "#3d4146"; g.fillRect(x + cw * 0.3, y + rh * 0.14, cw * 0.4, rh * 0.7); } continue; }   /* the dark slot */
+                  win(x + cw * 0.14, y + rh * 0.14, cw * 0.72, rh * 0.68, c % 3 !== 1); } });
+              if (!lit) { g.fillStyle = "#c6ad84"; [[2.25, 0.38], [2.95, 0.38], [5.25, 0.38], [7.9, 0.38]].forEach(([c, w]) => g.fillRect(c * cw, top, w * cw, rh * low4));   /* the beige strips */
+                g.fillStyle = "#f4f4f2"; rows((y) => { g.fillRect(SPLIT, y - 2, W - SPLIT, 5); g.fillRect(0, y - 2, cw * 1.7, 5); }); for (let c = Math.round(SPLIT / cw); c <= cols; c++) g.fillRect(c * cw - 3, top, 6, H - top); [0, 0.85].forEach((c) => g.fillRect(c * cw, top, 6, H - top));
+                g.fillStyle = "rgba(255,255,255,.4)"; for (let r = low4; r <= NF; r++) g.fillRect(0, top + r * rh - 1, SPLIT, 2); for (let c = 0; c * cw < SPLIT; c++) g.fillRect(c * cw, top + rh * low4, 2, rh * 4);
+                const px0 = 3 * cw, px1 = 7 * cw, py0 = top + rh * (NF - 2); g.fillStyle = "#1e2124"; g.fillRect(px0, py0, px1 - px0, rh * 2); g.fillStyle = "#3b3530"; g.fillRect(px0 + cw * 0.3, py0 + rh * 0.3, cw * 1.2, rh * 0.7);
+                g.fillStyle = "#ecebe8"; g.fillRect(px0 - 8, py0 - 10, px1 - px0 + 16, 12); g.fillRect(px0 - 8, py0, 10, rh * 2); g.fillRect(px1 - 2, py0, 10, rh * 2); g.fillRect(px0 + cw * 1.9, py0, cw * 0.25, rh * 2);   /* the pilotis' white frame and its pillar */
+                g.fillStyle = "rgba(40,44,48,.9)"; g.fillRect(px0, py0 - rh * 0.45, px1 - px0, 2); for (let k = px0; k < px1; k += 6) g.fillRect(k, py0 - rh * 0.45, 1, rh * 0.45);
+                g.fillStyle = "#f4f4f2"; g.fillRect(0, 0, W, top * 0.5); g.fillStyle = "#d2d2cf"; g.fillRect(0, top * 0.5, W, top * 0.5); g.fillStyle = "#f4f4f2"; for (let x = 10; x < W; x += cw) g.fillRect(x, top * 0.4, 5, top * 0.6); } } });
           const map = draw(false), em = draw(true); map.anisotropy = ANISO; const m = new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: em, emissiveIntensity: 0.1 }); OUT.aptMats.push(m); OUT.arteraMats.push(m); return m; };
         const sideD = (() => { const t = canvasTex(256, 1024, (g, W, H) => { g.fillStyle = "#8d9094"; g.fillRect(0, 0, W, H); g.fillStyle = "#f2f2f0"; g.fillRect(0, 0, 18, H); g.fillRect(W - 18, 0, 18, H); g.fillRect(0, 0, W, H * 0.035);
             const rh = (H * 0.965) / NF; for (let r = 0; r < NF; r++) { g.fillStyle = "#56666f"; g.fillRect(W * 0.36, H * 0.035 + r * rh + rh * 0.2, W * 0.28, rh * 0.6); } }); const m = new THREE.MeshLambertMaterial({ map: t }); OUT.arteraMats.push(m); return m; })();
         const fL = mkFace("L", 48), fR = mkFace("R", 38), fL2 = mkFace("L", 40), fR2 = mkFace("R", 36);
-        { /* the real faces: the street-view photographs, squared up (assets/artera/dt_L.jpg, dt_R.jpg), laid on as soon as they arrive; the drawn faces stand in until then */
-          const TLd = new THREE.TextureLoader(); [["assets/artera/dt_L.jpg", [fL, fL2]], ["assets/artera/dt_R.jpg", [fR, fR2]]].forEach(([src, ms]) => TLd.load(src, (tx) => { tx.encoding = THREE.sRGBEncoding; tx.anisotropy = ANISO;
-            ms.forEach((m) => { m.map = tx; m.emissiveMap = null; m.emissiveIntensity = 0; const i = OUT.aptMats.indexOf(m); if (i >= 0) OUT.aptMats.splice(i, 1); m.needsUpdate = true; }); }, undefined, () => {})); }
         cplx(142, 10, 48, 14, HD, fL, sideD, 0xe9e9e6, HY); cplx(225, 9, 38, 14, HD, fR, sideD, 0xe9e9e6, HY);   /* the two slabs on the street */
         cplx(146, -22, 40, 14, HD, fL2, sideD, 0xe9e9e6, HY); cplx(212, -22, 36, 14, HD, fR2, sideD, 0xe9e9e6, HY);   /* and two more behind them */
         const P = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; A.add(o); return o; };
@@ -8678,7 +8689,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const GA = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (42 + 76 * (i + 0.5) / 9) * D2), OA = [0, 1, 2, 3, 4].map((i) => (42 * (i + 0.5) / 5) * D2), pp = (r, a) => [CX + r * Math.cos(a), CZ - r * Math.sin(a)];
         const ring = (r0, r1, a0, a1, y, m) => { const o = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 64, 1, a0, a1 - a0), m); o.rotation.x = -Math.PI / 2; o.position.set(CX, y, CZ); o.receiveShadow = true; Y.add(o); return o; };
         const arc = (r, a0, a1, y0, y1, m) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, y1 - y0, 64, 1, true, Math.PI / 2 + a0, a1 - a0), m); o.position.set(CX, (y0 + y1) / 2, CZ); m.side = THREE.DoubleSide; Y.add(o); return o; };
-        { const pv = new THREE.Mesh(new THREE.PlaneGeometry(140, 15), PAVE_M); pv.rotation.x = -Math.PI / 2; pv.position.set(240, 0.03, -84); pv.receiveShadow = true; Y.add(pv); }   /* the street behind, now the same block paving as the pavements round it, running on from the side street's crossing */
+        { const pv = new THREE.Mesh(new THREE.PlaneGeometry(130.8, 15), PAVE_M); pv.rotation.x = -Math.PI / 2; pv.position.set(240.1, 0.03, -84);   /* kept between the two side streets' kerbs (x 174.5 – 305.7): the roads stay roads */ pv.receiveShadow = true; Y.add(pv); }   /* the street behind, now the same block paving as the pavements round it, running on from the side street's crossing */
         const asph = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x5a5d62).convertSRGBToLinear() }), kerb = lam(0xc9c6bf), wht = new THREE.MeshBasicMaterial({ color: 0xf2f2ee }), conc = lam(0xd6d2ca);
         ring(RAp - 1.2, RAp + 3.3, A0, A1, 0.06, kerb); ring(RAp + 3.3, YR + 0.6, A0, A1, 0.055, asph); ring(RAp + 3.05, RAp + 3.25, A0, A1, 0.065, new THREE.MeshBasicMaterial({ color: 0xf2c230 })); ring(YR + 0.6, YR + 30, A0 - 0.05, A1 + 0.05, 0.05, grass.material);
         const rline = (a, r0, r1) => { const [x0, z0] = pp(r0, a), [x1, z1] = pp(r1, a), o = new THREE.Mesh(new THREE.PlaneGeometry(0.15, r1 - r0), wht); o.position.set((x0 + x1) / 2, 0.07, (z0 + z1) / 2); o.rotation.order = "YXZ"; o.rotation.y = a - Math.PI / 2; o.rotation.x = -Math.PI / 2; Y.add(o); };
