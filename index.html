@@ -4692,7 +4692,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   function colBuild() {
     OUT.colDirty = false; const L = (OUT.treeCols || []).slice(), bb = new THREE.Box3(); world.updateMatrixWorld(true);
     const visible = (o) => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
-    world.traverse((o) => { if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !o.geometry || o.userData.idx || o.userData.noCol) return;
+    world.traverse((o) => { if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !o.geometry || o.userData.idx || o.userData.noCol || o.userData.mc) return;
       const m = Array.isArray(o.material) ? o.material[0] : o.material; if (m && m.transparent && m.opacity < 0.5) return; if (!visible(o)) return;
       if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); bb.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
       const w = bb.max.x - bb.min.x, d = bb.max.z - bb.min.z; if (bb.max.y < 0.4 || bb.min.y > 1.9) return;
@@ -4701,11 +4701,60 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const bldg = bb.min.y < 0.6 && bb.max.y > 3 && Math.max(w, d) < 60 && o.geometry.attributes.position.count <= 400;   // a building (a few boxes, not a merged batch): stop at its walls
       if (!bldg) { if (!(Math.max(w, d) < 14 || (Math.min(w, d) < 0.9 && Math.max(w, d) < 60))) return; if (w * d > 120) return; }
       L.push([bb.min.x, bb.max.x, bb.min.z, bb.max.z]); });
+    for (const e of OUT.colExtra || []) if (e.o.parent && visible(e.o)) for (const r of e.r) L.push(r);   // outlines kept from before a merge (mergeStatic)
     const G = new Map(); L.forEach((w) => { for (let i = Math.floor((w[0] - 0.3) / 8); i <= Math.floor((w[1] + 0.3) / 8); i++) for (let j = Math.floor((w[2] - 0.3) / 8); j <= Math.floor((w[3] + 0.3) / 8); j++) { const k = i + "," + j; if (!G.has(k)) G.set(k, []); G.get(k).push(w); } });
     OUT.colGrid = G; OUT.colN = L.length;
-    const GL = []; world.traverse((o) => { if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !o.geometry || o.userData.idx || o.userData.noCol || !visible(o)) return; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (m && m.transparent && m.opacity < 0.5) return;
+    const GL = []; world.traverse((o) => { if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || !o.geometry || o.userData.idx || o.userData.noCol || o.userData.noGL || !visible(o)) return; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (m && m.transparent && m.opacity < 0.5) return;
       if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); bb.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld); if (bb.min.y < 0.3 && !o.userData.idx && !(o.material && o.material.opacity === 0) && (bb.max.x - bb.min.x) * (bb.max.z - bb.min.z) > 1.5) GL.push([o, bb.min.x, bb.max.x, bb.min.z, bb.max.z]); });
     OUT.groundList = GL;   // floors, paving and lawns: what the character stands on
+  }
+  // static parts of the park merged into one mesh per material, per 40 m square and per height band: far fewer draw calls. Each part's outline
+  // is kept first (OUT.colExtra) so you still stop at it; low parts (up to 1.2 m) are merged apart from tall ones, so the mini bus, the taxi and
+  // the character still stand on paving and kerbs; anything that moves, hides, is clicked or is held by name in OUT is left as it is.
+  function mergeStatic(roots, skip) {
+    const T = THREE, bb = new T.Box3(), inv = new T.Matrix4(), M = new T.Matrix4(), c = new T.Vector3(), BR = T.Object3D.prototype.onBeforeRender; let n0 = 0, n1 = 0;
+    for (const R of roots) {
+      R.updateMatrixWorld(true); inv.copy(R.matrixWorld).invert(); const B = new Map(), kill = [], rects = [];
+      R.traverse((o) => {
+        if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || o === R || (R === world && o.parent !== world)) return;
+        for (let q = o; q && q !== R; q = q.parent) { if (!q.visible || skip.has(q)) return; if (q !== o && (q.isMesh || q.name)) return; }
+        if (o.children.length || o.name || o.userData.idx || o.onBeforeRender !== BR || Object.keys(o.userData).some((k) => k !== "noCol" && k !== "pvuv")) return;
+        const g0 = o.geometry; if (!g0 || !g0.attributes.position || !g0.attributes.normal || Object.keys(g0.morphAttributes).length || g0.attributes.position.count > 60000) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material]; if (mats.some((m) => !m || m.transparent || m.opacity < 1)) return;
+        if (!g0.boundingBox) g0.computeBoundingBox(); bb.copy(g0.boundingBox).applyMatrix4(o.matrixWorld);
+        const w = bb.max.x - bb.min.x, d = bb.max.z - bb.min.z, band = bb.max.y <= 0.6 ? 0 : bb.max.y <= 1.2 ? 1 : 2, gl = bb.min.y < 0.3 && w * d > 1.5, nc = !!o.userData.noCol;
+        if (!nc && !(bb.max.y < 0.4 || bb.min.y > 1.9)) { const bldg = bb.min.y < 0.6 && bb.max.y > 3 && Math.max(w, d) < 60 && g0.attributes.position.count <= 400;   // the same test colBuild makes
+          if (bldg || ((Math.max(w, d) < 14 || (Math.min(w, d) < 0.9 && Math.max(w, d) < 60)) && w * d <= 120)) rects.push([bb.min.x, bb.max.x, bb.min.z, bb.max.z]); }
+        bb.getCenter(c); const sig = Object.keys(g0.attributes).sort().join("|"), key0 = [Math.floor(c.x / 40), Math.floor(c.z / 40), sig, o.castShadow, o.receiveShadow, o.renderOrder, o.frustumCulled, o.layers.mask, band, gl, nc, !!o.userData.pvuv].join("/");
+        const g = g0.index ? g0.toNonIndexed() : g0.clone(); M.multiplyMatrices(inv, o.matrixWorld); g.applyMatrix4(M);
+        if (M.determinant() < 0) for (const nm in g.attributes) { const a = g.attributes[nm], s = a.itemSize, arr = a.array; for (let v = 0; v + 3 * s <= arr.length; v += 3 * s) for (let j = 0; j < s; j++) { const q = arr[v + s + j]; arr[v + s + j] = arr[v + 2 * s + j]; arr[v + 2 * s + j] = q; } }   // a mirrored part: its triangles turned back the right way round
+        const groups = g.groups.length ? g.groups : [{ start: 0, count: g.attributes.position.count, materialIndex: 0 }];
+        for (const gr of groups) { const mt = mats[gr.materialIndex] || mats[0], k = mt.uuid + "/" + key0; if (!B.has(k)) B.set(k, { mt, o, band, gl, nc, A: {} }); const b = B.get(k);
+          for (const nm in g.attributes) { const a = g.attributes[nm], s = a.itemSize, arr = a.array, dst = b.A[nm] || (b.A[nm] = { s, v: [] }); for (let v = gr.start * s, e = Math.min(arr.length, (gr.start + gr.count) * s); v < e; v++) dst.v.push(arr[v]); } }
+        g.dispose(); kill.push(o); });
+      if (kill.length < 2) continue;
+      n0 += kill.length; kill.forEach((o) => o.parent.remove(o));
+      B.forEach((b) => { const g = new T.BufferGeometry(); for (const nm in b.A) g.setAttribute(nm, new T.Float32BufferAttribute(b.A[nm].v, b.A[nm].s));
+        const m = new T.Mesh(g, b.mt), s = b.o; m.castShadow = s.castShadow; m.receiveShadow = s.receiveShadow; m.renderOrder = s.renderOrder; m.frustumCulled = s.frustumCulled; m.layers.mask = s.layers.mask;
+        m.userData.mc = true; if (b.nc) m.userData.noCol = true; if (s.userData.pvuv) m.userData.pvuv = 1; if (!b.gl) m.userData.noGL = true; R.add(m); n1++; });
+      if (rects.length) (OUT.colExtra = OUT.colExtra || []).push({ o: R, r: rects });
+    }
+    OUT.colDirty = true; rideGnd.w = null; miniTaxi.gw = null; renderer.shadowMap.needsUpdate = true; return [n0, n1];
+  }
+  function parkMerge(zones) {   // called from the frame loop: first the park (once it has stood still a moment), then the Artera gardens once all are built
+    const skip = new Set(), skipM = new Set(), seen = new Set(), NO = { groundList: 1, colGrid: 1, colExtra: 1, mgSnap: 1, treeCols: 1, bldRects: 1, walls: 1 };
+    const scan = (v, dp) => { if (!v || typeof v !== "object" || dp > 5 || seen.has(v)) return; seen.add(v); if (v.isMaterial) { skipM.add(v); return; } if (v.isObject3D) { skip.add(v); return; } if (v.isTexture || v.isBufferGeometry || v instanceof Map || ArrayBuffer.isView(v)) return; for (const k in v) { if (dp === 0 && NO[k]) continue; try { scan(v[k], dp + 1); } catch (e) {} } };
+    scan(OUT, 0); world.updateMatrixWorld(true);
+    if (OUT.mgSnap) OUT.mgSnap.forEach((m, o) => { if (!m.equals(o.matrixWorld)) skip.add(o); });   // anything that moved since the snapshot stays apart
+    const roots = [];
+    if (zones) (OUT.artZones || []).forEach((z) => { skip.delete(z.g); roots.push(z.g); });
+    else { world.children.forEach((g) => { if (g.isGroup && g !== OUT.uGroup && !skip.has(g)) roots.push(g); }); roots.push(world); }
+    let r = [0, 0]; try { r = mergeStatic(roots, skip); } catch (e) { console.warn("merge", e); }
+    if (!zones) { const use = new Map(); world.traverse((o) => { if (o.isMesh) for (const m of Array.isArray(o.material) ? o.material : [o.material]) { if (!use.has(m)) use.set(m, true); if (!o.userData.idx) use.set(m, false); } });   // click-boxes no one sees: not drawn (the click still finds them)
+      use.forEach((only, m) => { if (only && m.transparent && m.opacity === 0 && !skipM.has(m)) m.visible = false; }); }
+    OUT.mgSnap = null; OUT.warmQ = []; const tx = new Set(); scene.traverse((o) => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) for (const k of ["map", "emissiveMap", "alphaMap", "normalMap"]) if (m[k]) tx.add(m[k]); }); OUT.warmQ = [...tx];
+    try { renderer.compile(scene, camera); } catch (e) {}
+    return r;
   }
   // where you can walk outside: from the convenience-store row on the left to U-square on the right, from the lawn behind the archive to the
   // Artera blocks at the back; buildings and furniture stop you by their own outlines (colBuild). Cut out: the archive building itself,
@@ -4794,7 +4843,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
           if (t.__fab) { const F = t.__fab, i = F.clones.indexOf(t); if (i >= 0) F.clones.splice(i, 1); t.dispose(); }
           else if (!t.__keep && typeof HTMLCanvasElement !== "undefined" && t.image instanceof HTMLCanvasElement) t.dispose(); } });
       if (mode === "lobby" && taxiDecoded) for (const t of [taxiDecoded.texture, taxiDecoded.surface, taxiDecoded.normal]) if (t) t.dispose(); }   // the lobby taxi's three maps leave the graphics card too (sent again when you come back)
-    renderer.shadowMap.enabled = false; scene.fog = null; OUT.artAnim = null; OUT.artZones = null; OUT.artQ = null; OUT.artGlow = null; OUT.artFloorGlow = null; OUT.sunPrev = null; OUT.bus = null; OUT.dog = null; OUT.pets = null; OUT.parkGlow = null; OUT.nightSign = null; OUT.fount = null; OUT.fWater = null; OUT.cars = null; OUT.cityLit = null; OUT.shopAt = null; OUT.sky = null; OUT.aptMats = null; OUT.arteraMats = null; OUT.petals = null; OUT.bigTree = null; OUT.bugs = null; OUT.blobs = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.mazeHit = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); { const gb = document.getElementById("taxiGo"); if (gb) gb.hidden = true; } if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
+    renderer.shadowMap.enabled = false; scene.fog = null; OUT.artAnim = null; OUT.artZones = null; OUT.artQ = null; OUT.mgSt = 0; OUT.mgSnap = null; OUT.colExtra = null; OUT.warmQ = null; OUT.artGlow = null; OUT.artFloorGlow = null; OUT.sunPrev = null; OUT.bus = null; OUT.dog = null; OUT.pets = null; OUT.parkGlow = null; OUT.nightSign = null; OUT.fount = null; OUT.fWater = null; OUT.cars = null; OUT.cityLit = null; OUT.shopAt = null; OUT.sky = null; OUT.aptMats = null; OUT.arteraMats = null; OUT.petals = null; OUT.bigTree = null; OUT.bugs = null; OUT.blobs = null; OUT.veh = null; OUT.taxi = null; OUT.wx = null; OUT.arteraSign = null; OUT.walls = null; OUT.mazeHit = null; OUT.loadTaxi = null; OUT.taxiReq = false; if (OUT.st === "ride") { busy = false; camera.near = 0.05; document.body.classList.remove("riding"); { const gb = document.getElementById("taxiGo"); if (gb) gb.hidden = true; } if (OUT.zoomRide != null) { zoomTarget = OUT.zoomRide; OUT.zoomRide = null; } const tf = document.getElementById("taxiFade"); if (tf) tf.style.opacity = "0"; } OUT.st = "idle"; OUT.kind = "bus"; OUT.n = 0; if (camera.far !== 160) { camera.far = 160; camera.updateProjectionMatrix(); }
     window.__qualityGeneration=(window.__qualityGeneration||0)+1;
     if (DIO.holder && DIO.holder.parent === world && window.releaseArchiveModel) window.releaseArchiveModel(DIO.holder);
     const released=new Set();
@@ -8351,7 +8400,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             OUT.bldRects && OUT.bldRects.push([x - 2.4, x + 2.4, BZ - 0.15, BZ + 0.15]); };
           tSign(X0 - 5.6, ["금호건설 주거 브랜드 변천사", "1988 — 2024   ·   표지판을 누르면 크게 보여요"], ["금호건설 상호 변천사", "1967 — 2021"]);
           { /* beside it, on along the same line: 금호고속 거북이 로고 변천사, the same low signs, the turtle mark of each era (1970 · 1975 · 1984 · 1985) */
-            const TL = [["1970", "assets/turtle/t1970.png"], ["1975", "assets/turtle/t1975.png"], ["1984", "assets/turtle/t1984.png"], ["1985 —", "assets/turtle/t1985.png"]], XB = X0 + 5 * DX + 23.6, DB = 6.8,   /* three times the old gap after 금호건설's last sign, so the two lines read apart */ org = new THREE.MeshBasicMaterial({ color: 0xf26a1f });
+            const TL = [["1970", "assets/turtle/t1970.png"], ["1975", "assets/turtle/t1975.png"], ["1984", "assets/turtle/t1984.png"], ["1985", "assets/turtle/t1985.png"]], XB = X0 + 5 * DX + 23.6, DB = 6.8,   /* three times the old gap after 금호건설's last sign, so the two lines read apart */ org = new THREE.MeshBasicMaterial({ color: 0xf26a1f });
             const tTex = (k) => { const W = 512, H = 640, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO;
               const paint = (im) => { g.fillStyle = "#fbfaf7"; g.fillRect(0, 0, W, H); g.fillStyle = "#f26a1f"; g.fillRect(0, 0, W, 12);
                 if (im) { const s = Math.min(400 / im.width, 260 / im.height); g.imageSmoothingQuality = "high"; g.drawImage(im, (W - im.width * s) / 2, 80 + (260 - im.height * s) / 2, im.width * s, im.height * s); }
@@ -8971,6 +9020,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (OUT.artGlow) { const n = Math.max(0, 1 - u.uDay.value * 1.5); OUT.artGlow.opacity = 0.32 * n; OUT.artFloorGlow.opacity = 0.85 * n; }
     if (OUT.artQ && OUT.artQ.length && cam.z < -4) { OUT.artQ.shift()(); renderer.shadowMap.needsUpdate = true; OUT.colDirty = true; }   // one space a frame, once you are across the road
     if (OUT.artZones) for (const Z of OUT.artZones) { const d = Math.hypot(cam.x - Z.x, cam.z - Z.z), on = (AIR.on || AIR.out) ? true : Z.on ? d < 150 : d < 135; if (on !== Z.on) { Z.on = on; Z.g.visible = on; renderer.shadowMap.needsUpdate = true; } }
+    { const now = performance.now();   // merging the park's static parts (mergeStatic): a still moment to see what moves, then the park, then the gardens
+      if (!OUT.mgSt) { OUT.mgSt = 1; OUT.mgT = now + 1500; }
+      else if (OUT.mgSt === 1 && now > OUT.mgT && !RIDE.on) { OUT.mgSt = 2; OUT.mgT = now + 1500; world.updateMatrixWorld(true); OUT.mgSnap = new Map(); world.traverse((o) => { if (o.isMesh) OUT.mgSnap.set(o, o.matrixWorld.clone()); }); }
+      else if (OUT.mgSt === 2 && now > OUT.mgT && !RIDE.on) { OUT.mgSt = 3; OUT.mgN = parkMerge(false); }
+      else if (OUT.mgSt === 3 && OUT.artQ && !OUT.artQ.length && !RIDE.on) { OUT.mgSt = 4; OUT.mgZ = parkMerge(true); }
+      if (OUT.warmQ && OUT.warmQ.length) { const tx = OUT.warmQ.pop(), im = tx.image; if (im && (im.width || im.videoWidth) && !tx.isVideoTexture && renderer.properties.get(tx).__version !== tx.version) try { renderer.initTexture(tx); } catch (e) {} }   // one texture a frame sent to the GPU ahead of being seen, so walking into a new corner does not hitch
+    }
     if (OUT.artAnim) { const A = OUT.artAnim, tt = performance.now() / 1000;   // ARTSIS: water jets rising and falling, ripples and the stream moving
       let fb = 0; if (OUT.fBoost > 0) { OUT.fBoost = Math.max(0, OUT.fBoost - dt); const q = 1 - OUT.fBoost / 3.2; fb = Math.sin(Math.PI * Math.min(1, q * 1.15)) ** 0.7; }   // a click: one great surge, then back
       for (const j of A.jets) j.m.scale.y = j.base * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(tt * 1.5 + j.ph))) * (1 + fb * (j.big ? 3.2 : 0.8));
