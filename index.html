@@ -7455,8 +7455,85 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             if (!lit && accent === 2) { g.fillStyle = "#1d2023"; g.fillRect(cw * 0.1, top + rh * (FLD - 2), cw * 1.8, rh * 2); }   // a pilotis opening at the foot
           });
           const map = draw(false), em = draw(true); map.anisotropy = ANISO; const m = new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: em, emissiveIntensity: 0.1 }); OUT.aptMats.push(m); OUT.arteraMats.push(m); return m; };
-        const fA = dtFace(1, 21), fB = dtFace(2, 22), fS = dtFace(0, 23);
-        [[104, 36, 22, fA], [196, 36, 22, fB], [96, 13, 22, fB], [130, 13, 22, fA], [164, 13, 22, fB], [198, 13, 22, fA]].forEach(   /* six towers, set inside the block (x 174–306, z −88…−138): none on a street */([x, z, W, f], i) => cplx(x + DX2, z + DZ, W, 13, FLD * FH2 + 1.7 + (i % 3) * 0.01, f, fS, 0xf2f2f0, HY));   // DX2: moved east off the park's outer road, so the road round the park closes into a square
+        /* 동탄 아테라, after the street-view photographs: two wide 15-storey slabs. On the left, a slab of dark grey panels framed by white pilasters with beige spandrels, a strip of shops at its foot along the street;
+           on the right, half grey with beige vertical strips, half a white grid over grey-beige panels, a two-storey open pilotis. Through the gateway the drive runs to a little roundabout with a pine on its island,
+           and on to the car park's way in under the white podium (the same car park as the left slab's); MOM'S STATION stands to its right, and beyond it the right-hand slab */
+        const NF = 15, FHd = 2.9, HD = NF * FHd + 1.2, glam = (h) => new THREE.MeshLambertMaterial({ color: new THREE.Color(h).convertSRGBToLinear() });   /* greens and timber in true colour (plain lam() reads pale out here) */
+        const mkFace = (kind, Wm) => { const draw = (lit) => canvasTex(1024, 1024, (g, W, H) => { const top = H * 0.035, rh = (H - top) / NF, bays = Math.round(Wm / 3.6), bw = W / bays; let q = kind === "L" ? 31 : 37; const rr = () => (q = (q * 16807) % 2147483647) / 2147483647;
+            const win = (x, y, w, h) => { if (lit) { if (rr() < 0.5) { g.fillStyle = `rgb(255,${220 + Math.floor(rr() * 30)},${160 + Math.floor(rr() * 50)})`; g.fillRect(x, y, w, h); } return; }
+              const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, "#9fb2bb"); gr.addColorStop(1, "#56666f"); g.fillStyle = gr; g.fillRect(x, y, w, h); g.fillStyle = "rgba(30,34,38,.85)"; g.fillRect(x, y + h * 0.62, w, 2); g.fillRect(x, y + h * 0.82, w, 2); for (let k = x + 6; k < x + w; k += 7) g.fillRect(k, y + h * 0.62, 1, h * 0.38); g.fillStyle = "#2b2f33"; g.fillRect(x + w / 2 - 1, y, 2, h); };
+            g.fillStyle = lit ? "#000" : kind === "L" ? "#5e6165" : "#6f7276"; g.fillRect(0, 0, W, H);
+            if (kind === "L") {   /* dark grey field, a window in every bay with a beige panel beside it, white pilasters every third bay rising into open frames on the roof */
+              for (let r = 0; r < NF; r++) { const y = top + r * rh, low = r >= NF - 3; if (!lit && low) { g.fillStyle = "#d3cfc8"; g.fillRect(0, y, W, rh); g.fillStyle = "rgba(0,0,0,.08)"; g.fillRect(0, y, W, 2); }
+                for (let b = 0; b < bays; b++) { const x = b * bw; if (!lit && !low && b % 3 !== 1) { g.fillStyle = "#b9a37c"; g.fillRect(x + bw * 0.72, y + rh * 0.12, bw * 0.2, rh * 0.74); }
+                  win(x + bw * 0.16, y + rh * 0.12, bw * (b % 3 === 1 ? 0.68 : 0.52), rh * 0.74); } }
+              if (!lit) { g.fillStyle = "#f3f3f1"; for (let b = 0; b <= bays; b += 3) g.fillRect(b * bw - bw * 0.1, 0, bw * 0.2, H * (1 - 3 / (NF + 0.4)));
+                for (let b = 0; b < bays; b += 3) { g.fillRect(b * bw, 0, bw * 3, top * 0.45); }   /* the open frames on the roofline */ g.fillStyle = "#e9e9e6"; g.fillRect(0, 0, W, 4); } }
+            else {   /* left part grey with beige strips, right part a white grid over grey-beige panels; lower floors darker stone; a pilotis */
+              const split = Math.round(bays * 0.55) * bw;
+              for (let r = 0; r < NF; r++) { const y = top + r * rh, low = r >= NF - 4;
+                if (!lit) { g.fillStyle = low ? "#7c7f83" : "#a9a7a3"; g.fillRect(split, y, W - split, rh); if (low) { g.fillStyle = "#7c7f83"; g.fillRect(0, y, split, rh); } }
+                for (let b = 0; b < bays; b++) { const x = b * bw; if (r >= NF - 2 && x >= bw * 1.5 && x < bw * 4.5) continue; win(x + bw * 0.2, y + rh * 0.14, bw * 0.6, rh * 0.7); } }
+              if (!lit) { g.fillStyle = "#c6ae85"; [0.9, 1.9, 3.4, 4.4].forEach((k) => { if (k * bw < split) g.fillRect(k * bw, top, bw * 0.16, rh * (NF - 4)); });   /* the beige vertical strips */
+                g.fillStyle = "#f2f2f0"; for (let r = 0; r <= NF; r++) g.fillRect(split, top + r * rh - 2, W - split, 4); for (let b = Math.round(split / bw); b <= bays; b++) g.fillRect(b * bw - 3, top, 6, H - top);   /* the white grid */
+                g.fillStyle = "rgba(255,255,255,.35)"; for (let r = NF - 4; r <= NF; r++) g.fillRect(0, top + r * rh - 1, split, 2); for (let b = 0; b * bw < split; b++) g.fillRect(b * bw, top + rh * (NF - 4), 2, rh * 4);
+                g.fillStyle = "#1e2124"; g.fillRect(bw * 1.5, top + rh * (NF - 2), bw * 3, rh * 2); g.fillStyle = "#d8d6d0"; g.fillRect(bw * 1.5, top + rh * (NF - 2) - 6, bw * 3, 8); g.fillRect(bw * 2.9, top + rh * (NF - 2), bw * 0.2, rh * 2);   /* the open pilotis */
+                g.fillStyle = "#f2f2f0"; g.fillRect(0, 0, W, top); g.fillStyle = "#cfcfcc"; for (let x = 8; x < W; x += 30) g.fillRect(x, 4, 4, top - 8); } } });
+          const map = draw(false), em = draw(true); map.anisotropy = ANISO; const m = new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: em, emissiveIntensity: 0.1 }); OUT.aptMats.push(m); OUT.arteraMats.push(m); return m; };
+        const sideD = (() => { const t = canvasTex(256, 1024, (g, W, H) => { g.fillStyle = "#8d9094"; g.fillRect(0, 0, W, H); g.fillStyle = "#f2f2f0"; g.fillRect(0, 0, 18, H); g.fillRect(W - 18, 0, 18, H); g.fillRect(0, 0, W, H * 0.035);
+            const rh = (H * 0.965) / NF; for (let r = 0; r < NF; r++) { g.fillStyle = "#56666f"; g.fillRect(W * 0.36, H * 0.035 + r * rh + rh * 0.2, W * 0.28, rh * 0.6); } }); const m = new THREE.MeshLambertMaterial({ map: t }); OUT.arteraMats.push(m); return m; })();
+        const fL = mkFace("L", 48), fR = mkFace("R", 38), fL2 = mkFace("L", 40), fR2 = mkFace("R", 36);
+        { /* the real faces: the street-view photographs, squared up (assets/artera/dt_L.jpg, dt_R.jpg), laid on as soon as they arrive; the drawn faces stand in until then */
+          const TLd = new THREE.TextureLoader(); [["assets/artera/dt_L.jpg", [fL, fL2]], ["assets/artera/dt_R.jpg", [fR, fR2]]].forEach(([src, ms]) => TLd.load(src, (tx) => { tx.encoding = THREE.sRGBEncoding; tx.anisotropy = ANISO;
+            ms.forEach((m) => { m.map = tx; m.emissiveMap = null; m.emissiveIntensity = 0; const i = OUT.aptMats.indexOf(m); if (i >= 0) OUT.aptMats.splice(i, 1); m.needsUpdate = true; }); }, undefined, () => {})); }
+        cplx(142, 10, 48, 14, HD, fL, sideD, 0xe9e9e6, HY); cplx(225, 9, 38, 14, HD, fR, sideD, 0xe9e9e6, HY);   /* the two slabs on the street */
+        cplx(146, -22, 40, 14, HD, fL2, sideD, 0xe9e9e6, HY); cplx(212, -22, 36, 14, HD, fR2, sideD, 0xe9e9e6, HY);   /* and two more behind them */
+        const P = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; o.receiveShadow = true; A.add(o); return o; };
+        { /* the shops at the left slab's foot: a one-storey podium along the street, light stone piers, dark sign bands, lit shop windows; a planted roof with a glass railing */
+          const SH = ["카페", "부동산", "수학학원", "피아노", "꽃집", "편의점", "베이커리", "약국", "세탁소", "독서실"], SC = ["#e0b23a", "#f2f2f0", "#f5d34a", "#9fd3e8", "#f2a3b8", "#4fa3e0", "#f0c08a", "#7ad08a", "#c9d6f0", "#ffd36a"];
+          const shopT = (lit) => canvasTex(2048, 256, (g, W, H) => { const n = SH.length, bw = W / n; g.fillStyle = lit ? "#000" : "#d9d5ce"; g.fillRect(0, 0, W, H);
+            for (let i = 0; i < n; i++) { const x = i * bw;
+              if (!lit) { g.fillStyle = "#3a3d41"; g.fillRect(x + 10, H * 0.14, bw - 20, H * 0.2); const gr = g.createLinearGradient(0, H * 0.38, 0, H); gr.addColorStop(0, "#56636b"); gr.addColorStop(1, "#2c3338"); g.fillStyle = gr; g.fillRect(x + 10, H * 0.38, bw - 20, H * 0.62);
+                g.fillStyle = "rgba(255,226,180,.35)"; g.fillRect(x + 24, H * 0.55, bw - 48, H * 0.45); g.fillStyle = "#cfcbc4"; g.fillRect(x + bw * 0.62, H * 0.38, 4, H * 0.62); }
+              else { g.fillStyle = "#fff0d0"; g.fillRect(x + 24, H * 0.5, bw - 48, H * 0.5); }
+              g.fillStyle = lit ? SC[i] : SC[i]; g.font = `800 ${H * 0.13}px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(SH[i], x + bw / 2, H * 0.245); }
+            if (!lit) { g.fillStyle = "#e6e3dd"; g.fillRect(0, 0, W, H * 0.1); } });
+          const sm = new THREE.MeshLambertMaterial({ map: shopT(false), emissive: 0xffffff, emissiveMap: shopT(true), emissiveIntensity: 0.12 }); OUT.aptMats.push(sm); OUT.arteraMats.push(sm); const st = lam(0xd9d5ce); OUT.arteraMats.push(st);
+          P(new THREE.BoxGeometry(48, 5.2, 18), [st, st, lam(0xb8b6b0), st, sm, st], 142, 2.6, 26);
+          const rail = new THREE.Mesh(new THREE.BoxGeometry(48, 1.1, 0.06), new THREE.MeshBasicMaterial({ color: 0xcfe0e8, transparent: true, opacity: 0.35, depthWrite: false })); rail.position.set(142, 5.75, 34.9); A.add(rail);
+          const hedge = glam(0x5d7a45); OUT.arteraMats.push(hedge); for (let x = 122; x < 164; x += 6) P(new THREE.BoxGeometry(4.2, 0.7, 1.2), hedge, x, 5.55, 33.6); }
+        { /* the car park's way in, under a white podium at the end of the drive (the left slab's own car park), and MOM'S STATION beside it */
+          const wh = lam(0xeeeeec), dk = lam(0x1c1e21); OUT.arteraMats.push(wh, dk);
+          const pkT = canvasTex(1024, 256, (g, W, H) => { g.fillStyle = "#eeeeec"; g.fillRect(0, 0, W, H); g.fillStyle = "rgba(0,0,0,.06)"; for (let x = 0; x < W; x += 64) g.fillRect(x, 0, 2, H); for (let y = 0; y < H; y += 48) g.fillRect(0, y, W, 2);
+            g.fillStyle = "#1a1c1f"; g.fillRect(W * 0.3, H * 0.28, W * 0.4, H * 0.72); g.fillStyle = "#3a3d41"; g.fillRect(W * 0.3, H * 0.28, W * 0.4, H * 0.06); g.fillStyle = "#f2c230"; for (let x = W * 0.33; x < W * 0.67; x += 40) g.fillRect(x, H * 0.3, 20, 4);
+            g.fillStyle = "#ffffff"; g.font = `700 ${H * 0.09}px ${FONT}`; g.textAlign = "center"; g.fillText("PARKING  주차장 입구", W / 2, H * 0.2); });
+          const pk = new THREE.MeshLambertMaterial({ map: pkT }); OUT.arteraMats.push(pk);
+          P(new THREE.BoxGeometry(28, 6, 12), [wh, wh, lam(0xd6d4cf), wh, pk, wh], 182, 3, 12);
+          const msT = canvasTex(512, 256, (g, W, H) => { g.fillStyle = "#f1f0ed"; g.fillRect(0, 0, W, H); g.fillStyle = "#2a2d31"; g.fillRect(W * 0.18, H * 0.44, W * 0.64, H * 0.56); g.fillStyle = "rgba(255,230,190,.35)"; g.fillRect(W * 0.2, H * 0.5, W * 0.6, H * 0.5);
+            g.fillStyle = "#9aa0a6"; g.fillRect(W * 0.5 - 2, H * 0.44, 4, H * 0.56); g.fillStyle = "#3a3d41"; g.textAlign = "center"; g.font = `500 ${H * 0.07}px ${FONT}`; g.fillText("맘스스테이션", W / 2, H * 0.17); g.font = `700 ${H * 0.12}px "Helvetica Neue", Arial, ${FONT}`; g.fillText("MOM'S STATION", W / 2, H * 0.32); });
+          const ms = new THREE.MeshLambertMaterial({ map: msT }); OUT.arteraMats.push(ms); P(new THREE.BoxGeometry(8, 4.2, 7), [wh, wh, lam(0xd6d4cf), wh, ms, wh], 200.5, 2.1, 19.5); }
+        { /* the drive through the gateway: paving round it, a roundabout with a pine on a kerbed island, and on to the car park */
+          const asp = asphM(), kb = lam(0xd8d5ce), gr = grass.material; OUT.arteraMats.push(kb);
+          const fl = (w, d, m, x, z, y) => { const o = new THREE.Mesh(new THREE.PlaneGeometry(w, d), m); o.rotation.x = -Math.PI / 2; o.position.set(x, y, z); o.receiveShadow = true; A.add(o); return o; };
+          fl(44, 30, PAVE_M, 186, 31, 0.055); fl(11, 12, asp, 182, 21.5, 0.075);
+          const ring = new THREE.Mesh(new THREE.CircleGeometry(8.5, 40), asp); ring.rotation.x = -Math.PI / 2; ring.position.set(182, 0.076, 28.5); A.add(ring);
+          const isl = P(new THREE.CylinderGeometry(3.6, 3.7, 0.3, 32), kb, 182, 0.15, 28.5); const it = new THREE.Mesh(new THREE.CircleGeometry(3.4, 32), gr); it.rotation.x = -Math.PI / 2; it.position.set(182, 0.31, 28.5); A.add(it);
+          const tk = glam(0x6b4a33), nd = glam(0x2f5a34); OUT.arteraMats.push(tk, nd);
+          const pine = (x, z, s) => { const t = P(new THREE.CylinderGeometry(0.16 * s, 0.24 * s, 4.2 * s, 7), tk, x, 2.1 * s + 0.3, z); t.rotation.z = 0.12; [[0, 4.4, 0, 1.9], [0.9, 3.7, 0.3, 1.4], [-0.8, 3.9, -0.4, 1.3], [0.2, 5.0, -0.2, 1.2]].forEach(([dx, dy, dz, r]) => { const c = P(new THREE.SphereGeometry(r * s, 9, 6), nd, x + dx * s, dy * s + 0.3, z + dz * s); c.scale.y = 0.45; }); };
+          pine(182, 28.5, 1.6); pine(166, 37, 0.9); pine(197, 36, 0.85); pine(210, 19, 1.7); pine(215.5, 18, 1.4); pine(121, 37.5, 1.5); }   /* the pines in front of the right slab and at the left end of the shops, as in the photographs */
+        { /* the roof of the shops, made a garden: a lawn with a paved walk, low planters of shrubs, small trees, benches and a pergola, behind the glass railing on the street side */
+          const Y0 = 5.2, gr = grass.material, wk = PAVE_M, pl = lam(0xc9c4ba), sh = glam(0x5d7a45), sh2 = glam(0x7a9a52), fl1 = glam(0xd98aa0), fl2 = glam(0xf0d36a), wood = glam(0x9a6b45), tk = glam(0x6b4a33), cr = glam(0x6f8f4a); OUT.arteraMats.push(pl, sh, sh2, fl1, fl2, wood, tk, cr);
+          const lawn = new THREE.Mesh(new THREE.PlaneGeometry(47, 16.6), gr); lawn.rotation.x = -Math.PI / 2; lawn.position.set(142, Y0 + 0.03, 26.3); lawn.receiveShadow = true; A.add(lawn);
+          const walk = new THREE.Mesh(new THREE.PlaneGeometry(46, 2), wk); walk.rotation.x = -Math.PI / 2; walk.position.set(142, Y0 + 0.05, 23.5); walk.receiveShadow = true; A.add(walk);
+          [[126, 0], [142, 0], [158, 0]].forEach(([x]) => { const c = new THREE.Mesh(new THREE.PlaneGeometry(2, 6), wk); c.rotation.x = -Math.PI / 2; c.position.set(x, Y0 + 0.05, 20.5); A.add(c); });   /* short walks to the slab's doors */
+          for (let i = 0; i < 7; i++) { const x = 121.5 + i * 6.8; P(new THREE.BoxGeometry(4.6, 0.5, 1.6), pl, x, Y0 + 0.25, 28.6);   /* low planters with shrubs and flowers */
+            for (let k = 0; k < 4; k++) { const s = P(new THREE.SphereGeometry(0.55, 8, 6), k % 2 ? sh : sh2, x - 1.6 + k * 1.05, Y0 + 0.75, 28.6); s.scale.y = 0.7; }
+            for (let k = 0; k < 6; k++) P(new THREE.SphereGeometry(0.16, 6, 4), (i + k) % 2 ? fl1 : fl2, x - 1.8 + k * 0.72, Y0 + 0.62, 29.3); }
+          [[123, 25.8], [133, 26], [151, 25.8], [161, 26], [128, 19.5], [156, 19.5]].forEach(([x, z], i) => { P(new THREE.CylinderGeometry(0.1, 0.15, 2.4, 7), tk, x, Y0 + 1.2, z);   /* small garden trees */
+            [[0, 2.9, 0, 1.2], [0.6, 2.5, 0.2, 0.8], [-0.5, 2.6, -0.3, 0.85], [0.1, 3.4, -0.1, 0.8]].forEach(([dx, dy, dz, r]) => { const c = P(new THREE.SphereGeometry(r, 8, 6), cr, x + dx, Y0 + dy, z + dz); c.scale.y = 0.85; }); });
+          [[137, 21.6], [147, 21.6], [142, 31.4]].forEach(([x, z], i) => { P(new THREE.BoxGeometry(1.8, 0.1, 0.5), wood, x, Y0 + 0.45, z); P(new THREE.BoxGeometry(1.8, 0.4, 0.08), wood, x, Y0 + 0.7, z + (i < 2 ? -0.24 : 0.24)); [[-0.75], [0.75]].forEach(([dx]) => P(new THREE.BoxGeometry(0.08, 0.42, 0.42), lam(0x3a3d41), x + dx, Y0 + 0.21, z)); });   /* benches */
+          { const px = 142, pz = 26.2; [[-2.2, -1.4], [2.2, -1.4], [-2.2, 1.4], [2.2, 1.4]].forEach(([dx, dz]) => P(new THREE.BoxGeometry(0.18, 2.6, 0.18), wood, px + dx, Y0 + 1.3, pz + dz));   /* a timber pergola over the middle of the walk */
+            for (let k = -4; k <= 4; k++) P(new THREE.BoxGeometry(0.12, 0.16, 3.6), wood, px + k * 0.55, Y0 + 2.68, pz); [-1.4, 1.4].forEach((dz) => P(new THREE.BoxGeometry(5, 0.2, 0.16), wood, px, Y0 + 2.55, pz + dz)); } }
         { // the gateway (문주), after the photograph: a thin white roof on a white frame, a dark granite wall with the ARTERA mark on the left, the guard house (INFORMATION) on the right
           const gx = 150 + DX2, gz = DZ + 49,   /* at the block's front edge, facing U-square across the street */ wm = lam(0xdedcd7), dk = lam(0x232528); OUT.arteraMats.push(wm, dk);
           const granite = (w, h, logo, label) => { let markAt = null; const t = canvasTex(Math.round(64 * w), Math.round(64 * h), (g, W, H) => { g.fillStyle = "#34363a"; g.fillRect(0, 0, W, H);
@@ -7481,7 +7558,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             add(new THREE.PlaneGeometry(4.2, 1.3), new THREE.MeshBasicMaterial({ map: gT }), gx + 9.5, 1.7, gz + 3.27); }   // its window: tinted glass
           const nm = new THREE.Mesh(new THREE.PlaneGeometry(16, 1.6), new THREE.MeshBasicMaterial({ transparent: true, map: canvasTex(1024, 104, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "#f3f2ee"; g.font = `600 64px ${FONT}`; g.textAlign = "left"; g.textBaseline = "middle"; if ("letterSpacing" in g) g.letterSpacing = "6px"; g.fillText("동탄 아테라 파밀리에", 8, H / 2 + 4); }) }));
           nm.visible = false;   // (the complex's name on the roof: taken off)
-          const rd = new THREE.Mesh(new THREE.PlaneGeometry(14, 34), lam(0x48494d)); rd.rotation.x = -Math.PI / 2; rd.position.set(gx, 0.07, gz - 8); A.add(rd);
+          const rd = new THREE.Mesh(new THREE.PlaneGeometry(11, 14), asphM()); rd.rotation.x = -Math.PI / 2; rd.position.set(gx, 0.077, gz - 0.5); A.add(rd);   /* the drive through the gateway, to the roundabout */
           const zc = new THREE.Mesh(new THREE.PlaneGeometry(14, 4.5), new THREE.MeshBasicMaterial({ transparent: true, map: canvasTex(256, 80, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "rgba(240,240,236,0.9)"; for (let x = 6; x < W; x += 24) g.fillRect(x, 0, 12, H); }) }));
           zc.rotation.x = -Math.PI / 2; zc.position.set(gx, 0.08, gz + 7.5); A.add(zc); }   // the crossing in front
         // it stands on a hillside terrace (as in the photograph, against the hills), nearer the street so it rises clear of the trees
@@ -8600,7 +8677,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const GA = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (42 + 76 * (i + 0.5) / 9) * D2), OA = [0, 1, 2, 3, 4].map((i) => (42 * (i + 0.5) / 5) * D2), pp = (r, a) => [CX + r * Math.cos(a), CZ - r * Math.sin(a)];
         const ring = (r0, r1, a0, a1, y, m) => { const o = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 64, 1, a0, a1 - a0), m); o.rotation.x = -Math.PI / 2; o.position.set(CX, y, CZ); o.receiveShadow = true; Y.add(o); return o; };
         const arc = (r, a0, a1, y0, y1, m) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, y1 - y0, 64, 1, true, Math.PI / 2 + a0, a1 - a0), m); o.position.set(CX, (y0 + y1) / 2, CZ); m.side = THREE.DoubleSide; Y.add(o); return o; };
-        { const pv = new THREE.Mesh(new THREE.PlaneGeometry(140, 15), lam(0xd3cfc6)); pv.rotation.x = -Math.PI / 2; pv.position.set(240, 0.03, -84); Y.add(pv); }   /* the street behind, paved over */
+        { const pv = new THREE.Mesh(new THREE.PlaneGeometry(140, 15), PAVE_M); pv.rotation.x = -Math.PI / 2; pv.position.set(240, 0.03, -84); pv.receiveShadow = true; Y.add(pv); }   /* the street behind, now the same block paving as the pavements round it, running on from the side street's crossing */
         const asph = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x5a5d62).convertSRGBToLinear() }), kerb = lam(0xc9c6bf), wht = new THREE.MeshBasicMaterial({ color: 0xf2f2ee }), conc = lam(0xd6d2ca);
         ring(RAp - 1.2, RAp + 3.3, A0, A1, 0.06, kerb); ring(RAp + 3.3, YR + 0.6, A0, A1, 0.055, asph); ring(RAp + 3.05, RAp + 3.25, A0, A1, 0.065, new THREE.MeshBasicMaterial({ color: 0xf2c230 })); ring(YR + 0.6, YR + 30, A0 - 0.05, A1 + 0.05, 0.05, grass.material);
         const rline = (a, r0, r1) => { const [x0, z0] = pp(r0, a), [x1, z1] = pp(r1, a), o = new THREE.Mesh(new THREE.PlaneGeometry(0.15, r1 - r0), wht); o.position.set((x0 + x1) / 2, 0.07, (z0 + z1) / 2); o.rotation.order = "YXZ"; o.rotation.y = a - Math.PI / 2; o.rotation.x = -Math.PI / 2; Y.add(o); };
