@@ -4247,10 +4247,10 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const rr = aim(hold.x, hold.y).ray, ro = rr.origin, rd = rr.direction; let d = rd; if (rd.y < -0.05) { const t = (S.fy || 0) - ro.y, gx = ro.x + rd.x * t / rd.y - S.x, gz = ro.z + rd.z * t / rd.y - S.z; d = Math.hypot(gx, gz) > 0.25 ? { x: gx, z: gz } : { x: 0, z: 0 }; } const hl = Math.hypot(d.x, d.z); if (hl > 1e-3) {   /* toward the spot on the floor under the finger, from where 쿠모 stands (in the quarter view the ray alone would always point away from the camera) */ hold.v = Math.min(9.94, hold.v + dt * 15.1); move(d.x / hl, d.z / hl, hold.v * dt); } }
     else if (Math.hypot(JOY.x, JOY.y) > 0.12) {   // the stick: walk the way it points, any angle; a sideways push turns the view a little too
       S.tx = null; const f = -JOY.y, sd = JOY.x, m = Math.min(1, Math.hypot(f, sd)), L = Math.hypot(f, sd); 
-      S.v = (S.v || 0) + (6.5 * m - (S.v || 0)) * Math.min(1, dt * 5); const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw);
+      S.v = (S.v || 0) + (9.94 * m - (S.v || 0)) * Math.min(1, dt * 5);   /* the stick runs as fast as pressing and holding */ const hx = -Math.sin(S.yaw), hz = -Math.cos(S.yaw), rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw);
       S.yaw -= sd * 0.6 * dt * (f > -0.3 ? 1 : 0); S.yawTo = null;   /* the stick walks the way it points from where the view looks; a sideways push turns the view gently with it */ move((hx * f + rx * sd) / L, (hz * f + rz * sd) / L, S.v * dt); }
     else if (fw || tu) {   // keys / pad: turn, and walk with a soft start and stop
-      S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 6.5 - (S.v || 0)) * Math.min(1, dt * 5);
+      S.tx = null; S.yaw += tu * 1.5 * dt; S.v = (S.v || 0) + (fw * 9.94 - (S.v || 0)) * Math.min(1, dt * 5);
       if (Math.abs(S.v) > 0.02) move(-Math.sin(S.yaw), -Math.cos(S.yaw), S.v * dt); }
     else if (S.tx != null) {   // a click: glide there, easing in and out
       const dx = S.tx - S.x, dz = S.tz - S.z, d = Math.hypot(dx, dz);
