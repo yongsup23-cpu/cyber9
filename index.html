@@ -10222,11 +10222,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const ask = $("homeAsk"); if (ask && !ask.hidden) return;
       armed = false; VK.v = 0; const ri = 39.5 - 2.3; goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🚌 유·스퀘어 탑승구로 들어가겠습니까?"; el.dataset.to = "usqGate"; el.dataset.at = JSON.stringify([Math.cos(g) * ri, -Math.sin(g) * ri, Math.atan2(Math.cos(g), -Math.sin(g))]); }, 150); }   /* asked first, as at every other door */
   if (IS_PARK) { /* hints on the spot, once a visit each: at the court, tap the hoop; at the history signs, tap a sign */
-    const HINT = [["hoop", 119, -112, 19, "🏀 농구장에 왔어요! 골대를 눌러 보세요. 게이지에 맞춰 슛하는 농구 게임을 할 수 있어요"], ["apt", 22, -166, 0, "🏠 아테라 단지를 눌러 보세요! 아파트나 아래 상가·주차장을 누르면 쿠모의 집에 들어갈 수 있어요", -30, 75], ["brandC", 4.5, -106.4, 0, "🪧 표지판을 눌러 보세요! 금호건설 주거 브랜드와 상호 변천사를 연도별로 크게 볼 수 있어요", -16, 25], ["brandK", 57.8, -106.4, 0, "🪧 표지판을 눌러 보세요! 금호고속 거북이 로고와 상호 변천사를 연도별로 크게 볼 수 있어요", 41, 69]];
+    const HINT = [["apt", 22, -166, 0, "🏠 아테라 단지를 눌러 보세요! 아파트나 아래 상가·주차장을 누르면 쿠모의 집에 들어갈 수 있어요", -30, 75], ["brandC", 4.5, -106.4, 0, "🪧 표지판을 눌러 보세요! 금호건설 주거 브랜드와 상호 변천사를 연도별로 크게 볼 수 있어요", -16, 25], ["brandK", 57.8, -106.4, 0, "🪧 표지판을 눌러 보세요! 금호고속 거북이 로고와 상호 변천사를 연도별로 크게 볼 수 있어요", 41, 69]];
     const seenH = (k) => { try { return sessionStorage.getItem("kumhoHint_" + k) === "1"; } catch (e) { return false; } };
     setInterval(() => { if (mode !== "outside" || busy || RIDE.on || AIR.on || AIR.out || document.hidden || document.querySelector(".tutBox")) return;
       for (const [k, x, z, rad, t, x0, x1] of HINT) { if (seenH(k) || (k === "apt" && (OUT.fromHome || (() => { try { return sessionStorage.getItem("kumhoGuideGot") === "1"; } catch (e) { return false; } })()))) continue; const near = x0 != null ? cam.x > x0 - 3 && cam.x < x1 + 3 && Math.abs(cam.z - z) < 7 : Math.hypot(cam.x - x, cam.z - z) < rad;
-        if (near) { try { sessionStorage.setItem("kumhoHint_" + k, "1"); } catch (e) {} taxiCSS(); taxiToast(t, 6000); break; } } }, 700); }
+        if (near) { try { sessionStorage.setItem("kumhoHint_" + k, "1"); } catch (e) {} taxiCSS(); taxiToast(t, 6000); break; } } }, 700);
+    let onCourt = false; setInterval(() => { if (mode !== "outside" || AIR.on || AIR.out || document.hidden) return; const inC = cam.x > 103 && cam.x < 135 && cam.z > -124 && cam.z < -104;   /* each time 쿠모 steps onto the basketball court */
+      if (inC && !onCourt && !HOOP && !busy && !document.querySelector(".tutBox")) { taxiCSS(); taxiToast("🏀 농구 백보드를 클릭하면 농구게임을 할 수 있어!", 6000); } onCourt = inC; }, 500); }
   function pageGo(to) {
     window.__pageLeaving = true; busy = true;
     try { if (RIDE.ok) sessionStorage.setItem("kumhoBusGot", "1"); } catch (e) {}
@@ -12465,8 +12467,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       f.addEventListener("click", (e) => { e.stopPropagation(); setAir(!AIR.on); }); ["pointerdown", "pointerup"].forEach((ev) => f.addEventListener(ev, (e) => e.stopPropagation())); }
     const lk = !airGot(), lab = AIR.on ? "↩ 지상으로" : lk ? "🔒 항공뷰" : "✈ 항공뷰";   /* locked: a padlock; just opened: a shimmer until it is first used */
     if (!$("airFxCss")) { const st = document.createElement("style"); st.id = "airFxCss"; st.textContent = ".airNew{animation:airNew 1.4s ease-in-out infinite!important;border-color:#ffd36a!important;color:#fff6d8!important}@keyframes airNew{0%,100%{box-shadow:0 0 0 0 rgba(255,211,106,.0),0 0 6px rgba(255,211,106,.5)}50%{box-shadow:0 0 0 4px rgba(255,211,106,.35),0 0 18px rgba(255,211,106,.95)}}.airLock{opacity:.78}"; document.head.appendChild(st); }
-    f.classList.remove("on"); const a2 = $("airBtn2"); if (a2) { a2.hidden = mode !== "outside"; a2.textContent = lab; a2.classList.toggle("airNew", !!AIR.fresh && !AIR.on); a2.classList.toggle("airLock", lk); }
-    tpLabel(); const b = $("skyChip") && $("skyChip").querySelector(".air"); if (!b) return; b.hidden = mode !== "outside"; b.textContent = lab; b.classList.toggle("airNew", !!AIR.fresh && !AIR.on); b.classList.toggle("airLock", lk); }
+    f.classList.remove("on"); const a2 = $("airBtn2"); if (a2) { a2.hidden = mode !== "outside"; a2.textContent = lab; a2.classList.toggle("airNew", (!!AIR.fresh && !AIR.on) || (AIR.on && !AIR.out)); a2.classList.toggle("airLock", lk); }
+    tpLabel(); const b = $("skyChip") && $("skyChip").querySelector(".air"); if (b) { b.hidden = mode !== "outside"; b.textContent = lab; b.classList.toggle("airNew", (!!AIR.fresh && !AIR.on) || (AIR.on && !AIR.out)); b.classList.toggle("airLock", lk); } airTip(); }
+  /* up in the sky: a bubble beside the button that brings 쿠모 back down, for the first moments of each flight */
+  function airTip() { let t = $("airTip"); const b = [$("skyChip") && $("skyChip").querySelector(".air"), $("airBtn2"), $("airFab")].find((e) => e && !e.hidden && e.getClientRects().length && getComputedStyle(e).display !== "none" && e.getBoundingClientRect().width > 10);
+    const show = mode === "outside" && AIR.on && !AIR.out && b && performance.now() - (AIR.tipT || 0) < 15000;
+    if (!show) { if (t) t.hidden = true; return; }
+    if (!t) { const st = document.createElement("style"); st.textContent = "#airTip{position:fixed;z-index:46;max-width:220px;background:rgba(255,255,255,.94);color:#2a2219;font:700 14px/1.45 system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;padding:9px 13px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.3);pointer-events:none;word-break:keep-all;animation:airTipB 1.2s ease-in-out infinite}#airTip[hidden]{display:none}#airTip:before{content:'';position:absolute;width:12px;height:12px;background:inherit;transform:rotate(45deg)}#airTip.r:before{left:-5px;top:calc(50% - 6px)}#airTip.d:before{top:-5px;left:var(--ax,20px)}@keyframes airTipB{50%{transform:translate(var(--bx,0),var(--by,0))}}";
+      document.head.appendChild(st); t = document.createElement("div"); t.id = "airTip"; t.textContent = "👆 여기를 누르면 지상으로 내려가요"; document.body.appendChild(t); }
+    t.hidden = false; const r = b.getBoundingClientRect(), right = r.right + 240 < innerWidth;
+    t.className = right ? "r" : "d"; t.style.setProperty("--bx", right ? "4px" : "0px"); t.style.setProperty("--by", right ? "0px" : "4px");
+    if (right) { t.style.left = r.right + 12 + "px"; t.style.top = r.top + r.height / 2 - t.offsetHeight / 2 + "px"; }
+    else { const l = Math.max(8, Math.min(innerWidth - t.offsetWidth - 8, r.left + r.width / 2 - 30)); t.style.left = l + "px"; t.style.top = r.bottom + 12 + "px"; t.style.setProperty("--ax", (r.left + r.width / 2 - l - 6) + "px"); } }
   // ---- third-person walker, outside only. The character (assets/character.glb: one skinned mesh, walk + run clips, ~0.7 MB) is fetched
   // only once the visitor is outside, kept in the scene (not the rebuilt street) so it loads once per visit; the camera rides behind it.
   const TP = { on: true, obj: null, mixer: null, act: {}, loading: false, fail: false, px: 0, pz: 0, spd: 0, rw: 0, k: 0, d: 4.2, started: false };
@@ -12572,7 +12584,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function setAir(on) {
     if (mode !== "outside" || busy || on === AIR.on || AIR.out) return;
     if (on && !airGot()) { taxiCSS(); taxiToast("🔒 항공뷰는 아직 잠겨 있어요 · 변천사 표지판 앞의 아라에게 말을 걸어 퀴즈를 8문제 이상 맞히면 열려요!", 4200); return; }
-    if (on && AIR.fresh) { AIR.fresh = false; }
+    if (on && AIR.fresh) { AIR.fresh = false; } if (on) AIR.tipT = performance.now();
     anim = null; hold = null; if (auto.on) setAuto(false); VK.v = 0;
     AIR.from = { x: cam.x, z: cam.z, y: cam.y, yaw: cam.yaw, pitch: cam.pitch }; AIR.t = 0;
     if (on) { AIR.back = Object.assign({}, AIR.from); AIR.a = 0; AIR.s = 1; AIR.p = 0; AIR.cx = 55; AIR.cz = -82; AIR.on = true; AIR.near = camera.near; camera.near = 1.5; camera.updateProjectionMatrix();   // more depth precision far off, so the ground never shimmers
