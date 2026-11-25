@@ -4206,13 +4206,17 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     { const pk = add(new THREE.BoxGeometry(TW, 2.6, 0.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 1.35, TZ + 0.15); pk.userData = { idx: "ticket", front: { win: [x0, cw, N], z: TZ + 1.0, r: 0 } }; PICK.push(pk); }   /* the ticket windows hand it out too */
     block(x0, x1, TZ - BD - 0.3, TZ + 0.42); }
   // ---- on the back of the ticket windows, facing the seats: the 금호고속 coaches today, framed — the standard coach and the premium one ----
-  { const BZ = -12.5 - 2.2 - 0.3, L = new THREE.TextureLoader(), fr = lam(0x2a2826), mat = lam(0xf7f4ee), W = 2.9, H = 1.75, Y = 1.85;
-    [[-3.4, "usqbus_normal", 1000 / 633, "일반 고속버스", "45인승 일반 고속버스"], [3.4, "usqbus_premium", 1000 / 565, "프리미엄 고속버스", "21인승 프리미엄 고속버스 'Premium Gold'"]].forEach(([x, k, ar, nm, cap]) => {
+  { const BZ = -12.5 - 2.2 - 0.3, L = new THREE.TextureLoader(), fr = lam(0x2a2826), mat = lam(0xf7f4ee), W = 4.4, H = 2.45, Y = 2.15;
+    { const wt = tex(1024, 256, (g, cw, ch) => { g.fillStyle = "#b98d5e"; g.fillRect(0, 0, cw, ch); let sd = 7; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;   /* the wall behind: warm oak slats, a dark gap between each */
+        for (let x = 0; x < cw; x += 32) { const l = 0.88 + r() * 0.2; g.fillStyle = `rgb(${Math.round(185 * l)},${Math.round(141 * l)},${Math.round(94 * l)})`; g.fillRect(x, 0, 27, ch); for (let k = 0; k < 6; k++) { g.fillStyle = `rgba(${r() < 0.5 ? "90,60,30" : "235,205,160"},${0.08 + r() * 0.1})`; g.fillRect(x + r() * 24, 0, 1 + r() * 2, ch); } g.fillStyle = "#3a2a1c"; g.fillRect(x + 27, 0, 5, ch); } }, 22 / 4, 1);
+      const wp = add(new THREE.PlaneGeometry(22, 4.6 - 0.62), new THREE.MeshLambertMaterial({ map: wt }), 0, 0.62 + (4.6 - 0.62) / 2, BZ - 0.006); wp.rotation.y = Math.PI;
+      const bs = add(new THREE.PlaneGeometry(22, 0.62), lam(0x34302b), 0, 0.31, BZ - 0.006); bs.rotation.y = Math.PI; }   /* a dark base under the slats */
+    [[-4.3, "usqbus_normal", 1000 / 633, "일반 고속버스", "45인승 일반 고속버스"], [4.3, "usqbus_premium", 1000 / 565, "프리미엄 고속버스", "21인승 프리미엄 고속버스 'Premium Gold'"]].forEach(([x, k, ar, nm, cap]) => {
       const h = H, w = Math.min(W, h * ar); box(w + 0.16, h + 0.16, 0.05, fr, x, Y, BZ - 0.025); box(w + 0.06, h + 0.06, 0.02, mat, x, Y, BZ - 0.055);
       const t = L.load("assets/" + k + ".jpg"); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO;
       const pl = add(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, toneMapped: false }), x, Y, BZ - 0.068); pl.rotation.y = Math.PI; pl.userData = { idx: "frame", cap: "금호고속 " + cap }; PICK.push(pl);
       const lt = tex(512, 96, (g, cw, ch) => { g.fillStyle = "#1d1c1a"; g.fillRect(0, 0, cw, ch); g.fillStyle = "#e9dcc0"; g.font = `700 40px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("금호고속 · " + nm, cw / 2, ch / 2 + 2); });
-      const lb = add(new THREE.PlaneGeometry(1.5, 0.28), new THREE.MeshBasicMaterial({ map: lt, toneMapped: false }), x, Y - h / 2 - 0.32, BZ - 0.03); lb.rotation.y = Math.PI; }); }
+      const lb = add(new THREE.PlaneGeometry(1.8, 0.34), new THREE.MeshBasicMaterial({ map: lt, toneMapped: false }), x, Y - h / 2 - 0.3, BZ - 0.03); lb.rotation.y = Math.PI; }); }
   // ---- an advertising screen between the ticket windows and the information desk: 금호팔도마켓, the online market run by 금호익스프레스; a tap opens its site ----
   { const AX = 16.4, AZ = -10.9, G = new THREE.Group(); G.position.set(AX, 0, AZ); G.rotation.y = -0.25; scene.add(G); const dk = lam(0x26282b), st = new THREE.MeshPhongMaterial({ color: 0xc9cdd1, shininess: 90, specular: 0x888888 });
     const gb = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); G.add(o); return o; };
