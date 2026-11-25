@@ -6115,20 +6115,13 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (fem.length) return fem[Math.min(1, fem.length - 1)];
     return vs[0] || null;
   }
-  // 음성 읽기를 지원하지 않거나 한국어 음성이 없는 기기에서는 버튼을 숨김 (음성 목록이 늦게 오는 기기를 위해 몇 초간 다시 확인)
-  function docAvail() {
-    const b = $("docBtn"); if (!b) return;
-    const phone = matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 600;   // phones: no voice guide (tablets and PCs keep it)
-    const ok = !phone && !!TTS && TTS.getVoices().some((v) => /^ko/i.test(v.lang));
-    b.hidden = !ok;
-    if (!ok && DOC.on) setDocent(false);
-  }
-  if ($("docBtn")) $("docBtn").hidden = true;
-  if (TTS) {
-    DOC.voice = docVoice(); docAvail();
-    TTS.onvoiceschanged = () => { DOC.voice = docVoice(); docAvail(); };
-    let tries = 0; const iv = setInterval(() => { DOC.voice = docVoice(); docAvail(); if (!$("docBtn") || !$("docBtn").hidden || ++tries > 12) clearInterval(iv); }, 500);
-  }
+  // the narration is recorded: one mp3 per card (audio/docent/<hash of the text>.mp3), the same voice and pauses on every device; the device's own voice only for a card without a recording
+  const DOC_FILES = new Set("008ceaaa,0162ecaa,01d505a2,01e9cfa7,023dc4f3,0278f6bd,04204379,0450309d,0496cb14,04b3ff4f,063ec5cb,071530aa,084f92cb,0851eaea,0b31c32b,0b3b58de,0cbc80a7,0f01419a,0f897dab,1254c896,1278d51c,128beef4,12950719,131e9cb3,140e7bb2,152dc18d,176a6107,1773ae34,177bbfef,1792af50,17993bd2,17e41d7e,17fe28a9,184a55e4,19790ffa,1a041f2d,1acbc966,1b34bb7f,1ca49f8d,1f4a7add,1f5c03fd,1faae7e6,201e8c50,20d7649f,20dcca10,2224e06d,228318bc,22e1fb72,23c0b0f9,24bb1cbd,250bb160,25bcba58,25ce6409,25f4d8e0,26242b29,2673e866,269f13fe,26ae043f,27a2407e,28cb6129,2b26fd53,2c741354,2de44b80,2e10b4aa,2e314b40,2e35c5aa,2ed7ca42,2f3fd27d,3185f3ab,318b64ee,31a3f421,31d3f011,339b3406,33b2b807,33f81c6f,34ea9d4a,3604183f,361d4009,371163a4,37b232a5,37b3ca40,381caf86,38751899,38915fcd,39950065,39ca264d,3a9d828d,3ba64b97,3c3a2f2f,3cd10193,3d7488a3,3db4dc58,3e1ad10f,3ec222ef,3f361942,401bd1bc,40270b4d,43503b67,441b1aef,44207f59,44395c7a,444a8a56,44ea1d9e,4564a30f,46717d5d,4678e6ea,467f363d,47889769,478fa682,47b83401,4a04edb1,4a2e0923,4afbf032,4b76e705,4c2d9359,4cbc8e92,4cbe188d,4ccc4d5b,4d56e7cb,4f6d454e,4f9c8038,4ffcade5,50e9fd46,51d855f5,52067493,521dd488,52a76f82,5322c73e,532a7e97,535c1275,535d0b02,53a70752,54c64e2a,55c53ba9,55d7e750,55fc4aea,55fc9090,56617a1c,56abc57e,56bc1615,575fc8a9,579a1fc8,59d2609b,59fcf3fd,5a3c0b7c,5ae15654,5b55c2f4,5b606315,5b8a9676,5bf091d0,5d28bef6,5dbdd9a9,606506b9,60e25494,6135eb4e,6169f1a4,616d81ee,619a9ff5,624fdd72,62fc654d,6307c645,63e248c2,64158a45,641c60d3,64952949,6495fd2b,656aa3c7,65cef857,65f17cc9,67bfff62,67d11006,683d9870,6a3d5ce2,6aa7d5e9,6b2dc22c,6b38cd84,6b9b71cc,6bf90579,6c438700,6c8e7313,6cc9c9ff,6daa3b59,6dd9cc81,6dde1f7e,6e7dd37c,6e91b8cb,6eb11c8e,6f1a9e07,6f6186b1,6ffaa316,70401ada,7069f5b9,7081d98a,70853411,708704a7,7136a186,717afb9e,7224b32b,72c0eafd,72ca3f7f,742128c0,748b0882,74fdc45f,754febfc,760f62aa,763c3f3c,76669416,777c60a8,787d77ac,7880346f,7936686d,7a8fb66c,7b247b46,7b268bd4,7b3261be,7bede578,7bf7ad3f,7e318555,7efe7b6b,7f5aea82,7fd3ebb3,81a84ea9,82091e31,828d7c7c,8301a296,834d8c6c,838ead7c,8402d241,841fa7f4,84679296,858448e4,869ee34b,86ac12ba,8794d31d,87ddc5e9,8917f358,8ba6ee19,8bcd6e9b,8d911f65,8eb2b4de,8f051a68,8fbb4c22,902144bd,90e1bff5,90f33531,9143577b,937dd0c2,9494be81,94c56fc4,9538b754,957d1a21,95b2ff77,95fa8cc8,96ab8b6f,9717999f,984d8c93,987b7e8f,98b1ec99,98bf894b,993f5889,99637bc9,99bc3903,9a2b459d,9a55f187,9aa56bdc,9ba474d9,9c6646a4,9ce3bc87,9ce4a6c1,9f3018e8,9f33c1b4,a1995699,a2244dec,a2e53986,a3b23f2d,a40156de,a4f73959,a62837ea,a65917b6,a6a48b0e,a6aad2f8,a6ee7521,a7044532,a75b3c3a,a7cf009e,a8cccdea,a9d3beeb,aa1b9fee,aa4c4be4,aade87f7,aba1651a,aba34995,abdcea08,acc0ed47,adeebc9f,af41c515,affa982f,b14305e8,b2fef500,b342ee66,b43fd115,b5524279,b5f2ece4,b6531b7f,b88376e3,b8c9281f,b8f1cf28,b8f89c90,b972c848,ba124e6b,ba4d42a4,bb14d74c,bbd7188c,bc049a39,bc587910,bc93a61a,bdf5dd5b,be080d61,be76d197,bf734fb7,bff16d48,c0658a28,c1d4881a,c23d844a,c2822b1d,c4a9de6d,c4d29dbf,c5079149,c5a1582f,c5d6af56,c7083345,c8122ba7,ca4d2bed,ca504c9b,cc167c14,cd248076,cd316383,ce027a6e,ce415198,ce99a154,ceebef6f,cf313999,d03a5bb0,d03b3dbd,d1a2a67f,d3bc740e,d528664f,d54dd467,d68525f1,d6eb3268,d71f6b76,d7a17a23,d7d728da,d8a28bc9,d8ba5027,db0df04a,dbd107b2,dc8bb90d,ddc6b629,ddff5f32,df1963f2,df8d7b9a,e0580f7f,e0772926,e081c047,e0ec0a18,e48c1de3,e4a6ea8d,e4ab9b2a,e538e922,e58465e9,e742d7b0,e748d762,e8e94c5b,e936fe08,e9caccaf,ea11ca93,ea7f1626,eb76bf1a,ec36a50d,ed4834a5,ef274fbb,f0f6f750,f120da6a,f1655241,f18fc433,f1fd0200,f2739e58,f34a42f4,f36619c9,f3bc960f,f3d1e1ad,f3e69beb,f4094984,f40b7c01,f4a0e8d1,f5069592,f89ae08c,f8fd283f,fb47ed87,fb5890ef,fbc5f127,fc8879b2,fd5498e7,fd6aa54d,fe5bd601,ff5f0069,ffe80c27".split(","));
+  const docHash = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, "0"); };
+  const DOC_AUD = new Audio(); DOC_AUD.preload = "auto";
+  function docAvail() { const b = $("docBtn"); if (b) b.hidden = false; }
+  docAvail();
+  if (TTS) { DOC.voice = docVoice(); TTS.onvoiceschanged = () => { DOC.voice = docVoice(); }; }
   function docText(s) {
     const txt = (id) => { const el = $(id); if (!el || el.hidden) return ""; if (id !== "cTitle") return el.textContent.trim(); const c = el.cloneNode(true); c.querySelectorAll(".nb").forEach((n) => n.remove()); return c.textContent.trim(); };
     if (s.kind === "map" || s.kind === "kiosk" || s.kind === "overview") return [txt("cTitle"), txt("cCap")].filter(Boolean).join(". ");
@@ -6141,36 +6134,44 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!SND.ctx || !SND.bgmGain) return;
     const t = SND.ctx.currentTime, g = SND.bgmGain.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(bgmLevel(on), t + 0.6);
   }
-  function docentStop() { if (TTS) TTS.cancel(); DOC.speaking = false; DOC.key = ""; duck(false); }
+  function docentStop() { if (TTS) TTS.cancel(); try { DOC_AUD.pause(); } catch (e) {} DOC.speaking = false; DOC.key = ""; duck(false); }
   function docentSay(s, force) {
-    if (!DOC.on || !TTS || !s) return;
+    if (!DOC.on || !s) return;
     const key = mode + "|" + hallIndex + "|" + cur;
     if (!force && key === DOC.key) return;
     DOC.key = key;
     const text = docText(s);
-    TTS.cancel(); DOC.speaking = false;
+    if (TTS) TTS.cancel(); try { DOC_AUD.pause(); } catch (e) {} DOC.speaking = false;
     if (!text) { DOC.done = performance.now(); return; }
+    const end = () => { if (DOC.key === key) { DOC.speaking = false; DOC.done = performance.now(); duck(false); } };
+    duck(true);   // lower at once
+    DOC.speaking = true;   // count as speaking until it ends, so the auto tour waits
+    DOC.until = performance.now() + 4000 + text.length * 260;   // safety: never hold the tour longer than the text could take
+    const h = docHash(text);
+    if (DOC_FILES.has(h)) {
+      DOC_AUD.onended = DOC_AUD.onerror = end; DOC_AUD.onloadedmetadata = () => { if (DOC.key === key && isFinite(DOC_AUD.duration)) DOC.until = performance.now() + DOC_AUD.duration * 1000 + 3000; };
+      DOC_AUD.src = R("audio/docent/" + h + ".mp3"); try { DOC_AUD.load(); } catch (e) {}
+      setTimeout(() => { if (DOC.key === key && DOC.on) { const p = DOC_AUD.play(); if (p && p.catch) p.catch(end); } }, 350);
+      return; }
+    if (!TTS) { end(); return; }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "ko-KR"; if (DOC.voice) u.voice = DOC.voice; u.rate = 1.0; u.pitch = 1.0; u.volume = 1;
-    duck(true); // lower at once: some browsers fire onstart late or not at all
     u.onstart = () => { DOC.speaking = true; duck(true); };
-    u.onend = u.onerror = () => { if (DOC.key === key) { DOC.speaking = false; DOC.done = performance.now(); duck(false); } };
-    DOC.speaking = true;   // count as speaking until it ends, so the auto tour waits
-    DOC.until = performance.now() + 2500 + text.length * 260;   // safety: never hold the tour longer than the text could take
+    u.onend = u.onerror = end;
     setTimeout(() => { if (DOC.key === key) TTS.speak(u); }, 350);
   }
+  const DOC_SILENT = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//NwwAAAAAAAAAAAAEluZm8AAAAPAAAABgAAAykAWlpaWlpaWlpaWlpaWlpaWnt7e3t7e3t7e3t7e3t7e3t7nJycnJycnJycnJycnJycnL29vb29vb29vb29vb29vb293t7e3t7e3t7e3t7e3t7e3t7/////////////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQCowAAAAAAAAMpso+sIAAAAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NCxKMAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NAxKQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80LEowAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=";
   function setDocent(on) {
-    DOC.on = on && !!TTS;
+    DOC.on = !!on;
     const b = $("docBtn");
     if (b) { b.setAttribute("aria-pressed", String(DOC.on)); b.textContent = DOC.on ? "🎧 해설 끄기" : "🎧 음성 해설"; }
-    if (!TTS && on) { if (b) b.textContent = "음성 해설 미지원"; return; }
     if (DOC.on) {
+      try { DOC_AUD.src = DOC_SILENT; const p = DOC_AUD.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}   /* inside the tap: lets phones (iOS) play the narration that follows on their own */
       duck(false);
-      if (!docVoice() && b) b.title = "이 기기에 한국어 음성이 없어 기본 음성으로 읽습니다.";
       docentSay(stops[cur], true);
     } else docentStop();
   }
-  document.addEventListener("visibilitychange", () => { if (document.hidden && TTS) TTS.pause(); else if (TTS) TTS.resume(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) { if (TTS) TTS.pause(); if (DOC.speaking) try { DOC_AUD.pause(); } catch (e) {} } else { if (TTS) TTS.resume(); if (DOC.on && DOC.speaking && DOC_AUD.paused && DOC_AUD.currentTime > 0 && !DOC_AUD.ended) DOC_AUD.play().catch(() => {}); } });
 
   /* ---------- automatic tour ---------- */
   const auto = { on: false, next: 0, dwell: 0, hold: 0 };
@@ -6193,6 +6194,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const s = stops[cur];
     if (cur < stops.length - 1) { setStop(cur + 1); return; }
     if (s && s.kind === "door") {
+      if (s.target.lobby && mode === "hall" && hallIndex + 1 < DATA.length) { auto.hold = performance.now() + 4500; walkThrough(s.target, { hall: hallIndex + 1 }); return; }   /* the exit door leads to the lobby, but the auto tour carries on into the next hall */
       if (s.target.lobby) { setAuto(false); walkThrough(s.target); return; }
       auto.hold = performance.now() + 4500;
       walkThrough(s.target);
@@ -8373,7 +8375,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
               g.fillStyle = "#7d776c"; g.font = `600 34px ${FONT}`; g.fillText(BR[i][1], W / 2, 572); t.needsUpdate = true; };
             paint(null); const im = new Image(); im.onload = () => paint(im); im.src = LOGOS[i]; return t; };
           /* the back of each sign, toward the ARTERA blocks: 금호건설 상호 변천사, 1967 → 2021, post by post with the brands on the front */
-          const CN = [["1967", "제일토목건축(주)"], ["1978", "금호건설(주)"], ["1984", "광주고속(주)"], ["1993", "(주)금호건설"], ["1999", "금호산업(주)"], ["2021 —", "금호건설(주)"]];
+          const CN = [["1967", "제일토목건축(주)"], ["1978", "금호건설(주)"], ["1984", "광주고속(주)"], ["1993", "(주)금호건설"], ["1999", "금호산업(주)"], ["2021 —", "금호건설(주)"]]; OUT.cnames = CN;
           const cTex = (k) => canvasTex(512, 640, (g, W, H) => { const last = k === 5; g.fillStyle = "#fbfaf7"; g.fillRect(0, 0, W, H); g.fillStyle = last ? "#1d2a5a" : "#c9a86a"; g.fillRect(0, 0, W, 12);
             g.fillStyle = "#9a8f7c"; g.textAlign = "center"; g.font = `600 30px ${FONT}`; g.fillText("상호", W / 2, 150); g.fillStyle = last ? "#1d2a5a" : "#2a2c30"; g.font = `800 66px ${FONT}`;
             const nm = CN[k][1]; let fs = 66; while (g.measureText(nm).width > W - 60 && fs > 30) { fs -= 2; g.font = `800 ${fs}px ${FONT}`; } g.fillText(nm, W / 2, 290);
@@ -8408,7 +8410,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
               paint(null); const im = new Image(); im.onload = () => paint(im); im.src = TL[k][1]; return t; };
             const TT = TL.map((_, k) => new THREE.MeshBasicMaterial({ map: tTex(k), toneMapped: false }));
             /* the back, toward the ARTERA blocks: 금호고속 상호 변천사, two (or three) names a sign, read left to right from that side */
-            const BK = [[["1946", "광주택시"], ["1948", "광주여객자동차(주)"]], [["1972", "(주)광주고속"], ["1993", "(주)금호건설"]], [["1999", "금호산업(주) 고속사업부"], ["2011", "금호고속(주)"]], [["2017", "금호홀딩스(주)"], ["2018", "금호고속(주)"], ["2020 —", "금호익스프레스(주)"]]];
+            const BK = [[["1946", "광주택시"], ["1948", "광주여객자동차(주)"]], [["1972", "(주)광주고속"], ["1993", "(주)금호건설"]], [["1999", "금호산업(주) 고속사업부"], ["2011", "금호고속(주)"]], [["2017", "금호홀딩스(주)"], ["2018", "금호고속(주)"], ["2020 —", "금호익스프레스(주)"]]]; OUT.turtles = TL; OUT.knames = BK.flat(); OUT.kOff = BK.map((_, j) => BK.slice(0, j).flat().length);
             const kTex = (k) => canvasTex(512, 640, (g, W, H) => { g.fillStyle = "#fbfaf7"; g.fillRect(0, 0, W, H); g.fillStyle = "#f26a1f"; g.fillRect(0, 0, W, 12); g.textAlign = "center";
               const L = BK[k], n = L.length, top = 48, span = (H - top - 24) / n;
               L.forEach(([y, nm], j) => { const cy = top + span * j; if (j) { g.fillStyle = "rgba(242,106,31,.35)"; g.fillRect(70, cy, W - 140, 3); }
@@ -9922,10 +9924,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     addRouteArrows();
     buildBarrier();
     let target, label2, preview;
-    if (hi + 1 < DATA.length) {
-      target = { hall: hi + 1 }; preview = DATA[hi + 1].door || DATA[hi + 1].items[0].file;
-      label2 = { title: HL(hi + 1), sub: HSUB(hi + 1), kicker: "다음 전시관" };
-    } else {
+    { /* every hall's exit leads back to the lobby, not on into the next hall */
       target = { lobby: true }; preview = DATA[0].door || DATA[0].items[0].file;
       label2 = { title: "로비로 돌아가기", sub: "금호 아카이브", kicker: "EXIT" };
     }
@@ -10117,14 +10116,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       renderer.dispose(); renderer.forceContextLoss(); } catch (e) {} }
   addEventListener("pagehide", freeGL); addEventListener("pageshow", (e) => { if (e.persisted) location.reload(); });   // never come back to a page whose GL was handed back
   // ---- a brand post, large: the logo, the year, the name ----
-  function brandShow(i) { const B = OUT.brands; if (!B) return; let el = $("brandLB");
-    if (!el) { const st = document.createElement("style"); st.textContent = "#brandLB{position:fixed;inset:0;z-index:100500;background:rgba(10,12,20,.88);display:flex;align-items:center;justify-content:center}#brandLB[hidden]{display:none}#brandLB .cd{background:#fbfaf7;border-radius:18px;width:min(560px,calc(100vw - 32px));padding:34px 28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);border-top:8px solid #c9a86a}#brandLB img{max-width:72%;max-height:200px;image-rendering:auto;margin:6px auto 18px;display:block}#brandLB .y{font:800 46px 'Helvetica Neue',Arial,sans-serif;color:#1d2a5a}#brandLB .n{font-size:20px;font-weight:700;color:#2a2c30;margin-top:6px}#brandLB .e{font-size:13px;letter-spacing:.14em;color:#9a8f7c;margin-top:4px}#brandLB .tl{display:flex;justify-content:center;gap:8px;margin-top:22px;flex-wrap:wrap}#brandLB button{background:#efe9dd;border:1px solid #d6cdb9;border-radius:999px;padding:7px 12px;font:600 13px inherit;font-family:inherit;color:#2a2c30;cursor:pointer}#brandLB button.on{background:#1d2a5a;color:#fff;border-color:#1d2a5a}#brandLB .x{position:absolute;top:16px;right:16px;background:rgba(30,30,34,.85);color:#f2e7d2;border-color:rgba(201,168,106,.6)}";
-      document.head.appendChild(st); el = document.createElement("div"); el.id = "brandLB"; el.hidden = true; el.innerHTML = '<button type="button" class="x">닫기 ✕</button><div class="cd"><img alt=""><div class="y"></div><div class="n"></div><div class="e"></div><div class="tl"></div></div>'; document.body.appendChild(el);
-      el.querySelector(".tl").innerHTML = B.map((b, j) => `<button type="button" data-i="${j}">${b[0].replace(" —", "")}</button>`).join("");
+  function brandShow(i, k = "brand") { const S = { brand: { L: OUT.brands, t: "금호건설 주거 브랜드 변천사", img: (j) => OUT.brandLogos[j], c: "#c9a86a", a: "#1d2a5a" },
+        cname: { L: OUT.cnames, t: "금호건설 상호 변천사", c: "#c9a86a", a: "#1d2a5a" },
+        turtle: { L: OUT.turtles && OUT.turtles.map((q) => [q[0], "금호고속 거북이 로고"]), t: "금호고속 거북이 로고 변천사", img: (j) => OUT.turtles[j][1], c: "#f26a1f", a: "#c8202a" },
+        kname: { L: OUT.knames, t: "금호고속 상호 변천사", c: "#f26a1f", a: "#c8202a" } }[k], B = S && S.L; if (!B) return; let el = $("brandLB");
+    if (!el) { const st = document.createElement("style"); st.textContent = "#brandLB{position:fixed;inset:0;z-index:100500;background:rgba(10,12,20,.88);display:flex;align-items:center;justify-content:center}#brandLB[hidden]{display:none}#brandLB .cd{background:#fbfaf7;border-radius:18px;width:min(560px,calc(100vw - 32px));padding:26px 28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);border-top:8px solid var(--c,#c9a86a)}#brandLB .h{font-size:13px;font-weight:700;letter-spacing:.12em;color:#9a8f7c;margin-bottom:10px}#brandLB img{max-width:72%;max-height:200px;image-rendering:auto;margin:6px auto 18px;display:block}#brandLB img[hidden]{display:none}#brandLB .y{font:800 46px 'Helvetica Neue',Arial,sans-serif;color:var(--a,#1d2a5a)}#brandLB .n{font-size:20px;font-weight:700;color:#2a2c30;margin-top:6px;word-break:keep-all}#brandLB.txt .n{font-size:clamp(24px,7vw,34px);font-weight:800;margin:10px 0 4px}#brandLB.txt .y{margin-top:18px}#brandLB .tl{display:flex;justify-content:center;gap:8px;margin-top:22px;flex-wrap:wrap}#brandLB button{background:#efe9dd;border:1px solid #d6cdb9;border-radius:999px;padding:7px 12px;font:600 13px inherit;font-family:inherit;color:#2a2c30;cursor:pointer}#brandLB button.on{background:var(--a,#1d2a5a);color:#fff;border-color:var(--a,#1d2a5a)}#brandLB .x{position:absolute;top:16px;right:16px;background:rgba(30,30,34,.85);color:#f2e7d2;border-color:rgba(201,168,106,.6)}";
+      document.head.appendChild(st); el = document.createElement("div"); el.id = "brandLB"; el.hidden = true; el.innerHTML = '<button type="button" class="x">닫기 ✕</button><div class="cd"><div class="h"></div><img alt=""><div class="y"></div><div class="n"></div><div class="tl"></div></div>'; document.body.appendChild(el);
       ["pointerdown", "pointerup", "wheel"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation()));
-      el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (b && b.dataset.i) brandShow(+b.dataset.i); else if ((b && b.classList.contains("x")) || e.target === el) el.hidden = true; });
-      document.addEventListener("keydown", (e) => { if (el.hidden) return; const k = e.key; if (k === "Escape") el.hidden = true; else if (k === "ArrowRight") brandShow(Math.min(B.length - 1, el._i + 1)); else if (k === "ArrowLeft") brandShow(Math.max(0, el._i - 1)); else return; e.preventDefault(); e.stopImmediatePropagation(); }, true); }
-    el._i = i; const b = B[i]; el.querySelector("img").src = OUT.brandLogos[i]; el.querySelector(".y").textContent = b[0]; el.querySelector(".n").textContent = b[1]; el.querySelector(".e").textContent = ""; el.querySelector(".e").hidden = true;
+      el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (b && b.dataset.i) brandShow(+b.dataset.i, el._k); else if ((b && b.classList.contains("x")) || e.target === el) el.hidden = true; });
+      document.addEventListener("keydown", (e) => { if (el.hidden) return; const k = e.key, n = el._n; if (k === "Escape") el.hidden = true; else if (k === "ArrowRight") brandShow(Math.min(n - 1, el._i + 1), el._k); else if (k === "ArrowLeft") brandShow(Math.max(0, el._i - 1), el._k); else return; e.preventDefault(); e.stopImmediatePropagation(); }, true); }
+    if (el._k !== k) { el._k = k; el._n = B.length; el.querySelector(".tl").innerHTML = B.map((b, j) => `<button type="button" data-i="${j}">${b[0].replace(" —", "")}</button>`).join("");
+      el.querySelector(".h").textContent = S.t; el.style.setProperty("--c", S.c); el.style.setProperty("--a", S.a); el.classList.toggle("txt", !S.img); }
+    el._i = i; const b = B[i], im = el.querySelector("img"); im.hidden = !S.img; if (S.img) im.src = S.img(i); else im.removeAttribute("src"); el.querySelector(".y").textContent = b[0]; el.querySelector(".n").textContent = b[1];
     el.querySelectorAll(".tl button").forEach((t) => t.classList.toggle("on", +t.dataset.i === i)); el.hidden = false; }
   // ---- the kiosk's large view: the archive's own photo view (photo, year, title, caption, story), with ◀ ▶ through the hall and on into the next ----
   const KLB = { on: false, h: 0, i: 0 };
@@ -10157,7 +10160,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!target.outside && IS_PARK) { pageGo(target.lobby ? { lobby: true } : { hall: target.hall }); return; }
     if (target.outside) buildOutside(); else if (target.lobby) buildLobby(); else buildHall(target.hall);
   }
-  function walkThrough(target) {
+  function walkThrough(target, go) {   // go: where to arrive instead of the door's own target (the auto tour, on from a hall's lobby door into the next hall)
     if (busy) return;
     const s = stops.find((t) => t.kind === "door" && t.target === target);
     const rec = doorFor(target);
@@ -10168,7 +10171,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       openDoor(rec, 900); if (rec) sfxDoor();
       setTimeout(() => {
         if (s) { const P = s.P || wp(s.side, s.u, 0, 0), n = s.n || normalOf(s.side, s.u), p = P.clone().addScaledVector(n, 0.5); moveTo({ x: p.x, z: p.z, yaw: Math.atan2(n.x, n.z), pitch: 0 }, false, 700); }
-        setTimeout(() => eraGo(target), reduce ? 0 : 450);
+        setTimeout(() => eraGo(go || target), reduce ? 0 : 450);
       }, reduce ? 0 : 850);
     }, reduce ? 0 : (s ? 650 : 0));
   }
@@ -11453,9 +11456,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }   // 도서관 할아버지 on his walk
     if (o.userData.idx === "signLink") { const lk = o.userData.link, P0 = OUT.signPos || [0, 0], FP = { x: P0[0] + 0.6, z: P0[1] + 3.6, yaw: 0, pitch: 0.12 };   /* first tap from afar: walk up in front of the fingerpost; then a tap on an arrow opens its site */
       if (Math.hypot(cam.x - P0[0], cam.z - P0[1]) > 7 && !RIDE.on) { moveTo(FP); return; } taxiCSS(); taxiToast(`🔗 ${lk.n} 홈페이지를 새 창으로 열어요`, 2200); try { window.open(lk.url, "_blank", "noopener"); } catch (e) {} return; }
-    if (o.userData.idx === "turtle") { const B = OUT.turtlePos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 }; moveTo(FP); return; }   // a 금호고속 sign: stand square in front of it, on whichever side
+    if (o.userData.idx === "turtle") { const B = OUT.turtlePos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 };   // a 금호고속 sign: first tap, stand square in front of it on whichever side; then the marks (front) or the company's names (back), year by year
+      if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - FP.yaw)) > 0.25) { moveTo(FP); return; } brandShow(back ? OUT.kOff[o.userData.i] : o.userData.i, back ? "kname" : "turtle"); return; }
     if (o.userData.idx === "brand") { const B = OUT.brandPos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 };   // first tap: stand square in front of that post (on whichever side 쿠모 is)
-      if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - FP.yaw)) > 0.25) { moveTo(FP); return; } if (!back) brandShow(o.userData.i); return; }   // a residential-brand post: that brand, large (from the ARTERA side the sign shows the company's names, read where it stands)
+      if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - FP.yaw)) > 0.25) { moveTo(FP); return; } brandShow(o.userData.i, back ? "cname" : "brand"); return; }   // a residential-brand post: that brand, large (from the ARTERA side the sign shows the company's names, read where it stands)
     if (o.userData.idx === "kiosk2") { const KP = { x: -31, z: -33 + 7.2, yaw: 0, pitch: 0.06 };   // first tap: come round to stand square in front of the screen
       if (Math.hypot(cam.x - KP.x, cam.z - KP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - KP.yaw)) > 0.25) { moveTo(KP); return; } if (OUT.kiosk) OUT.kiosk.tap(hitUV); return; }   // the park kiosk: a hall, a page, or a photo large   // into the library (library.html)
     if (o.userData.idx === "bigScreen") { if (SCR.at && !anim && Math.hypot(cam.x - SCR.at.x, cam.z - SCR.at.z) < 1.5) screenBig(); else screenFace(); return; }   // first click: walk to face it; again: see it full size
@@ -11807,12 +11811,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (NPC.aW) { NPC.aW.setEffectiveWeight(NPC.ww); NPC.aW.timeScale = 0.75; } if (NPC.aT) NPC.aT.setEffectiveWeight(NPC.tw * (1 - NPC.ww)); if (NPC.aI) NPC.aI.setEffectiveWeight((1 - NPC.tw) * (1 - NPC.ww));
     if (NPC.mix) NPC.mix.update(dt); }
   // talking: a speech box over the bottom of the screen, typed out (the same as in the library)
-  function npcSay(lines, done) { let el = $("npcDlg");
+  function npcSay(lines, done, who) { let el = $("npcDlg");
     if (!el) { const st = document.createElement("style"); st.textContent = `#npcDlg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:min(720px,calc(100vw - 32px));z-index:100400;background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:26px 24px 20px;box-shadow:0 10px 30px rgba(0,0,0,.35);cursor:pointer;box-sizing:border-box}#npcDlg[hidden]{display:none}
 #npcDlg .nm{position:absolute;left:18px;top:-15px;background:#5a3b22;color:#f6ead2;font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px}#npcDlg .tx{font-size:19px;font-weight:600;line-height:1.6;min-height:1.6em}#npcDlg .nx{position:absolute;right:16px;bottom:8px;font-size:12px;color:#9a7a4e}`;
       document.head.appendChild(st); el = document.createElement("div"); el.id = "npcDlg"; el.hidden = true; el.innerHTML = '<div class="nm">도서관 할아버지</div><div class="tx"></div><div class="nx">▼ 눌러서 계속</div>'; document.body.appendChild(el);
       ["pointerdown", "pointerup"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation())); el.addEventListener("click", (e) => { e.stopPropagation(); if (el._next) el._next(); }); }
-    const tx = el.querySelector(".tx"); let li = 0, timer = 0; el.hidden = false; NPC.talk = true;
+    el.querySelector(".nm").textContent = who || "도서관 할아버지"; const tx = el.querySelector(".tx"); let li = 0, timer = 0; el.hidden = false; NPC.talk = true;
     const show = () => { const t = lines[li]; let c = 0; clearInterval(timer); tx.textContent = ""; timer = setInterval(() => { c++; tx.textContent = t.slice(0, c); if (c >= t.length) { clearInterval(timer); timer = 0; } }, 40); };
     el._next = () => { if (timer) { clearInterval(timer); timer = 0; tx.textContent = lines[li]; return; } li++; if (li < lines.length) show(); else { el.hidden = true; el._next = null; NPC.talk = false; NPC.wait = 2; if (done) done(); } };
     show(); }
@@ -11844,6 +11848,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       { k: "hoop", n: "엔조이코트", d: "골대를 누르고 게이지에 맞춰 슛! 농구게임을 해 보세요.", r: [930, 385, 1228, 548], at: [119, -114.5], st: [119, -101] },
       { k: "screen", n: "대형 전광판", d: "금호의 사진이 돌아가며 나오는 큰 전광판이에요.", r: [965, 582, 1112, 702], at: sc ? [sc.x, sc.z] : [90, -60], st: sc ? [sc.x, sc.z + 12] : [90, -48] },
       { k: "usq", n: "유·스퀘어", d: "거리 끝 광주 종합버스터미널 유·스퀘어예요.", r: [1262, 212, 1522, 475], at: [240, -34], st: [240, -4] },
+      { k: "apt", n: "아테라 아파트 단지 · 쿠모의 집", d: "공원 뒤 아테라 단지예요. 입구를 누르면 실제 아테라 아파트를 반영한 쿠모의 집에 들어갈 수 있어요.", r: [540, 62, 1210, 168], at: [22, -190], st: [22, -182.6] },
+      { k: "brandC", n: "금호건설 변천사", d: "주거 브랜드(앞면)와 상호(뒷면)의 변천을 표지판으로 볼 수 있어요. 표지판을 누르면 연도별로 크게 보여요.", r: [476, 290, 720, 354], at: [5, -106.4], st: [5, -101] },
+      { k: "brandK", n: "금호고속 변천사", d: "거북이 로고(앞면)와 상호(뒷면)의 변천을 표지판으로 볼 수 있어요. 표지판을 누르면 연도별로 크게 보여요.", r: [812, 290, 1052, 354], at: [55, -106.4], st: [55, -101] },
+      { k: "sign", n: "홈페이지 이정표", d: "화살표를 누르면 금호 계열사 홈페이지가 새 창으로 열려요.", r: [868, 648, 996, 724], at: [60, -40], st: [60, -36] },
       { k: "archive", n: "금호 아카이브", d: "금호 80년의 기록. 1관부터 특별관까지 둘러볼 수 있어요.", r: [300, 822, 1240, 918], at: [0, 27], st: [0, 11] } ]; };
   // world (x, z) → picture: the picture is simplified, so 쿠모's spot is blended from fixed matching points (inverse-distance weighting)
   const MAP_ANCH = [[0, 1, 760, 780], [-100, 1, 70, 780], [200, 1, 1330, 780], [0, 27, 760, 880], [-84, -113, 130, 300], [-65, -37, 135, 610], [-31, -33, 400, 610], [-14.5, -40.2, 350, 410],
@@ -11851,7 +11859,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function mapXY(x, z) { let sw = 0, su = 0, sv = 0; for (const [ax, az, u, v] of MAP_ANCH) { const d2 = (x - ax) ** 2 + (z - az) ** 2; if (d2 < 1) return [u, v]; const w = 1 / (d2 * d2); sw += w; su += w * u; sv += w * v; }
     return [Math.max(10, Math.min(MAP_W - 10, su / sw)), Math.max(10, Math.min(MAP_H - 10, sv / sw))]; }
   function mapSVG(mini) { const pc = (v, t) => (v / t * 100).toFixed(2) + "%";
-    let h = `<div class="pm" style="position:relative;width:100%;height:100%"><img src="${R("assets/park-map.jpg")}" alt="아테라 타운 안내도" style="width:100%;height:100%;display:block;object-fit:cover" draggable="false">`;
+    let h = `<div class="pm" style="position:relative;width:100%;height:100%"><img src="${R("assets/park-map.jpg")}?v=5" alt="아테라 타운 안내도" style="width:100%;height:100%;display:block;object-fit:cover" draggable="false">`;
     if (!mini) MAP_SPOTS().forEach((p) => { const [x0, y0, x1, y1] = p.r; h += `<div class="mk" data-k="${p.k}" style="position:absolute;left:${pc(x0, MAP_W)};top:${pc(y0, MAP_H)};width:${pc(x1 - x0, MAP_W)};height:${pc(y1 - y0, MAP_H)}"></div>`; });
     if (!mini) h += `<div id="mapMe" style="position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#f26a1f;border:3px solid #fff;box-shadow:0 0 0 3px rgba(242,106,31,.35),0 2px 6px rgba(0,0,0,.4);pointer-events:none"></div>`;
     return h + "</div>"; }
@@ -13007,7 +13015,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       if (arrive.ride) RIDE.ok = true;
       if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usqYard" && isFinite(arrive.x) && isFinite(arrive.z)) moveTo({ x: arrive.x, z: arrive.z, yaw: isFinite(arrive.yaw) ? arrive.yaw : 0, pitch: 0.04, fy: 0, y: EYE }, true);   /* out of U-square's coach yard on foot: on the same spot of the road out, in the park's own copy of the yard */ else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
         const viaDoor = (arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home" || arrive.from === "usquare" || arrive.from === "bus") && window.doorFx; if (viaDoor) doorFx.closed();   /* out through the doors: they open on the park */
-        warmOutside(() => { if (viaDoor) setTimeout(() => doorFx.open(), 700); requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); setTimeout(() => document.documentElement.classList.add("arrived"), 350); }); }   /* the cover stays up until the park is fully ready (warmOutside) */
+        warmOutside(() => { if (viaDoor) setTimeout(() => doorFx.open(), 700); requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); setTimeout(() => document.documentElement.classList.add("arrived"), 350);
+          let seen = true; try { seen = sessionStorage.getItem("kumhoParkIntro") === "1"; sessionStorage.setItem("kumhoParkIntro", "1"); } catch (e) {}
+          if (!arrive.from && !seen) setTimeout(() => { if (!$("npcDlg") || $("npcDlg").hidden) npcSay(["아테라 타운에 온 걸 환영해요! 이곳에서는 자유롭게 돌아다니며 금호의 이야기들을 둘러볼 수 있어요.", "금호 가치체계관과 금호도서관, 실제 아테라 아파트를 반영한 집 내부, 유·스퀘어 등이 구현되어 있어요.", "그 밖에도 곳곳에 다양한 즐길거리가 숨어 있답니다.", "길 건너편에 있는 할아버지에게 말을 걸면 아테라 타운 지도를 받을 수 있으니 참고하세요!"], null, "아테라 타운 안내"); }, 1200); }); }   /* the first time out of the archive (once a visit): a welcome in the same speech box as the library grandpa's; the cover stays up until the park is fully ready (warmOutside) */
       else if (arrive.hall != null) { leaveEasel(); go(() => { buildHall(arrive.hall); if (arrive.photo != null) { const si = stops.findIndex((s) => s.kind === "photo" && s.idx === arrive.photo); if (si >= 0) { cur = si; moveTo(focusFor(stops[si]), true); showCard(); syncChips(); refreshHiRes(); } } }); }
       else { enterArchive(); const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }
       if (!IS_PARK) setTimeout(() => document.documentElement.classList.add("arrived"), 350);   // the scene is up: the moving card fades (the park: once warmOutside is done)
