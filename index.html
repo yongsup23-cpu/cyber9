@@ -6150,7 +6150,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const h = docHash(text);
     if (DOC_FILES.has(h)) {
       DOC_AUD.onended = DOC_AUD.onerror = end; DOC_AUD.onloadedmetadata = () => { if (DOC.key === key && isFinite(DOC_AUD.duration)) DOC.until = performance.now() + DOC_AUD.duration * 1000 + 3000; };
-      DOC_AUD.src = R("audio/docent/" + h + ".mp3"); try { DOC_AUD.load(); } catch (e) {}
+      DOC_AUD.src = R("audio/docent/" + h + ".mp3") + "?v=2";   /* v: raised whenever recordings are redone, so phones fetch the new ones */ try { DOC_AUD.load(); } catch (e) {}
       setTimeout(() => { if (DOC.key === key && DOC.on) { const p = DOC_AUD.play(); if (p && p.catch) p.catch(end); } }, 350);
       return; }
     if (!TTS) { end(); return; }
