@@ -7265,6 +7265,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const inner = new THREE.Group(); inner.add(m); inner.scale.setScalar(k); inner.rotation.y = bs.x >= bs.z ? 0 : Math.PI / 2;   // nose (model -x) to -x: it pulls away to the left
       const g = new THREE.Group(); g.add(inner); g.position.set(0, 0.02, 1.75); world.add(g);
       const pb = new THREE.Mesh(new THREE.BoxGeometry(11.5, 3.6, 2.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.y = 1.8; pb.userData.idx = "outBus"; g.add(pb); pickables.push(pb);
+      carShadow(g, 11.5, Math.min(bs.x, bs.z) * k);
       OUT.bus = g; OUT.busProto = g; OUT.veh = g; OUT.kind = "bus"; OUT.st = "idle"; OUT.t = 0; OUT.x = 0; OUT.v = 0; g.position.x = 0;   // already standing at the stop when the park opens (it used to pull in)
       g.updateMatrixWorld(true);
       const rc = new THREE.Raycaster(), bodies = []; inner.traverse((o) => { if (o.isMesh) bodies.push(o); });
@@ -7286,6 +7287,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const lp = g.worldToLocal(hit.point.clone()), d = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mt);
         d.position.set(lp.x, lp.y, lp.z + sd * 0.012); d.rotation.y = sd > 0 ? 0 : Math.PI; g.add(d); }));
     });
+  // a soft contact shadow under a vehicle that drives along the street (the street's shadow map is baked once, so a moving car needs its own, like 쿠모's)
+  let CAR_SH_TEX = null;
+  function carShadow(g, len, wid) { if (!CAR_SH_TEX) CAR_SH_TEX = canvasTex(256, 128, (c, W, H) => { c.shadowColor = "rgba(0,0,0,0.88)"; c.shadowBlur = 18; c.shadowOffsetX = W * 2; c.fillStyle = "#000";
+      const x = 30 - W * 2, y = 26, w = W - 60, h = H - 52, rr = 18; c.beginPath(); c.moveTo(x + rr, y); c.arcTo(x + w, y, x + w, y + h, rr); c.arcTo(x + w, y + h, x, y + h, rr); c.arcTo(x, y + h, x, y, rr); c.arcTo(x, y, x + w, y, rr); c.closePath(); c.fill(); });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(len * 1.14, wid * 1.5), new THREE.MeshBasicMaterial({ map: CAR_SH_TEX, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    m.rotation.x = -Math.PI / 2; m.position.y = 0.012; m.renderOrder = 2; m.castShadow = false; m.receiveShadow = false; m.userData.carShadow = true; g.add(m); return m; }
     // easter egg: the founding taxi, waiting off-stage until the bus has been sent off twice.
     // A light copy (75k triangles, 1.3 MB) fetched only after the bus first leaves, instead of the 1.9M-triangle lobby model.
     OUT.loadTaxi = () => { if (OUT.taxiReq) return; OUT.taxiReq = true;
@@ -7295,6 +7302,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const mesh = new THREE.Group(); mesh.add(m0); mesh.scale.setScalar(4.15 / Math.max(bs.x, bs.z)); mesh.rotation.y = (bs.x >= bs.z ? 0 : Math.PI / 2) + OUT_TAXI_YAW;
       const g = new THREE.Group(); g.add(mesh); g.position.set(90, 0.02, 1.75); g.visible = false; world.add(g);
       const pb = new THREE.Mesh(new THREE.BoxGeometry(5.6, 2.8, 3.0), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.y = 1.2; pb.userData.idx = "outBus"; g.add(pb); pickables.push(pb);
+      carShadow(g, 4.15, Math.min(bs.x, bs.z) * 4.15 / Math.max(bs.x, bs.z));
       OUT.taxi = g; OUT.taxiMesh = mesh;
       // the cabin, modelled after a 1930s saloon interior: glossy chocolate dashboard with chrome trim, three ivory-faced gauges between
       // chrome grilles, an ivory three-spoke wheel, split windscreen with a hanging mirror, wood-and-burgundy door, long black bonnet.
