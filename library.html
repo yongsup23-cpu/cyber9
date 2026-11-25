@@ -4135,7 +4135,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   window.__libT = { LIB, easy: () => takeEasy(), ask: () => askLibrarian(), open: (i) => openEbook(i) };
   const uiOpen = () => $("ebook").classList.contains("on") || $("getItem").classList.contains("on") || dlg.el.classList.contains("on");
   function meetLibrarian() { LIB.pend = false; S.tx = null; S.yaw = Math.atan2(-(LIB.x - S.x), -(LIB.z - S.z)); S.pitch = -0.02;
-    if (!LIB.given) say(["금호 도서관에 잘 왔어.", "네게 줄 금호 헤리티지북이 있어."], giveBook);
+    if (!LIB.given) say(["금호 도서관에 잘 왔어.", "네게 줄 금호 헤리티지북이 있어.", "그리고 2층 오른쪽 끝 책장에는 '쉽게 보는 금호 80년'이라는 책도 숨어 있단다. 계단으로 올라가서 꼭 찾아보렴!"], () => { EASY.hint = true; giveBook(); });   /* the first talk: the book, and the easy one upstairs at once (it used to wait for a second talk) */
     else if (LIB.easy || sessionStorage.getItem("kumhoEasyGot") === "1") say(["쉽게 보는 금호 80년도 찾았구나! 잘했다, 쿠모.", "이제 밖으로 나가 공원을 둘러보렴. 그네도 타고, 소원 동전도 줍고, 농구도 하고, 미니버스도 탈 수 있단다.", "공원에서 나도 산책하고 있을 테니 만나면 인사하렴. 즐거운 시간 보내거라!"]);   // both books found: off to enjoy the park
     else say(["또 왔구나! 금호 헤리티지북은 잘 보고 있니?", "2층 책장 끝에 가 보렴. 좀 더 쉽게 풀어 쓴 헤리티지북이 꽂혀 있단다.", "관심 있으면 한번 찾아보렴. 반짝이고 있을 거야!"], () => { EASY.hint = true; toast("2층 오른쪽 끝 책장에서 반짝이는 책을 찾아보세요 ✨"); }); }
   function askLibrarian() { const dx = LIB.x - S.x, dz = (DZ + DD / 2 + 1.0) - S.z;

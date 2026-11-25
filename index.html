@@ -52,7 +52,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 #chips button{min-height:32px;padding:5px 11px;font-size:12px;background:rgba(23,24,21,.82)}
 #chips button[aria-pressed=true]{background:var(--gold2);color:#171712}
 .vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 42%,transparent 55%,rgba(0,0,0,.45))}
-#card{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:min(1180px,calc(100% - 40px));background:rgba(22,24,22,.9);border:1px solid #4d4638;border-top:1px solid #71634c;padding:10px 16px 10px 20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 18px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+#card{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:min(1180px,calc(100% - 40px));background:rgba(22,24,22,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid #4d4638;border-top:1px solid #71634c;padding:10px 16px 10px 20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 18px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 #card .txt{min-width:0;max-height:170px;overflow:auto;scrollbar-width:thin}
 #card .head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 #card.min #cCap,#card.min #cDetail{display:none}
@@ -6121,7 +6121,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     return vs[0] || null;
   }
   // the narration is recorded: one mp3 per card (audio/docent/<hash of the text>.mp3), the same voice and pauses on every device; the device's own voice only for a card without a recording
-  const DOC_FILES = new Set("008ceaaa,0162ecaa,01d505a2,01e9cfa7,023dc4f3,0278f6bd,04204379,0450309d,0496cb14,04b3ff4f,063ec5cb,071530aa,084f92cb,0851eaea,0b31c32b,0b3b58de,0cbc80a7,0f01419a,0f897dab,0f9ffe93,1254c896,1278d51c,128beef4,12950719,131e9cb3,140e7bb2,152dc18d,176a6107,1773ae34,177bbfef,1792af50,17993bd2,17e41d7e,17fe28a9,184a55e4,19790ffa,1a041f2d,1acbc966,1b34bb7f,1ca49f8d,1f4a7add,1f5c03fd,1faae7e6,201e8c50,20d7649f,20dcca10,2224e06d,228318bc,22e1fb72,23c0b0f9,24bb1cbd,250bb160,25bcba58,25ce6409,25f4d8e0,26242b29,2673e866,269f13fe,26ae043f,27a2407e,28cb6129,2b26fd53,2c741354,2de44b80,2e10b4aa,2e314b40,2e35c5aa,2ed7ca42,2f3fd27d,3185f3ab,318b64ee,31a3f421,31d3f011,339b3406,33b2b807,33f81c6f,34ea9d4a,3604183f,361d4009,371163a4,37b232a5,37b3ca40,381caf86,38915fcd,39950065,39ca264d,3a9d828d,3ba64b97,3c3a2f2f,3cd10193,3d7488a3,3db4dc58,3e1ad10f,3ec222ef,3f361942,401bd1bc,40270b4d,43503b67,441b1aef,44207f59,44395c7a,444a8a56,44ea1d9e,4564a30f,46717d5d,4678e6ea,467f363d,47889769,478fa682,47b83401,4a04edb1,4a2e0923,4afbf032,4b76e705,4c2d9359,4cbc8e92,4cbe188d,4ccc4d5b,4d56e7cb,4f6d454e,4f9c8038,4ffcade5,50e9fd46,51d855f5,52067493,521dd488,52a76f82,5322c73e,532a7e97,535c1275,535d0b02,53a70752,54c64e2a,55c53ba9,55d7e750,55fc4aea,55fc9090,56abc57e,56bc1615,575fc8a9,579a1fc8,59d2609b,59fcf3fd,5a3c0b7c,5ae15654,5b55c2f4,5b606315,5b8a9676,5bf091d0,5d28bef6,5dbdd9a9,5f4c63eb,606506b9,60e25494,6135eb4e,6169f1a4,616d81ee,619a9ff5,624fdd72,62fc654d,6307c645,63e248c2,64158a45,641c60d3,64952949,6495fd2b,656aa3c7,65cef857,65f17cc9,67bfff62,67d11006,683d9870,6a3d5ce2,6aa7d5e9,6b2dc22c,6b38cd84,6bf90579,6c438700,6c8e7313,6cc9c9ff,6daa3b59,6dd9cc81,6dde1f7e,6e7dd37c,6e91b8cb,6eb11c8e,6f1a9e07,6f6186b1,6ffaa316,70401ada,7069f5b9,7081d98a,70853411,708704a7,7136a186,717afb9e,7224b32b,72c0eafd,72ca3f7f,742128c0,748b0882,74fdc45f,754febfc,760f62aa,763c3f3c,76669416,777c60a8,787d77ac,7880346f,7936686d,7a8fb66c,7b247b46,7b268bd4,7b3261be,7bede578,7bf7ad3f,7e318555,7efe7b6b,7f5aea82,7fd3ebb3,81a84ea9,82091e31,828d7c7c,8301a296,834d8c6c,838ead7c,8402d241,841fa7f4,84679296,858448e4,869ee34b,86ac12ba,8794d31d,87ddc5e9,8917f358,8ba6ee19,8bcd6e9b,8eb2b4de,8f051a68,8fbb4c22,902144bd,90e1bff5,90f33531,9143577b,937dd0c2,9494be81,94c56fc4,9538b754,957d1a21,95b2ff77,95fa8cc8,96ab8b6f,9717999f,984d8c93,987b7e8f,98b1ec99,98bf894b,993f5889,99637bc9,99bc3903,9a2b459d,9a55f187,9aa56bdc,9ba474d9,9c6646a4,9ce3bc87,9ce4a6c1,9f3018e8,9f33c1b4,a1995699,a2244dec,a2e53986,a3b23f2d,a40156de,a4f73959,a62837ea,a65917b6,a6a48b0e,a6aad2f8,a6ee7521,a7044532,a75b3c3a,a7cf009e,a8cccdea,a9d3beeb,aa1b9fee,aa4c4be4,aade87f7,aba1651a,aba34995,abdcea08,acc0ed47,adeebc9f,af41c515,affa982f,b14305e8,b2fef500,b342ee66,b43fd115,b4832b71,b5524279,b5f2ece4,b6531b7f,b88376e3,b8c9281f,b8f1cf28,b8f89c90,b972c848,ba124e6b,ba4d42a4,bb14d74c,bbd7188c,bc049a39,bc587910,bc93a61a,bdf5dd5b,be080d61,be76d197,bf734fb7,bff16d48,c0658a28,c1d4881a,c23d844a,c2822b1d,c4a9de6d,c4d29dbf,c5079149,c5a1582f,c5d6af56,c7083345,c8122ba7,ca4d2bed,ca504c9b,cc167c14,cd248076,cd316383,ce027a6e,ce415198,ce99a154,ceebef6f,cf313999,d03a5bb0,d03b3dbd,d1a2a67f,d3bc740e,d528664f,d54dd467,d68525f1,d6eb3268,d71f6b76,d7a17a23,d7d728da,d8a28bc9,d8ba5027,db0df04a,dbd107b2,dc8bb90d,ddc6b629,ddff5f32,df1963f2,df8d7b9a,e0580f7f,e0772926,e081c047,e0ec0a18,e48c1de3,e4a6ea8d,e4ab9b2a,e538e922,e58465e9,e742d7b0,e748d762,e8e94c5b,e936fe08,e9caccaf,ea11ca93,ea7f1626,eb76bf1a,ec36a50d,ed4834a5,ef274fbb,f0f6f750,f120da6a,f1655241,f18fc433,f1fd0200,f2739e58,f34a42f4,f36619c9,f3bc960f,f3e69beb,f4094984,f40b7c01,f4a0e8d1,f5069592,f89ae08c,f8fd283f,fb47ed87,fb5890ef,fbc5f127,fc8879b2,fd5498e7,fd6aa54d,fe5bd601,ff5f0069,ffe80c27".split(","));
+  const DOC_FILES = new Set("008ceaaa,0162ecaa,01d505a2,01e9cfa7,023dc4f3,0278f6bd,04204379,0450309d,0496cb14,04b3ff4f,063ec5cb,071530aa,084f92cb,0851eaea,0b31c32b,0b3b58de,0cbc80a7,0f01419a,0f897dab,0f9ffe93,1254c896,1278d51c,128beef4,12950719,131e9cb3,140e7bb2,152dc18d,176a6107,1773ae34,177bbfef,1792af50,17993bd2,17e41d7e,17fe28a9,184a55e4,19790ffa,1a041f2d,1acbc966,1b34bb7f,1ca49f8d,1f4a7add,1f5c03fd,1faae7e6,201e8c50,20d7649f,20dcca10,2224e06d,228318bc,22e1fb72,23c0b0f9,24bb1cbd,250bb160,25625246,25bcba58,25ce6409,25f4d8e0,26242b29,2673e866,269f13fe,26ae043f,27a2407e,28cb6129,2b26fd53,2c741354,2de44b80,2e10b4aa,2e314b40,2e35c5aa,2ed7ca42,2f3fd27d,3185f3ab,318b64ee,31a3f421,31d3f011,339b3406,33b2b807,33f81c6f,34ea9d4a,3604183f,361d4009,371163a4,37b232a5,37b3ca40,381caf86,38915fcd,39950065,39ca264d,3a9d828d,3ba64b97,3c3a2f2f,3cd10193,3d7488a3,3db4dc58,3e1ad10f,3ec222ef,3f361942,401bd1bc,40270b4d,43503b67,441b1aef,44207f59,44395c7a,444a8a56,44ea1d9e,4564a30f,46717d5d,4678e6ea,467f363d,47889769,478fa682,47b83401,4a04edb1,4a2e0923,4afbf032,4b76e705,4c2d9359,4cbc8e92,4cbe188d,4ccc4d5b,4d56e7cb,4f6d454e,4f9c8038,4ffcade5,50e9fd46,51d855f5,52067493,521dd488,52a76f82,5322c73e,532a7e97,535c1275,535d0b02,53a70752,54c64e2a,55c53ba9,55d7e750,55fc4aea,55fc9090,56abc57e,56bc1615,575fc8a9,579a1fc8,59d2609b,59fcf3fd,5a3c0b7c,5ae15654,5b55c2f4,5b606315,5b8a9676,5bf091d0,5d28bef6,5dbdd9a9,5f4c63eb,606506b9,60e25494,6135eb4e,6169f1a4,616d81ee,619a9ff5,624fdd72,62fc654d,6307c645,63e248c2,64158a45,641c60d3,64952949,6495fd2b,656aa3c7,65cef857,65f17cc9,67bfff62,67d11006,683d9870,6a3d5ce2,6aa7d5e9,6b2dc22c,6b38cd84,6bf90579,6c438700,6c8e7313,6cc9c9ff,6daa3b59,6dd9cc81,6dde1f7e,6e7dd37c,6e91b8cb,6eb11c8e,6f1a9e07,6f6186b1,6ffaa316,70401ada,7069f5b9,7081d98a,70853411,708704a7,7136a186,717afb9e,7224b32b,72c0eafd,72ca3f7f,742128c0,748b0882,74fdc45f,754febfc,760f62aa,763c3f3c,76669416,777c60a8,787d77ac,7880346f,7936686d,7a8fb66c,7b247b46,7b268bd4,7b3261be,7bede578,7bf7ad3f,7e318555,7efe7b6b,7f5aea82,7fd3ebb3,81a84ea9,82091e31,828d7c7c,8301a296,834d8c6c,838ead7c,8402d241,841fa7f4,84679296,858448e4,869ee34b,86ac12ba,8794d31d,87ddc5e9,8917f358,8ba6ee19,8bcd6e9b,8eb2b4de,8f051a68,8fbb4c22,902144bd,90e1bff5,90f33531,9143577b,937dd0c2,9494be81,94c56fc4,9538b754,957d1a21,95b2ff77,95fa8cc8,96ab8b6f,9717999f,984d8c93,987b7e8f,98b1ec99,98bf894b,993f5889,99637bc9,99bc3903,9a2b459d,9a55f187,9aa56bdc,9ba474d9,9c6646a4,9ce3bc87,9ce4a6c1,9f3018e8,9f33c1b4,a1995699,a2244dec,a2e53986,a3b23f2d,a40156de,a4f73959,a62837ea,a65917b6,a6a48b0e,a6aad2f8,a6ee7521,a7044532,a75b3c3a,a7cf009e,a8cccdea,a9d3beeb,aa1b9fee,aa4c4be4,aade87f7,aba1651a,aba34995,abdcea08,acc0ed47,adeebc9f,af41c515,affa982f,b14305e8,b2fef500,b342ee66,b43fd115,b4832b71,b5524279,b5f2ece4,b6531b7f,b88376e3,b8c9281f,b8f1cf28,b8f89c90,b972c848,ba124e6b,ba4d42a4,bb14d74c,bbd7188c,bc049a39,bc587910,bc93a61a,bdf5dd5b,be080d61,be76d197,bf734fb7,bff16d48,c0658a28,c1d4881a,c23d844a,c2822b1d,c4a9de6d,c4d29dbf,c5079149,c5a1582f,c5d6af56,c7083345,c8122ba7,ca4d2bed,ca504c9b,cc167c14,cd248076,cd316383,ce027a6e,ce415198,ce99a154,ceebef6f,cf313999,d03a5bb0,d03b3dbd,d1a2a67f,d3bc740e,d528664f,d54dd467,d68525f1,d6eb3268,d71f6b76,d7a17a23,d7d728da,d8a28bc9,d8ba5027,db0df04a,dbd107b2,dc8bb90d,ddc6b629,ddff5f32,df1963f2,df8d7b9a,e0580f7f,e0772926,e081c047,e0ec0a18,e48c1de3,e4a6ea8d,e4ab9b2a,e538e922,e58465e9,e742d7b0,e748d762,e8e94c5b,e936fe08,e9caccaf,ea11ca93,ea7f1626,eb76bf1a,ec36a50d,ed4834a5,ef274fbb,f0f6f750,f120da6a,f1655241,f18fc433,f1fd0200,f2739e58,f34a42f4,f36619c9,f3bc960f,f3e69beb,f4094984,f40b7c01,f4a0e8d1,f5069592,f89ae08c,f8fd283f,fb47ed87,fb5890ef,fbc5f127,fc8879b2,fd5498e7,fd6aa54d,fe5bd601,ff5f0069,ffe80c27".split(","));
   const docHash = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, "0"); };
   const DOC_AUD = new Audio(); DOC_AUD.preload = "auto";
   function docAvail() { const b = $("docBtn"); if (b) b.hidden = false; }
@@ -6867,35 +6867,42 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   /* ---------- outside: out of the lobby onto a two-lane street — a Kumho Express bus at the kerb, a dense row of trees across the road, Ulsan Artera in the distance ---------- */
   const VISITED = new Set();   // halls entered in this visit only: the exit appears after all of them, and is gone again on reload
   /* the way outside: a pivot door of dark steel in a deep fair-faced concrete portal; behind it, plain bright white */
-  function buildOutDoor(side, u, target) {
+  function buildOutDoor(side, u, target) {   /* the way out to 아테라 타운, dressed as the doors of its buildings: a travertine surround, warm light in the reveals, dark oak leaves edged in bronze, and a bronze-framed name board */
     const grp = new THREE.Group(); grp.position.copy(wp(side, u, 0, 0.02)); grp.rotation.y = rotOf(side, u); world.add(grp);
-    const W = 2.0, H = 3.2, FW = 0.42, D = 0.16;            // opening, frame band, depth the portal stands out from the wall
-    const conc = canvasTex(512, 512, (g) => {
-      g.fillStyle = "#a19f9a"; g.fillRect(0, 0, 512, 512);
-      let sd = 11; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
-      for (let i = 0; i < 9000; i++) { g.fillStyle = `rgba(${r() < 0.5 ? "255,255,255" : "40,40,40"},${0.03 + r() * 0.04})`; g.fillRect(r() * 512, r() * 512, 1 + r() * 3, 1 + r() * 3); }
-      g.strokeStyle = "rgba(90,90,88,.35)"; g.lineWidth = 2; g.strokeRect(1, 1, 510, 510);
-      g.fillStyle = "rgba(70,70,68,.55)"; [[96, 128], [416, 128], [96, 384], [416, 384]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2); g.fill(); });
-    });
-    conc.wrapS = conc.wrapT = THREE.RepeatWrapping;
-    const cm = (w, h) => { const t = conc.clone(); t.needsUpdate = true; t.repeat.set(w / 1.2, h / 1.2); return new THREE.MeshBasicMaterial({ map: t }); };
+    const W = 2.0, H = 3.2, FW = 0.42, D = 0.3;
+    const trav = canvasTex(512, 512, (g) => { g.fillStyle = "#d8cdb9"; g.fillRect(0, 0, 512, 512);
+      let sd = 31; const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 160; i++) { const y = r() * 512; g.strokeStyle = `rgba(${r() < 0.5 ? "150,132,104" : "245,238,225"},${0.15 + r() * 0.25})`; g.lineWidth = 1 + r() * 2.5; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= 512; x += 32) g.lineTo(x, y + (r() - 0.5) * 4); g.stroke(); }
+      for (let i = 0; i < 260; i++) { g.fillStyle = "rgba(140,120,92,.35)"; g.fillRect(r() * 512, r() * 512, 3 + r() * 10, 1 + r() * 2); } });
+    trav.wrapS = trav.wrapT = THREE.RepeatWrapping;
+    const tm = (w, h) => { const t = trav.clone(); t.needsUpdate = true; t.repeat.set(w / 1.4, h / 1.4); return new THREE.MeshBasicMaterial({ map: t }); };
     const box = (w, h, d, x, y, z, m) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); grp.add(b); return b; };
-    const white = plane(W, H, new THREE.MeshBasicMaterial({ color: 0xf6f4ef })); white.position.set(0, H / 2, 0.03); grp.add(white);
+    box(FW, H + FW, D, -(W + FW) / 2, (H + FW) / 2, D / 2, tm(FW, H + FW)); box(FW, H + FW, D, (W + FW) / 2, (H + FW) / 2, D / 2, tm(FW, H + FW)); box(W + 2 * FW, FW, D, 0, H + FW / 2, D / 2, tm(W + 2 * FW, FW));
+    const stripM = new THREE.MeshBasicMaterial({ color: 0xffd9a0 }); [-1, 1].forEach((sg) => { const s1 = plane(0.05, H, stripM); s1.position.set(sg * (W / 2 - 0.01), H / 2, D * 0.55); s1.rotation.y = -sg * Math.PI / 2; grp.add(s1); });
+    const white = plane(W, H, new THREE.MeshBasicMaterial({ color: 0xfff4de })); white.position.set(0, H / 2, 0.03); grp.add(white);
     const glow = plane(W * 1.6, 1.8, new THREE.MeshBasicMaterial({ map: softTex, color: 0xfff8ea, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
     glow.rotation.x = -Math.PI / 2; glow.position.set(0, 0.01, D + 0.6); grp.add(glow);
-    // two leaves of dark steel, hinged at the jambs, each with a long recessed pull by the meeting edge: they swing open as a pair
-    const leafM = new THREE.MeshBasicMaterial({ color: 0x38393c }), edgeM = new THREE.MeshBasicMaterial({ color: 0x232426 }), LW = W / 2 - 0.01;
-    const leaf = (sg) => {   // sg -1: left leaf, +1: right leaf
+    const oak = (sg) => canvasTex(256, 680, (g, w, h) => { g.fillStyle = "#2b221b"; g.fillRect(0, 0, w, h);
+      let sd = 5 + (sg > 0 ? 7 : 0); const r = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 220; i++) { const x = r() * w; g.strokeStyle = `rgba(${r() < 0.5 ? "70,56,44" : "18,14,11"},${0.3 + r() * 0.4})`; g.lineWidth = 0.6 + r() * 1.6; g.beginPath(); g.moveTo(x, 0); for (let y = 0; y <= h; y += 32) g.lineTo(x + (r() - 0.5) * 2, y); g.stroke(); }
+      const e = Math.round(w * 0.05); g.fillStyle = "#8f6c3a"; [[0, 0, w, e], [0, h - e, w, e], [0, 0, e, h], [w - e, 0, e, h]].forEach(([x, y, a, b]) => g.fillRect(x, y, a, b)); });
+    const edgeM = new THREE.MeshBasicMaterial({ color: 0x8f6c3a }), pullM = new THREE.MeshBasicMaterial({ color: 0xb48a4e }), LW = W / 2 - 0.01;
+    const leaf = (sg) => {   // sg -1: left leaf, +1: right leaf, each hinged at its jamb
       const pv = new THREE.Group(); pv.position.set(sg * (W / 2), 0, D * 0.5); grp.add(pv);
-      const cx = -sg * LW / 2;
-      const body = new THREE.Mesh(new THREE.BoxGeometry(LW, H - 0.02, 0.07), [edgeM, edgeM, edgeM, edgeM, leafM, leafM]); body.position.set(cx, H / 2, 0); pv.add(body);
-      const pull = plane(0.05, 1.2, basic(0x17181a)); pull.position.set(-sg * (LW - 0.14), H * 0.47, 0.037); pv.add(pull);
+      const cx = -sg * LW / 2, face = new THREE.MeshBasicMaterial({ map: oak(sg) });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(LW, H - 0.02, 0.07), [edgeM, edgeM, edgeM, edgeM, face, face]); body.position.set(cx, H / 2, 0); pv.add(body);
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.3, 12), pullM); bar.position.set(-sg * (LW - 0.14), H * 0.49, 0.1); pv.add(bar);
+      [-0.6, 0.6].forEach((dy) => { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.07, 8), pullM); st.rotation.x = Math.PI / 2; st.position.set(-sg * (LW - 0.14), H * 0.49 + dy, 0.06); pv.add(st); });
       body.userData.door = target; pickables.push(body); return pv; };
     const pivotL = leaf(-1), pivotR = leaf(1);
     white.userData.door = target; pickables.push(white);
-    // a quiet engraved word on the head
-    const lt = canvasTex(1024, 160, (g) => { g.clearRect(0, 0, 1024, 160); g.fillStyle = "#f3e2b8"; g.shadowColor = "rgba(255,214,150,.9)"; g.shadowBlur = 24; g.font = `600 96px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("E X I T", 512, 84); });
-    const lab = plane(1.5, 0.234, new THREE.MeshBasicMaterial({ map: lt, transparent: true })); lab.position.set(0, H + 0.35, 0.03); grp.add(lab);
+    // the name board above, as on the park's buildings: a bronze-framed dark plaque, 아테라 타운 나가기
+    const lt = canvasTex(1280, 240, (g, w, h) => { const bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, "#2a2620"); bg.addColorStop(1, "#1a1814"); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+      g.strokeStyle = "#b48a4e"; g.lineWidth = 10; g.strokeRect(5, 5, w - 10, h - 10); g.strokeStyle = "rgba(180,138,78,.45)"; g.lineWidth = 2; g.strokeRect(22, 22, w - 44, h - 44);
+      g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#c9a86a"; g.font = `600 34px ${FONT}`; g.fillText("A R T E R A   T O W N", w / 2, 70);
+      g.fillStyle = "#f6ead0"; g.shadowColor = "rgba(255,214,150,.6)"; g.shadowBlur = 16; g.font = `700 82px ${FONT}`; g.fillText("아테라 타운 나가기", w / 2, 150); });
+    const lab = plane(W + 2 * FW - 0.1, (W + 2 * FW - 0.1) * 240 / 1280, new THREE.MeshBasicMaterial({ map: lt })); lab.position.set(0, H + FW + 0.36, D * 0.5); grp.add(lab);
+    box(W + 2 * FW, 0.06, D + 0.1, 0, H + FW + 0.03, D / 2, edgeM);
     const rec = { target, left: pivotL, right: pivotR, t: 0, opening: null, glow, double: true };
     doors.push(rec);
   }
@@ -7433,15 +7440,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const pb = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pb.position.copy(b.position); pb.userData.idx = "outApt"; A.add(pb); pickables.push(pb);   /* not clickable any more: the towers stand behind trees and shops, and a click meant for the ground sent the visitor back to the archive */
       };
       const H1 = FL * FH;
-      { // 쿠모의 집: a lobby door at the foot of the left tower (world x 22, its front face z −187), glass under a canopy, a sign above — tap to go up to the 84A flat
-        const E = new THREE.Group(); E.position.set(-36, 0, 6 + 7.02); A.add(E);
-        const gl = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.6), new THREE.MeshBasicMaterial({ color: 0xffe2a8 })); gl.position.set(0, 1.3, 0.02); E.add(gl);
-        const fr = new THREE.MeshLambertMaterial({ color: 0x2b2e33 }); [[-1.65, 1.35, 0.12, 2.7], [1.65, 1.35, 0.12, 2.7], [0, 2.66, 3.42, 0.12], [0, 1.3, 0.06, 2.6]].forEach(([x, y, w, h]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.14), fr); b.position.set(x, y, 0.08); E.add(b); });
-        const cn = new THREE.Mesh(new THREE.BoxGeometry(5, 0.18, 2.2), new THREE.MeshLambertMaterial({ color: 0x1d2a5a })); cn.position.set(0, 3.1, 1.1); E.add(cn);
-        const sg = canvasTex(1024, 256, (g, W, H) => { g.fillStyle = "#1d2a5a"; g.fillRect(0, 0, W, H); g.fillStyle = "#f26a1f"; g.fillRect(0, H - 14, W, 14); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 104px ${FONT}`; g.fillText("쿠모의 집", W / 2, 104); g.fillStyle = "#c9d2ea"; g.font = `600 40px ${FONT}`; g.fillText("84A · 눌러서 들어가기", W / 2, 192); });
-        const sp = new THREE.Mesh(new THREE.PlaneGeometry(4, 1), new THREE.MeshBasicMaterial({ map: sg, toneMapped: false })); sp.position.set(0, 3.75, 0.08); E.add(sp);
-        const st = new THREE.Mesh(new THREE.BoxGeometry(5, 0.12, 3), new THREE.MeshLambertMaterial({ color: 0xcfc9bd })); st.position.set(0, 0.06, 1.5); E.add(st);
-        const pk = new THREE.Mesh(new THREE.BoxGeometry(5, 4.4, 1.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(0, 2.2, 0.6); pk.userData.idx = "kumoHome"; E.add(pk); pickables.push(pk); }
+      /* 쿠모의 집 has no door of its own: tap the towers, or the shops and car park along the podium, and 쿠모 is asked whether to go home */
       // left: tall greige tower with the lit ARTERA sign
       tower(-36, 6, 17, 14, H1 + 6, "#eceae5", "#5d626a", "#f6f5f2",
         facade(17, H1, 6, "#eceae5", "#5d626a", "#f7f6f3", { seed: 1, band: "#5d534c", bandX: 0, bandW: 0.32, sign: { text: "ARTERA", size: 150, vertical: true, x: 0.16, y: 0.14 } }),
@@ -7482,6 +7481,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       shopT.wrapS = THREE.RepeatWrapping; shopT.repeat.set(172 / 24, 1); shopT.anisotropy = ANISO;
       const podSide = new THREE.MeshLambertMaterial({ color: 0xd9d7d1 }), podFront = new THREE.MeshLambertMaterial({ map: shopT });
       const pod = new THREE.Mesh(new THREE.BoxGeometry(172, 6, 44), [podSide, podSide, podSide, podSide, podFront, podSide]); pod.position.set(-9, 3, 6); A.add(pod); OUT.arteraMats.push(podSide, podFront);
+      { const pp = new THREE.Mesh(new THREE.BoxGeometry(172, 6.4, 1.2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pp.position.set(-9, 3.2, 28.6); pp.userData.idx = "outApt"; pp.userData.noCol = true; A.add(pp); pickables.push(pp); }   /* the shops and the car park: tap to go home to 쿠모의 집 */
       { const EW = 44, EH = 6; let markAt = null; const ent = canvasTex(2048, Math.round(2048 * EH / EW), (g, W, H) => {   // the entrance, 44 m wide
           const band = Math.round(H * 0.46);
           speck(g, 0, 0, W, band, "#4b4544", 4200, 60, 120); g.fillStyle = "rgba(0,0,0,0.25)"; for (let x = 0; x < W; x += 92) g.fillRect(x, 0, 2, band);   // dark granite in large slabs
@@ -9149,7 +9149,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       text: DATA.map((h, i) => `${HL(i)}${h.span ? ` (${h.span.replace(/ — /, "~")})` : ""}  ${h.title}`).join("\n") }, 3.4, 3.1);
     // the way out appears only once every hall has been visited (?outside=1 shows it anyway)
     if (DATA.every((h, i) => VISITED.has(i)) || /[?&]outside=1/.test(location.search)) {
-      const OUTT = { outside: true }, ol = { title: "EXIT", sub: "바깥으로 · 아테라 타운" };
+      const OUTT = { outside: true }, ol = { title: "아테라 타운 나가기", sub: "바깥으로 · 아테라 타운" };
       buildOutDoor(2, -5.7, OUTT);
       stops.push({ kind: "door", side: 2, u: -5.7, cy: 1.6, w: 2.9, h: 3.0, target: OUTT, label: ol, outDoor: true }); }
     // (lobbyLights(ND, SP): the downlight scallops and the lit bronze panel, left out: the plain lobby reads better)
@@ -9185,7 +9185,28 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     moveTo(lobbyOverview(), false, reduce ? 0 : 3200); setZoom(1.25);
     if (DOME && DOME.tree) { DOME.tree.t0 = performance.now(); DOME.tree.done = false; }
     cur = lobbyHome(); showCard();
+    setTimeout(lobbyTut, reduce ? 300 : 3400);   // the first time in: a short guided look round the lobby
   }
+  /* the lobby tutorial, once a visit: the view turns to each thing in turn while a speech box explains it (the doors, the live sky and tree, the '80', the founding taxi, the wall where the way out to 아테라 타운 appears) */
+  function lobbyTut() {
+    if (mode !== "lobby" || busy || $("lobTut")) return; let seen = false; try { seen = sessionStorage.getItem("kumhoLobbyTut") === "1"; sessionStorage.setItem("kumhoLobbyTut", "1"); } catch (e) {} if (seen) return;
+    const s80 = stops.find((t) => t.kind === "art" && t.data && /80/.test(t.data.title || "")), sTx = stops.find((t) => t.kind === "art" && !t.carsign && t.data && /포드/.test(t.data.title || ""));
+    const ov = lobbyOverview(), S = [[ov, "문을 누르면 각 전시관으로 입장해요. 1관부터 특별관 Ⅱ까지 다섯 개의 관이 있어요."],
+      [Object.assign({}, ov, { pitch: 0.78 }), "위쪽의 하늘과 나무는 지금의 계절과 날씨, 시간을 실시간으로 반영해요."],
+      [s80 ? focusFor(s80) : ov, "화면을 좌우로 돌리면 금호 80년을 사진 353장으로 그린 '80'을 볼 수 있어요."],
+      [sTx ? focusFor(sTx) : ov, "그 옆에는 창업 당시의 택시, 1935년형 포드 디럭스가 전시되어 있어요."],
+      [focusPose(2, -5.7, 1.6, 2.9, 3.0), "다섯 개의 관을 모두 관람하고 로비로 돌아오면, 이 벽에 아테라 타운으로 나가는 문이 나타나요."]];
+    const st = document.createElement("style"); st.textContent = `#lobTut{position:fixed;left:50%;top:86px;transform:translateX(-50%);width:min(560px,calc(100vw - 32px));z-index:100400;background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:24px 20px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;animation:ltIn .35s ease}
+#lobTut .nm{position:absolute;left:16px;top:-14px;background:#5a3b22;color:#f6ead2;font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px}#lobTut .tx{font-size:17px;font-weight:600;line-height:1.6;min-height:3.2em;word-break:keep-all}
+#lobTut .ft{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px}#lobTut .pg{font-size:12px;color:#9a7a4e;letter-spacing:.08em}#lobTut button{font:700 14px/1 inherit;font-family:inherit;border-radius:999px;padding:9px 16px;cursor:pointer;border:1px solid #b08b55}#lobTut .sk{background:transparent;color:#7d6a50}#lobTut .nx{background:#5a3b22;color:#f6ead2;border-color:#5a3b22}
+@keyframes ltIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}`;
+    document.head.appendChild(st); const el = document.createElement("div"); el.id = "lobTut"; el.innerHTML = '<div class="nm">아카이브 둘러보기</div><div class="tx"></div><div class="ft"><span class="pg"></span><span><button type="button" class="sk">건너뛰기</button> <button type="button" class="nx">다음 ▶</button></span></div>'; document.body.appendChild(el);
+    ["pointerdown", "pointerup", "wheel", "touchstart"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation(), { passive: true }));
+    let i = -1; const end = () => { el.remove(); st.remove(); if (mode === "lobby") { moveTo(lobbyOverview(), false, reduce ? 0 : 1200); cur = lobbyHome(); showCard(); } };
+    const step = () => { i++; if (i >= S.length || mode !== "lobby") { end(); return; } const [pose, t] = S[i]; moveTo(pose, false, reduce ? 0 : 1300);
+      el.querySelector(".tx").textContent = t; el.querySelector(".pg").textContent = `${i + 1} / ${S.length}`; el.querySelector(".nx").textContent = i === S.length - 1 ? "관람 시작 ▶" : "다음 ▶"; };
+    el.querySelector(".nx").addEventListener("click", (e) => { e.stopPropagation(); step(); }); el.querySelector(".sk").addEventListener("click", (e) => { e.stopPropagation(); end(); });
+    step(); }
   const lobbyHome = () => Math.max(0, stops.findIndex((t) => t.kind === "overview"));
   /* the Kumho E&C wing mark, laid out as a mosaic of the archive photos (1946 at the tail, today at the tip) */
   const WING = { file: "img/wing80.jpg", year: "1946 — 2026", co: "금호건설", title: "사진으로 그린 80",
@@ -10091,8 +10112,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       set("cDetail", it.detail);
       set("cCount", `${String(s.idx + 1).padStart(3, "0")} / ${String(total).padStart(3, "0")}`);
     } else if (s.kind === "door" && s.target && s.target.outside) {
-      set("cYear", "EXIT"); set("cTitle", "아테라 타운으로 나가기"); set("cCap", "금호고속 버스가 서는 2차선 도로");
-      set("cDetail", "문을 열고 나가면 금호고속 버스가 정차한 거리와 길 건너 울산 신정 아테라를 볼 수 있습니다."); set("cCount", "");
+      set("cYear", "ARTERA TOWN"); set("cTitle", "아테라 타운 나가기"); set("cCap", "");
+      set("cDetail", "문을 열고 나가면 아테라 타운으로 나갈 수 있습니다."); set("cCount", "");
       $("enterBtn2").textContent = "문 열고 나가기";
     } else if (s.kind === "door" && mode === "lobby") {
       const h = s.data;
@@ -11864,10 +11885,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       { k: "hoop", n: "엔조이코트", d: "골대를 누르고 게이지에 맞춰 슛! 농구게임을 해 보세요.", r: [930, 385, 1228, 548], at: [119, -114.5], st: [119, -101] },
       { k: "screen", n: "대형 전광판", d: "금호의 사진이 돌아가며 나오는 큰 전광판이에요.", r: [965, 582, 1112, 702], at: sc ? [sc.x, sc.z] : [90, -60], st: sc ? [sc.x, sc.z + 12] : [90, -48] },
       { k: "usq", n: "유·스퀘어", d: "거리 끝 광주 종합버스터미널 유·스퀘어예요.", r: [1262, 212, 1522, 475], at: [240, -34], st: [240, -4] },
-      { k: "apt", n: "아테라 아파트 단지 · 쿠모의 집", d: "공원 뒤 아테라 단지예요. 입구를 누르면 실제 아테라 아파트를 반영한 쿠모의 집에 들어갈 수 있어요.", r: [540, 62, 1210, 168], at: [22, -190], st: [22, -182.6] },
-      { k: "brandC", n: "금호건설 변천사", d: "주거 브랜드(앞면)와 상호(뒷면)의 변천을 표지판으로 볼 수 있어요. 표지판을 누르면 연도별로 크게 보여요.", r: [476, 290, 720, 354], at: [5, -106.4], st: [5, -101] },
-      { k: "brandK", n: "금호고속 변천사", d: "거북이 로고(앞면)와 상호(뒷면)의 변천을 표지판으로 볼 수 있어요. 표지판을 누르면 연도별로 크게 보여요.", r: [812, 290, 1052, 354], at: [55, -106.4], st: [55, -101] },
-      { k: "sign", n: "홈페이지 이정표", d: "화살표를 누르면 금호 계열사 홈페이지가 새 창으로 열려요.", r: [868, 648, 996, 724], at: [60, -40], st: [60, -36] },
+      { k: "apt", n: "아테라 아파트 단지 · 쿠모의 집", d: "공원 뒤 아테라 단지예요. 아파트나 아래 상가·주차장을 누르면 실제 아테라 아파트를 반영한 쿠모의 집에 들어갈 수 있어요.", r: [540, 62, 1210, 168], at: [22, -190], st: [22, -164] },
+      { k: "brandC", n: "금호건설 변천사", d: "주거 브랜드(앞면)와 상호(뒷면)의 변천을 표지판으로 볼 수 있어요. 표지판을 누르면 연도별로 크게 보여요.", r: [476, 290, 720, 354], at: [5, -106.4], st: [5, -100.5] },
+      { k: "brandK", n: "금호고속 변천사", d: "거북이 로고(앞면)와 상호(뒷면)의 변천을 표지판으로 볼 수 있어요. 표지판을 누르면 연도별로 크게 보여요.", r: [812, 290, 1052, 354], at: [57.8, -106.4], st: [57.8, -100.5] },
+      { k: "sign", n: "홈페이지 이정표", d: "화살표를 누르면 금호 계열사 홈페이지가 새 창으로 열려요.", r: [868, 648, 996, 724], at: OUT.signPos ? [OUT.signPos[0], OUT.signPos[1]] : [60, -40], st: OUT.signPos ? [OUT.signPos[0] + 0.6, OUT.signPos[1] + 3.6] : [60, -36] },
       { k: "archive", n: "금호 아카이브", d: "금호 80년의 기록. 1관부터 특별관까지 둘러볼 수 있어요.", r: [300, 822, 1240, 918], at: [0, 27], st: [0, 11] } ]; };
   // world (x, z) → picture: the picture is simplified, so 쿠모's spot is blended from fixed matching points (inverse-distance weighting)
   const MAP_ANCH = [[0, 1, 760, 780], [-100, 1, 70, 780], [200, 1, 1330, 780], [0, 27, 760, 880], [-84, -113, 130, 300], [-65, -37, 135, 610], [-31, -33, 400, 610], [-14.5, -40.2, 350, 410],
@@ -11891,13 +11912,16 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!el) { el = document.createElement("div"); el.id = "atMap"; el.hidden = true; document.body.appendChild(el);
       ["pointerdown", "pointerup", "wheel"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation()));
       el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (b && b.dataset.a === "x") return mapClose();
-        if (b && b.dataset.go) { const p = MAP_SPOTS().find((q) => q.k === b.dataset.go); mapClose(); if (p) { const [sx, sz] = p.st, [tx, tz] = p.at; moveTo({ x: sx, z: sz, yaw: Math.atan2(-(tx - sx), -(tz - sz)), pitch: 0.08 }, true); } return; }
+        if (b && b.dataset.go) { const p = MAP_SPOTS().find((q) => q.k === b.dataset.go); mapClose(); if (!p) return;
+          if (RIDE.on || (typeof AIR !== "undefined" && (AIR.on || AIR.out)) || busy) { taxiCSS(); taxiToast("지금은 이동할 수 없어요 · 내린 뒤에 다시 눌러 주세요", 2200); return; }
+          const [sx, sz] = p.st, [tx, tz] = p.at, f = $("fade"); if (f) { f.innerHTML = ""; f.classList.add("on"); }
+          setTimeout(() => { cam.fy = 0; moveTo({ x: sx, z: sz, yaw: Math.atan2(-(tx - sx), -(tz - sz)), pitch: 0.08 }, true); setTimeout(() => { if (f) f.classList.remove("on"); }, 180); }, 440); return; }
         const m = e.target.closest(".mk"); if (m) mapPick(m.dataset.k); });
       document.addEventListener("keydown", (e) => { if (!el.hidden && e.key === "Escape") { mapClose(); e.preventDefault(); e.stopImmediatePropagation(); } }, true); }
     el.innerHTML = `<div class="hd"><div><b>🗺 아테라 타운 안내도</b><span>장소를 누르면 설명이 나와요</span></div><button type="button" data-a="x">닫기 ✕</button></div><div class="bd"><div class="sv">${mapSVG(false)}</div></div><div class="info"><p>궁금한 곳을 눌러 보세요. 주황 점이 지금 쿠모가 있는 곳이에요.</p></div>`;
     el.hidden = false; const me = () => { const g = $("mapMe"); if (!g) return; const [u, v] = mapXY(cam.x, cam.z); g.style.left = (u / MAP_W * 100) + "%"; g.style.top = (v / MAP_H * 100) + "%"; }; me(); clearInterval(mapTimer); mapTimer = setInterval(me, 400); }
   function mapPick(k) { const el = $("atMap"), p = MAP_SPOTS().find((q) => q.k === k); if (!el || !p) return; el.querySelectorAll(".mk").forEach((m) => m.classList.toggle("on", m.dataset.k === k));
-    el.querySelector(".info").innerHTML = `<b>${p.n}</b><p>${p.d}</p>`; }   // a description only: no jumping there, 쿠모 walks
+    el.querySelector(".info").innerHTML = `<b>${p.n}</b><p>${p.d}</p><button type="button" class="go" data-go="${p.k}">📍 여기로 바로 가기</button>`; }   // its description, and a quick hop there (no page load: a short fade, and 쿠모 stands in front of it)
   function mapClose() { const el = $("atMap"); if (el) el.hidden = true; clearInterval(mapTimer); }
   setTimeout(() => { if (mapGot) mapBtn().hidden = mode !== "outside"; }, 0);
   window.__npc = { NPC, talk: () => npcTalk(), map: () => mapOpen(), pick: (k) => mapPick(k) };
@@ -13033,7 +13057,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (IS_PARK && arrive && arrive.sound !== false) { try { setSound(true); } catch (e) {} }   /* the park's tune starts as the page opens, not only once every model has loaded */
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -182.6, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usqYard" && isFinite(arrive.x) && isFinite(arrive.z)) moveTo({ x: arrive.x, z: arrive.z, yaw: isFinite(arrive.yaw) ? arrive.yaw : 0, pitch: 0.04, fy: 0, y: EYE }, true);   /* out of U-square's coach yard on foot: on the same spot of the road out, in the park's own copy of the yard */ else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -164, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usqYard" && isFinite(arrive.x) && isFinite(arrive.z)) moveTo({ x: arrive.x, z: arrive.z, yaw: isFinite(arrive.yaw) ? arrive.yaw : 0, pitch: 0.04, fy: 0, y: EYE }, true);   /* out of U-square's coach yard on foot: on the same spot of the road out, in the park's own copy of the yard */ else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
         const viaDoor = (arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home" || arrive.from === "usquare" || arrive.from === "bus") && window.doorFx; if (viaDoor) doorFx.closed();   /* out through the doors: they open on the park */
         let seen = true; try { seen = sessionStorage.getItem("kumhoParkIntro") === "1"; } catch (e) {} const welcome = !arrive.from && !seen;
         warmOutside(() => { if (viaDoor) setTimeout(() => doorFx.open(), 700); requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); setTimeout(() => document.documentElement.classList.add("arrived"), 350);
@@ -13189,8 +13213,25 @@ body #mapBtn[hidden],body #hbBtn[hidden],body #ezBtn[hidden],body #bookBtn[hidde
   const isPark = !!$("enterBtn");
   const gen = () => { GEN.forEach(([id, key, nat]) => { if (isPark && id !== "invMap" ? false : isPark) return; if (isPark && id === "invBus") return;   /* out in the park the pass is the page's own button (it calls the bus) */ if (nat.some((n) => $(n))) { const g = $(id); if (g) g.remove(); return; } let b = $(id); if (!got(key)) { if (b) b.hidden = true; return; }
       if (!b) { b = document.createElement("button"); b.type = "button"; b.id = id; b.textContent = CAP[id]; document.body.appendChild(b); stop(b); b.addEventListener("click", (e) => { e.stopPropagation(); OPEN[id](); }); } b.hidden = false; }); };
-  const base = () => { if (isPark) { let b = 130; document.querySelectorAll("button").forEach((e) => { if (IDS.includes(e.id) || e.closest(".invView") || e.hidden || !e.getClientRects().length) return; const r = e.getBoundingClientRect(); if (r.right > innerWidth - 90 && r.bottom < innerHeight * 0.45 && r.width < innerWidth * 0.5) b = Math.max(b, r.bottom + 8); }); return b; }   /* on a narrow phone the top buttons wrap down: start below whichever sit over the item column */ let b = 70; ["exitBtn", "sndBtn", "viewBtn"].forEach((id) => { const e = $(id); if (!e || e.hidden || !e.getClientRects().length) return; const r = e.getBoundingClientRect(); if (r.right > innerWidth - 260 && r.bottom < innerHeight * 0.5) b = Math.max(b, r.bottom + 10); }); return b; };
-  const lay = () => { gen(); let y = base(), col = 0; const y0 = y; IDS.forEach((id) => { const e = $(id); if (!e) return; if (!e.dataset.cap) { e.dataset.cap = CAP[id]; e.setAttribute("aria-label", (e.textContent || CAP[id]).trim()); e.title = CAP[id]; } if (e.hidden || getComputedStyle(e).display === "none") return; if (y + 54 > innerHeight - 12 && y > y0) { y = y0; col++; } e.style.setProperty("top", y + "px", "important"); e.style.setProperty("right", (innerWidth >= 900 ? 24 : 14) + col * 62 + "px", "important"); y += 60; }); };   /* on a short screen (a phone held sideways) the column wraps into a second one rather than running off the bottom */
+  const base = () => { if (isPark) { let b = 130; document.querySelectorAll("button").forEach((e) => { if (IDS.includes(e.id) || e.classList.contains("invSlot") || e.closest(".invView") || e.hidden || !e.getClientRects().length) return; const r = e.getBoundingClientRect(); if (r.right > innerWidth - 90 && r.bottom < innerHeight * 0.45 && r.width < innerWidth * 0.5) b = Math.max(b, r.bottom + 8); }); return b; }   /* on a narrow phone the top buttons wrap down: start below whichever sit over the item column */ let b = 70; ["exitBtn", "sndBtn", "viewBtn"].forEach((id) => { const e = $(id); if (!e || e.hidden || !e.getClientRects().length) return; const r = e.getBoundingClientRect(); if (r.right > innerWidth - 260 && r.bottom < innerHeight * 0.5) b = Math.max(b, r.bottom + 10); }); return b; };
+  /* out in the park every item has its slot from the start: an empty one shows what goes there, and a tap says how to get it */
+  const PARKP = window.KUMHO_PAGE === "park";
+  const SLOTS = [["slMap", "지도", ["mapBtn", "invMap"], "kumhoMapGot", "map", "🗺 지도 · 길 건너편에 있는 캐릭터(도서관 할아버지)에게 말을 걸면 받을 수 있어요."],
+    ["slHb", "헤리티지북", ["hbBtn", "bookBtn", "invHb"], "kumhoHeritageGot", "heritage", "📖 헤리티지북 · 금호도서관에 들어가 사서 할아버지를 만나면 받을 수 있어요."],
+    ["slEz", "쉬운 책", ["ezBtn", "easyBtn", "invEz"], "kumhoEasyGot", "easy", "📗 쉬운 책 · 헤리티지북을 받은 뒤 금호도서관 2층 오른쪽 끝 책장에서 찾을 수 있어요."],
+    ["slBus", "미니버스", [], "kumhoBusGot", "minibus", "🚌 미니버스 탑승권 · 소원 동전 10개를 모두 주워 분수에 던지거나, 엔조이코트 농구 3단계를 통과하거나, 사진 퍼즐 3개를 맞추면 얻어요."],
+    ["slTk", "승차권", ["invTk"], "kumhoTicket", "ticket", "🎫 미니택시 승차권 · 미니버스 탑승권을 얻은 뒤 유·스퀘어 안 무인발권기에서 받을 수 있어요."],
+    ["slGd", "집 안내서", ["guideBtn"], "kumhoGuideGot", "guide", "🏠 집 안내서 · 공원 뒤 아테라 아파트의 쿠모의 집에 들어가 안내서를 누르면 얻어요."]];
+  if (PARKP) { const st = document.createElement("style"); st.textContent = ".invSlot{position:fixed;z-index:44;width:54px;height:54px;padding:0;margin:0;border-radius:14px;border:1.5px dashed rgba(240,226,196,.55);background:rgba(18,20,24,.22);color:rgba(244,234,214,.9);font:700 10.5px/1.25 system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;text-align:center;word-break:keep-all;cursor:pointer;display:flex;align-items:center;justify-content:center;text-shadow:0 1px 2px rgba(0,0,0,.6)}.invSlot[hidden]{display:none}.invSlot:hover{border-color:#c9a86a;background:rgba(201,168,106,.18)}.invSlot.got{border:1px solid rgba(201,168,106,.7);background:rgba(18,20,24,.34) var(--ico) center 6px/34px no-repeat;color:#fff;align-items:flex-end;padding-bottom:5px;font-size:9px}"; document.head.appendChild(st); }
+  const slot = (S) => { let b = $(S[0]); if (!b) { b = document.createElement("button"); b.type = "button"; b.id = S[0]; b.className = "invSlot"; b.textContent = S[1]; b.title = S[1] + " (아직 없음)"; document.body.appendChild(b); stop(b);
+      b.addEventListener("click", (e) => { e.stopPropagation(); if (b.classList.contains("got")) { if (S[0] === "slBus" && $("busCall")) { $("busCall").click(); return; } note(S[0] === "slGd" ? "🏠 집 안내서는 쿠모의 집 안에서 오른쪽 위 ‘집 안내서’로 볼 수 있어요." : S[5]); return; } note(S[5]); }); } return b; };
+  const lay = () => { gen(); let y = base(), col = 0; const y0 = y;
+    if (PARKP) { const put = (e) => { if (y + 54 > innerHeight - 12 && y > y0) { y = y0; col++; } e.style.setProperty("top", y + "px", "important"); e.style.setProperty("right", (innerWidth >= 900 ? 24 : 14) + col * 62 + "px", "important"); y += 60; };
+      SLOTS.forEach((S) => { const real = S[2].map($).find((e) => e && !e.hidden && getComputedStyle(e).display !== "none"), b = slot(S);
+        if (real) { b.hidden = true; if (!real.dataset.cap) { real.dataset.cap = CAP[real.id] || S[1]; real.title = CAP[real.id] || S[1]; } put(real); return; }
+        const have = got(S[3]); b.classList.toggle("got", have); b.style.setProperty("--ico", "url(assets/items/" + S[4] + ".png)"); b.textContent = S[1]; b.title = have ? S[1] : S[1] + " (아직 없음)"; b.hidden = false; put(b); });
+      return; }
+    IDS.forEach((id) => { const e = $(id); if (!e) return; if (!e.dataset.cap) { e.dataset.cap = CAP[id]; e.setAttribute("aria-label", (e.textContent || CAP[id]).trim()); e.title = CAP[id]; } if (e.hidden || getComputedStyle(e).display === "none") return; if (y + 54 > innerHeight - 12 && y > y0) { y = y0; col++; } e.style.setProperty("top", y + "px", "important"); e.style.setProperty("right", (innerWidth >= 900 ? 24 : 14) + col * 62 + "px", "important"); y += 60; }); };   /* on a short screen (a phone held sideways) the column wraps into a second one rather than running off the bottom */
   setInterval(lay, 400); addEventListener("resize", lay); setTimeout(lay, 50); })();</script>
 </body>
 </html>
