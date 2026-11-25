@@ -4429,7 +4429,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       if (NPC.aT) { ease(NPC.aT, NPC.talk ? 1 : 0); ease(NPC.aW, NPC.talk ? 0 : walk); NPC.aI.setEffectiveWeight(Math.max(0, 1 - NPC.aT.getEffectiveWeight() - (NPC.aW ? NPC.aW.getEffectiveWeight() : 0))); }
       NPC.mix.update(dt); })(); }
   NPC.way = [[NPC.x, NPC.z], [NPC.x + 6.4, NPC.z + 0.4]];
-  // ---- 테라 at U-square: a friend who tells 쿠모 about the place, and where the mini-taxi ticket is ----
+  // ---- 아라 at U-square: a friend who tells 쿠모 about the place, and where the mini-taxi ticket is ----
   const GIRL = { g: null, mix: null, aW: null, aI: null, talk: false, x: 2.6, z: -2.6, wi: 1, pause: 1, way: [[2.6, -2.6], [5.2, -2.9]] };
   const GIRL_SAY = ["어, 쿠모! 여기가 바로 유·스퀘어야.", "원래는 광주종합버스터미널인데, 2006년에 쇼핑이랑 문화 공간까지 갖춘 복합문화공간으로 새로 태어났어.", "'유(U)'는 You와 Youth래. 당신의 광장, 젊음의 광장이라는 뜻이지. 멋지지?",
     "광주 어디서든 차로 30분이면 오고, 쇼핑도 하고 영화도 보고 맛있는 것도 먹을 수 있어.", "만나고 헤어지는 사람들의 추억이 잔뜩 쌓이는 곳이기도 해.", "아, 매표소 무인발권기 옆 화면 봤어? 금호익스프레스가 운영하는 금호팔도마켓 광고야. 한번 눌러 봐!"];
@@ -4453,7 +4453,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       if (GIRL.aW) { const w = GIRL.aW.getEffectiveWeight(); GIRL.aW.setEffectiveWeight(w + (walk - w) * Math.min(1, dt * 6)); if (GIRL.aI) GIRL.aI.setEffectiveWeight(1 - GIRL.aW.getEffectiveWeight()); }
       GIRL.mix.update(dt); })(); }
   function girlTalk() { if (!GIRL.g || GIRL.talk) return; const d = Math.hypot(S.x - GIRL.x, S.z - GIRL.z);
-    const go = () => { GIRL.talk = true; npcSay(GIRL_SAY.concat(busHave() ? GIRL_TK : GIRL_NOBUS), () => { GIRL.talk = false; }); NPC.talk = false; const dl = $("npcDlg"); if (dl) dl.querySelector(".nm").textContent = "테라"; };
+    const go = () => { GIRL.talk = true; npcSay(GIRL_SAY.concat(busHave() ? GIRL_TK : GIRL_NOBUS), () => { GIRL.talk = false; }); NPC.talk = false; const dl = $("npcDlg"); if (dl) dl.querySelector(".nm").textContent = "아라"; };
     if (d > 2.4) { const ux = (S.x - GIRL.x) / d, uz = (S.z - GIRL.z) / d; goTo(GIRL.x + ux * 1.6, GIRL.z + uz * 1.6); const t0 = performance.now(); (function w() { if (S.tx == null || performance.now() - t0 > 8000) go(); else setTimeout(w, 150); })(); } else go(); }
 
   function taxiSign() { const fx = TSIGN.x + Math.sin(TSIGN.r) * 1.7, fz = TSIGN.z + Math.cos(TSIGN.r) * 1.7;   /* the taxi's story board: a first tap walks 쿠모 round to stand square in front of it, a second shows it large */
@@ -4507,7 +4507,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const NOBUS = ["그런데 미니택시 승차권은 미니버스 탑승권이 있어야 받을 수 있단다.", "아테라 타운에서 분수에 소원 동전을 모두 던지거나, 농구 3단계를 통과하거나, 사진 퍼즐 3개를 맞추면 미니버스를 얻을 수 있어. 미니버스부터 얻어 오렴!"];
   const busHave = () => { try { return sessionStorage.getItem("kumhoBusGot") === "1"; } catch (e) { return false; } };
   function npcTalk() { if (!NPC.g) return; const d = Math.hypot(S.x - NPC.x, S.z - NPC.z);   /* he tells 쿠모 about U-square (the bus-ride event is left out for now) */
-    const go = () => { const L = NPC.said ? TAXI : ["오, 쿠모 왔구나! 저기 택시 보이지? 1946년 금호가 처음 달린 바로 그 택시란다."].concat(TAXI); NPC.said = true; npcSay(L); };   /* he tells of the founding taxi; 테라 tells 쿠모 about U-square */   /* without the mini bus pass yet, he sends 쿠모 off to win it first */   /* the first time: U-square; asked again: the founding taxi */
+    const go = () => { const L = NPC.said ? TAXI : ["오, 쿠모 왔구나! 저기 택시 보이지? 1946년 금호가 처음 달린 바로 그 택시란다."].concat(TAXI); NPC.said = true; npcSay(L); };   /* he tells of the founding taxi; 아라 tells 쿠모 about U-square */   /* without the mini bus pass yet, he sends 쿠모 off to win it first */   /* the first time: U-square; asked again: the founding taxi */
     if (d > 2.4) { const ux = (S.x - NPC.x) / d, uz = (S.z - NPC.z) / d; goTo(NPC.x + ux * 1.6, NPC.z + uz * 1.6); const t0 = performance.now(); (function w() { if (S.tx == null || performance.now() - t0 > 8000) go(); else setTimeout(w, 150); })(); } else go(); }
   const toast = (t) => { const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 2400); };
   function askLeave() { let el = $("leaveAsk"); if (!el) { const st = document.createElement("style"); st.textContent = "#leaveAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:30;width:min(520px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#leaveAsk[hidden]{display:none}#leaveAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#leaveAsk button{margin:0 6px;padding:9px 0;width:124px;box-sizing:border-box;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#leaveAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
