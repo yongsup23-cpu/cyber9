@@ -9236,7 +9236,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const items = () => ["slMap", "slHb", "slEz", "slBus", "slTk", "slGd", "mapBtn", "hbBtn", "ezBtn", "invTk", "guideBtn"].map(q);
     tutRun([{ t: "아테라 타운에 온 걸 환영해요! 이곳에서는 자유롭게 돌아다니며 금호의 이야기를 둘러볼 수 있어요. 가치체계관과 금호도서관, 실제 아테라 아파트를 반영한 쿠모의 집, 유·스퀘어가 있고 곳곳에 즐길거리도 숨어 있어요." },
       { el: items, side: "left", t: "오른쪽은 아이템 칸이에요. 빈 칸을 누르면 그 아이템을 어떻게 얻는지 알려 줘요. 하나씩 모아 보세요!" },
-      { el: () => [document.querySelector("#vkeys .joy")], side: "left", t: "오른쪽 아래 조이스틱을 밀면 쿠모가 걸어가요. 가고 싶은 곳을 눌러도 그쪽으로 걸어가요." },
+      { el: () => [document.querySelector("#vkeys .joy")], side: "left", t: "오른쪽 아래 조이스틱을 밀면 쿠모가 걸어가요. 가고 싶은 곳을 누르면 그쪽으로 걸어가고, 그 방향을 꾹 누르고 있으면 뛰어가요." },
       (() => { const sc = q("skyChip"), wide = sc && sc.getClientRects().length && getComputedStyle(sc).display !== "none" && sc.getBoundingClientRect().width > 40;   /* phones have no weather chips at the top left: the view buttons at the top instead */
         return wide ? { el: () => [q("skyChip")], side: "right", t: "왼쪽 위에서는 날씨 지역과 시간, 계절을 바꿔 볼 수 있고, 항공뷰로 하늘에서 아테라 타운을 내려다볼 수도 있어요." }
           : { el: () => [q("airBtn2"), q("tpBtn2")], side: "below", t: "위쪽 버튼으로 항공뷰로 하늘에서 아테라 타운을 내려다보거나, 1인칭 시점으로 바꿔 볼 수 있어요." }; })(),
@@ -11531,7 +11531,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "valueHall") { doorFront(o, () => { if (!busy) pageGo({ valueHall: true }); }); return; }
     if (o.userData.idx === "usqDoor") { doorFront(o, usqAsk); return; } if (o.userData.idx === "kumoHome") { doorFront(o, goHomeAsk); return; }   // 쿠모의 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { doorFront(o, () => { if (!busy) pageGo({ library: true }); }); return; }
-    if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }   // 도서관 할아버지 on his walk
+    if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }
+    if (o.userData.idx === "npcGirl") { girlTalk(); return; }   // 아라 by the history signs: the Kumho quiz   // 도서관 할아버지 on his walk
     if (o.userData.idx === "signLink") { const lk = o.userData.link, P0 = OUT.signPos || [0, 0], FP = { x: P0[0] + 0.6, z: P0[1] + 3.6, yaw: 0, pitch: 0.12 };   /* first tap from afar: walk up in front of the fingerpost; then a tap on an arrow opens its site */
       if (Math.hypot(cam.x - P0[0], cam.z - P0[1]) > 7 && !RIDE.on) { moveTo(FP); return; } taxiCSS(); taxiToast(`🔗 ${lk.n} 홈페이지를 새 창으로 열어요`, 2200); try { window.open(lk.url, "_blank", "noopener"); } catch (e) {} return; }
     if (o.userData.idx === "turtle") { const B = OUT.turtlePos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 };   // a 금호고속 sign: first tap, stand square in front of it on whichever side; then the marks (front) or the company's names (back), year by year
@@ -11876,6 +11877,59 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       if (W) { NPC.aW = NPC.mix.clipAction(W); NPC.aW.play(); NPC.aW.setEffectiveWeight(0); }
       if (T) { NPC.aT = NPC.mix.clipAction(T); NPC.aT.play(); NPC.aT.setEffectiveWeight(0); NPC.aI = NPC.mix.clipAction(T.clone()); NPC.aI.play(); NPC.aI.timeScale = 0; NPC.aI.setEffectiveWeight(1); } },
       undefined, () => { NPC.loading = false; NPC.fail = true; }); }
+  /* 아라, the girl in ARTERA colours by the history signs: she strolls up and down in front of them; talk to her and she quizzes 쿠모 on Kumho's story, ten questions drawn from forty-seven */
+  const GIRL = { g: null, world: null, loading: false, fail: false, mix: null, aW: null, aI: null, ww: 0, tx: 4, tz: -101.2, wait: 2, talk: false };
+  const GIRL_AREA = [-9, 36, -101.8, -100.6];
+  const QUIZ = [["금호는 몇 년에 처음 시작했을까?", "1946년", "1936년", "1956년", "1966년"], ["금호를 세운 창업회장님은 누구일까?", "박인천 회장", "박성용 회장", "박정구 회장", "박삼구 회장"], ["금호의 첫 사업은 뭐였을까?", "택시", "버스", "타이어", "건설"], ["처음 시작할 때 택시는 몇 대였을까?", "2대", "5대", "10대", "20대"], ["금호의 첫 택시는 어느 도시를 달렸을까?", "광주", "서울", "부산", "대구"], ["로비에 전시된 창업 택시는 어떤 차일까?", "1935년형 포드 디럭스", "1955년형 포드 디럭스", "1946년형 포드 트럭", "1960년형 포드 왜건"], ["금호 첫 택시 회사의 이름은?", "광주택시", "금호택시", "전남택시", "호남택시"], ["1948년 금호가 택시 다음으로 시작한 사업은?", "버스", "항공", "타이어", "건설"], ["연료가 모자라던 시절, 광주여객 버스는 무엇을 때서 달렸을까?", "목탄(숯)", "휘발유", "전기", "천연가스"], ["1956년 광주여객이 국내 최초로 들여온 것은?", "디젤엔진", "냉방장치", "자동문", "2층 버스"], ["1960년 금호가 직접 만들기 시작한 물건은?", "타이어", "자동차", "버스 차체", "엔진"], ["1960년 금호가 학교를 세우며 시작한 일은?", "육영사업(인재 기르기)", "출판사업", "방송사업", "체육사업"], ["1970년 금호가 새로 시작한 버스 사업은?", "고속버스", "시내버스", "관광버스", "공항버스"], ["1970년 금호 고속버스가 처음 달린 구간은?", "서울–대전", "서울–부산", "광주–목포", "서울–광주"], ["1972년 광주여객이 바꾼 새 이름은?", "광주고속", "금호고속", "호남고속", "광주관광"], ["1977년 금호가 새로 인수한 사업은?", "건설", "항공", "화학", "금융"], ["1978년 생긴 금호의 건설 회사 이름은?", "금호건설", "금호산업", "금호개발", "광주건설"], ["1988년 금호가 하늘길을 연 회사는?", "아시아나항공", "금호항공", "호남항공", "광주항공"], ["1992년 광주고속이 바꾼 새 이름은?", "금호고속", "금호익스프레스", "아시아나고속", "광주여객"], ["금호고속 버스 로고 속 동물은?", "거북이", "독수리", "말", "호랑이"], ["금호고속 거북이 로고가 처음 쓰인 해는?", "1970년", "1960년", "1980년", "1990년"], ["1992년 광주에 문을 연 국내 최대 규모의 시설은?", "광주종합버스터미널", "광주공항 여객터미널", "광주역 신역사", "광주 고속도로 휴게소"], ["광주종합버스터미널의 지금 이름은?", "유·스퀘어", "광주스퀘어", "금호플라자", "아시아나센터"], ["유·스퀘어의 '유(U)'에 담긴 뜻은?", "You와 Youth", "Union과 Unity", "Urban과 Up", "Unique와 Universe"], ["유·스퀘어는 어느 도시에 있을까?", "광주", "서울", "대전", "전주"], ["2001년 문을 연, 금호건설이 지은 공항은?", "인천국제공항", "김포국제공항", "제주국제공항", "무안국제공항"], ["금호건설이 인천국제공항 건설에서 맡지 않은 것은?", "공항 철도 열차 제작", "여객터미널", "관제탑", "활주로"], ["다음 중 금호건설이 지은 건축물이 아닌 것은?", "동대문디자인플라자(DDP)", "인천국제공항", "한남더힐", "건대 스타시티"], ["금호건설이 베트남 호찌민에 지은 건축물은?", "금호아시아나플라자", "아시아나타워", "금호센트럴파크", "아테라플라자"], ["2001년 금호건설이 내놓은 주상복합 브랜드는?", "리첸시아", "아테라", "어울림", "금호타운"], ["1988년 금호건설의 첫 주거 브랜드는?", "금호타운", "아테라", "리첸시아", "어울림"], ["1999년 금호건설의 주거 브랜드는?", "금호베스트빌", "아테라", "리첸시아", "금호타운"], ["2003년 금호건설의 주거 브랜드는?", "어울림", "아테라", "리첸시아", "금호타운"], ["2024년 금호건설이 내놓은 새 주거 브랜드는?", "아테라", "어울림", "리첸시아", "금호베스트빌"], ["아테라(ARTERA)는 어떤 말들을 합친 이름일까?", "예술(ART)·대지(TERRA)·시대(ERA)", "예술(ART)·하늘(TERRA)·영원(ERA)", "건축(ARCH)·테라스(TERRACE)·지역(AREA)", "아트(ART)·기술(TECH)·공간(AREA)"], ["아테라의 영문 표기로 맞는 것은?", "ARTERA", "ARTERRA", "ATERRA", "ARTEA"], ["2004년에 바뀐 그룹 이름은?", "금호아시아나그룹", "금호그룹", "아시아나그룹", "금호타이어그룹"], ["2006년 금호는 창립 몇 주년을 맞았을까?", "60주년", "50주년", "70주년", "80주년"], ["2027년, 금호건설은 창립 몇 주년일까?", "80주년", "60주년", "70주년", "90주년"], ["아카이브 로비의 '80'은 무엇으로 만들었을까?", "금호의 사진 353장", "금호고속 버스 모형", "금호건설 건물 모형", "80년 신문 기사"], ["금호 아카이브의 전시관은 모두 몇 개일까?", "5개", "3개", "4개", "6개"], ["아카이브 제1관의 이름은?", "열다", "펴다", "뛰다", "잇다"], ["특별관 Ⅰ '짓다'에서 볼 수 있는 것은?", "금호건설이 지은 건축물", "금호고속 버스와 터미널", "아시아나항공 비행기", "창업 초기 사진"], ["특별관 Ⅱ '잇다'에서 볼 수 있는 것은?", "금호의 버스와 터미널", "금호건설이 지은 건축물", "아시아나항공 비행기", "창업 초기 사진"], ["2014년부터 전라남도와 금호고속이 운영한 관광 순환버스는?", "남도한바퀴", "남도투어", "전남한바퀴", "호남여행버스"], ["2020년 금호고속의 고속버스 사업을 맡은 회사는?", "금호익스프레스", "금호모빌리티", "금호버스", "금호트래블"], ["2021년 금호산업이 바꾼 새 이름은?", "금호건설", "금호E&C", "금호개발", "금호산업건설"]];   /* each: the question, the right answer, then three wrong ones (shuffled when shown) */
+  function girlLoad() { GIRL.loading = true;
+    if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
+    if (!gltfLoader) return;
+    gltfLoader.load(R("assets/girl.glb"), (g) => { GIRL.loading = false; if (mode !== "outside") return;
+      const m = g.scene, G = new THREE.Group(); m.scale.setScalar(1.62 / 1.7); m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } }); G.add(m);
+      const pk = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.7, 0.7), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.85; pk.userData.idx = "npcGirl"; G.add(pk); pickables.push(pk);
+      { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.45, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.015; bl.renderOrder = 2; G.add(bl); }
+      G.position.set(GIRL.tx, 0.02, GIRL.tz); world.add(G); GIRL.g = G; GIRL.world = world; GIRL.mix = new THREE.AnimationMixer(m);
+      const clip = (re) => g.animations.find((c) => re.test(c.name)), W = clip(/walk/i), I = clip(/idle/i) || g.animations[0];
+      if (W) { GIRL.aW = GIRL.mix.clipAction(W); GIRL.aW.play(); GIRL.aW.setEffectiveWeight(0); }
+      if (I) { GIRL.aI = GIRL.mix.clipAction(I); GIRL.aI.play(); GIRL.aI.setEffectiveWeight(1); } },
+      undefined, () => { GIRL.loading = false; GIRL.fail = true; }); }
+  function girlStep(dt) {
+    if (mode !== "outside" || !world || !document.documentElement.classList.contains("arrived")) return;   /* fetched only once the park is open: no longer a wait at the start */
+    if (!GIRL.g || GIRL.world !== world) { GIRL.g = null; if (!GIRL.loading && !GIRL.fail && world.children.length > 20) girlLoad(); return; }
+    const G = GIRL.g, far = Math.hypot(cam.x - G.position.x, cam.z - G.position.z) > 70; let moving = false;
+    if (GIRL.talk) { const a = Math.atan2(cam.x - G.position.x, cam.z - G.position.z); G.rotation.y += wrapAngle(a - G.rotation.y) * Math.min(1, dt * 6); }
+    else if (GIRL.wait > 0) GIRL.wait -= dt;
+    else { const dx = GIRL.tx - G.position.x, dz = GIRL.tz - G.position.z, d = Math.hypot(dx, dz);
+      if (d < 0.15) { GIRL.wait = 2 + Math.random() * 4; GIRL.tx = GIRL_AREA[0] + Math.random() * (GIRL_AREA[1] - GIRL_AREA[0]); GIRL.tz = GIRL_AREA[2] + Math.random() * (GIRL_AREA[3] - GIRL_AREA[2]); }
+      else { const v = Math.min(d, 0.9 * dt); G.position.x += dx / d * v; G.position.z += dz / d * v; G.rotation.y += wrapAngle(Math.atan2(dx, dz) - G.rotation.y) * Math.min(1, dt * 5); moving = true; } }
+    GIRL.ww += ((moving ? 1 : 0) - GIRL.ww) * Math.min(1, dt * 5);
+    if (GIRL.aW) GIRL.aW.setEffectiveWeight(GIRL.ww); if (GIRL.aI) GIRL.aI.setEffectiveWeight(1 - GIRL.ww);
+    if (GIRL.mix && !far) GIRL.mix.update(dt); }   /* far off: her steps are not worked out */
+  function girlTalk() { const G = GIRL.g; if (!G || GIRL.talk || $("quizDlg")) return; GIRL.talk = true; const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z);
+    const go = () => npcSay(["야, 쿠모! 너 금호 아카이브에 갔다 왔지?", "그럼 내가 질문한다! 금호 역사 문제 10개, 준비됐지?"], () => quizStart(), "아라");
+    if (d > 3.2) { const ux = (cam.x - G.position.x) / d, uz = (cam.z - G.position.z) / d, sx = G.position.x + ux * 2.2, sz = G.position.z + uz * 2.2; moveTo({ x: sx, z: sz, yaw: Math.atan2(-(G.position.x - sx), -(G.position.z - sz)), pitch: 0.06 }); setTimeout(go, 1300); } else go(); }
+  function quizStart() { const pick = QUIZ.map((q, i) => [Math.random(), i]).sort((a, b) => a[0] - b[0]).slice(0, 10).map((x) => QUIZ[x[1]]); let n = 0, score = 0;
+    let el = $("quizDlg"); if (!el) { const st = document.createElement("style"); st.textContent = `#quizDlg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:min(620px,calc(100vw - 24px));z-index:100400;background:rgba(250,246,238,.94);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:24px 18px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box}
+#quizDlg .nm{position:absolute;left:16px;top:-14px;background:#f26a1f;color:#fff;font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px}#quizDlg .pg{position:absolute;right:16px;top:-12px;background:#1d2a5a;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+#quizDlg .q{font-size:18px;font-weight:700;line-height:1.5;margin-bottom:12px;word-break:keep-all}#quizDlg .ch{display:grid;grid-template-columns:1fr 1fr;gap:8px}#quizDlg .ch button{font:600 15px/1.35 inherit;font-family:inherit;text-align:left;padding:11px 12px;border-radius:12px;border:1px solid #d6c4a2;background:#fff;color:#2a2219;cursor:pointer;word-break:keep-all}
+#quizDlg .ch button.ok{background:#1d7a4a;color:#fff;border-color:#1d7a4a}#quizDlg .ch button.no{background:#c8202a;color:#fff;border-color:#c8202a}#quizDlg .fb{min-height:1.5em;margin:10px 2px 0;font-size:15px;font-weight:700;color:#5a3b22}#quizDlg .ft{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+#quizDlg .ft button{font:700 14px/1 inherit;font-family:inherit;border-radius:999px;padding:10px 18px;cursor:pointer;border:1px solid #b08b55;background:#5a3b22;color:#f6ead2}#quizDlg .ft button.x{background:transparent;color:#7d6a50}#quizDlg[hidden]{display:none}#quizDlg .big{font-size:40px;font-weight:900;color:#f26a1f;text-align:center;margin:6px 0}
+@media (max-width:520px){#quizDlg .ch{grid-template-columns:1fr}#quizDlg .q{font-size:16px}}`; document.head.appendChild(st);
+      el = document.createElement("div"); el.id = "quizDlg"; el.hidden = true; document.body.appendChild(el); ["pointerdown", "pointerup", "wheel", "touchstart"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation(), { passive: true })); }
+    const close = () => { el.hidden = true; GIRL.talk = false; };
+    const show = () => { const Q = pick[n], ch = Q.slice(1).map((t, k) => [Math.random(), t, k === 0]).sort((a, b) => a[0] - b[0]);
+      el.innerHTML = `<div class="nm">아라</div><div class="pg">${n + 1} / 10</div><div class="q">Q${n + 1}. ${Q[0]}</div><div class="ch">${ch.map((c, k) => `<button type="button" data-k="${k}">${c[1]}</button>`).join("")}</div><div class="fb"></div><div class="ft"><button type="button" class="x">그만할래</button></div>`; el.hidden = false;
+      el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); };
+      el.querySelectorAll(".ch button").forEach((b) => b.onclick = (e) => { e.stopPropagation(); if (el.dataset.done === "1") return; el.dataset.done = "1"; const c = ch[+b.dataset.k], right = ch.findIndex((x) => x[2]);
+        el.querySelectorAll(".ch button")[right].classList.add("ok"); if (c[2]) { score++; el.querySelector(".fb").textContent = ["딩동댕! 정답이야 👍", "오~ 맞았어!", "역시 쿠모! 정답!"][n % 3]; if (typeof sfxChime === "function") sfxChime(); }
+        else { b.classList.add("no"); el.querySelector(".fb").textContent = `땡! 정답은 '${ch[right][1]}'이야.`; }
+        const ft = el.querySelector(".ft"); ft.innerHTML = `<button type="button" class="x">그만할래</button><button type="button" class="nx">${n === 9 ? "결과 보기 ▶" : "다음 문제 ▶"}</button>`; ft.querySelector(".x").onclick = (ev) => { ev.stopPropagation(); close(); };
+        ft.querySelector(".nx").onclick = (ev) => { ev.stopPropagation(); n++; el.dataset.done = ""; if (n < 10) show(); else result(); }; }); el.dataset.done = ""; };
+    const result = () => { const msg = score === 10 ? "와, 만점이야! 너 완전 금호 박사구나! 🏆" : score >= 8 ? "대단한데? 금호 아카이브를 꼼꼼히 봤구나!" : score >= 5 ? "오, 꽤 잘했어! 조금만 더 둘러보면 만점도 문제없겠다." : score >= 3 ? "음… 아카이브를 한 번 더 둘러보고 오는 건 어때?" : "에이~ 아카이브 제대로 안 봤지? 다녀와서 다시 도전해!";
+      el.innerHTML = `<div class="nm">아라</div><div class="q" style="text-align:center">10문제 중</div><div class="big">${score}개 정답!</div><div class="q" style="text-align:center;font-weight:600">${msg}</div><div class="ft"><button type="button" class="x">고마워, 다음에!</button><button type="button" class="nx">한 번 더!</button></div>`;
+      el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); }; el.querySelector(".nx").onclick = (e) => { e.stopPropagation(); close(); GIRL.talk = true; quizStart(); }; if (score >= 8 && typeof sfxChime === "function") sfxChime(); };
+    show(); }
   function npcStep(dt) {
     if (mode !== "outside" || !world) return;
     if (!NPC.g || NPC.world !== world) { NPC.g = null; if (!NPC.loading && !NPC.fail && world.children.length > 20) npcLoad(); return; }
@@ -12953,7 +13007,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function frame(now) {
     if (freeGL.done) return;
     const dt = Math.min(RIDE.on ? 0.1 : 0.05, lastNow ? (now - lastNow) / 1000 : 0.016); lastNow = now;   /* aboard the mini bus or taxi a slow frame still covers its full distance, so both keep the same pace on any device */
-    stepHold(dt); stepTilt(dt); stepVK(dt); doorBump(dt); stepAir(dt); stepHoop(dt); stepSwing(dt); stepThumbs(dt); stepCoins(dt); npcStep(dt); cgStep(dt); if (mapGot && $("mapBtn")) $("mapBtn").hidden = mode !== "outside"; if ((NPC.bt = (NPC.bt || 0) + dt) > 0.5) { NPC.bt = 0; bookBtns(); } busCallStep(dt); screenStep(dt); pzStep(dt); tpStep(dt); placeVK();
+    stepHold(dt); stepTilt(dt); stepVK(dt); doorBump(dt); stepAir(dt); stepHoop(dt); stepSwing(dt); stepThumbs(dt); stepCoins(dt); npcStep(dt); girlStep(dt); cgStep(dt); if (mapGot && $("mapBtn")) $("mapBtn").hidden = mode !== "outside"; if ((NPC.bt = (NPC.bt || 0) + dt) > 0.5) { NPC.bt = 0; bookBtns(); } busCallStep(dt); screenStep(dt); pzStep(dt); tpStep(dt); placeVK();
     const taxiControls = document.getElementById("taxiControls");
     taxiControls.hidden = true;
     if (mode === "lobby" && CAR.lights && CAR.lights.length) {   // uplights round the dais: a soft, uneven twinkle
