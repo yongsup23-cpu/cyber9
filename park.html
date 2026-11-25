@@ -5,11 +5,11 @@
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
 (function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
   var carry = null; try { carry = JSON.parse(sessionStorage.getItem("kumhoItemsCarry") || "null"); } catch (e) {}
-  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].concat(["kumhoPz"]).forEach(function (k) { sessionStorage.removeItem(k); });
+  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone", "kumhoAirGot", "kumhoCgGot"].concat(["kumhoPz"]).forEach(function (k) { sessionStorage.removeItem(k); });
   if (carry && Date.now() - carry.t < 120000) (carry.k || []).forEach(function (k) { sessionStorage.setItem(k, "1"); }); } catch (e) {}   /* items handed over by the page just left are always kept, whatever the browser says about where we came from */
-  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
+  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone", "kumhoAirGot", "kumhoCgGot"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
 <script>/* test link: ?allclear opens the site with every item found and every mission done (books, map, guide, mini bus pass, mini taxi ticket, hoop game, all puzzles, wish coins), so the grandpa offers the 80-coin game at once */
-(function () { try { if (!/[?&]allclear\b/.test(location.search)) return; ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoTaxiGot", "kumhoBusGot", "kumhoHoopDone", "kumhoCoinDone"].forEach(function (k) { sessionStorage.setItem(k, "1"); }); sessionStorage.setItem("kumhoPz", "[0,1,2,3,4,5,6,7]"); } catch (e) {} })();</script>
+(function () { try { if (!/[?&]allclear\b/.test(location.search)) return; ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoTaxiGot", "kumhoBusGot", "kumhoHoopDone", "kumhoCoinDone", "kumhoAirGot", "kumhoCgGot"].forEach(function (k) { sessionStorage.setItem(k, "1"); }); sessionStorage.setItem("kumhoPz", "[0,1,2,3,4,5,6,7]"); } catch (e) {} })();</script>
 <title>금호 아카이브</title>
 <script>document.documentElement.classList.add("easel")</script>
 <script>/* arriving from the other page (lobby ⇄ park): no start screen, only a "moving" card until the scene is ready */
@@ -4642,7 +4642,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     if (h) {
       const img = new Image();
       img.onload = () => { preview = img; draw(tex.image.getContext("2d")); tex.needsUpdate = true; };
-      img.src = R(h);
+      photoSrc(h).then((u) => { img.src = u; }, () => { img.src = R(h); });   /* from its photo pack once that is in (a bare img/ path is not on the server) */
     }
     return tex;
   }
@@ -6157,7 +6157,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const h = docHash(text);
     if (DOC_FILES.has(h)) {
       DOC_AUD.onended = DOC_AUD.onerror = end; DOC_AUD.onloadedmetadata = () => { if (DOC.key === key && isFinite(DOC_AUD.duration)) DOC.until = performance.now() + DOC_AUD.duration * 1000 + 3000; };
-      DOC_AUD.src = R("audio/docent/" + h + ".mp3") + "?v=3";   /* v: raised whenever recordings are redone, so phones fetch the new ones */ try { DOC_AUD.load(); } catch (e) {}
+      DOC_AUD.src = R("audio/docent/" + h + ".mp3") + "?v=4";   /* v: raised whenever recordings are redone, so phones fetch the new ones */ try { DOC_AUD.load(); } catch (e) {}
       setTimeout(() => { if (DOC.key === key && DOC.on) { const p = DOC_AUD.play(); if (p && p.catch) p.catch(end); } }, 350);
       return; }
     if (!TTS) { end(); return; }
@@ -6196,6 +6196,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       if (d0) { auto.hold = performance.now() + 4000; walkThrough(d0.target); }
     }
   }
+  function autoPause(ms) { if (auto.on) { if (mode === "outside") { setAuto(false); return; } auto.hold = Math.max(auto.hold, performance.now() + (ms || 6000)); auto.next = 0; } }   /* a touch, a drag or a click in a hall only pauses the tour for a moment; only the button turns it off */
   function autoAdvance() {
     if (mode === "lobby") { setAuto(false); return; }
     const s = stops[cur];
@@ -8591,8 +8592,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const pk = mk(new THREE.BoxGeometry(DW + 1.2, DH + 0.8, 1.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, (DH + 0.8) / 2, 0.6); pk.castShadow = false; pk.userData.idx = "valueHall"; pickables.push(pk);
             }   // no separate door step: the apron already paves it (two pavings on top of each other flickered)
         }
-      { /* the fingerpost in the park between the photo puzzle and the big screen: four arrows to the group's own sites — tap one and that site opens in a new window */
-        const SX = 61.5, SZ = -27.5, G = new THREE.Group(); G.position.set(SX, 0.02, SZ); world.add(G);   /* in the park, half way between the photo puzzle and the big screen, its arrows facing the front walk */ OUT.signPos = [SX, SZ];
+      { const fingerpost = (SX, SZ, RY) => { /* the fingerpost in the park between the photo puzzle and the big screen: four arrows to the group's own sites — tap one and that site opens in a new window */
+        const G = new THREE.Group(); G.position.set(SX, 0.02, SZ); G.rotation.y = RY; world.add(G);   /* in the park, half way between the photo puzzle and the big screen, its arrows facing the front walk */
         const navy = new THREE.MeshLambertMaterial({ color: 0x1d2a5a }), gold = new THREE.MeshLambertMaterial({ color: 0xc9a86a });
         const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 3.2, 14), navy); pole.position.y = 1.6; pole.castShadow = true; G.add(pole);
         const top = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 10), gold); top.position.y = 3.26; G.add(top); const ft = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.12, 18), navy); ft.position.y = 0.06; G.add(ft);
@@ -8606,10 +8607,12 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           const ed = new THREE.Mesh(edge, new THREE.MeshLambertMaterial({ color: 0xf4efe4 })); B.add(ed);
           const fr = new THREE.Mesh(face, new THREE.MeshBasicMaterial({ map: paint(false), toneMapped: false })); fr.position.z = 0.027; B.add(fr);
           const bk = new THREE.Mesh(face, new THREE.MeshBasicMaterial({ map: paint(true), side: THREE.BackSide, toneMapped: false })); bk.position.z = -0.027; B.add(bk);
-          const pk = new THREE.Mesh(new THREE.BoxGeometry(L, H + 0.12, 0.3), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.x = L / 2; pk.userData.idx = "signLink"; pk.userData.link = lk; B.add(pk); pickables.push(pk); });
+          const pk = new THREE.Mesh(new THREE.BoxGeometry(L, H + 0.12, 0.3), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.x = L / 2; pk.userData.idx = "signLink"; pk.userData.link = lk; pk.userData.post = [SX, SZ]; B.add(pk); pickables.push(pk); });
         { const pt = canvasTex(256, 128, (g, W, Hh) => { g.fillStyle = "#f6efe0"; g.fillRect(0, 0, W, Hh); g.strokeStyle = "#1d2a5a"; g.lineWidth = 6; g.strokeRect(3, 3, W - 6, Hh - 6); g.fillStyle = "#1d2a5a"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `800 30px ${FONT}`; g.fillText("홈페이지 이정표", W / 2, 46); g.fillStyle = "#c4161c"; g.font = `700 21px ${FONT}`; g.fillText("화살표를 눌러 보세요", W / 2, 88); });
           const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.31), new THREE.MeshBasicMaterial({ map: pt, toneMapped: false })); pl.position.set(0, 0.55, -0.1); pl.rotation.y = Math.PI; G.add(pl); const pb = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.35, 0.04), navy); pb.position.set(0, 0.55, -0.07);   /* the little plate on the other face of the post, toward the archive */ G.add(pb); }
-        OUT.walls && OUT.walls.push([SX - 0.3, SX + 0.3, SZ - 0.3, SZ + 0.3]); }
+        OUT.walls && OUT.walls.push([SX - 0.3, SX + 0.3, SZ - 0.3, SZ + 0.3]); };
+        fingerpost(61.5, -27.5, 0); OUT.signPos = [61.5, -27.5];
+        FPOSTS.forEach(([x, z, r]) => fingerpost(x, z, r)); }   /* and three more like it: by 유·스퀘어, by the court and by the 아테라 단지 */
       // on the street: zebra crossings either side of the archive and a pair of signal poles
       { const zebra = canvasTex(256, 64, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "#f1f0ea"; for (let i = 0; i < 8; i++) g.fillRect(i * 32 + 4, 0, 20, H); });
         zebra.wrapS = THREE.RepeatWrapping; zebra.repeat.set(7 / 8, 1);
@@ -8867,7 +8870,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         OUT.petals.userData.paint = (SEAS) => { const c = new THREE.Color(); for (let i = 0; i < NP; i++) {
             if (SEAS === "autumn") c.setHSL(0.02 + CR() * 0.11, 0.7 + CR() * 0.2, 0.36 + CR() * 0.2); else c.setRGB(1, 1, 1);
             pc[i * 3] = c.r; pc[i * 3 + 1] = c.g; pc[i * 3 + 2] = c.b; }
-          pg.attributes.color.needsUpdate = true; const m = OUT.petals.material; m.map = OUT.petals.userData.tex[SEAS] || petalTex; m.size = SEAS === "autumn" ? 0.19 : 0.16; m.needsUpdate = true; pg.setDrawRange(0, SEAS === "autumn" ? Math.round(NP * 0.4) : NP); };   // autumn: about 40% as many leaves as spring petals
+          pg.attributes.color.needsUpdate = true; const m = OUT.petals.material; m.map = OUT.petals.userData.tex[SEAS] || petalTex; m.size = SEAS === "autumn" ? 0.19 : 0.16; m.needsUpdate = true; pg.setDrawRange(0, SEAS === "autumn" ? Math.round(NP * 0.28) : NP);   /* autumn: 70 % of the leaves there were */ };   // autumn: about 40% as many leaves as spring petals
         OUT.petals.frustumCulled = false; OUT.petals.visible = false; OUT.petals.userData.ph = ph; world.add(OUT.petals); }
       // summer: butterflies over the verges and dragonflies hovering above the street
       { const G = new THREE.Group(); G.visible = false; world.add(G); const list = [];
@@ -9150,9 +9153,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       text: DATA.map((h, i) => `${HL(i)}${h.span ? ` (${h.span.replace(/ — /, "~")})` : ""}  ${h.title}`).join("\n") }, 3.4, 3.1);
     // the way out appears only once every hall has been visited (?outside=1 shows it anyway)
     if (DATA.every((h, i) => VISITED.has(i)) || /[?&]outside=1/.test(location.search)) {
-      const OUTT = { outside: true }, ol = { title: "아테라 타운 나가기", sub: "바깥으로 · 아테라 타운" };
-      buildOutDoor(2, -5.7, OUTT);
-      stops.push({ kind: "door", side: 2, u: -5.7, cy: 1.6, w: 2.9, h: 3.0, target: OUTT, label: ol, outDoor: true }); }
+      const OUTT = { outside: true }, ol = { title: "아테라 타운 나가기", sub: "ARTERA TOWN · 바깥으로" };
+      hangDoor(2, -5.7, "assets/door-town.jpg", ol, OUTT, ND > 3 ? 2.15 : 2.3);   /* dressed as the halls' own doors, its name board on the door frame (no longer up over the film strip) */
+      stops.push({ kind: "door", side: 2, u: -5.7, cy: 1.6, w: 2.5, h: 3.3, target: OUTT, label: ol, outDoor: true }); }
     // (lobbyLights(ND, SP): the downlight scallops and the lit bronze panel, left out: the plain lobby reads better)
     addLobbyArrows();
     const art = hangWing();
@@ -9238,8 +9241,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       { el: items, side: "left", t: "오른쪽은 아이템 칸이에요. 빈 칸을 누르면 그 아이템을 어떻게 얻는지 알려 줘요. 하나씩 모아 보세요!" },
       { el: () => [document.querySelector("#vkeys .joy")], side: "left", t: "오른쪽 아래 조이스틱을 밀면 쿠모가 걸어가요. 가고 싶은 곳을 누르면 그쪽으로 걸어가고, 그 방향을 꾹 누르고 있으면 뛰어가요." },
       (() => { const sc = q("skyChip"), wide = sc && sc.getClientRects().length && getComputedStyle(sc).display !== "none" && sc.getBoundingClientRect().width > 40;   /* phones have no weather chips at the top left: the view buttons at the top instead */
-        return wide ? { el: () => [q("skyChip")], side: "right", t: "왼쪽 위에서는 날씨 지역과 시간, 계절을 바꿔 볼 수 있고, 항공뷰로 하늘에서 아테라 타운을 내려다볼 수도 있어요." }
-          : { el: () => [q("airBtn2"), q("tpBtn2")], side: "below", t: "위쪽 버튼으로 항공뷰로 하늘에서 아테라 타운을 내려다보거나, 1인칭 시점으로 바꿔 볼 수 있어요." }; })(),
+        return wide ? { el: () => [q("skyChip")], side: "right", t: "왼쪽 위에서는 날씨 지역과 시간, 계절을 바꿔 볼 수 있어요. 🔒 항공뷰는 처음엔 잠겨 있어요. 변천사 표지판 앞의 아라에게 말을 걸어 퀴즈를 8문제 이상 맞히면, 하늘에서 아테라 타운을 내려다볼 수 있어요!" }
+          : { el: () => [q("airBtn2"), q("tpBtn2")], side: "below", t: "위쪽 버튼으로 1인칭 시점으로 바꿔 볼 수 있어요. 🔒 항공뷰는 처음엔 잠겨 있어요. 변천사 표지판 앞의 아라에게 말을 걸어 퀴즈를 8문제 이상 맞히면, 하늘에서 아테라 타운을 내려다볼 수 있어요!" }; })(),
       { el: () => [kumoBox()], side: "above", t: "캐릭터를 누르면 캐릭터 설명도 볼 수 있어요." },
       { t: "자, 이제 처음 할 일! 지금 길 건너편 캐릭터에게 말을 걸어 보세요~!", last: "시작하기 ▶" }], "아테라 타운 안내"); }
   const lobbyHome = () => Math.max(0, stops.findIndex((t) => t.kind === "overview"));
@@ -10220,11 +10223,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const ask = $("homeAsk"); if (ask && !ask.hidden) return;
       armed = false; VK.v = 0; const ri = 39.5 - 2.3; goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🚌 유·스퀘어 탑승구로 들어가겠습니까?"; el.dataset.to = "usqGate"; el.dataset.at = JSON.stringify([Math.cos(g) * ri, -Math.sin(g) * ri, Math.atan2(Math.cos(g), -Math.sin(g))]); }, 150); }   /* asked first, as at every other door */
   if (IS_PARK) { /* hints on the spot, once a visit each: at the court, tap the hoop; at the history signs, tap a sign */
-    const HINT = [["hoop", 119, -114.5, 13, "🏀 골대를 눌러 보세요! 게이지에 맞춰 슛하는 농구 게임을 할 수 있어요"], ["brandC", 4.5, -106.4, 0, "🪧 표지판을 눌러 보세요! 금호건설 주거 브랜드와 상호 변천사를 연도별로 크게 볼 수 있어요", -16, 25], ["brandK", 57.8, -106.4, 0, "🪧 표지판을 눌러 보세요! 금호고속 거북이 로고와 상호 변천사를 연도별로 크게 볼 수 있어요", 41, 69]];
+    const HINT = [["hoop", 119, -112, 19, "🏀 농구장에 왔어요! 골대를 눌러 보세요. 게이지에 맞춰 슛하는 농구 게임을 할 수 있어요"], ["apt", 22, -166, 0, "🏠 아테라 단지를 눌러 보세요! 아파트나 아래 상가·주차장을 누르면 쿠모의 집에 들어갈 수 있어요", -30, 75], ["brandC", 4.5, -106.4, 0, "🪧 표지판을 눌러 보세요! 금호건설 주거 브랜드와 상호 변천사를 연도별로 크게 볼 수 있어요", -16, 25], ["brandK", 57.8, -106.4, 0, "🪧 표지판을 눌러 보세요! 금호고속 거북이 로고와 상호 변천사를 연도별로 크게 볼 수 있어요", 41, 69]];
     const seenH = (k) => { try { return sessionStorage.getItem("kumhoHint_" + k) === "1"; } catch (e) { return false; } };
     setInterval(() => { if (mode !== "outside" || busy || RIDE.on || AIR.on || AIR.out || document.hidden || document.querySelector(".tutBox")) return;
-      for (const [k, x, z, rad, t, x0, x1] of HINT) { if (seenH(k)) continue; const near = x0 != null ? cam.x > x0 - 3 && cam.x < x1 + 3 && Math.abs(cam.z - z) < 7 : Math.hypot(cam.x - x, cam.z - z) < rad;
-        if (near) { try { sessionStorage.setItem("kumhoHint_" + k, "1"); } catch (e) {} taxiCSS(); taxiToast(t, 4200); break; } } }, 700); }
+      for (const [k, x, z, rad, t, x0, x1] of HINT) { if (seenH(k) || (k === "apt" && (OUT.fromHome || (() => { try { return sessionStorage.getItem("kumhoGuideGot") === "1"; } catch (e) { return false; } })()))) continue; const near = x0 != null ? cam.x > x0 - 3 && cam.x < x1 + 3 && Math.abs(cam.z - z) < 7 : Math.hypot(cam.x - x, cam.z - z) < rad;
+        if (near) { try { sessionStorage.setItem("kumhoHint_" + k, "1"); } catch (e) {} taxiCSS(); taxiToast(t, 6000); break; } } }, 700); }
   function pageGo(to) {
     window.__pageLeaving = true; busy = true;
     try { if (RIDE.ok) sessionStorage.setItem("kumhoBusGot", "1"); } catch (e) {}
@@ -11444,7 +11447,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   /* click on empty floor / wall: walk forward toward that point */
   function goInner() { // walk through the drum door and stop on the inner hall's turn arrow, facing the way round
     const si = stops.findIndex((t) => t.side === 5); if (si < 0) return;
-    if (auto.on) setAuto(false);
+    autoPause();
     const rp = RI - IWT - BARRIER - 1.5;
     cur = si; showCard(); setNav(); looked = true;
     moveTo({ x: rp * Math.sin(DA), z: -rp * Math.cos(DA), yaw: -Math.PI / 2 - DA, pitch: -0.02 });
@@ -11533,7 +11536,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "library") { doorFront(o, () => { if (!busy) pageGo({ library: true }); }); return; }
     if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }
     if (o.userData.idx === "npcGirl") { girlTalk(); return; }   // 아라 by the history signs: the Kumho quiz   // 도서관 할아버지 on his walk
-    if (o.userData.idx === "signLink") { const lk = o.userData.link, P0 = OUT.signPos || [0, 0], FP = { x: P0[0] + 0.6, z: P0[1] + 3.6, yaw: 0, pitch: 0.12 };   /* first tap from afar: walk up in front of the fingerpost; then a tap on an arrow opens its site */
+    if (o.userData.idx === "signLink") { const lk = o.userData.link, P0 = o.userData.post || OUT.signPos || [0, 0], FP = { x: P0[0] + 0.6, z: P0[1] + 3.6, yaw: 0, pitch: 0.12 };   /* first tap from afar: walk up in front of the fingerpost; then a tap on an arrow opens its site */
       if (Math.hypot(cam.x - P0[0], cam.z - P0[1]) > 7 && !RIDE.on) { moveTo(FP); return; } taxiCSS(); taxiToast(`🔗 ${lk.n} 홈페이지를 새 창으로 열어요`, 2200); try { window.open(lk.url, "_blank", "noopener"); } catch (e) {} return; }
     if (o.userData.idx === "turtle") { const B = OUT.turtlePos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 };   // a 금호고속 sign: first tap, stand square in front of it on whichever side; then the marks (front) or the company's names (back), year by year
       if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2 || Math.abs(wrapAngle(cam.yaw - FP.yaw)) > 0.25) { moveTo(FP); return; } brandShow(back ? OUT.kOff[o.userData.i] : o.userData.i, back ? "kname" : "turtle"); return; }
@@ -11556,18 +11559,18 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "dioItem") { const si = stops.findIndex((t) => t.dioItem === o.userData.item); if (si < 0) return; if (si !== cur || looked) setStop(si); else showCard(); return; }
     if (o.userData.door) { walkThrough(o.userData.door); return; }
     if (o.userData.chron !== undefined) {
-      if (auto.on) setAuto(false);
+      autoPause();
       const si = stops.findIndex((t) => t.kind === "chron" && t.ci === o.userData.chron);
       if (si === cur && !anim) { looked = false; chronClickUV(hitUV); } else setStop(si);
       return;
     }
-    if (o.userData.idx === "kiosk") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "kiosk"); clearTimeout(SR.timer); SR.timer = 0; kFocused = false; setStop(si); return; }
+    if (o.userData.idx === "kiosk") { autoPause(); const si = stops.findIndex((t) => t.kind === "kiosk"); clearTimeout(SR.timer); SR.timer = 0; kFocused = false; setStop(si); return; }
     if (o.userData.idx === "ytChannel") { window.open(o.userData.url, "_blank", "noopener"); return; }
-    if (o.userData.idx === "yt") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "yt" && t.data === o.userData.Y); if (si !== cur) { setStop(si); if (stops[si].outside) { ytOn = true; ytRec = stops[si].rec; showCard(); } } else { ytOn = true; ytRec = stops[si].rec; showCard(); } return; }
+    if (o.userData.idx === "yt") { autoPause(); const si = stops.findIndex((t) => t.kind === "yt" && t.data === o.userData.Y); if (si !== cur) { setStop(si); if (stops[si].outside) { ytOn = true; ytRec = stops[si].rec; showCard(); } } else { ytOn = true; ytRec = stops[si].rec; showCard(); } return; }
     if (o.userData.idx === "inner") { goInner(); return; }
     if (o.userData.idx === "home") { goHome(); return; }
-    if (o.userData.idx === "map") { if (auto.on) setAuto(false); openMap(); return; }
-    if (o.userData.idx === "book") { if (auto.on) setAuto(false); const si = stops.findIndex((t) => t.kind === "book" && t.bi === o.userData.book); if (si === cur && !anim && !looked) openBook(stops[si].data); else setStop(si); return; }
+    if (o.userData.idx === "map") { autoPause(); openMap(); return; }
+    if (o.userData.idx === "book") { autoPause(); const si = stops.findIndex((t) => t.kind === "book" && t.bi === o.userData.book); if (si === cur && !anim && !looked) openBook(stops[si].data); else setStop(si); return; }
     if (o.userData.idx === "carsign") { const si = stops.findIndex((t) => t.carsign); if (si < 0) return; if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }   // 1st click: walk up to it, 2nd: the detail view (as with the taxi)
     if (o.userData.idx === "car") { const si = stops.findIndex((t) => t.car); if (si === cur && !anim && !looked) open3D(stops[si]); else setStop(si); return; }
     if (o.userData.idx === "wing") { const si = stops.findIndex((t) => t.kind === "art" && !t.car); if (si === cur && !anim && !looked) openLB(stops[si]); else setStop(si); return; }
@@ -11851,8 +11854,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   window.__kumhoCG = { panel: () => cgPanel(), start: () => cgStart(), end: () => cgEnd(), st: () => ({ on: CG.on, run: CG.run, n: CG.list.length, got: CG.got, k: [1, 5, 10].map((v) => CG.list.filter((c) => c.v === v).length), x10: CG.list.filter((c) => c.v === 10).map((c) => [+c.x.toFixed(1), +c.z.toFixed(1)]), ride: RIDE.on, kind: RIDE.kind, taxi: !!RIDE.taxi, inW: !!(RIDE.taxi && RIDE.taxi.parent === world), c: CG.list.slice(0, 3).map((c) => [c.x, c.z]) }) };
   function cgTalk() {   /* the grandpa, once 쿠모 has the mini taxi (and the park map): the game if everything else is done, else what is still left to do */
     if (!cgTaxi() || !mapGot) return false; const left = cgReq().filter((q) => !q[1]).map((q) => q[0]);
-    if (!left.length) { npcSay(["오, 쿠모! 미니택시까지 얻었구나. 아이템도 다 모으고, 농구도 퍼즐도 소원 동전도 모두 해냈다니 정말 대단하구나!", "그럼 할아버지가 특별한 게임을 하나 알려 주마. 이름하여 ‘80주화 챌린지’!", "금호 80주년을 기념하는 80주화 100개를 아테라 타운 곳곳에 뿌려 두었단다. 은빛 ×5 동전은 5개분, 빨간 ×10 동전은 10개분이지.", "미니택시를 타고 80개분을 누가 가장 빨리 모으나 겨루는 타임어택이란다. 5분이 지나면 끝이니 서두르렴. 빠르면 이니셜이 명예의 전당에 남는단다!"], cgPanel); return true; }
+    if (!left.length) { try { sessionStorage.setItem("kumhoCgGot", "1"); } catch (e) {} npcSay(["오, 쿠모! 미니택시까지 얻었구나. 아이템도 다 모으고, 농구도 퍼즐도 소원 동전도 모두 해냈다니 정말 대단하구나!", "그럼 할아버지가 특별한 게임을 하나 알려 주마. 이름하여 ‘80주화 챌린지’!", "금호 80주년을 기념하는 80주화 100개를 아테라 타운 곳곳에 뿌려 두었단다. 은빛 ×5 동전은 5개분, 빨간 ×10 동전은 10개분이지.", "미니택시를 타고 80개분을 누가 가장 빨리 모으나 겨루는 타임어택이란다. 5분이 지나면 끝이니 서두르렴. 빠르면 이니셜이 명예의 전당에 남는단다!", "옜다, 80주화 하나 주마. 오른쪽 아이템 칸의 동전을 누르면 언제든 바로 도전할 수 있단다!"], cgPanel); return true; }
     npcSay(["미니택시를 얻었구나, 쿠모! 그 택시로 할 수 있는 아주 특별한 게임이 있단다.", "그런데 먼저 이것들을 다 해내야 해 — " + left.join(" · ") + ".", "다 해내고 다시 오면 할아버지가 그 게임을 알려 주마!"]); return true; }
+  const FPOSTS = [[232, -10, 0], [110, -99, 0], [15, -160, 0]];
   const SIGN_LINKS = [   /* the fingerpost across from the archive: name, address, colour, which way the arrow points */
     { n: "금호건설", url: "https://www.kumhoenc.com/", c: "#1d2a5a", yaw: 0.35 },
     { n: "아테라", url: "https://www.artera.co.kr/", c: "#9a7b4f", c2: "#fff4d8", yaw: Math.PI - 0.3 },
@@ -11885,8 +11889,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
     if (!gltfLoader) return;
     gltfLoader.load(R("assets/girl.glb"), (g) => { GIRL.loading = false; if (mode !== "outside") return;
-      const m = g.scene, G = new THREE.Group(); m.scale.setScalar(1.62 / 1.7); m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } }); G.add(m);
-      const pk = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.7, 0.7), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.85; pk.userData.idx = "npcGirl"; G.add(pk); pickables.push(pk);
+      const m = g.scene, G = new THREE.Group(); { m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m), hh = bb.max.y - bb.min.y; m.scale.setScalar(hh > 0.2 ? (1.35) / hh : 0.8); }   /* as tall as 쿠모 */ m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } }); G.add(m);
+      const pk = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.4, 0.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.7; pk.userData.idx = "npcGirl"; G.add(pk); pickables.push(pk);
       { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
         const bl = new THREE.Mesh(new THREE.CircleGeometry(0.45, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.015; bl.renderOrder = 2; G.add(bl); }
       G.position.set(GIRL.tx, 0.02, GIRL.tz); world.add(G); GIRL.g = G; GIRL.world = world; GIRL.mix = new THREE.AnimationMixer(m);
@@ -11906,17 +11910,29 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     GIRL.ww += ((moving ? 1 : 0) - GIRL.ww) * Math.min(1, dt * 5);
     if (GIRL.aW) GIRL.aW.setEffectiveWeight(GIRL.ww); if (GIRL.aI) GIRL.aI.setEffectiveWeight(1 - GIRL.ww);
     if (GIRL.mix && !far) GIRL.mix.update(dt); }   /* far off: her steps are not worked out */
-  function girlTalk() { const G = GIRL.g; if (!G || GIRL.talk || $("quizDlg")) return; GIRL.talk = true; const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z);
-    const go = () => npcSay(["야, 쿠모! 너 금호 아카이브에 갔다 왔지?", "그럼 내가 질문한다! 금호 역사 문제 10개, 준비됐지?"], () => quizStart(), "아라");
+  function airGot() { try { return sessionStorage.getItem("kumhoAirGot") === "1"; } catch (e) { return false; } }   /* the aerial view: locked until 아라's quiz is passed (8 of 10) */
+  function quizTried() { try { return sessionStorage.getItem("kumhoQuizTry") === "1"; } catch (e) { return false; } }
+  function girlTalk() { const G = GIRL.g, qd = $("quizDlg"), nd = $("npcDlg"), qOpen = qd && !qd.hidden; if (GIRL.talk && !qOpen && (!nd || nd.hidden)) GIRL.talk = false;   /* a talk that ended some other way no longer leaves her deaf */
+    if (!G || GIRL.talk || qOpen) return; GIRL.talk = true; const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z);
+    const go = () => airGot() ? girlMenu() : npcSay(quizTried() ? ["또 왔네, 쿠모? 다시 도전해 볼래?", "10문제 중 8문제 이상 맞히면 하늘을 나는 물약을 줄게. 이번엔 할 수 있어!"]
+      : ["야, 쿠모! 너 금호 아카이브에 갔다 왔지?", "쿠모, 하늘에서 아테라 타운 본 적 있어? 나한테 하늘을 나는 물약이 있거든.", "내가 금호 역사 문제 10개를 낼게. 8문제 이상 맞히면 물약 줄게! 준비됐지?"], () => quizStart(), "아라");
     if (d > 3.2) { const ux = (cam.x - G.position.x) / d, uz = (cam.z - G.position.z) / d, sx = G.position.x + ux * 2.2, sz = G.position.z + uz * 2.2; moveTo({ x: sx, z: sz, yaw: Math.atan2(-(G.position.x - sx), -(G.position.z - sz)), pitch: 0.06 }); setTimeout(go, 1300); } else go(); }
-  function quizStart() { const pick = QUIZ.map((q, i) => [Math.random(), i]).sort((a, b) => a[0] - b[0]).slice(0, 10).map((x) => QUIZ[x[1]]); let n = 0, score = 0;
-    let el = $("quizDlg"); if (!el) { const st = document.createElement("style"); st.textContent = `#quizDlg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:min(620px,calc(100vw - 24px));z-index:100400;background:rgba(250,246,238,.94);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:24px 18px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box}
+  function quizBox() { let el = $("quizDlg"); if (!el) { quizStart.css(); el = $("quizDlg"); } return el; }
+  function girlMenu() { const el = quizBox(); el.dataset.done = "";
+    el.innerHTML = `<div class="nm">아라</div><div class="q" style="font-weight:600">하늘을 나는 물약은 벌써 마셨지? ✈ 항공뷰 버튼을 누르면 하늘에서 아테라 타운을 내려다볼 수 있어! 퀴즈를 또 풀어 봐도 좋고.</div><div class="ft"><button type="button" class="x">다음에</button><button type="button" class="qz">퀴즈 한 번 더</button><button type="button" class="nx">✈ 항공뷰 해볼래</button></div>`; el.hidden = false;
+    const close = () => { el.hidden = true; GIRL.talk = false; };
+    el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); }; el.querySelector(".qz").onclick = (e) => { e.stopPropagation(); close(); GIRL.talk = true; quizStart(); };
+    el.querySelector(".nx").onclick = (e) => { e.stopPropagation(); close(); setTimeout(() => setAir(true), 250); }; }
+  function airUnlock() { try { sessionStorage.setItem("kumhoAirGot", "1"); } catch (e) {} AIR.fresh = true; airBtn(); }
+  quizStart.css = () => { if ($("quizDlg")) return; let el; const st = document.createElement("style"); st.textContent = `#quizDlg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:min(620px,calc(100vw - 24px));z-index:100400;background:rgba(250,246,238,.94);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:24px 18px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box}
 #quizDlg .nm{position:absolute;left:16px;top:-14px;background:#f26a1f;color:#fff;font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px}#quizDlg .pg{position:absolute;right:16px;top:-12px;background:#1d2a5a;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
 #quizDlg .q{font-size:18px;font-weight:700;line-height:1.5;margin-bottom:12px;word-break:keep-all}#quizDlg .ch{display:grid;grid-template-columns:1fr 1fr;gap:8px}#quizDlg .ch button{font:600 15px/1.35 inherit;font-family:inherit;text-align:left;padding:11px 12px;border-radius:12px;border:1px solid #d6c4a2;background:#fff;color:#2a2219;cursor:pointer;word-break:keep-all}
 #quizDlg .ch button.ok{background:#1d7a4a;color:#fff;border-color:#1d7a4a}#quizDlg .ch button.no{background:#c8202a;color:#fff;border-color:#c8202a}#quizDlg .fb{min-height:1.5em;margin:10px 2px 0;font-size:15px;font-weight:700;color:#5a3b22}#quizDlg .ft{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
-#quizDlg .ft button{font:700 14px/1 inherit;font-family:inherit;border-radius:999px;padding:10px 18px;cursor:pointer;border:1px solid #b08b55;background:#5a3b22;color:#f6ead2}#quizDlg .ft button.x{background:transparent;color:#7d6a50}#quizDlg[hidden]{display:none}#quizDlg .big{font-size:40px;font-weight:900;color:#f26a1f;text-align:center;margin:6px 0}
+#quizDlg .ft button{font:700 14px/1 inherit;font-family:inherit;border-radius:999px;padding:10px 18px;cursor:pointer;border:1px solid #b08b55;background:#5a3b22;color:#f6ead2}#quizDlg .ft button.x{background:transparent;color:#7d6a50}#quizDlg[hidden]{display:none}#quizDlg .big{font-size:40px;font-weight:900;color:#f26a1f;text-align:center;margin:6px 0}#quizDlg .potion{font-size:54px;text-align:center;line-height:1.1;animation:qzPot 1.6s ease-in-out infinite;filter:drop-shadow(0 0 12px rgba(120,200,255,.9))}@keyframes qzPot{50%{transform:translateY(-6px) rotate(-8deg)}}
 @media (max-width:520px){#quizDlg .ch{grid-template-columns:1fr}#quizDlg .q{font-size:16px}}`; document.head.appendChild(st);
-      el = document.createElement("div"); el.id = "quizDlg"; el.hidden = true; document.body.appendChild(el); ["pointerdown", "pointerup", "wheel", "touchstart"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation(), { passive: true })); }
+      el = document.createElement("div"); el.id = "quizDlg"; el.hidden = true; document.body.appendChild(el); ["pointerdown", "pointerup", "wheel", "touchstart"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation(), { passive: true })); };
+  function quizStart() { const pick = QUIZ.map((q, i) => [Math.random(), i]).sort((a, b) => a[0] - b[0]).slice(0, 10).map((x) => QUIZ[x[1]]); let n = 0, score = 0;
+    let el = quizBox();
     const close = () => { el.hidden = true; GIRL.talk = false; };
     const show = () => { const Q = pick[n], ch = Q.slice(1).map((t, k) => [Math.random(), t, k === 0]).sort((a, b) => a[0] - b[0]);
       el.innerHTML = `<div class="nm">아라</div><div class="pg">${n + 1} / 10</div><div class="q">Q${n + 1}. ${Q[0]}</div><div class="ch">${ch.map((c, k) => `<button type="button" data-k="${k}">${c[1]}</button>`).join("")}</div><div class="fb"></div><div class="ft"><button type="button" class="x">그만할래</button></div>`; el.hidden = false;
@@ -11927,9 +11943,19 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const ft = el.querySelector(".ft"); ft.innerHTML = `<button type="button" class="x">그만할래</button><button type="button" class="nx">${n === 9 ? "결과 보기 ▶" : "다음 문제 ▶"}</button>`; ft.querySelector(".x").onclick = (ev) => { ev.stopPropagation(); close(); };
         ft.querySelector(".nx").onclick = (ev) => { ev.stopPropagation(); n++; el.dataset.done = ""; if (n < 10) show(); else result(); }; }); el.dataset.done = ""; };
     const result = () => { const msg = score === 10 ? "와, 만점이야! 너 완전 금호 박사구나! 🏆" : score >= 8 ? "대단한데? 금호 아카이브를 꼼꼼히 봤구나!" : score >= 5 ? "오, 꽤 잘했어! 조금만 더 둘러보면 만점도 문제없겠다." : score >= 3 ? "음… 아카이브를 한 번 더 둘러보고 오는 건 어때?" : "에이~ 아카이브 제대로 안 봤지? 다녀와서 다시 도전해!";
-      el.innerHTML = `<div class="nm">아라</div><div class="q" style="text-align:center">10문제 중</div><div class="big">${score}개 정답!</div><div class="q" style="text-align:center;font-weight:600">${msg}</div><div class="ft"><button type="button" class="x">고마워, 다음에!</button><button type="button" class="nx">한 번 더!</button></div>`;
-      el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); }; el.querySelector(".nx").onclick = (e) => { e.stopPropagation(); close(); GIRL.talk = true; quizStart(); }; if (score >= 8 && typeof sfxChime === "function") sfxChime(); };
+      try { sessionStorage.setItem("kumhoQuizTry", "1"); } catch (e) {} const pass = score >= 8, fresh = pass && !airGot(); if (fresh) airUnlock();
+      const extra = fresh ? `<div class="potion">🧪</div><div class="q" style="text-align:center;color:#1d2a5a">약속대로 하늘을 나는 물약이야! 이제 ✈ 항공뷰로 하늘에서 아테라 타운을 볼 수 있어!</div>` : pass ? "" : `<div class="q" style="text-align:center;font-weight:600;color:#7d6a50">8문제 이상 맞히면 하늘을 나는 물약을 줄게. 다시 도전해 봐!</div>`;
+      el.innerHTML = `<div class="nm">아라</div><div class="q" style="text-align:center">10문제 중</div><div class="big">${score}개 정답!</div><div class="q" style="text-align:center;font-weight:600">${msg}</div>${extra}<div class="ft"><button type="button" class="x">${fresh ? "고마워!" : "고마워, 다음에!"}</button><button type="button" class="nx">${fresh || (pass && airGot()) ? "✈ 항공뷰 해볼래" : "한 번 더!"}</button></div>`;
+      el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); }; el.querySelector(".nx").onclick = (e) => { e.stopPropagation(); close(); if (airGot()) { setTimeout(() => setAir(true), 250); return; } GIRL.talk = true; quizStart(); }; if (score >= 8 && typeof sfxChime === "function") sfxChime(); };
     show(); }
+  /* near a character: a soft white arrow bobbing over its head, pointing down at it, so it is clear it can be tapped */
+  const NARW = { tex: null, t: 0, list: new Map() };
+  function npcArrows(dt) { NARW.t += dt; const ok = mode === "outside" && !(AIR && (AIR.on || AIR.out)) && !RIDE.on && !document.querySelector(".tutBox"), dlg = ($("npcDlg") && !$("npcDlg").hidden) || ($("quizDlg") && !$("quizDlg").hidden);
+    [[NPC.g, NPC.talk], [GIRL.g, GIRL.talk]].forEach(([G, talk]) => { if (!G) return; let a = NARW.list.get(G);
+      if (!a) { if (!NARW.tex) NARW.tex = canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = "rgba(255,255,255,.75)"; g.strokeStyle = "rgba(30,30,30,.45)"; g.lineWidth = 5; g.lineJoin = "round"; g.beginPath(); g.moveTo(40, 14); g.lineTo(88, 14); g.lineTo(88, 62); g.lineTo(112, 62); g.lineTo(64, 116); g.lineTo(16, 62); g.lineTo(40, 62); g.closePath(); g.fill(); g.stroke(); });
+        G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G); a = new THREE.Sprite(new THREE.SpriteMaterial({ map: NARW.tex, transparent: true, depthWrite: false, opacity: 0 })); a.scale.set(0.42, 0.42, 1); a.userData.y = Math.min(2.6, Math.max(1.4, bb.max.y - G.position.y)) + 0.45; a.renderOrder = 20; G.add(a); NARW.list.set(G, a); }
+      const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z), on = ok && !talk && !dlg && d < 10, m = a.material;
+      m.opacity += ((on ? 0.85 : 0) - m.opacity) * Math.min(1, dt * 5); a.visible = m.opacity > 0.02; a.position.y = a.userData.y + Math.sin(NARW.t * 3.2) * 0.08; }); }
   function npcStep(dt) {
     if (mode !== "outside" || !world) return;
     if (!NPC.g || NPC.world !== world) { NPC.g = null; if (!NPC.loading && !NPC.fail && world.children.length > 20) npcLoad(); return; }
@@ -12051,7 +12077,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!el) { const st = document.createElement("style"); st.textContent = "#homeAsk{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100400;width:min(560px,calc(100vw - 32px));background:rgba(250,246,238,.97);color:#2a2219;border:2px solid #b08b55;border-radius:16px;padding:22px 22px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);box-sizing:border-box;text-align:center}#homeAsk[hidden]{display:none}#homeAsk .q{font-size:20px;font-weight:700;margin-bottom:14px}#homeAsk button{margin:0 6px;padding:9px 0;width:124px;box-sizing:border-box;border-radius:999px;font:700 15px inherit;font-family:inherit;cursor:pointer;border:1px solid #b08b55;background:#fff;color:#2a2219}#homeAsk button.y{background:#1d2a5a;color:#fff;border-color:#1d2a5a}";
       document.head.appendChild(st); el = document.createElement("div"); el.id = "homeAsk"; el.hidden = true; el.innerHTML = '<div class="q">🏠 집(아테라 아파트)으로 들어가겠습니까?</div><button type="button" class="y">YES</button><button type="button" class="n">NO</button>'; document.body.appendChild(el);
       ["pointerdown", "pointerup"].forEach((ev) => el.addEventListener(ev, (e) => e.stopPropagation()));
-      el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; el.hidden = true; if (b.classList.contains("y")) { if (el.dataset.to === "busCall") { busCall(); return; } if (el.dataset.to === "usqGate") { let at = null; try { at = JSON.parse(el.dataset.at || "null"); } catch (er) {} pageGo(at ? { usquare: true, usqAt: at } : { usquare: true }); } else pageGo({ [el.dataset.to || "home"]: true }); } }); }
+      el.addEventListener("click", (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; el.hidden = true; if (b.classList.contains("y")) { if (el.dataset.to === "busCall") { busCallRide(); return; } if (el.dataset.to === "usqGate") { let at = null; try { at = JSON.parse(el.dataset.at || "null"); } catch (er) {} pageGo(at ? { usquare: true, usqAt: at } : { usquare: true }); } else pageGo({ [el.dataset.to || "home"]: true }); } }); }
     el.dataset.to = "home"; el.querySelector(".q").textContent = "🏠 집(아테라 아파트)으로 들어가겠습니까?"; el.hidden = false; }
   const RIDE = { on: false, bus: null, ok: false };
   function busUnlocked() { try { if (!RIDE.ok && sessionStorage.getItem("kumhoBusGot") === "1") RIDE.ok = true; if (RIDE.ok && sessionStorage.getItem("kumhoBusGot") !== "1") sessionStorage.setItem("kumhoBusGot", "1"); } catch (e) {} return !!RIDE.ok; }   /* the pass and its record in the tab always agree, however it was won (or carried back in from another page) */   // earned anew on each visit (no longer remembered by the browser)
@@ -12061,7 +12087,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function busItem() {   /* the minibus pass joins the other items at the right: the same square slot with a clear picture; a tap goes aboard */
     let b = $("invBus"); if (b) { b.hidden = false; return; } b = document.createElement("button"); b.type = "button"; b.id = "invBus"; b.textContent = "미니버스"; document.body.appendChild(b);
     ["pointerdown", "pointerup", "wheel", "touchstart"].forEach((ev) => b.addEventListener(ev, (e) => e.stopPropagation(), { passive: true }));
-    b.addEventListener("click", (e) => { e.stopPropagation(); if (mode !== "outside" || AIR.on || AIR.out) { taxiCSS(); taxiToast("🚌 아테라 타운 1층에서 누르면 미니버스가 와요", 2400); return; } busCall(); }); }
+    b.addEventListener("click", (e) => { e.stopPropagation(); if (mode !== "outside" || AIR.on || AIR.out) { taxiCSS(); taxiToast("🚌 아테라 타운 1층에서 누르면 미니버스가 와요", 2400); return; } busCallRide(); }); }
+  function busCallRide() { if (RIDE.on) return; busCall(); const M = COIN.mini; if (!M || !M.userData.arrive) return; const t0 = performance.now(); (function w() { if (RIDE.on || mode !== "outside") return; if (M.userData.arrive && performance.now() - t0 < 4000) { setTimeout(w, 120); return; } rideAsk(); })(); }   /* wherever 쿠모 is: the bus pulls up beside him and he gets on */
   function rideBtn() {
     let b = $("rideOff"); if (b) return b; const st = document.createElement("style");
     st.textContent = "#rideOff{position:fixed;left:50%;transform:translateX(-50%);top:76px;z-index:45;font:14px/1 inherit;font-family:inherit;color:#f0e2c4;background:rgba(23,24,21,.86);border:1px solid rgba(201,168,106,.55);border-radius:999px;padding:9px 16px;cursor:pointer}#rideOff[hidden]{display:none}";
@@ -12437,8 +12464,10 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       st.textContent = "#airFab{display:none;position:fixed;right:12px;top:148px;z-index:30;font:12px/1 inherit;font-family:inherit;color:#d6c9b3;background:rgba(23,24,21,.78);border:1px solid rgba(201,168,106,.45);border-radius:999px;padding:8px 12px;cursor:pointer}@media (max-width:700px){#airFab.on{display:block}}";
       document.head.appendChild(st); f = document.createElement("button"); f.type = "button"; f.id = "airFab"; document.body.appendChild(f);
       f.addEventListener("click", (e) => { e.stopPropagation(); setAir(!AIR.on); }); ["pointerdown", "pointerup"].forEach((ev) => f.addEventListener(ev, (e) => e.stopPropagation())); }
-    f.classList.remove("on"); const a2 = $("airBtn2"); if (a2) { a2.hidden = mode !== "outside"; a2.textContent = AIR.on ? "↩ 지상으로" : "✈ 항공뷰"; }
-    tpLabel(); const b = $("skyChip") && $("skyChip").querySelector(".air"); if (!b) return; b.hidden = mode !== "outside"; b.textContent = AIR.on ? "↩ 지상으로" : "✈ 항공뷰"; }
+    const lk = !airGot(), lab = AIR.on ? "↩ 지상으로" : lk ? "🔒 항공뷰" : "✈ 항공뷰";   /* locked: a padlock; just opened: a shimmer until it is first used */
+    if (!$("airFxCss")) { const st = document.createElement("style"); st.id = "airFxCss"; st.textContent = ".airNew{animation:airNew 1.4s ease-in-out infinite!important;border-color:#ffd36a!important;color:#fff6d8!important}@keyframes airNew{0%,100%{box-shadow:0 0 0 0 rgba(255,211,106,.0),0 0 6px rgba(255,211,106,.5)}50%{box-shadow:0 0 0 4px rgba(255,211,106,.35),0 0 18px rgba(255,211,106,.95)}}.airLock{opacity:.78}"; document.head.appendChild(st); }
+    f.classList.remove("on"); const a2 = $("airBtn2"); if (a2) { a2.hidden = mode !== "outside"; a2.textContent = lab; a2.classList.toggle("airNew", !!AIR.fresh && !AIR.on); a2.classList.toggle("airLock", lk); }
+    tpLabel(); const b = $("skyChip") && $("skyChip").querySelector(".air"); if (!b) return; b.hidden = mode !== "outside"; b.textContent = lab; b.classList.toggle("airNew", !!AIR.fresh && !AIR.on); b.classList.toggle("airLock", lk); }
   // ---- third-person walker, outside only. The character (assets/character.glb: one skinned mesh, walk + run clips, ~0.7 MB) is fetched
   // only once the visitor is outside, kept in the scene (not the rebuilt street) so it loads once per visit; the camera rides behind it.
   const TP = { on: true, obj: null, mixer: null, act: {}, loading: false, fail: false, px: 0, pz: 0, spd: 0, rw: 0, k: 0, d: 4.2, started: false };
@@ -12543,6 +12572,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   }   // computers and pads: under the time-of-day chip
   function setAir(on) {
     if (mode !== "outside" || busy || on === AIR.on || AIR.out) return;
+    if (on && !airGot()) { taxiCSS(); taxiToast("🔒 항공뷰는 아직 잠겨 있어요 · 변천사 표지판 앞의 아라에게 말을 걸어 퀴즈를 8문제 이상 맞히면 열려요!", 4200); return; }
+    if (on && AIR.fresh) { AIR.fresh = false; }
     anim = null; hold = null; if (auto.on) setAuto(false); VK.v = 0;
     AIR.from = { x: cam.x, z: cam.z, y: cam.y, yaw: cam.yaw, pitch: cam.pitch }; AIR.t = 0;
     if (on) { AIR.back = Object.assign({}, AIR.from); AIR.a = 0; AIR.s = 1; AIR.p = 0; AIR.cx = 55; AIR.cz = -82; AIR.on = true; AIR.near = camera.near; camera.near = 1.5; camera.updateProjectionMatrix();   // more depth precision far off, so the ground never shimmers
@@ -12608,7 +12639,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!VK.j) VK.jH = null;   /* let go of the stick: the next push picks its way afresh */
     if (AIR.on || AIR.out) { VK.v = 0; return; }
     if (VK.j && !busy && !vkBlocked()) {   // the stick: walk the way it points (from where the camera looks), any angle, and let the view follow a sideways push
-      if (anim) anim = null; if (auto.on) setAuto(false);
+      if (anim) anim = null; autoPause();
       const f = -VK.jy, sd = VK.jx, m = Math.min(1, Math.hypot(f, sd)), vs = (mode === "outside" ? 14.3 * (RIDE.on ? (RIDE.kind === "taxi" ? 1.728 : 1.44) : 1) : 9.94) * m;   /* the stick runs as fast as pressing and holding */
       const hx = -Math.sin(cam.yaw), hz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw), L = Math.hypot(f, sd) || 1;
       VK.v += (vs - VK.v) * Math.min(1, dt * 5);
@@ -12617,7 +12648,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       cam.y += (EYE - cam.y) * Math.min(1, dt * 2.5); cam.pitch += (0 - cam.pitch) * Math.min(1, dt * 2); looked = true; return; }
     if (!(VK.f || VK.b || VK.l || VK.r || VK.fl || VK.fr) || busy || vkBlocked()) { VK.v = 0; return; }
     if (anim) anim = null;
-    if (auto.on) setAuto(false);
+    autoPause();
     // diagonal keys: walk forward while turning gently toward that side
     const turn = (VK.l ? 1 : 0) - (VK.r ? 1 : 0) + (VK.fl ? 0.7 : 0) - (VK.fr ? 0.7 : 0);
     if (turn) cam.yaw += turn * 1.5 * dt;
@@ -12685,7 +12716,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     holdTimer = setTimeout(() => {
       if (!drag || AIR.on || AIR.out || drag.dio || drag.tp || drag.moved > 8 || touches.size !== 1 || atEasel || busy || (mode !== "hall" && mode !== "outside")) return;   // press and hold to run: in the halls and out on the street
       hold = { x: drag.lx, y: drag.ly, v: 0 }; anim = null; looked = true;
-      if (auto.on) setAuto(false);
+      autoPause();
       canvas.style.cursor = "move";
     }, 320);
   });
@@ -12698,6 +12729,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     if (hold) { hold.x = e.clientX; hold.y = e.clientY; return; }
     if (!drag && mode === "hall" && e.pointerType === "mouse") { const o = hit(e.clientX, e.clientY); if (o && o.userData.thumbOf !== undefined && thumbFront()) { thumbHover(o); return; } thumbHover(null); if (o && (o.userData.screen || o.userData.thumbOf !== undefined)) { canvas.style.cursor = "pointer"; return; } }
+    if (drag && drag.moved > 4) autoPause();
     if (!drag) { if (e.pointerType === "mouse") canvas.style.cursor = mode === "outside" && tpHit(e.clientX, e.clientY) ? "grab" : hit(e.clientX, e.clientY) ? "pointer" : "crosshair"; return; }
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
     drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
@@ -12734,7 +12766,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (d.tp) { canvas.style.cursor = ""; TP.dragging = false; if (!cancel && d.moved <= 4) tpProfile(); return; }   // turning the character is not a step; a plain click shows who he is
     if (AIR.on || AIR.out) return;   // no walking off from the sky
     if (HOOP && !cancel && d.moved <= 8) { hoopShoot(); return; }   // during the game a click shoots
-    if (auto.on) setAuto(false);
+    autoPause();
     if (!cancel && d.moved <= 8) { if (!eggClick()) pick(e.clientX, e.clientY); }
   };
   canvas.addEventListener("pointerup", (e) => endPointer(e, false));
@@ -12745,7 +12777,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
     const v = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY;
-    setZoom(zoomTarget * Math.exp(-v * (e.ctrlKey ? 0.01 : 0.0015)));
+    setZoom(zoomTarget * Math.exp(-v * (e.ctrlKey ? 0.01 : 0.0015))); autoPause();
   }, { passive: false });
   document.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     const z = b.dataset.zoom;
@@ -12896,7 +12928,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         if (!EMBED || EMBED[`film/sheet_${sh}.jpg`]) im.style.backgroundImage = `url(${R(`film/sheet_${sh}.jpg`)})`;
         const y = document.createElement("span"); y.textContent = it.year;
         b.append(im, y);
-        b.addEventListener("click", () => { if (!filmMoved) { if (auto.on) setAuto(false); goToPhoto(hi, i); } });
+        b.addEventListener("click", () => { if (!filmMoved) { autoPause(); goToPhoto(hi, i); } });
         frag.appendChild(b);
       });
     });
@@ -13007,7 +13039,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function frame(now) {
     if (freeGL.done) return;
     const dt = Math.min(RIDE.on ? 0.1 : 0.05, lastNow ? (now - lastNow) / 1000 : 0.016); lastNow = now;   /* aboard the mini bus or taxi a slow frame still covers its full distance, so both keep the same pace on any device */
-    stepHold(dt); stepTilt(dt); stepVK(dt); doorBump(dt); stepAir(dt); stepHoop(dt); stepSwing(dt); stepThumbs(dt); stepCoins(dt); npcStep(dt); girlStep(dt); cgStep(dt); if (mapGot && $("mapBtn")) $("mapBtn").hidden = mode !== "outside"; if ((NPC.bt = (NPC.bt || 0) + dt) > 0.5) { NPC.bt = 0; bookBtns(); } busCallStep(dt); screenStep(dt); pzStep(dt); tpStep(dt); placeVK();
+    stepHold(dt); stepTilt(dt); stepVK(dt); doorBump(dt); stepAir(dt); stepHoop(dt); stepSwing(dt); stepThumbs(dt); stepCoins(dt); npcStep(dt); girlStep(dt); npcArrows(dt); cgStep(dt); if (mapGot && $("mapBtn")) $("mapBtn").hidden = mode !== "outside"; if ((NPC.bt = (NPC.bt || 0) + dt) > 0.5) { NPC.bt = 0; bookBtns(); } busCallStep(dt); screenStep(dt); pzStep(dt); tpStep(dt); placeVK();
     const taxiControls = document.getElementById("taxiControls");
     taxiControls.hidden = true;
     if (mode === "lobby" && CAR.lights && CAR.lights.length) {   // uplights round the dais: a soft, uneven twinkle
@@ -13307,7 +13339,7 @@ body #mapBtn[hidden],body #hbBtn[hidden],body #ezBtn[hidden],body #bookBtn[hidde
   const view = (id, html) => { let v = $(id); if (!v) { v = document.createElement("div"); v.id = id; v.className = "invView"; v.hidden = true; v.innerHTML = html; document.body.appendChild(v); stop(v); } return v; };
   /* pages that have no button of their own for an item still show it, and open it in a plain viewer: the park map as a picture, the heritage book page by page, the easy book in its frame */
   const HB = { i: 0, n: 54 }, hbShow = () => { const v = $("invHbV"); v.querySelector("img").src = "assets/heritage/p" + String(HB.i + 1).padStart(2, "0") + ".jpg"; v.querySelector(".pg").textContent = (HB.i + 1) + " / " + HB.n; };
-  const note = (t) => { let n = $("invNote"); if (!n) { n = document.createElement("div"); n.id = "invNote"; n.style.cssText = "position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:100700;background:rgba(20,18,16,.9);color:#f4e9d2;padding:12px 18px;border-radius:14px;font:600 15px/1.5 system-ui,sans-serif;text-align:center;max-width:calc(100vw - 40px);pointer-events:none"; document.body.appendChild(n); } n.textContent = t; n.hidden = false; clearTimeout(n._t); n._t = setTimeout(() => { n.hidden = true; }, Math.max(2600, t.length * 75)); };
+  const note = (t) => { let n = $("invNote"); if (!n) { n = document.createElement("div"); n.id = "invNote"; n.style.cssText = "position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:100700;background:rgba(20,18,16,.9);color:#f4e9d2;padding:12px 18px;border-radius:14px;font:600 15px/1.5 system-ui,sans-serif;text-align:center;max-width:calc(100vw - 40px);pointer-events:none"; document.body.appendChild(n); } { const k = t.indexOf(" : "); n.textContent = ""; if (k > 0) { const b = document.createElement("b"); b.textContent = t.slice(0, k); b.style.cssText = "color:#ffd36a"; n.append(b, " : " + t.slice(k + 3)); } else n.textContent = t; } n.hidden = false; clearTimeout(n._t); n._t = setTimeout(() => { n.hidden = true; }, Math.max(2600, t.length * 75)); };
   const OPEN = { invBus: () => note("🚌 아테라 타운(바깥)에서 누르면 미니버스가 와요"), invTk: () => { if (window.__miniTaxi) window.__miniTaxi(); else note("🚕 아테라 타운(바깥)에서 누르면 미니택시가 와요"); }, invMap: () => { const v = view("invMapV", '<div class="bar"><b>🗺 아테라 타운 안내도</b><button type="button">닫기 ✕</button></div><div class="st"><img alt="아테라 타운 안내도" src="assets/park-map.jpg"></div>'); v.querySelector("button").onclick = (e) => { e.stopPropagation(); v.hidden = true; }; v.hidden = false; },
     invHb: () => { const v = view("invHbV", '<div class="bar"><b>금호 헤리티지북 <span class="pg"></span></b><button type="button" data-a="x">닫기 ✕</button></div><div class="st"><img alt="금호 헤리티지북 페이지"></div><div class="nav"><button type="button" data-a="p">◀ 이전</button><button type="button" data-a="n">다음 ▶</button></div>');
       v.onclick = (e) => { e.stopPropagation(); const b = e.target.closest("button"); if (!b) return; if (b.dataset.a === "x") { v.hidden = true; return; } HB.i = Math.max(0, Math.min(HB.n - 1, HB.i + (b.dataset.a === "n" ? 1 : -1))); hbShow(); }; v.hidden = false; hbShow(); },
@@ -13319,16 +13351,16 @@ body #mapBtn[hidden],body #hbBtn[hidden],body #ezBtn[hidden],body #bookBtn[hidde
   const base = () => { if (isPark) { let b = 130; document.querySelectorAll("button").forEach((e) => { if (IDS.includes(e.id) || e.classList.contains("invSlot") || e.closest(".invView") || e.hidden || !e.getClientRects().length) return; const r = e.getBoundingClientRect(); if (r.right > innerWidth - 90 && r.bottom < innerHeight * 0.45 && r.width < innerWidth * 0.5) b = Math.max(b, r.bottom + 8); }); return b; }   /* on a narrow phone the top buttons wrap down: start below whichever sit over the item column */ let b = 70; ["exitBtn", "sndBtn", "viewBtn"].forEach((id) => { const e = $(id); if (!e || e.hidden || !e.getClientRects().length) return; const r = e.getBoundingClientRect(); if (r.right > innerWidth - 260 && r.bottom < innerHeight * 0.5) b = Math.max(b, r.bottom + 10); }); return b; };
   /* out in the park every item has its slot from the start: an empty one shows what goes there, and a tap says how to get it */
   const PARKP = window.KUMHO_PAGE === "park";
-  const SLOTS = [["slMap", "지도", ["mapBtn", "invMap"], "kumhoMapGot", "map", "🗺 지도 · 길 건너편에 있는 캐릭터(도서관 할아버지)에게 말을 걸면 받을 수 있어요."],
-    ["slHb", "헤리티지북", ["hbBtn", "bookBtn", "invHb"], "kumhoHeritageGot", "heritage", "📖 헤리티지북 · 금호도서관에 들어가 사서 할아버지를 만나면 받을 수 있어요."],
-    ["slEz", "쉬운 책", ["ezBtn", "easyBtn", "invEz"], "kumhoEasyGot", "easy", "📗 쉬운 책 · 헤리티지북을 받은 뒤 금호도서관 2층 오른쪽 끝 책장에서 찾을 수 있어요."],
-    ["slBus", "미니버스", ["invBus"], "kumhoBusGot", "minibus", "🚌 미니버스 탑승권 · 소원 동전 10개를 모두 주워 분수에 던지거나, 엔조이코트 농구 3단계를 통과하거나, 사진 퍼즐 3개를 맞추면 얻어요."],
-    ["slTk", "승차권", ["invTk"], "kumhoTicket", "ticket", "🎫 미니택시 승차권 · 미니버스 탑승권을 얻은 뒤 유·스퀘어 안 무인발권기에서 받을 수 있어요."],
-    ["slGd", "아테라\n안내서", ["guideBtn"], "kumhoGuideGot", "guide", "🏠 아테라 안내서 · 공원 뒤 아테라 아파트의 쿠모의 집에 들어가 안내서를 누르면 얻어요."],
-    ["slCg", "80주화", [], "kumhoCgDone", "", "🪙 80주화 챌린지 · 아이템을 모두 모으고 농구 3단계·사진 퍼즐·소원 동전 미션을 마치고 미니택시까지 얻은 뒤, 길 건너편 할아버지에게 말을 걸면 시작해요. 미니택시로 아테라 타운 곳곳의 80주화를 모아 기록에 도전해 보세요!"]];
+  const SLOTS = [["slMap", "지도", ["mapBtn", "invMap"], "kumhoMapGot", "map", "🗺 지도 : 길 건너편에 있는 캐릭터(도서관 할아버지)에게 말을 걸면 받을 수 있어요."],
+    ["slHb", "헤리티지북", ["hbBtn", "bookBtn", "invHb"], "kumhoHeritageGot", "heritage", "📖 헤리티지북 : 금호도서관에 들어가 사서 할아버지를 만나면 받을 수 있어요."],
+    ["slEz", "쉬운 책", ["ezBtn", "easyBtn", "invEz"], "kumhoEasyGot", "easy", "📗 쉬운 책 : 헤리티지북을 받은 뒤 금호도서관 2층 오른쪽 끝 책장에서 찾을 수 있어요."],
+    ["slBus", "미니버스", ["invBus"], "kumhoBusGot", "minibus", "🚌 미니버스 탑승권 : 소원 동전 10개를 모두 주워 분수에 던지거나, 엔조이코트 농구 3단계를 통과하거나, 사진 퍼즐 3개를 맞추면 얻어요."],
+    ["slTk", "승차권", ["invTk"], "kumhoTicket", "ticket", "🎫 미니택시 승차권 : 미니버스 탑승권을 얻은 뒤 유·스퀘어 안 무인발권기에서 받을 수 있어요."],
+    ["slGd", "아테라\n안내서", ["guideBtn"], "kumhoGuideGot", "guide", "🏠 아테라 안내서 : 공원 뒤 아테라 아파트의 쿠모의 집에 들어가 안내서를 누르면 얻어요."],
+    ["slCg", "80주화", [], "kumhoCgGot", "coin80", "🪙 80주화 챌린지 : 아이템을 모두 모으고 농구 3단계·사진 퍼즐·소원 동전 미션을 마치고 미니택시까지 얻은 뒤, 길 건너편 할아버지에게 말을 걸면 80주화를 받아요. 동전을 누르면 언제든 미니택시로 80주화 모으기 기록에 도전할 수 있어요!"]];
   if (PARKP) { const st = document.createElement("style"); st.textContent = ".invSlot{white-space:pre-line;position:fixed;z-index:44;width:54px;height:54px;padding:0;margin:0;border-radius:14px;border:1.5px dashed rgba(240,226,196,.55);background:rgba(18,20,24,.22);color:rgba(244,234,214,.9);font:700 10.5px/1.25 system-ui,-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;text-align:center;word-break:keep-all;cursor:pointer;display:flex;align-items:center;justify-content:center;text-shadow:0 1px 2px rgba(0,0,0,.6)}.invSlot[hidden]{display:none}.invSlot:hover{border-color:#c9a86a;background:rgba(201,168,106,.18)}#slCg:not(.got){border-color:rgba(236,198,108,.85);color:#f3d27a}#slGd.got{background-size:26px;background-position:center 4px}.invSlot.got{border:1px solid rgba(201,168,106,.7);background:rgba(18,20,24,.34) var(--ico) center 6px/34px no-repeat;color:#fff;align-items:flex-end;padding-bottom:5px;font-size:9px}"; document.head.appendChild(st); }
   const slot = (S) => { let b = $(S[0]); if (!b) { b = document.createElement("button"); b.type = "button"; b.id = S[0]; b.className = "invSlot"; b.textContent = S[1]; b.title = S[1] + " (아직 없음)"; document.body.appendChild(b); stop(b);
-      b.addEventListener("click", (e) => { e.stopPropagation(); if (b.classList.contains("got")) { if (S[0] === "slBus" && $("busCall")) { $("busCall").click(); return; } note(S[0] === "slGd" ? "🏠 아테라 안내서는 쿠모의 집 안에서 오른쪽 위 ‘아테라 안내서’로 볼 수 있어요." : S[5]); return; } note(S[5]); }); } return b; };
+      b.addEventListener("click", (e) => { e.stopPropagation(); if (b.classList.contains("got")) { if (S[0] === "slBus" && $("busCall")) { $("busCall").click(); return; } if (S[0] === "slCg" && window.__kumhoCG) { window.__kumhoCG.panel(); return; } note(S[0] === "slGd" ? "🏠 아테라 안내서는 쿠모의 집 안에서 오른쪽 위 ‘아테라 안내서’로 볼 수 있어요." : S[5]); return; } note(S[5]); }); } return b; };
   const lay = () => { gen(); let y = base(), col = 0; const y0 = y;
     if (PARKP) { const put = (e) => { if (y + 54 > innerHeight - 12 && y > y0) { y = y0; col++; } e.style.setProperty("top", y + "px", "important"); e.style.setProperty("right", (innerWidth >= 900 ? 24 : 14) + col * 62 + "px", "important"); y += 60; };
       SLOTS.forEach((S) => { const real = S[2].map($).find((e) => e && !e.hidden && getComputedStyle(e).display !== "none"), b = slot(S);

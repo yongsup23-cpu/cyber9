@@ -4,9 +4,9 @@
 <script>/* found items (헤리티지북 · 쉬운 책 · 공원 안내도) last only while moving between the site's own pages: a reload or a fresh visit starts from the beginning */
 (function () { try { var h = +sessionStorage.getItem("kumhoHop") || 0; sessionStorage.removeItem("kumhoHop"); var nv = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null, reload = nv ? nv.type === "reload" : !!(performance.navigation && performance.navigation.type === 1), inSite = !!document.referrer && document.referrer.indexOf(location.origin) === 0;
   var carry = null; try { carry = JSON.parse(sessionStorage.getItem("kumhoItemsCarry") || "null"); } catch (e) {}
-  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].concat(["kumhoPz"]).forEach(function (k) { sessionStorage.removeItem(k); });
+  if (!(inSite || Date.now() - h < 120000) && !reload) ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone", "kumhoAirGot", "kumhoCgGot"].concat(["kumhoPz"]).forEach(function (k) { sessionStorage.removeItem(k); });
   if (carry && Date.now() - carry.t < 120000) (carry.k || []).forEach(function (k) { sessionStorage.setItem(k, "1"); }); } catch (e) {}   /* items handed over by the page just left are always kept, whatever the browser says about where we came from */
-  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
+  window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone", "kumhoAirGot", "kumhoCgGot"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
 <title>유·스퀘어</title>
 <script>/* the park tune starts the moment the page opens (before the 3D scene is built), unless it was switched off */
 (function () { try { var off = false; try { var g = JSON.parse(sessionStorage.getItem("kumhoPageGo") || "null"), c = JSON.parse(sessionStorage.getItem("kumhoHomeCarry") || "null"); if (g ? g.sound === false : (c && c.sound === false)) off = true; } catch (e) {}
@@ -4430,14 +4430,14 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       NPC.mix.update(dt); })(); }
   NPC.way = [[NPC.x, NPC.z], [NPC.x + 6.4, NPC.z + 0.4]];
   // ---- 아라 at U-square: a friend who tells 쿠모 about the place, and where the mini-taxi ticket is ----
-  const GIRL = { g: null, mix: null, aW: null, aI: null, talk: false, x: 2.6, z: -2.6, wi: 1, pause: 1, way: [[2.6, -2.6], [5.2, -2.9]] };
+  const GIRL = { g: null, mix: null, aW: null, aI: null, talk: false, x: -1.4, z: -16.6, wi: 1, pause: 1, way: [[-1.4, -16.6], [1.4, -16.9]] };   /* inside, behind the ticket windows */
   const GIRL_SAY = ["어, 쿠모! 여기가 바로 유·스퀘어야.", "원래는 광주종합버스터미널인데, 2006년에 쇼핑이랑 문화 공간까지 갖춘 복합문화공간으로 새로 태어났어.", "'유(U)'는 You와 Youth래. 당신의 광장, 젊음의 광장이라는 뜻이지. 멋지지?",
     "광주 어디서든 차로 30분이면 오고, 쇼핑도 하고 영화도 보고 맛있는 것도 먹을 수 있어.", "만나고 헤어지는 사람들의 추억이 잔뜩 쌓이는 곳이기도 해.", "아, 매표소 무인발권기 옆 화면 봤어? 금호익스프레스가 운영하는 금호팔도마켓 광고야. 한번 눌러 봐!"];
   const GIRL_TK = ["그리고 무인발권기나 매표소에 가면 승차권을 받을 수 있어. 그걸로 창업택시를 닮은 미니택시를 탈 수 있다고!", "저기 택시 앞에 계신 할아버지한테 가면 그 택시 이야기도 해 주실 거야."];
   const GIRL_NOBUS = ["근데 미니택시 승차권은 미니버스 탑승권이 있어야 받을 수 있어.", "아테라 타운에서 분수에 소원 동전을 다 던지거나, 농구 3단계를 깨거나, 사진 퍼즐 3개를 맞추면 미니버스를 얻을 수 있어. 그거부터 하고 와!"];
   { const L4 = new THREE.GLTFLoader(); if (window.MeshoptDecoder) L4.setMeshoptDecoder(window.MeshoptDecoder);
-    L4.load("assets/girl.glb", (g) => { const m = g.scene, G = new THREE.Group(); m.scale.setScalar(1.62 / 1.7); m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; const mp = o.material && o.material.map; o.material = new THREE.MeshLambertMaterial({ map: mp, color: mp ? 0xffffff : o.material.color, skinning: true }); } }); G.add(m);
-      const pk = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.7, 0.7), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.85; pk.userData = { idx: "npcGirl" }; G.add(pk); PICK.push(pk);
+    L4.load("assets/girl.glb", (g) => { const m = g.scene, G = new THREE.Group(); { m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m), hh = bb.max.y - bb.min.y; m.scale.setScalar(hh > 0.2 ? (0.96 * 0.85 * 1.4) / hh : 0.8); }   /* as tall as 쿠모 */ m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; const mp = o.material && o.material.map; o.material = new THREE.MeshLambertMaterial({ map: mp, color: mp ? 0xffffff : o.material.color, skinning: true }); } }); G.add(m);
+      const pk = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.4, 0.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.7; pk.userData = { idx: "npcGirl" }; G.add(pk); PICK.push(pk);
       const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
       const bl = new THREE.Mesh(new THREE.CircleGeometry(0.45, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.015; G.add(bl);
       G.position.set(GIRL.x, 0.01, GIRL.z); scene.add(G); GIRL.g = G; GIRL.mix = new THREE.AnimationMixer(m);
@@ -4452,9 +4452,17 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
         else { const st = Math.min(d, 0.85 * dt); GIRL.x += dx / d * st; GIRL.z += dz / d * st; GIRL.g.position.set(GIRL.x, 0.01, GIRL.z); GIRL.g.rotation.y += wrapA(Math.atan2(dx, dz) - GIRL.g.rotation.y) * Math.min(1, dt * 5); walk = 1; } }
       if (GIRL.aW) { const w = GIRL.aW.getEffectiveWeight(); GIRL.aW.setEffectiveWeight(w + (walk - w) * Math.min(1, dt * 6)); if (GIRL.aI) GIRL.aI.setEffectiveWeight(1 - GIRL.aW.getEffectiveWeight()); }
       GIRL.mix.update(dt); })(); }
-  function girlTalk() { if (!GIRL.g || GIRL.talk) return; const d = Math.hypot(S.x - GIRL.x, S.z - GIRL.z);
+  { /* near a character: a soft white arrow bobbing over its head, pointing down at it, so it is clear it can be tapped */
+    let at = null, t = 0; const L = new Map(), ck = new THREE.Clock();
+    (function ar() { if (freeGL.done) return; requestAnimationFrame(ar); const dt = Math.min(0.05, ck.getDelta()); t += dt; const dl = $("npcDlg"), dlg = dl && !dl.hidden;
+      [[NPC.g, NPC.talk, NPC], [GIRL.g, GIRL.talk, GIRL]].forEach(([G, talk, O]) => { if (!G) return; let a = L.get(G);
+        if (!a) { if (!at) at = tex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = "rgba(255,255,255,.75)"; g.strokeStyle = "rgba(30,30,30,.45)"; g.lineWidth = 5; g.lineJoin = "round"; g.beginPath(); g.moveTo(40, 14); g.lineTo(88, 14); g.lineTo(88, 62); g.lineTo(112, 62); g.lineTo(64, 116); g.lineTo(16, 62); g.lineTo(40, 62); g.closePath(); g.fill(); g.stroke(); });
+          G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G); a = new THREE.Sprite(new THREE.SpriteMaterial({ map: at, transparent: true, depthWrite: false, opacity: 0 })); a.scale.set(0.36, 0.36, 1); a.userData.y = Math.min(2.4, Math.max(1.1, bb.max.y - G.position.y)) + 0.38; a.renderOrder = 20; G.add(a); L.set(G, a); }
+        const d = Math.hypot(S.x - G.position.x, S.z - G.position.z), on = !talk && !dlg && d < 8, m = a.material;
+        m.opacity += ((on ? 0.85 : 0) - m.opacity) * Math.min(1, dt * 5); a.visible = m.opacity > 0.02; a.position.y = a.userData.y + Math.sin(t * 3.2) * 0.07; }); })(); }
+  function girlTalk() { { const dl = $("npcDlg"); if (GIRL.talk && (!dl || dl.hidden)) GIRL.talk = false; }   /* a talk cut short (another box took its place) no longer leaves her deaf */ if (!GIRL.g || GIRL.talk) return; const d = Math.hypot(S.x - GIRL.x, S.z - GIRL.z);
     const go = () => { GIRL.talk = true; npcSay(GIRL_SAY.concat(busHave() ? GIRL_TK : GIRL_NOBUS), () => { GIRL.talk = false; }); NPC.talk = false; const dl = $("npcDlg"); if (dl) dl.querySelector(".nm").textContent = "아라"; };
-    if (d > 2.4) { const ux = (S.x - GIRL.x) / d, uz = (S.z - GIRL.z) / d; goTo(GIRL.x + ux * 1.6, GIRL.z + uz * 1.6); const t0 = performance.now(); (function w() { if (S.tx == null || performance.now() - t0 > 8000) go(); else setTimeout(w, 150); })(); } else go(); }
+    if (d > 2.4) { const ux = (S.x - GIRL.x) / d, uz = (S.z - GIRL.z) / d; goTo(GIRL.x + ux * 1.6, GIRL.z + uz * 1.6); const t0 = performance.now(); (function w() { if (S.tx == null || performance.now() - t0 > 20000) go(); else setTimeout(w, 150); })(); } else go(); }
 
   function taxiSign() { const fx = TSIGN.x + Math.sin(TSIGN.r) * 1.7, fz = TSIGN.z + Math.cos(TSIGN.r) * 1.7;   /* the taxi's story board: a first tap walks 쿠모 round to stand square in front of it, a second shows it large */
     if (Math.hypot(S.x - fx, S.z - fz) > 0.8) { goTo(fx, fz); S.faceTo = TSIGN.r; return; }
