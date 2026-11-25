@@ -9037,6 +9037,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     // (fog: the Artera fades with everything else; only its ARTERA name stays clear, as before)
     stepWeather(dt, t, u); OUT.snap = false;
     if (!OUT.veh) return;
+    if (!OUT.autoGone && OUT.readyAt && OUT.kind === "bus" && OUT.st === "idle" && performance.now() > OUT.readyAt + 4000 && (!$("npcDlg") || $("npcDlg").hidden)) { OUT.autoGone = true; outBusGo(); }   /* the bus standing at the stop pulls away by itself, once the park is ready and the welcome has been read */
     const taxi = OUT.kind === "taxi";
     if (OUT.st === "ride") {   // riding the founding taxi: a chase view from just behind and beside it, for about ten seconds
       OUT.t += dt; OUT.v = OUT.paused ? Math.max(0, OUT.v - dt * 5) : Math.min(9, OUT.v + dt * 2.2); OUT.x -= OUT.v * dt; OUT.veh.position.x = OUT.x;   // a tapped bus or building brings the taxi to a gentle stop
@@ -12975,7 +12976,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera);   // behind the card: every part drawn once
         off.forEach((o) => { o.frustumCulled = true; }); Z.forEach((z, i) => { z.g.visible = zv[i]; }); renderer.shadowMap.needsUpdate = true; } catch (e) { console.warn("warm", e); } };
     const open = () => { if (opened) return; opened = true; if (window.__archiveProgress) window.__archiveProgress(1); done(); };
-    const finish = () => { if (fin) return; fin = true; gardens(); warm(); open(); };
+    const finish = () => { if (fin) return; fin = true; gardens(); warm(); open(); OUT.readyAt = performance.now(); };
     const tick = () => { if (fin) return; const now = performance.now(), n = count(); if (n !== last) { last = n; still = now; }
       if (quick && !opened) open();   /* open at once: the full pass (every part drawn once) waits until the models are in, while the welcome is being read */
       if ((LDM.n === 0 && now - still > 600) || now - t0 > (quick ? 20000 : 5000)) finish(); else setTimeout(tick, 200); };   /* nothing left to fetch and nothing new added for a moment */
