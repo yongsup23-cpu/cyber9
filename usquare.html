@@ -3975,7 +3975,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const SECT = [];   // curved obstacles [r0, r1, a0, a1] about the hall's centre (0,0): a is measured from east (+x) round to the north (−z)
   const polar = (r, a) => [r * Math.cos(a), -r * Math.sin(a)], D2R = Math.PI / 180;
   const GA = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (42 + 76 * (i + 0.5) / 9) * D2R), GOA = [0, 1, 2, 3, 4].map((i) => (42 * (i + 0.5) / 5) * D2R).concat(GA), GDO = [], YR = RA + 30, XY1 = 70, ZY0 = -RA - 44, YXW = 6.9, YA0 = 1.5, YA1 = 122;   /* GOA: every door that opens — the five orange (고속) and the nine green (직행) — all onto the one coach yard */   /* the nine green (직행) bay doors, the only ones that open: out through them to the coach yard, walled at YR */
-  const YBUS = [0, 2, 4, 6, 8].map((i) => ({ a: GA[i], rc: RA + 9.4 }));   /* five coaches nose on to the doors, one at every other door */
+  const GOLD_ROT = 0; const YBUS = [0, 2, 4, 6, 8].map((i, n) => ({ a: GA[i], rc: RA + 9.4, gold: n % 2 === 1 })), YB_N = YBUS.filter((b) => !b.gold), YB_G = YBUS.filter((b) => b.gold);   /* five coaches nose on to the doors, one at every other door */
   const yard = (r, a) => { if (r < RA + 1.4) return GOA.some((g) => Math.abs(a - g) * RA < 1.1); const ad = a / D2R; if (r > YR - 0.4) return Math.abs(r * Math.cos(a)) < YXW && r * Math.sin(a) < -ZY0 - 0.5 && a > 0;   /* past the yard's edge only on the road out, between its pavements */ if (ad < YA0 + 1 || ad > YA1 - 3) return false;
     for (const b of YBUS) { const da = a - b.a, t = r * Math.sin(da), q = r * Math.cos(da) - b.rc; if (Math.abs(t) < 1.55 && Math.abs(q) < 6.4) return false; } return true; };
   const arcMesh = (r, a0, a1, y0, y1, m, inward = true) => { const g = new THREE.CylinderGeometry(r, r, y1 - y0, 48, 1, true, Math.PI / 2 + a0, a1 - a0); const o = add(g, m, 0, (y0 + y1) / 2, 0); if (inward) o.material.side = THREE.DoubleSide; return o; };
@@ -4107,9 +4107,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
         const bb = new THREE.Box3().setFromObject(root), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3()), k = 12 / Math.max(bs.x, bs.z), alongX = bs.x >= bs.z;
         let src = null; root.traverse((o) => { if (o.isMesh && !src) src = o; }); if (!src) return;
         const m0 = Array.isArray(src.material) ? src.material[0] : src.material, mat = new THREE.MeshLambertMaterial({ map: m0.map || null, color: 0xffffff });
-        const im = new THREE.InstancedMesh(src.geometry, mat, YBUS.length); im.frustumCulled = false; scene.add(im);
+        const im = new THREE.InstancedMesh(src.geometry, mat, YB_N.length); im.frustumCulled = false; scene.add(im);
         const fix = new THREE.Matrix4().makeTranslation(-bc.x, -bb.min.y, -bc.z), sc = new THREE.Matrix4().makeScale(k, k, k), ro = new THREE.Matrix4(), tr = new THREE.Matrix4(), M = new THREE.Matrix4();
-        YBUS.forEach((b, i) => { const [x, z] = polar(b.rc, b.a); ro.makeRotationY(b.a + (alongX ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.02, z); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); });
+        YB_N.forEach((b, i) => { const [x, z] = polar(b.rc, b.a); ro.makeRotationY(b.a + (alongX ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.02, z); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); });
         im.instanceMatrix.needsUpdate = true;
         { /* the 금호고속 lettering on both sides, drawn the right way round as on the coach at the archive (the model's own lettering read backwards on its left side) */ const s = 12 / 11.5, lm = new THREE.Mesh(src.geometry, new THREE.MeshBasicMaterial()); lm.matrixAutoUpdate = false; lm.matrix.makeRotationY(alongX ? 0 : Math.PI / 2).multiply(sc).multiply(fix).multiply(src.matrixWorld); lm.updateMatrixWorld(true);
           const dm = (w, h, draw) => { const c = document.createElement("canvas"); c.width = Math.round(w * 200); c.height = Math.round(h * 200); draw(c.getContext("2d"), c.width, c.height); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = ANISO; return new THREE.MeshLambertMaterial({ map: t, polygonOffset: true, polygonOffsetFactor: -2 }); };
@@ -4120,7 +4120,15 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
           [[3.97, 1.7, 2.36, 0.72, bigM], [-4.03, 1.57, 0.8, 0.36, smallM], [-3.72, 1.9, 1.4, 0.3, whiteM], [-3.08, 1.6, 0.5, 0.5, whiteM, -1]].forEach(([x, y, w, h, mt, only]) => [1, -1].forEach((sd) => { if (only && sd !== only) return;
             rc.set(new THREE.Vector3(x * s, y * s, sd * 4), new THREE.Vector3(0, 0, -sd)); const hit = rc.intersectObject(lm, false)[0]; if (!hit) return;
             const d = new THREE.Mesh(new THREE.PlaneGeometry(w * s, h * s), mt); d.position.set(hit.point.x, hit.point.y, hit.point.z + sd * 0.012); d.rotation.y = sd > 0 ? 0 : Math.PI; DG.add(d); }));
-          YBUS.forEach((b) => { const [x, z] = polar(b.rc, b.a), g = DG.clone(); g.position.set(x, 0.02, z); g.rotation.y = b.a; scene.add(g); }); } }, undefined, () => {})); }
+          YB_N.forEach((b) => { const [x, z] = polar(b.rc, b.a), g = DG.clone(); g.position.set(x, 0.02, z); g.rotation.y = b.a; scene.add(g); }); } }, undefined, () => {}));
+      /* every other coach is the gold premium coach (its own model, its lettering kept only where it reads the right way) */
+      L.load("assets/gold-bus.glb", (g) => { if (freeGL.done) return; const root = g.scene; root.updateMatrixWorld(true); let src = null; root.traverse((o) => { if (o.isMesh && !src) src = o; }); if (!src) return;
+        const bb = new THREE.Box3().setFromObject(root), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3()), k = 12 / Math.max(bs.x, bs.z), alongX = bs.x >= bs.z;
+        const m0 = Array.isArray(src.material) ? src.material[0] : src.material, mat = new THREE.MeshLambertMaterial({ map: m0.map || null, color: 0xffffff, side: THREE.DoubleSide });
+        const im = new THREE.InstancedMesh(src.geometry, mat, YB_G.length); im.frustumCulled = false; scene.add(im);
+        const fix = new THREE.Matrix4().makeTranslation(-bc.x, -bb.min.y, -bc.z), sc = new THREE.Matrix4().makeScale(k, k, k), ro = new THREE.Matrix4(), tr = new THREE.Matrix4(), M = new THREE.Matrix4();
+        YB_G.forEach((b, i) => { const [x, z] = polar(b.rc, b.a); ro.makeRotationY(b.a + GOLD_ROT + (alongX ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.02, z); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); });
+        im.instanceMatrix.needsUpdate = true; }, undefined, () => {}); }
     (function gd() { if (freeGL.done) return; requestAnimationFrame(gd); const S = window.__vh; if (!S) return; GDO.forEach((d) => { const to = Math.hypot(S.x - d.x, S.z - d.z) < 4.2 ? 1 : 0; if (Math.abs(d.t - to) < 1e-3) return; d.t += Math.sign(to - d.t) * Math.min(Math.abs(to - d.t), 0.04); const e = d.t * d.t * (3 - 2 * d.t); d.L.position.x = -1.25 * e; d.R.position.x = 1.25 * e; }); })(); }
   // ---- the light-box pillars ① – ⑥ in the waiting area along the bays ----
   { const ads = [["#1b1f2a", "#f26a1f", "금호고속", "프리미엄 고속버스"], ["#f4f1ea", "#1d2a5a", "ARTERA", "당신의 삶을 비추는 아름다움"], ["#c4161c", "#ffffff", "유·스퀘어", "당신의 광장 · 젊음의 광장"], ["#f4f1ea", "#c4161c", "금호건설", "대지 위의 예술"]];
