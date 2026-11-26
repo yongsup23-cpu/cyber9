@@ -3966,7 +3966,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     for (const sx of [-1, 1]) outline(add(capsule(0.45, 5.0), vinyl(stripes("#ffd23f", "#ff8a3d", 8)), sx * (HALF + 0.9), 0, -LEN), 1.05); }
 
   // ---- the years: a gate every 20 m with a board — 1946, 1948, 1960 … 2024 — so the run goes through Kumho's eighty years; passing one shows its story ----
-  const YEARS = [["1946", "택시 두 대로 금호의 첫걸음"], ["1948", "광주여객, 버스 운행 시작"], ["1960", "삼양타이어 설립"], ["1967", "제일토목건축 설립"], ["1970", "고속버스 시대를 열다"], ["1977", "건설업 진출"], ["1988", "아시아나항공 출범"], ["2006", "광주종합버스터미널, 유·스퀘어로"], ["2024", "주거 브랜드 아테라 탄생"]];
+  const YEARS = [["1946", "택시 두 대로 금호의 첫걸음"], ["1948", "광주여객, 버스 운행 시작"], ["1960", "삼양타이어 설립"], ["1967", "제일토목건축 설립"], ["1970", "고속버스 시대를 열다"], ["1977", "건설업 진출"], ["2006", "광주종합버스터미널, 유·스퀘어로"], ["2021", "금호산업, 금호건설로 상호 변경"], ["2024", "주거 브랜드 아테라 탄생"]];
   const GATES = [];
   YEARS.forEach(([y, t], i) => { const z = -12 - i * 25, pc = PAL[i % PAL.length];
     const bt = tex(768, 256, (g, w, h) => { g.fillStyle = "#fffaf0"; g.fillRect(0, 0, w, h); g.fillStyle = pc[0]; g.fillRect(0, 0, w, 24); g.fillRect(0, h - 24, w, 24); g.fillStyle = "#e3343a"; g.font = `900 112px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(y, w / 2, 100); g.fillStyle = "#2a2f45"; g.font = `800 46px ${FONT}`; g.fillText(t, w / 2, 192); });
