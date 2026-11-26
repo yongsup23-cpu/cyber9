@@ -11952,12 +11952,25 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     show(); }
   /* near a character: a soft white arrow bobbing over its head, pointing down at it, so it is clear it can be tapped */
   const NARW = { tex: null, t: 0, list: new Map() };
+  function narwTex() { if (!NARW.tex) NARW.tex = canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.shadowColor = "rgba(0,0,0,.45)"; g.shadowBlur = 8; g.fillStyle = "rgba(255,255,255,.82)"; g.strokeStyle = "rgba(20,20,20,.55)"; g.lineWidth = 6; g.lineJoin = "round"; g.beginPath(); g.moveTo(40, 14); g.lineTo(88, 14); g.lineTo(88, 62); g.lineTo(112, 62); g.lineTo(64, 116); g.lineTo(16, 62); g.lineTo(40, 62); g.closePath(); g.fill(); g.stroke(); }); return NARW.tex; }
   function npcArrows(dt) { NARW.t += dt; const ok = mode === "outside" && !(AIR && (AIR.on || AIR.out)) && !RIDE.on && !document.querySelector(".tutBox"), dlg = ($("npcDlg") && !$("npcDlg").hidden) || ($("quizDlg") && !$("quizDlg").hidden);
     [[NPC.g, NPC.talk], [GIRL.g, GIRL.talk]].forEach(([G, talk]) => { if (!G) return; let a = NARW.list.get(G);
-      if (!a) { if (!NARW.tex) NARW.tex = canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = "rgba(255,255,255,.75)"; g.strokeStyle = "rgba(30,30,30,.45)"; g.lineWidth = 5; g.lineJoin = "round"; g.beginPath(); g.moveTo(40, 14); g.lineTo(88, 14); g.lineTo(88, 62); g.lineTo(112, 62); g.lineTo(64, 116); g.lineTo(16, 62); g.lineTo(40, 62); g.closePath(); g.fill(); g.stroke(); });
+      if (!a) { narwTex();
         G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G); a = new THREE.Sprite(new THREE.SpriteMaterial({ map: NARW.tex, transparent: true, depthWrite: false, opacity: 0 })); a.scale.set(0.42, 0.42, 1); a.userData.y = Math.min(2.6, Math.max(1.4, bb.max.y - G.position.y)) + 0.45; a.renderOrder = 20; G.add(a); NARW.list.set(G, a); }
-      const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z), on = ok && !talk && !dlg && d < 10, m = a.material;
-      m.opacity += ((on ? 0.85 : 0) - m.opacity) * Math.min(1, dt * 5); a.visible = m.opacity > 0.02; a.position.y = a.userData.y + Math.sin(NARW.t * 3.2) * 0.08; }); }
+      const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z), on = ok && !talk && !dlg && d < 14, m = a.material;
+      m.opacity += ((on ? 0.85 : 0) - m.opacity) * Math.min(1, dt * 5); a.visible = m.opacity > 0.02; a.position.y = a.userData.y + Math.sin(NARW.t * 3.2) * 0.08; });
+    spotArrows(dt, ok && !dlg && !HOOP && !(TP && TP.sit)); }
+  /* the same arrow over everything else out there that answers a tap: the swing, the puzzle, the fountain, the hoop, the kiosks, the screen, the signs, the doors, the buses… one per thing (a row of boards gets one each) */
+  const SPOT_SKIP = new Set(["npcGrandpa", "npcGirl", "coin", "seat", "outApt"]);
+  function spotArrows(dt, ok) { const L = NARW.spots;
+    if (!L || NARW.sw !== world || NARW.sn !== pickables.length) { if (L) L.forEach((a) => { if (a.parent) a.parent.remove(a); }); const out = (NARW.spots = []), cells = new Set(), bb = new THREE.Box3(); NARW.sw = world; NARW.sn = pickables.length; if (mode !== "outside" || !world) return; world.updateMatrixWorld(true);
+      const put = (x, y, z, k, sc) => { const a = new THREE.Sprite(new THREE.SpriteMaterial({ map: NARW.tex, transparent: true, depthWrite: false, depthTest: false, opacity: 0 })); a.scale.set(sc, sc, 1); a.position.set(x, y, z); a.userData = { y, r: k }; a.renderOrder = 20; a.visible = false; world.add(a); out.push(a); };
+      narwTex(); pickables.forEach((o) => { const id = o.userData && o.userData.idx; if (!id || SPOT_SKIP.has(id)) return; let q = o; while (q && q !== world) q = q.parent; if (!q) return;
+        bb.setFromObject(o); if (!isFinite(bb.max.y)) return; const x = (bb.min.x + bb.max.x) / 2, z = (bb.min.z + bb.max.z) / 2, key = id + ":" + Math.round(x / 7) + ":" + Math.round(z / 7); if (cells.has(key)) return; cells.add(key);
+        const big = id === "bigScreen", top = big ? bb.max.y : Math.min(bb.max.y, bb.min.y + 3.6); put(x, top + (big ? 1.4 : 0.85), z, big ? 40 : 14, big ? 2.2 : 0.9); });
+      put(22, 5.4, -165, 16, 1.0); }   /* 아테라 단지: over the shops and the parking in front, where a tap takes 쿠모 home */
+    for (const a of NARW.spots) { const d = Math.hypot(cam.x - a.position.x, cam.z - a.position.z), on = ok && d < a.userData.r && d > 1.2, m = a.material;
+      if (!on && m.opacity < 0.02) { a.visible = false; continue; } m.opacity += ((on ? 0.8 : 0) - m.opacity) * Math.min(1, dt * 5); a.visible = m.opacity > 0.02; a.position.y = a.userData.y + Math.sin(NARW.t * 3.2 + a.position.x) * 0.08 * (a.scale.x / 0.42); } }
   function npcStep(dt) {
     if (mode !== "outside" || !world) return;
     if (!NPC.g || NPC.world !== world) { NPC.g = null; if (!NPC.loading && !NPC.fail && world.children.length > 20) npcLoad(); return; }
