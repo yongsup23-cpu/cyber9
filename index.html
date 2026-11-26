@@ -12486,7 +12486,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function hoopNext() {
     const H = HOOP; if (!H || H.shots < 10) return; const L = HOOP_LV[H.lv], ok = H.made >= L.need;
     if (ok && H.lv < 2) { hoopMsg(`레벨 ${H.lv + 2} 도전!`, true); const n = H.lv + 1; setTimeout(() => { if (HOOP === H) hoopLevel(n); }, 1400); }
-    else if (ok) { hoopMsg("올 클리어!", true); try { sessionStorage.setItem("kumhoHoopDone", "1"); } catch (e) {} setTimeout(() => busUnlock("농구 3단계 마스터"), 1600); setTimeout(() => { if (HOOP === H) hoopLevel(0); }, 2200); }
+    else if (ok) { hoopMsg("올 클리어!", true); try { sessionStorage.setItem("kumhoHoopDone", "1"); } catch (e) {} setTimeout(() => wishMsg("🎉 금호 80주년을 축하합니다!", "농구 3단계 올 클리어! 멋진 슛이었어요"), 1300); setTimeout(() => busUnlock("농구 3단계 마스터"), 4900); setTimeout(() => { if (HOOP === H) hoopLevel(0); }, 2200); }
     else { hoopMsg("다시 도전!", false); const n = H.lv; setTimeout(() => { if (HOOP === H) hoopLevel(n); }, 1400); }
     H.wait = true; setTimeout(() => { if (HOOP === H) H.wait = false; }, 1500);
   }
