@@ -11541,7 +11541,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "valueHall") { doorFront(o, () => { if (!busy) pageGo({ valueHall: true }); }); return; }
     if (o.userData.idx === "usqDoor") { doorFront(o, usqAsk); return; } if (o.userData.idx === "kumoHome") { doorFront(o, goHomeAsk); return; }   // 쿠모의 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { doorFront(o, () => { if (!busy) pageGo({ library: true }); }); return; }
-    if (o.userData.idx === "bounce") { const FP = { x: BOUNCE_AT[0], z: BOUNCE_AT[1] + 7.2, yaw: 0, pitch: 0.05 }; if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2) { moveTo(FP); const t0 = performance.now(), w = setInterval(() => { const near = Math.hypot(cam.x - FP.x, cam.z - FP.z) < 1.5; if (!near && performance.now() - t0 < 9000) return; clearInterval(w); if (near && !busy) { goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🎪 금호 바운스에 들어가겠습니까?"; el.dataset.to = "bounce"; } }, 150); return; } goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🎪 금호 바운스에 들어가겠습니까?"; el.dataset.to = "bounce"; return; }
+    if (o.userData.idx === "bounce") { const FP = { x: BOUNCE_AT[0], z: BOUNCE_AT[1] + 8.0, yaw: 0, pitch: 0.05 }; if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2) { moveTo(FP); const t0 = performance.now(), w = setInterval(() => { const near = Math.hypot(cam.x - FP.x, cam.z - FP.z) < 2.2; if (!near && performance.now() - t0 < 15000) return; clearInterval(w); if (near && !busy) { goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🎪 금호 바운스에 들어가겠습니까?"; el.dataset.to = "bounce"; } }, 150); return; } goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🎪 금호 바운스에 들어가겠습니까?"; el.dataset.to = "bounce"; return; }
     if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }
     if (o.userData.idx === "npcGirl") { girlTalk(); return; }   // 아라 by the history signs: the Kumho quiz   // 도서관 할아버지 on his walk
     if (o.userData.idx === "signLink") { const lk = o.userData.link, P0 = o.userData.post || OUT.signPos || [0, 0], FP = { x: P0[0] + 0.6, z: P0[1] + 3.6, yaw: 0, pitch: 0.12 };   /* first tap from afar: walk up in front of the fingerpost; then a tap on an arrow opens its site */
@@ -11866,8 +11866,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     npcSay(["미니택시를 얻었구나, 쿠모! 그 택시로 할 수 있는 아주 특별한 게임이 있단다.", "그런데 먼저 이것들을 다 해내야 해 — " + left.join(" · ") + ".", "다 해내고 다시 오면 할아버지가 그 게임을 알려 주마!"]); return true; }
   /* the bounce house on the lawn beside the big screen: a green inflatable base, a yellow-netted cage on yellow posts and a round yellow canopy,
      yellow steps at its front; through it, 바운스 대시 (bounce.html) */
-  const BOUNCE_AT = [105, -31];
-  function bounceHouse(X, Z) { const G = new THREE.Group(); G.position.set(X, 0.02, Z); world.add(G); const L = 7.5, W = 3.6, H0 = 0.75, PH = 2.25;
+  const BOUNCE_AT = [101, -34], BOUNCE_S = 1.2;   /* 20 % larger, further from the big screen */
+  function bounceHouse(X, Z) { const G = new THREE.Group(); G.position.set(X, 0.02, Z); G.scale.setScalar(BOUNCE_S); world.add(G); const L = 7.5, W = 3.6, H0 = 0.75, PH = 2.25;
     /* the real thing's surfaces, drawn: glossy PVC tarpaulin with welded seams and stitching on the base, foam-padded posts, a woven trampoline mat, a vinyl canopy with sewn panels and a scalloped valance */
     const pvc = (base, hi, lo, label, cw, ch) => canvasTex(cw || 512, ch || 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, hi); gr.addColorStop(0.5, base); gr.addColorStop(1, lo); g.fillStyle = gr; g.fillRect(0, 0, w, h);
       for (let x = 0; x < w; x += 128) { g.fillStyle = "rgba(0,0,0,.10)"; g.fillRect(x, 0, 3, h); g.fillStyle = "rgba(255,255,255,.18)"; g.fillRect(x + 3, 0, 2, h); }
@@ -11901,11 +11901,11 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       { const e = new THREE.Mesh(new THREE.CircleGeometry(W / 2 + 0.12, 28, 0, Math.PI), cm); e.position.set(0, H0 + PH, -(L / 2 + 0.25)); G.add(e); }   /* the back end closed, the front open as in the photo */
       const fr = new THREE.TorusGeometry(W / 2 + 0.13, 0.05, 6, 28, Math.PI); for (const sz of [-1, 1]) { const t = new THREE.Mesh(fr, yel); t.position.set(0, H0 + PH, sz * (L / 2 + 0.25)); G.add(t); } }
     const sign = canvasTex(512, 160, (g, w, h) => { g.fillStyle = "#e3343a"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `900 66px ${FONT}`; g.fillText("금호 바운스", w / 2, 66); g.font = `700 30px ${FONT}`; g.fillStyle = "#ffe68a"; g.fillText("KUMHO BOUNCE · 눌러서 입장", w / 2, 124); });
-    { const sp = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.75), new THREE.MeshBasicMaterial({ map: sign })); sp.position.set(0, H0 + PH + 0.95, L / 2 + 0.28); G.add(sp); }
+    { const bd = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.7, 0.08), yel); bd.position.set(0, H0 + PH + 0.35, L / 2 + 0.02); G.add(bd); const sp = new THREE.Mesh(new THREE.PlaneGeometry(2.45, 0.6), new THREE.MeshBasicMaterial({ map: sign })); sp.position.set(0, H0 + PH + 0.35, L / 2 + 0.07); G.add(sp); }   /* the name board sits right on the beam over the square entrance */
     for (let k = 0; k < 3; k++) mk(new THREE.BoxGeometry(1.1, 0.12, 0.34), dk, 0, 0.14 + k * 0.22, L / 2 + 0.9 - k * 0.3);
     for (const sx of [-1, 1]) { const r = mk(new THREE.CylinderGeometry(0.04, 0.04, 1.6, 8), yel, sx * 0.62, 0.9, L / 2 + 0.75); r.rotation.x = 0.75; mk(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 8), yel, sx * 0.62, 0.6, L / 2 + 1.25); }
     const pk = new THREE.Mesh(new THREE.BoxGeometry(W + 0.6, 3.6, L + 2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(0, 1.8, 0.6); pk.userData.idx = "bounce"; G.add(pk); pickables.push(pk);
-    OUT.walls && OUT.walls.push([X - W / 2 - 0.1, X + W / 2 + 0.1, Z - L / 2 - 0.3, Z + L / 2 + 0.3]); }
+    OUT.walls && OUT.walls.push([X - (W / 2 + 0.1) * BOUNCE_S, X + (W / 2 + 0.1) * BOUNCE_S, Z - (L / 2 + 0.3) * BOUNCE_S, Z + (L / 2 + 0.3) * BOUNCE_S]); }
   const FPOSTS = [[232, -10, 0], [110, -99, 0], [15, -160, 0]];
   const SIGN_LINKS = [   /* the fingerpost across from the archive: name, address, colour, which way the arrow points */
     { n: "금호건설", url: "https://www.kumhoenc.com/", c: "#1d2a5a", yaw: 0.35 },
@@ -12803,7 +12803,6 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     }
     if (hold) { hold.x = e.clientX; hold.y = e.clientY; return; }
     if (!drag && mode === "hall" && e.pointerType === "mouse") { const o = hit(e.clientX, e.clientY); if (o && o.userData.thumbOf !== undefined && thumbFront()) { thumbHover(o); return; } thumbHover(null); if (o && (o.userData.screen || o.userData.thumbOf !== undefined)) { canvas.style.cursor = "pointer"; return; } }
-    if (drag && drag.moved > 4) autoPause();
     if (!drag) { if (e.pointerType === "mouse") canvas.style.cursor = mode === "outside" && tpHit(e.clientX, e.clientY) ? "grab" : hit(e.clientX, e.clientY) ? "pointer" : "crosshair"; return; }
     const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
     drag.moved = Math.max(drag.moved, Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0));
@@ -12840,6 +12839,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (d.tp) { canvas.style.cursor = ""; TP.dragging = false; if (!cancel && d.moved <= 4) tpProfile(); return; }   // turning the character is not a step; a plain click shows who he is
     if (AIR.on || AIR.out) return;   // no walking off from the sky
     if (HOOP && !cancel && d.moved <= 8) { hoopShoot(); return; }   // during the game a click shoots
+    if (auto.on && mode !== "outside") { if (cancel || d.moved > 8) return; const o = hit(e.clientX, e.clientY);   /* the tour goes on through any tap or drag: only a tap on a photo stops it (and opens that photo) */
+      if (o && (photoMeshes.includes(o) || o.userData.thumbOf !== undefined)) { setAuto(false); pick(e.clientX, e.clientY); } return; }
     autoPause();
     if (!cancel && d.moved <= 8) { if (!eggClick()) pick(e.clientX, e.clientY); }
   };
@@ -12851,7 +12852,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
     const v = e.deltaMode === 1 ? e.deltaY * 30 : e.deltaY;
-    setZoom(zoomTarget * Math.exp(-v * (e.ctrlKey ? 0.01 : 0.0015))); autoPause();
+    setZoom(zoomTarget * Math.exp(-v * (e.ctrlKey ? 0.01 : 0.0015)));
   }, { passive: false });
   document.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     const z = b.dataset.zoom;
@@ -13002,7 +13003,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         if (!EMBED || EMBED[`film/sheet_${sh}.jpg`]) im.style.backgroundImage = `url(${R(`film/sheet_${sh}.jpg`)})`;
         const y = document.createElement("span"); y.textContent = it.year;
         b.append(im, y);
-        b.addEventListener("click", () => { if (!filmMoved) { autoPause(); goToPhoto(hi, i); } });
+        b.addEventListener("click", () => { if (!filmMoved) { if (auto.on) setAuto(false); goToPhoto(hi, i); } });
         frag.appendChild(b);
       });
     });
@@ -13266,7 +13267,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (IS_PARK && arrive && arrive.sound !== false) { try { setSound(true); } catch (e) {} }   /* the park's tune starts as the page opens, not only once every model has loaded */
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "bounce") moveTo({ x: BOUNCE_AT[0], z: BOUNCE_AT[1] + 7.6, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -164, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usqYard" && isFinite(arrive.x) && isFinite(arrive.z)) moveTo({ x: arrive.x, z: arrive.z, yaw: isFinite(arrive.yaw) ? arrive.yaw : 0, pitch: 0.04, fy: 0, y: EYE }, true);   /* out of U-square's coach yard on foot: on the same spot of the road out, in the park's own copy of the yard */ else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "bounce") moveTo({ x: BOUNCE_AT[0], z: BOUNCE_AT[1] + 8.4, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -164, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usqYard" && isFinite(arrive.x) && isFinite(arrive.z)) moveTo({ x: arrive.x, z: arrive.z, yaw: isFinite(arrive.yaw) ? arrive.yaw : 0, pitch: 0.04, fy: 0, y: EYE }, true);   /* out of U-square's coach yard on foot: on the same spot of the road out, in the park's own copy of the yard */ else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
         const viaDoor = (arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home" || arrive.from === "usquare" || arrive.from === "bus") && window.doorFx; if (viaDoor) doorFx.closed();   /* out through the doors: they open on the park */
         let seen = true; try { seen = sessionStorage.getItem("kumhoParkIntro") === "1"; } catch (e) {} const welcome = !arrive.from && !seen;
         warmOutside(() => { if (viaDoor) setTimeout(() => doorFx.open(), 700); requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); setTimeout(() => document.documentElement.classList.add("arrived"), 350);
