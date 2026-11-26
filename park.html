@@ -4786,8 +4786,12 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     for (const v of [OUT.bus, OUT.taxi]) { if (!v || !v.visible || !v.parent) continue;
       if (!v.userData.half) { const bb = new THREE.Box3().setFromObject(v), p = v.getWorldPosition(new THREE.Vector3()); v.userData.half = [bb.min.x - p.x, bb.max.x - p.x, bb.min.z - p.z, bb.max.z - p.z]; }
       const h = v.userData.half, p = v.position; if (a > p.x + h[0] - 0.35 && a < p.x + h[1] + 0.35 && b > p.z + h[2] - 0.35 && b < p.z + h[3] + 0.35) return true; }
+    for (const G of [NPC.g, GIRL.g]) if (G && G.parent === world && Math.hypot(a - G.position.x, b - G.position.z) < 0.6) return true;   /* the characters are solid too */
+    if (!RIDE.on) for (const v of [COIN.mini, RIDE.taxi]) { if (!v || !v.visible || v.parent !== world || Math.hypot(a - v.position.x, b - v.position.z) > 4) continue;   /* the parked mini bus and mini taxi, measured where and how they stand now */
+      const bb = VEHB.setFromObject(v); if (a > bb.min.x - 0.25 && a < bb.max.x + 0.25 && b > bb.min.z - 0.25 && b < bb.max.z + 0.25) return true; }
     return false;
   }
+  const VEHB = new THREE.Box3();
   function clampXZ(x, z, m) {
     if (mode === "outside") {   // across the road and on past the trees; the bus shelter's glass is solid
       const okA = (a, b) => floorAt(a, b, cam.fy || 0) != null;   // walkable at a height within a step of where you stand (ground, U-square stair, its first-floor gallery)
@@ -8613,7 +8617,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
           const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.31), new THREE.MeshBasicMaterial({ map: pt, toneMapped: false })); pl.position.set(0, 0.55, -0.1); pl.rotation.y = Math.PI; G.add(pl); const pb = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.35, 0.04), navy); pb.position.set(0, 0.55, -0.07);   /* the little plate on the other face of the post, toward the archive */ G.add(pb); }
         OUT.walls && OUT.walls.push([SX - 0.3, SX + 0.3, SZ - 0.3, SZ + 0.3]); };
         fingerpost(61.5, -27.5, 0); OUT.signPos = [61.5, -27.5];
-        FPOSTS.forEach(([x, z, r]) => fingerpost(x, z, r)); }   /* and three more like it: by 유·스퀘어, by the court and by the 아테라 단지 */
+        FPOSTS.forEach(([x, z, r]) => fingerpost(x, z, r)); try { bounceHouse(BOUNCE_AT[0], BOUNCE_AT[1]); } catch (e) { console.warn("bounce", e); } }   /* and three more like it: by 유·스퀘어, by the court and by the 아테라 단지 */
       // on the street: zebra crossings either side of the archive and a pair of signal poles
       { const zebra = canvasTex(256, 64, (g, W, H) => { g.clearRect(0, 0, W, H); g.fillStyle = "#f1f0ea"; for (let i = 0; i < 8; i++) g.fillRect(i * 32 + 4, 0, 20, H); });
         zebra.wrapS = THREE.RepeatWrapping; zebra.repeat.set(7 / 8, 1);
@@ -10237,8 +10241,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     try { if (RIDE.ok) sessionStorage.setItem("kumhoBusGot", "1"); } catch (e) {}
     try { sessionStorage.setItem("kumhoPageGo", JSON.stringify(Object.assign({ ride: !!RIDE.ok, sound: !!SND.on, t: Date.now() }, to))); } catch (e) {}
     if ((to.library || to.valueHall || to.home || to.usquare) && window.doorFx) { doorFx.close(() => { freeGL(); kumhoHop(); location.replace(to.library ? "library.html" : to.home ? "kumohome.html" : to.usquare ? "usquare.html" : "valuehall.html"); }); return; }   // through the doors: they swing shut, then the room
-    const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">${to.library ? "금호 도서관으로 이동 중…" : to.valueHall ? "금호 가치체계 전시관으로 이동 중…" : to.park ? "아테라 타운으로 이동 중…" : "금호 아카이브로 이동 중…"}</div>`; }
-    setTimeout(() => { freeGL(); kumhoHop(); location.href = to.library ? "library.html" : to.valueHall ? "valuehall.html" : to.park ? "park.html" : "index.html"; }, 160);
+    const f = $("fade"); if (f) { f.classList.add("on"); f.innerHTML = `<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#e8c98c;font:600 16px/1.6 inherit;font-family:inherit;text-align:center;letter-spacing:.04em">${to.library ? "금호 도서관으로 이동 중…" : to.valueHall ? "금호 가치체계 전시관으로 이동 중…" : to.bounce ? "바운스 대시로 이동 중…" : to.park ? "아테라 타운으로 이동 중…" : "금호 아카이브로 이동 중…"}</div>`; }
+    setTimeout(() => { freeGL(); kumhoHop(); location.href = to.library ? "library.html" : to.valueHall ? "valuehall.html" : to.bounce ? "bounce.html" : to.park ? "park.html" : "index.html"; }, 160);
   }
   function enterTarget(target) {
     if (target.outside && !IS_PARK) { pageGo({ park: true }); return; }
@@ -11538,6 +11542,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "valueHall") { doorFront(o, () => { if (!busy) pageGo({ valueHall: true }); }); return; }
     if (o.userData.idx === "usqDoor") { doorFront(o, usqAsk); return; } if (o.userData.idx === "kumoHome") { doorFront(o, goHomeAsk); return; }   // 쿠모의 집 (kumohome.html), in the ARTERA tower   // into the hall (valuehall.html)
     if (o.userData.idx === "library") { doorFront(o, () => { if (!busy) pageGo({ library: true }); }); return; }
+    if (o.userData.idx === "bounce") { const FP = { x: BOUNCE_AT[0], z: BOUNCE_AT[1] + 7.2, yaw: 0, pitch: 0.05 }; if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2) { moveTo(FP); const t0 = performance.now(), w = setInterval(() => { const near = Math.hypot(cam.x - FP.x, cam.z - FP.z) < 1.5; if (!near && performance.now() - t0 < 9000) return; clearInterval(w); if (near && !busy) { goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🎪 바운스 대시에 들어가겠습니까?"; el.dataset.to = "bounce"; } }, 150); return; } goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🎪 바운스 대시에 들어가겠습니까?"; el.dataset.to = "bounce"; return; }
     if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }
     if (o.userData.idx === "npcGirl") { girlTalk(); return; }   // 아라 by the history signs: the Kumho quiz   // 도서관 할아버지 on his walk
     if (o.userData.idx === "signLink") { const lk = o.userData.link, P0 = o.userData.post || OUT.signPos || [0, 0], FP = { x: P0[0] + 0.6, z: P0[1] + 3.6, yaw: 0, pitch: 0.12 };   /* first tap from afar: walk up in front of the fingerpost; then a tap on an arrow opens its site */
@@ -11860,6 +11865,28 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (!cgTaxi() || !mapGot) return false; const left = cgReq().filter((q) => !q[1]).map((q) => q[0]);
     if (!left.length) { try { sessionStorage.setItem("kumhoCgGot", "1"); } catch (e) {} npcSay(["오, 쿠모! 미니택시까지 얻었구나. 아이템도 다 모으고, 농구도 퍼즐도 소원 동전도 모두 해냈다니 정말 대단하구나!", "그럼 할아버지가 특별한 게임을 하나 알려 주마. 이름하여 ‘80주화 챌린지’!", "금호 80주년을 기념하는 80주화 100개를 아테라 타운 곳곳에 뿌려 두었단다. 은빛 ×5 동전은 5개분, 빨간 ×10 동전은 10개분이지.", "미니택시를 타고 80개분을 누가 가장 빨리 모으나 겨루는 타임어택이란다. 5분이 지나면 끝이니 서두르렴. 빠르면 이니셜이 명예의 전당에 남는단다!", "옜다, 80주화 하나 주마. 오른쪽 아이템 칸의 동전을 누르면 언제든 바로 도전할 수 있단다!"], cgPanel); return true; }
     npcSay(["미니택시를 얻었구나, 쿠모! 그 택시로 할 수 있는 아주 특별한 게임이 있단다.", "그런데 먼저 이것들을 다 해내야 해 — " + left.join(" · ") + ".", "다 해내고 다시 오면 할아버지가 그 게임을 알려 주마!"]); return true; }
+  /* the bounce house on the lawn beside the big screen: a green inflatable base, a yellow-netted cage on yellow posts and a round yellow canopy,
+     yellow steps at its front; through it, 바운스 대시 (bounce.html) */
+  const BOUNCE_AT = [124, -31];
+  function bounceHouse(X, Z) { const G = new THREE.Group(); G.position.set(X, 0.02, Z); world.add(G); const L = 7.5, W = 3.6, H0 = 0.75, PH = 2.25;
+    const yel = new THREE.MeshLambertMaterial({ color: 0xf2c21b }), grn = new THREE.MeshLambertMaterial({ color: 0x35b34a }), mat = new THREE.MeshLambertMaterial({ color: 0x2f8f7a }), dk = new THREE.MeshLambertMaterial({ color: 0x2a2a2a });
+    const mk = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = true; G.add(o); return o; };
+    mk(new THREE.BoxGeometry(W, H0, L), grn, 0, H0 / 2, 0); mk(new THREE.BoxGeometry(W - 0.3, 0.02, L - 0.3), mat, 0, H0 + 0.01, 0).castShadow = false;
+    [[W, 0.1, 0.1, 0, L / 2], [W, 0.1, 0.1, 0, -L / 2], [0.1, 0.1, L, W / 2, 0], [0.1, 0.1, L, -W / 2, 0]].forEach(([a, b, c, x, z]) => mk(new THREE.BoxGeometry(a, b, c), yel, x, H0 + 0.05, z));
+    const post = new THREE.CylinderGeometry(0.05, 0.05, PH, 8); for (let k = 0; k <= 5; k++) { const z = -L / 2 + k * L / 5; for (const sx of [-1, 1]) mk(post, yel, sx * W / 2, H0 + PH / 2, z); }
+    [[0.08, 0.08, L, W / 2, 0], [0.08, 0.08, L, -W / 2, 0], [W, 0.08, 0.08, 0, L / 2], [W, 0.08, 0.08, 0, -L / 2]].forEach(([a, b, c, x, z]) => mk(new THREE.BoxGeometry(a, b, c), yel, x, H0 + PH, z));
+    const netT = canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.strokeStyle = "rgba(242,194,27,.85)"; g.lineWidth = 3; for (let i = -w; i < w * 2; i += 16) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + h, h); g.stroke(); g.beginPath(); g.moveTo(i, h); g.lineTo(i + h, 0); g.stroke(); } });
+    netT.wrapS = netT.wrapT = THREE.RepeatWrapping; const net = (len, rot, x, z) => { const t = netT.clone(); t.needsUpdate = true; t.repeat.set(len / 0.5, PH / 0.5); const m = new THREE.Mesh(new THREE.PlaneGeometry(len, PH), new THREE.MeshBasicMaterial({ map: t, transparent: true, side: THREE.DoubleSide, depthWrite: false })); m.position.set(x, H0 + PH / 2, z); m.rotation.y = rot; m.userData.noCol = true; G.add(m); };
+    net(L, Math.PI / 2, W / 2, 0); net(L, Math.PI / 2, -W / 2, 0); net(W, 0, 0, -L / 2); net(W * 0.3, 0, -W * 0.35, L / 2); net(W * 0.3, 0, W * 0.35, L / 2);
+    { const cg = new THREE.CylinderGeometry(W / 2 + 0.12, W / 2 + 0.12, L + 0.5, 28, 1, true, -Math.PI / 2, Math.PI); const cm = new THREE.MeshLambertMaterial({ color: 0xf7cf2a, side: THREE.DoubleSide }); const c = new THREE.Mesh(cg, cm); c.rotation.x = -Math.PI / 2; c.position.set(0, H0 + PH, 0); c.castShadow = true; G.add(c);
+      { const e = new THREE.Mesh(new THREE.CircleGeometry(W / 2 + 0.12, 28, 0, Math.PI), cm); e.position.set(0, H0 + PH, -(L / 2 + 0.25)); G.add(e); }   /* the back end closed, the front open as in the photo */
+      const fr = new THREE.TorusGeometry(W / 2 + 0.13, 0.05, 6, 28, Math.PI); for (const sz of [-1, 1]) { const t = new THREE.Mesh(fr, yel); t.position.set(0, H0 + PH, sz * (L / 2 + 0.25)); G.add(t); } }
+    const sign = canvasTex(512, 160, (g, w, h) => { g.fillStyle = "#e3343a"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `900 66px ${FONT}`; g.fillText("바운스 대시", w / 2, 66); g.font = `700 30px ${FONT}`; g.fillStyle = "#ffe68a"; g.fillText("BOUNCE DASH · 눌러서 입장", w / 2, 124); });
+    { const sp = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.75), new THREE.MeshBasicMaterial({ map: sign })); sp.position.set(0, H0 + PH + 0.95, L / 2 + 0.28); G.add(sp); }
+    for (let k = 0; k < 3; k++) mk(new THREE.BoxGeometry(1.1, 0.12, 0.34), dk, 0, 0.14 + k * 0.22, L / 2 + 0.9 - k * 0.3);
+    for (const sx of [-1, 1]) { const r = mk(new THREE.CylinderGeometry(0.04, 0.04, 1.6, 8), yel, sx * 0.62, 0.9, L / 2 + 0.75); r.rotation.x = 0.75; mk(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 8), yel, sx * 0.62, 0.6, L / 2 + 1.25); }
+    const pk = new THREE.Mesh(new THREE.BoxGeometry(W + 0.6, 3.6, L + 2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(0, 1.8, 0.6); pk.userData.idx = "bounce"; G.add(pk); pickables.push(pk);
+    OUT.walls && OUT.walls.push([X - W / 2 - 0.1, X + W / 2 + 0.1, Z - L / 2 - 0.3, Z + L / 2 + 0.3]); }
   const FPOSTS = [[232, -10, 0], [110, -99, 0], [15, -160, 0]];
   const SIGN_LINKS = [   /* the fingerpost across from the archive: name, address, colour, which way the arrow points */
     { n: "금호건설", url: "https://www.kumhoenc.com/", c: "#1d2a5a", yaw: 0.35 },
@@ -11955,7 +11982,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     show(); }
   /* near a character: a soft white arrow bobbing over its head, pointing down at it, so it is clear it can be tapped */
   const NARW = { tex: null, t: 0, list: new Map() };
-  function narwTex() { if (!NARW.tex) NARW.tex = canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.shadowColor = "rgba(0,0,0,.45)"; g.shadowBlur = 8; g.fillStyle = "rgba(255,255,255,.82)"; g.strokeStyle = "rgba(20,20,20,.55)"; g.lineWidth = 6; g.lineJoin = "round"; g.beginPath(); g.moveTo(40, 14); g.lineTo(88, 14); g.lineTo(88, 62); g.lineTo(112, 62); g.lineTo(64, 116); g.lineTo(16, 62); g.lineTo(40, 62); g.closePath(); g.fill(); g.stroke(); }); return NARW.tex; }
+  function narwTex() { if (!NARW.tex) NARW.tex = canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.shadowColor = "rgba(0,0,0,.35)"; g.shadowBlur = 10; g.fillStyle = "rgba(255,255,255,.85)"; g.beginPath(); g.moveTo(40, 14); g.lineTo(88, 14); g.lineTo(88, 62); g.lineTo(112, 62); g.lineTo(64, 116); g.lineTo(16, 62); g.lineTo(40, 62); g.closePath(); g.fill(); }); return NARW.tex; }
   function npcArrows(dt) { NARW.t += dt; const ok = mode === "outside" && !(AIR && (AIR.on || AIR.out)) && !RIDE.on && !document.querySelector(".tutBox"), dlg = ($("npcDlg") && !$("npcDlg").hidden) || ($("quizDlg") && !$("quizDlg").hidden);
     [[NPC.g, NPC.talk], [GIRL.g, GIRL.talk]].forEach(([G, talk]) => { if (!G) return; let a = NARW.list.get(G);
       if (!a) { narwTex();
@@ -13220,7 +13247,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (IS_PARK && arrive && arrive.sound !== false) { try { setSound(true); } catch (e) {} }   /* the park's tune starts as the page opens, not only once every model has loaded */
     preloadEssentials().then(() => { if (window.__archiveReady) window.__archiveReady(); if (!arrive) return;
       if (arrive.ride) RIDE.ok = true;
-      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -164, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usqYard" && isFinite(arrive.x) && isFinite(arrive.z)) moveTo({ x: arrive.x, z: arrive.z, yaw: isFinite(arrive.yaw) ? arrive.yaw : 0, pitch: 0.04, fy: 0, y: EYE }, true);   /* out of U-square's coach yard on foot: on the same spot of the road out, in the park's own copy of the yard */ else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
+      if (IS_PARK) { leaveEasel(); buildOutside(); if (arrive.from === "library") moveTo({ x: -55, z: -113, yaw: -Math.PI / 2, pitch: 0.02 }, true); else if (arrive.from === "bounce") moveTo({ x: BOUNCE_AT[0], z: BOUNCE_AT[1] + 7.6, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "home") moveTo({ x: 22, z: -164, yaw: Math.PI, pitch: 0.04 }, true); else if (arrive.from === "bus") moveTo({ x: 240, z: -8 + UZ, yaw: 0, pitch: 0.04 }, true); else if (arrive.from === "usqYard" && isFinite(arrive.x) && isFinite(arrive.z)) moveTo({ x: arrive.x, z: arrive.z, yaw: isFinite(arrive.yaw) ? arrive.yaw : 0, pitch: 0.04, fy: 0, y: EYE }, true);   /* out of U-square's coach yard on foot: on the same spot of the road out, in the park's own copy of the yard */ else if (arrive.from === "usquare") { const th = Math.asin(12.5 / 25.55); moveTo({ x: 240 + 22.35 * Math.sin(th), z: -36 + UZ - 22.35 * Math.cos(th), yaw: Math.PI - th, pitch: 0.02, fy: 0, y: EYE }, true); }   /* out of the ground-floor door to the right of the stair, facing out */ else if (arrive.from === "valueHall") { const hd = OUT.hallDoor || [-59.9, -24.9]; moveTo({ x: hd[0], z: hd[1], yaw: Math.PI, pitch: 0.02 }, true); }   /* the city (and the hall) may still be building: its door's place is known anyway */
         const viaDoor = (arrive.from === "library" || arrive.from === "valueHall" || arrive.from === "home" || arrive.from === "usquare" || arrive.from === "bus") && window.doorFx; if (viaDoor) doorFx.closed();   /* out through the doors: they open on the park */
         let seen = true; try { seen = sessionStorage.getItem("kumhoParkIntro") === "1"; } catch (e) {} const welcome = !arrive.from && !seen;
         warmOutside(() => { if (viaDoor) setTimeout(() => doorFx.open(), 700); requestAnimationFrame(() => { const f = $("fade"); f.classList.remove("on"); f.innerHTML = ""; }); setTimeout(() => document.documentElement.classList.add("arrived"), 350);
