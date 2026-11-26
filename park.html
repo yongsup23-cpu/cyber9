@@ -6867,6 +6867,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (Math.floor(now / 60000) !== skyDome.min) { skyDome.min = Math.floor(now / 60000); fetchWeather(); skyLabel(); }
   }
   /* ---------- outside: out of the lobby onto a two-lane street — a Kumho Express bus at the kerb, a dense row of trees across the road, Ulsan Artera in the distance ---------- */
+  if (IS_PARK) try { sessionStorage.setItem("kumhoParkSeen", "1"); } catch (e) {}   /* once out in the park, the lobby keeps its door to it */
   const VISITED = new Set();   // halls entered in this visit only: the exit appears after all of them, and is gone again on reload
   /* the way outside: a pivot door of dark steel in a deep fair-faced concrete portal; behind it, plain bright white */
   function buildOutDoor(side, u, target) {   /* the way out to 아테라 타운, dressed as the doors of its buildings: a travertine surround, warm light in the reveals, dark oak leaves edged in bronze, and a bronze-framed name board */
@@ -9152,7 +9153,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     hangPanel(2, -2.5, { kicker: "EXHIBITION", title: `${KNUM} 개의 전시관`,
       text: DATA.map((h, i) => `${HL(i)}${h.span ? ` (${h.span.replace(/ — /, "~")})` : ""}  ${h.title}`).join("\n") }, 3.4, 3.1);
     // the way out appears only once every hall has been visited (?outside=1 shows it anyway)
-    if (DATA.every((h, i) => VISITED.has(i)) || /[?&]outside=1/.test(location.search)) {
+    const parkSeen = (() => { try { return sessionStorage.getItem("kumhoParkSeen") === "1"; } catch (e) { return false; } })();   /* back from 아테라 타운: the way out stays open */
+    if (DATA.every((h, i) => VISITED.has(i)) || parkSeen || /[?&]outside=1/.test(location.search)) {
       const OUTT = { outside: true }, ol = { title: "아테라 타운 나가기", sub: "ARTERA TOWN · 바깥으로" };
       hangDoor(2, -5.7, "assets/door-town.jpg", ol, OUTT, ND > 3 ? 2.15 : 2.3);   /* dressed as the halls' own doors, its name board on the door frame (no longer up over the film strip) */
       stops.push({ kind: "door", side: 2, u: -5.7, cy: 1.6, w: 2.5, h: 3.3, target: OUTT, label: ol, outDoor: true }); }
@@ -11890,14 +11892,15 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function girlLoad() { GIRL.loading = true;
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
     if (!gltfLoader) return;
-    gltfLoader.load(R("assets/girl.glb"), (g) => { GIRL.loading = false; if (mode !== "outside") return;
+    gltfLoader.load(R("assets/girl.glb") + "?v=3", (g) => { GIRL.loading = false; if (mode !== "outside") return;
       const m = g.scene, G = new THREE.Group(); { m.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(m), hh = bb.max.y - bb.min.y; m.scale.setScalar(hh > 0.2 ? (1.35) / hh : 0.8); }   /* as tall as 쿠모 */ m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } }); G.add(m);
       const pk = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.4, 0.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.7; pk.userData.idx = "npcGirl"; G.add(pk); pickables.push(pk);
       { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
         const bl = new THREE.Mesh(new THREE.CircleGeometry(0.45, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.015; bl.renderOrder = 2; G.add(bl); }
       G.position.set(GIRL.tx, 0.02, GIRL.tz); world.add(G); GIRL.g = G; GIRL.world = world; GIRL.mix = new THREE.AnimationMixer(m);
-      const clip = (re) => g.animations.find((c) => re.test(c.name)), W = clip(/walk/i), I = clip(/idle/i) || g.animations[0];
+      const clip = (re) => g.animations.find((c) => re.test(c.name)), W = clip(/walk/i), I = clip(/idle|stand/i), T = clip(/talk/i);   /* walking, standing (her rest pose when there is no clip for it), talking */
       if (W) { GIRL.aW = GIRL.mix.clipAction(W); GIRL.aW.play(); GIRL.aW.setEffectiveWeight(0); }
+      if (T) { GIRL.aT = GIRL.mix.clipAction(T); GIRL.aT.play(); GIRL.aT.setEffectiveWeight(0); }
       if (I) { GIRL.aI = GIRL.mix.clipAction(I); GIRL.aI.play(); GIRL.aI.setEffectiveWeight(1); } },
       undefined, () => { GIRL.loading = false; GIRL.fail = true; }); }
   function girlStep(dt) {
@@ -11909,8 +11912,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     else { const dx = GIRL.tx - G.position.x, dz = GIRL.tz - G.position.z, d = Math.hypot(dx, dz);
       if (d < 0.15) { GIRL.wait = 2 + Math.random() * 4; GIRL.tx = GIRL_AREA[0] + Math.random() * (GIRL_AREA[1] - GIRL_AREA[0]); GIRL.tz = GIRL_AREA[2] + Math.random() * (GIRL_AREA[3] - GIRL_AREA[2]); }
       else { const v = Math.min(d, 0.9 * dt); G.position.x += dx / d * v; G.position.z += dz / d * v; G.rotation.y += wrapAngle(Math.atan2(dx, dz) - G.rotation.y) * Math.min(1, dt * 5); moving = true; } }
-    GIRL.ww += ((moving ? 1 : 0) - GIRL.ww) * Math.min(1, dt * 5);
-    if (GIRL.aW) GIRL.aW.setEffectiveWeight(GIRL.ww); if (GIRL.aI) GIRL.aI.setEffectiveWeight(1 - GIRL.ww);
+    GIRL.ww += ((moving ? 1 : 0) - GIRL.ww) * Math.min(1, dt * 5); { const qd = $("quizDlg"), nd = $("npcDlg"); GIRL.tw = (GIRL.tw || 0) + (((GIRL.talk && ((nd && !nd.hidden) || (qd && !qd.hidden))) ? 1 : 0) - (GIRL.tw || 0)) * Math.min(1, dt * 4); }   /* talking while her box is open */
+    if (GIRL.aW) GIRL.aW.setEffectiveWeight(GIRL.ww * (1 - GIRL.tw)); if (GIRL.aT) GIRL.aT.setEffectiveWeight(GIRL.tw * (1 - GIRL.ww)); if (GIRL.aI) GIRL.aI.setEffectiveWeight((1 - GIRL.ww) * (1 - GIRL.tw));
     if (GIRL.mix && !far) GIRL.mix.update(dt); }   /* far off: her steps are not worked out */
   function airGot() { try { return sessionStorage.getItem("kumhoAirGot") === "1"; } catch (e) { return false; } }   /* the aerial view: locked until 아라's quiz is passed (8 of 10) */
   function quizTried() { try { return sessionStorage.getItem("kumhoQuizTry") === "1"; } catch (e) { return false; } }
