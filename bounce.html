@@ -8,13 +8,13 @@
   if (carry && Date.now() - carry.t < 120000) (carry.k || []).forEach(function (k) { sessionStorage.setItem(k, "1"); }); } catch (e) {}   /* items handed over by the page just left are always kept, whatever the browser says about where we came from */
   window.kumhoHop = function () { try { sessionStorage.setItem("kumhoHop", String(Date.now())); var got = ["kumhoHeritageGot", "kumhoEasyGot", "kumhoMapGot", "kumhoGuideGot", "kumhoTicket", "kumhoBusGot", "kumhoTaxiGot", "kumhoHoopDone", "kumhoCoinDone", "kumhoAirGot", "kumhoCgGot"].filter(function (k) { return sessionStorage.getItem(k) === "1"; }); sessionStorage.setItem("kumhoItemsCarry", JSON.stringify({ t: Date.now(), k: got })); } catch (e) {} }; })();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>바운스 대시 · 아테라 타운</title>
+<title>금호 바운스 · 아테라 타운</title>
 <style>*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#9fd8ff;font-family:"Noto Sans KR","Apple SD Gothic Neo",system-ui,sans-serif;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 #stage{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #top{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:12px 14px;z-index:5;pointer-events:none}
 #top>*{pointer-events:auto}#exitBtn,#exit2{background:rgba(23,24,21,.78);color:#f2e7d2;border:1px solid rgba(201,168,106,.6);border-radius:999px;padding:9px 14px;font:700 13px inherit;font-family:inherit;cursor:pointer}
 #stat{margin-left:auto;display:flex;gap:8px;align-items:center}#stat span{background:rgba(255,255,255,.88);color:#2a2219;border-radius:999px;padding:6px 12px;font-weight:800;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.15)}#hearts{color:#e3343a!important;letter-spacing:2px}
-#bar{position:fixed;left:50%;top:60px;transform:translateX(-50%);width:min(420px,70vw);height:10px;background:rgba(255,255,255,.6);border-radius:99px;overflow:hidden;z-index:5}#prog{height:100%;width:0;background:linear-gradient(90deg,#ffd23f,#ff5a5f)}
+#bar{position:fixed;left:50%;top:58px;transform:translateX(-50%);width:min(420px,70vw);height:10px;background:rgba(255,255,255,.6);border-radius:99px;overflow:hidden;z-index:5}#prog{height:100%;width:0;background:linear-gradient(90deg,#ffd23f,#ff5a5f)}
 .pnl{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(20,40,70,.35)}.pnl[hidden]{display:none}
 .card{background:#fffaf0;border-radius:22px;padding:26px 26px 22px;width:min(440px,calc(100vw - 32px));text-align:center;box-shadow:0 16px 50px rgba(0,0,0,.3);border-top:8px solid #ffd23f}
 .card h1{margin:4px 0 6px;font-size:30px;color:#e3343a;letter-spacing:.02em}.card .k{font-size:12px;letter-spacing:.3em;color:#3fa7ff;font-weight:800}.card p{color:#4a3d2c;line-height:1.65;font-size:15px;margin:10px 0}
@@ -24,20 +24,28 @@
 #pad{position:fixed;left:0;right:0;bottom:18px;display:flex;justify-content:space-between;align-items:center;padding:0 18px;z-index:6;pointer-events:none}#pad button{pointer-events:auto;width:70px;height:70px;border-radius:50%;border:2px solid rgba(255,255,255,.8);background:rgba(255,255,255,.28);color:#fff;font:900 24px inherit;font-family:inherit;text-shadow:0 2px 6px rgba(0,0,0,.35);touch-action:none}#pad .lr{display:flex;gap:12px}#pad #bJ{width:96px;height:96px;font-size:20px;background:rgba(227,52,58,.55)}
 @media (hover:hover) and (pointer:fine){#pad{display:none}}
 #ld{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:#9fd8ff;color:#fff;font:800 20px inherit;font-family:inherit}#ld[hidden]{display:none}
-@media (max-width:600px){#exitBtn{padding:7px 11px;font-size:12px}#stat{gap:5px}#stat span{padding:5px 9px;font-size:12px}#bar{top:54px}}
+@media (max-width:600px){#exitBtn{padding:7px 11px;font-size:12px}#stat{gap:5px}#stat span{padding:5px 9px;font-size:12px}#bar{top:54px}#clock{top:68px}#clock b{font-size:24px}#count b{width:150px;height:150px;font-size:56px}}
+#clock{position:fixed;left:50%;top:74px;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.92);border-radius:16px;padding:4px 16px 6px;display:flex;align-items:baseline;gap:5px;box-shadow:0 4px 14px rgba(0,0,0,.18);color:#2a2219}#clock b{font:900 30px/1 inherit;font-family:inherit;font-variant-numeric:tabular-nums;min-width:3.6em;text-align:center}#clock small{font-size:12px;color:#8a7a5a;font-weight:700}
+#popz{position:absolute;left:100%;top:4px;width:0}.pop{position:absolute;left:8px;white-space:nowrap;font:900 20px inherit;font-family:inherit;animation:popu .9s ease-out forwards;text-shadow:0 2px 6px rgba(255,255,255,.9)}.pop.g{color:#1d9a5a}.pop.b{color:#e3343a}@keyframes popu{0%{opacity:0;transform:translateY(8px) scale(.8)}20%{opacity:1;transform:translateY(0) scale(1.15)}100%{opacity:0;transform:translateY(-26px) scale(1)}}
+#count{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(20,40,70,.35);z-index:9;pointer-events:none}#count[hidden]{display:none}#count b{width:190px;height:190px;border-radius:50%;background:#fffaf0;color:#e3343a;display:flex;align-items:center;justify-content:center;font:900 72px/1 inherit;font-family:inherit;box-shadow:0 0 0 10px rgba(255,210,63,.85),0 18px 40px rgba(0,0,0,.3)}#count i{font-style:normal;color:#fff;font-weight:800;font-size:20px;text-shadow:0 2px 8px rgba(0,0,0,.4)}#count.bump b{animation:cdb .5s ease-out}@keyframes cdb{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+.hof{margin-top:12px;font-weight:800;color:#1d2a5a;font-size:14px}.tb{margin-top:6px;max-height:210px;overflow:auto}.tb table{width:100%;border-collapse:collapse;font-size:14px}.tb th{color:#8a7a5a;font-weight:700;padding:3px;border-bottom:1px solid #e3d6b8}.tb td{padding:4px 3px;border-bottom:1px dashed #eadfc6}.tb tr.me td{background:#fff1b8;font-weight:800;color:#e3343a}.tb .no{color:#8a7a5a;font-size:13px;padding:6px}
+.card .big{font:900 44px/1.1 inherit;font-family:inherit;color:#e3343a;margin:4px 0}.save{display:flex;gap:6px;justify-content:center;margin:8px 0}.save[hidden]{display:none}.save input{width:120px;padding:10px;border-radius:12px;border:2px solid #e3d6b8;font:800 18px inherit;font-family:inherit;text-align:center;text-transform:uppercase}.saved{font-weight:800;color:#1d7a4a;min-height:1.2em;font-size:14px}
+.card{max-height:calc(100vh - 24px);overflow:auto}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .25s;z-index:30}#fade.on{opacity:1}</style>
 </head>
 <body>
 <canvas id="stage"></canvas>
-<div id="top"><button type="button" id="exitBtn">← 아테라 타운으로 나가기</button><div id="stat"><span id="hearts">❤❤❤</span><span id="coins">🪙 0</span><span id="time">0.0초</span></div></div>
+<div id="top"><button type="button" id="exitBtn">← 아테라 타운으로 나가기</button><div id="stat"><span id="coins">🪙 0</span><span id="hits">💥 0</span></div></div>
+<div id="clock"><small>기록</small><b id="time">0.00</b><small>초</small><div id="popz"></div></div>
 <div id="bar"><div id="prog"></div></div>
-<div id="count" hidden>3</div>
+<div id="count" hidden><b>3</b><i></i></div>
 <div id="pad"><div class="lr"><button type="button" id="bL" aria-label="왼쪽">◀</button><button type="button" id="bR" aria-label="오른쪽">▶</button></div><button type="button" id="bJ">점프</button></div>
-<div class="pnl" id="start" hidden><div class="card"><div class="k">ARTERA BOUNCE</div><h1>바운스 대시</h1><p>폭신폭신 에어바운스 위를 쿠모가 달려요!<br>움직이는 장애물을 피해 결승선까지 가 보세요.</p>
-<div class="keys"><i>화면 누르기 · 스페이스 = 점프</i><i>공중에서 한 번 더 = 2단 점프</i><i>←/→ · 밀기 = 줄 바꾸기</i></div><p style="font-size:13px;color:#8a7a5a">세 번 부딪히면 끝! 🪙 80주화도 모아 보세요 · <span id="bestStart"></span></p>
+<div class="pnl" id="start" hidden><div class="card"><div class="k">KUMHO BOUNCE</div><h1>금호 바운스</h1><p>폭신폭신 에어바운스 위를 쿠모가 달려요!<br>움직이는 장애물을 피해 결승선까지 가 보세요.</p>
+<div class="keys"><i>화면 누르기 · 스페이스 = 점프</i><i>공중에서 한 번 더 = 2단 점프</i><i>←/→ · 밀기 = 줄 바꾸기</i></div><p style="font-size:14px">⏱ <b>타임어택!</b> 🪙 80주화를 먹으면 <b style="color:#1d7a4a">−0.5초</b>, 장애물에 부딪히면 <b style="color:#e3343a">+2초</b><br><span id="bestStart" style="font-size:13px;color:#8a7a5a"></span></p>
+<div class="hof">🏆 명예의 전당 · 빠른 기록 TOP 10</div><div class="tb" id="tbStart"><div class="no">순위를 불러오는 중…</div></div>
 <button type="button" id="goBtn">▶ 시작하기</button><button type="button" class="g" id="exit2">나가기</button></div></div>
-<div class="pnl" id="over" hidden><div class="card"><h1 class="t"></h1><p class="s"></p><div class="b"></div><button type="button" id="againBtn">↻ 다시 하기</button><button type="button" class="g" onclick="document.getElementById('exitBtn').click()">아테라 타운으로</button></div></div>
-<div id="ld">바운스 놀이터 준비 중…</div><div id="fade"></div>
+<div class="pnl" id="over" hidden><div class="card"><h1 class="t"></h1><div class="big"></div><p class="s"></p><div class="save" hidden><input maxlength="3" placeholder="이니셜 3자" autocomplete="off"><button type="button" class="sv">기록 올리기</button></div><div class="saved"></div><div class="hof">🏆 명예의 전당 · TOP 10</div><div class="tb"><div class="no">순위를 불러오는 중…</div></div><button type="button" id="againBtn">↻ 다시 하기</button><button type="button" class="g" onclick="document.getElementById('exitBtn').click()">아테라 타운으로</button></div></div>
+<div id="ld">금호 바운스 준비 중…</div><div id="fade"></div>
 <script>/**
  * @license
  * Copyright 2010-2021 Three.js Authors
@@ -3879,7 +3887,7 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
 
 window.MeshoptDecoder=MeshoptDecoder;</script>
 <script>
-/* 바운스 대시 — the bouncy castle game behind the yellow canopy in 아테라 타운 (three.js r128).
+/* 금호 바운스 — the bouncy castle game behind the yellow canopy in 아테라 타운 (three.js r128).
    쿠모 runs down an inflatable course by himself: the floor keeps him hopping, a tap (or space) jumps, a second tap in the air jumps again,
    left / right (keys, buttons or a swipe) change lane. Sliding blocks, pistons, a sweeping bar and rolling balls move across the course;
    three hits and the run is over, the finish line ends it with the time and the 80 coins picked up. */
@@ -3912,24 +3920,28 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // ---- obstacles and coins along the course ----
   const OBS = [], COINS = [], R = (a) => { let s = a; return () => (s = (s * 16807) % 2147483647) / 2147483647; }, rnd = R(80);
   const soft = (c) => new THREE.MeshPhongMaterial({ color: c, shininess: 60, specular: 0x444444 });
-  const coinT = tex(128, 128, (g, w, h) => { g.fillStyle = "#c98a1e"; g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fill(); g.fillStyle = "#f6c04a"; g.beginPath(); g.arc(64, 64, 54, 0, 7); g.fill(); g.fillStyle = "#fff6d0"; g.font = `900 56px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("80", 64, 68); });
-  const coinM = new THREE.MeshBasicMaterial({ map: coinT, transparent: true, side: THREE.DoubleSide }), coinG = new THREE.CircleGeometry(0.35, 20);
-  const coin = (x, y, z) => { const m = add(coinG, coinM, x, y, z); COINS.push({ m, x, y, z, got: false }); };
-  function slider(z) { const m = add(new THREE.BoxGeometry(1.9, 1.1, 0.9), soft(0xff5a5f), 0, 0.55, z), ph = rnd() * 6, sp = 1.4 + rnd() * 0.8;
+  const coinT = tex(128, 128, (g, w, h) => { g.fillStyle = "#c98a1e"; g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fill(); g.fillStyle = "#f6c04a"; g.beginPath(); g.arc(64, 64, 54, 0, 7); g.fill(); g.strokeStyle = "rgba(160,100,10,.6)"; g.lineWidth = 3; g.beginPath(); g.arc(64, 64, 46, 0, 7); g.stroke(); g.fillStyle = "#fff6d0"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = `900 46px ${FONT}`; g.fillText("80", 64, 54); g.font = `800 22px ${FONT}`; g.fillText("주년", 64, 86); });
+  const coinFace = new THREE.MeshPhongMaterial({ map: coinT, shininess: 90, specular: 0x886622 }), coinEdge = new THREE.MeshPhongMaterial({ color: 0xd99a22, shininess: 120, specular: 0xffe08a }), coinG = new THREE.CylinderGeometry(0.36, 0.36, 0.09, 28); coinG.rotateX(Math.PI / 2);   /* a real coin: two faces and a milled gold edge */
+  const coin = (x, y, z) => { const m = add(coinG, [coinEdge, coinFace, coinFace], x, y, z); COINS.push({ m, x, y, z, got: false }); };
+  function slider(z) { const m = add(new THREE.BoxGeometry(1.9, 1.1, 0.9), soft(0xff5a5f), 0, 0.55, z), ph = rnd() * 6, sp = 1.9 + rnd() * 1.0;
     OBS.push({ z, upd: (t) => { m.position.x = Math.sin(t * sp + ph) * (LANE + 0.2); }, hit: (p) => Math.abs(p.x - m.position.x) < 1.25 && p.y < 1.05 && Math.abs(p.z - z) < 0.75 }); }
   function pistons(z) { const k = (rnd() * 3) | 0; [0, 1, 2].filter((i) => i !== k).forEach((i, n) => { const x = LANES[i], m = add(new THREE.BoxGeometry(1.7, 1, 1.0), soft(0x3fa7ff), x, 0.5, z), ph = n * Math.PI;
-      OBS.push({ z, upd: (t) => { const h = 0.25 + 1.6 * (0.5 + 0.5 * Math.sin(t * 2.2 + ph)); m.scale.y = h; m.position.y = h / 2; m.userData.h = h; }, hit: (p) => Math.abs(p.x - x) < 1.15 && p.y < (m.userData.h || 1) - 0.05 && Math.abs(p.z - z) < 0.8 }); });
+      OBS.push({ z, upd: (t) => { const h = 0.25 + 1.6 * (0.5 + 0.5 * Math.sin(t * 2.9 + ph)); m.scale.y = h; m.position.y = h / 2; m.userData.h = h; }, hit: (p) => Math.abs(p.x - x) < 1.15 && p.y < (m.userData.h || 1) - 0.05 && Math.abs(p.z - z) < 0.8 }); });
     coin(LANES[k], 1.0, z); }
   function sweeper(z) { const g = new THREE.Group(); g.position.set(0, 0, z); scene.add(g); add(new THREE.CylinderGeometry(0.3, 0.3, 1.0, 14), soft(0xffd23f), 0, 0.5, 0, g);
-    const bar = add(new THREE.CylinderGeometry(0.16, 0.16, HALF * 2 - 0.4, 10), soft(0xff8a1f), 0, 0.45, 0, g); bar.rotation.z = Math.PI / 2; const sp = 1.6 + rnd() * 0.6;
+    const bar = add(new THREE.CylinderGeometry(0.16, 0.16, HALF * 2 - 0.4, 10), soft(0xff8a1f), 0, 0.45, 0, g); bar.rotation.z = Math.PI / 2; const sp = (2.0 + rnd() * 0.9) * (rnd() < 0.5 ? -1 : 1);
     OBS.push({ z, upd: (t) => { g.rotation.y = t * sp; }, hit: (p) => { if (p.y > 0.62) return false; const a = g.rotation.y, dx = p.x, dz = p.z - z, ux = Math.cos(a), uz = -Math.sin(a), along = dx * ux + dz * uz, perp = Math.abs(-dx * uz + dz * ux); return Math.abs(along) < HALF && perp < 0.45; } }); }
   function ball(z) { const m = add(new THREE.SphereGeometry(0.75, 20, 14), soft([0x5ad15a, 0xff5a5f, 0x3fa7ff][(rnd() * 3) | 0]), 0, 0.75, z), ph = rnd() * 6, sp = 1.2 + rnd() * 0.6;
     OBS.push({ z, upd: (t) => { m.position.x = Math.sin(t * sp + ph) * (LANE + 0.3); m.position.y = 0.75 + Math.abs(Math.sin(t * 3 + ph)) * 0.9; m.rotation.z = -m.position.x; }, hit: (p) => Math.hypot(p.x - m.position.x, p.y + 0.6 - m.position.y, p.z - z) < 1.2 }); }
-  { const kinds = [slider, pistons, sweeper, ball]; let z = -22;
-    while (z > -LEN + 12) { const f = kinds[(rnd() * kinds.length) | 0]; f(z); const cx = LANES[(rnd() * 3) | 0]; for (let i = 1; i <= 3; i++) coin(cx, 0.9 + (i === 2 ? 0.5 : 0), z + 3 + i * 1.6); z -= 11 + rnd() * 5; } }
+  { const kinds = [slider, pistons, sweeper, ball]; let z = -18, k = 0;
+    while (z > -LEN + 12) { const f = kinds[(rnd() * kinds.length) | 0]; f(z); if (k > 3 && rnd() < 0.45) { const f2 = [slider, ball][(rnd() * 2) | 0]; f2(z - 3.2); z -= 3.2; }   /* further on, two at once */
+      const cx = LANES[(rnd() * 3) | 0]; for (let i = 1; i <= 3; i++) coin(cx, 0.9 + (i === 2 ? 0.6 : 0), z + 2.6 + i * 1.4); z -= 8.5 + rnd() * 4; k++; } }
 
   // ---- 쿠모 ----
-  const P = { x: 0, y: 0, z: 6, vy: 0, lane: 1, jumps: 0, sp: 0, hearts: 3, inv: 0, coins: 0, t: 0, run: false, done: false, obj: null, mix: null };
+  const P = { x: 0, y: 0, z: 6, vy: 0, lane: 1, jumps: 0, sp: 0, inv: 0, coins: 0, hits: 0, t: 0, run: false, done: false, obj: null, mix: null };
+  window.__bounceP = P;
+  const COIN_BONUS = 0.5, HIT_PEN = 2.0, rec = () => Math.max(0, P.t - P.coins * COIN_BONUS + P.hits * HIT_PEN);   /* the record: running time, less half a second per coin, plus two per knock */
+  const pop = (txt, good) => { const el = document.createElement("div"); el.className = "pop " + (good ? "g" : "b"); el.textContent = txt; $("popz").appendChild(el); setTimeout(() => el.remove(), 900); };
   const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
   L.load("assets/character.glb", (g) => { const o = g.scene; o.scale.setScalar(0.96); o.traverse((m) => { if (m.isMesh) { const mp = m.material && m.material.map; m.material = new THREE.MeshLambertMaterial({ map: mp, skinning: true }); m.frustumCulled = false; } }); scene.add(o); P.obj = o;
     P.mix = new THREE.AnimationMixer(o); const run = g.animations.find((c) => /run/i.test(c.name)) || g.animations[0], idle = g.animations.find((c) => /idle/i.test(c.name)); P.aR = P.mix.clipAction(run); P.aR.play(); if (idle) { P.aI = P.mix.clipAction(idle); P.aI.play(); } setRun(0); ready(); }, undefined, () => ready());
@@ -3949,20 +3961,38 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   hold("bL", () => lane(-1)); hold("bR", () => lane(1)); hold("bJ", jump);
 
   // ---- the run ----
-  const hud = () => { $("hearts").textContent = "❤".repeat(P.hearts) + "♡".repeat(3 - P.hearts); $("coins").textContent = "🪙 " + P.coins; $("time").textContent = P.t.toFixed(1) + "초"; $("prog").style.width = Math.max(0, Math.min(100, (6 - P.z) / (LEN + 6) * 100)) + "%"; };
+  const hud = () => { $("coins").textContent = "🪙 " + P.coins; $("hits").textContent = "💥 " + P.hits; $("time").textContent = rec().toFixed(2); $("prog").style.width = Math.max(0, Math.min(100, (6 - P.z) / (LEN + 6) * 100)) + "%"; };
   const best = () => { try { return JSON.parse(localStorage.getItem("kumhoBounceBest") || "null"); } catch (e) { return null; } };
-  function reset() { P.x = 0; P.y = 0; P.z = 6; P.vy = 0; P.lane = 1; P.jumps = 0; P.sp = 0; P.hearts = 3; P.inv = 0; P.coins = 0; P.t = 0; P.done = false; COINS.forEach((c) => { c.got = false; c.m.visible = true; }); hud(); }
-  function startGame() { reset(); $("start").hidden = true; $("over").hidden = true; let n = 3; const cd = $("count"); cd.hidden = false; cd.textContent = n; blip(600, 600, 0.12);
-    const iv = setInterval(() => { n--; if (n > 0) { cd.textContent = n; blip(600, 600, 0.12); } else { clearInterval(iv); cd.textContent = "GO!"; blip(900, 1200, 0.25); P.run = true; setTimeout(() => { cd.hidden = true; }, 600); } }, 800); }
-  function end(win) { P.run = false; P.done = true; setRun(0); const el = $("over"), b = best(); let rec = false;
-    if (win) { const score = { t: +P.t.toFixed(2), c: P.coins }; if (!b || score.t < b.t) { rec = true; try { localStorage.setItem("kumhoBounceBest", JSON.stringify(score)); } catch (e) {} } blip(523, 1046, 0.5, "triangle", 0.15); }
-    else blip(300, 90, 0.6, "sawtooth", 0.08);
-    const bb = best();
-    el.querySelector(".t").textContent = win ? "🏁 골인!" : "💥 아쉬워요!"; el.querySelector(".s").innerHTML = win ? `기록 <b>${P.t.toFixed(1)}초</b> · 80주화 <b>${P.coins}개</b>${rec ? "<br><span class='nb'>🎉 새 최고 기록!</span>" : ""}` : `세 번 부딪혔어요 · 진행 ${Math.round((6 - P.z) / (LEN + 6) * 100)}% · 80주화 ${P.coins}개`;
-    el.querySelector(".b").textContent = bb ? `최고 기록 ${bb.t.toFixed(1)}초 · 80주화 ${bb.c}개` : ""; el.hidden = false; }
+  function reset() { P.x = 0; P.y = 0; P.z = 6; P.vy = 0; P.lane = 1; P.jumps = 0; P.sp = 0; P.inv = 0; P.coins = 0; P.hits = 0; P.t = 0; P.done = false; COINS.forEach((c) => { c.got = false; c.m.visible = true; }); hud(); }
+  function startGame() { reset(); $("start").hidden = true; $("over").hidden = true; const cd = $("count"), num = cd.querySelector("b"), sub = cd.querySelector("i"); cd.hidden = false; cd.className = "on"; num.textContent = "준비"; sub.textContent = "곧 출발해요!"; blip(440, 440, 0.15);
+    const steps = ["3", "2", "1"]; let k = 0; const tick = () => { if (k < steps.length) { num.textContent = steps[k]; sub.textContent = "출발까지 " + steps[k] + "초"; cd.classList.remove("bump"); void cd.offsetWidth; cd.classList.add("bump"); blip(600, 600, 0.14); k++; setTimeout(tick, 1000); }
+      else { num.textContent = "출발!"; sub.textContent = "화면을 누르면 점프!"; cd.classList.remove("bump"); void cd.offsetWidth; cd.classList.add("bump"); blip(900, 1300, 0.3, "triangle"); P.run = true; setTimeout(() => { cd.hidden = true; cd.className = ""; }, 900); } };
+    setTimeout(tick, 1000); }
+  function end() { P.run = false; P.done = true; setRun(0); const el = $("over"), b = best(), t = +rec().toFixed(2); let nb = false;
+    if (!b || t < b.t) { nb = true; try { localStorage.setItem("kumhoBounceBest", JSON.stringify({ t, c: P.coins })); } catch (e) {} } blip(523, 1046, 0.5, "triangle", 0.15);
+    el.querySelector(".t").textContent = "🏁 골인!"; el.querySelector(".big").textContent = t.toFixed(2) + "초";
+    el.querySelector(".s").innerHTML = `달린 시간 ${P.t.toFixed(2)}초 · 🪙 ${P.coins}개 (−${(P.coins * COIN_BONUS).toFixed(1)}초) · 💥 ${P.hits}번 (+${(P.hits * HIT_PEN).toFixed(1)}초)${nb ? "<br><span class='nb'>🎉 내 최고 기록!</span>" : ""}`;
+    el.dataset.t = t; el.querySelector(".save").hidden = true; el.querySelector(".saved").textContent = ""; el.querySelector("input").value = ""; el.hidden = false;
+    RK.pull().then((top) => { RK.draw(el.querySelector(".tb"), top, -1); const q = top.length < 10 || t < top[top.length - 1].t; el.querySelector(".save").hidden = !q; if (q) setTimeout(() => el.querySelector("input").focus(), 50); }); }
   $("goBtn").addEventListener("click", startGame); $("againBtn").addEventListener("click", startGame);
-  { const b = best(); if (b) $("bestStart").textContent = `최고 기록 ${b.t.toFixed(1)}초`; }
-  function ready() { $("ld").hidden = true; $("start").hidden = false; }
+  { const b = best(); if (b) $("bestStart").textContent = `내 최고 ${b.t.toFixed(2)}초`; }
+  function ready() { $("ld").hidden = true; $("start").hidden = false; RK.pull().then((top) => RK.draw($("tbStart"), top, -1)); }
+
+  // ---- the hall of fame: the best ten times with initials, shared through the archive's Google Sheet (its own sheet, "바운스"); kept in this browser when the sheet cannot be reached ----
+  const RK = (() => { const API = "https://script.google.com/macros/s/AKfycbxUHA_t359_BfO975HraXxuc5xtL4_L3KJ-uzP6eWqphEsFzlxA4APMHZflVkXkGC26jg/exec";
+    const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const local = () => { try { const r = JSON.parse(localStorage.getItem("kumhoBounceRank") || "[]"); return Array.isArray(r) ? r : []; } catch (e) { return []; } };
+    const localAdd = (n, t) => { const r = local(), me = { n, t, d: Date.now() }; r.push(me); r.sort((a, b) => a.t - b.t || a.d - b.d); const top = r.slice(0, 10); try { localStorage.setItem("kumhoBounceRank", JSON.stringify(top)); } catch (e) {} return top; };
+    const pend = (add) => { let p = []; try { p = JSON.parse(localStorage.getItem("kumhoBouncePend") || "[]"); } catch (e) {} if (add) { p.push(add); try { localStorage.setItem("kumhoBouncePend", JSON.stringify(p.slice(-20))); } catch (e) {} } return p; };
+    const get = (q) => { const ctl = window.AbortController ? new AbortController() : null, tm = setTimeout(() => { if (ctl) ctl.abort(); }, 9000);
+      return fetch(API + "?g=bounce&" + q + "&_=" + Date.now(), { cache: "no-store", signal: ctl ? ctl.signal : undefined }).then((r) => r.json()).then((j) => { clearTimeout(tm); if (!j || !j.ok || j.g !== "bounce" || !Array.isArray(j.top)) throw new Error("rank"); return j.top.slice(0, 10); }, (e) => { clearTimeout(tm); throw e; }); };   /* only a sheet script that knows this game (it answers g: "bounce") is used: an older one would mix these times into the 80-coin list */
+    const flush = () => { const p = pend(); if (!p.length) return Promise.resolve(); try { localStorage.removeItem("kumhoBouncePend"); } catch (e) {} return p.reduce((q, x) => q.then(() => get("action=add&n=" + encodeURIComponent(x.n) + "&t=" + x.t).catch(() => pend(x))), Promise.resolve()); };
+    return { pull: () => flush().then(() => get("action=top")).catch(() => local()),
+      add: (n, t) => get("action=add&n=" + encodeURIComponent(n) + "&t=" + t).catch(() => { pend({ n, t }); return localAdd(n, t); }),
+      draw: (el, top, me) => { if (!el) return; el.innerHTML = !top.length ? '<div class="no">아직 기록이 없어요 · 첫 번째 주인공이 되어 보세요!</div>' : "<table><tr><th>순위</th><th>이니셜</th><th>기록</th></tr>" + top.map((r, i) => `<tr${i === me ? ' class="me"' : ""}><td>${i + 1}</td><td>${esc(r.n)}</td><td>${(+r.t).toFixed(2)}초</td></tr>`).join("") + "</table>"; } }; })();
+  { const el = $("over"), inp = el.querySelector("input"), go = () => { const n = inp.value.toUpperCase().replace(/[^A-Z0-9가-힣]/g, "").slice(0, 3); if (!n) { inp.focus(); return; } const t = +el.dataset.t; el.querySelector(".save").hidden = true; el.querySelector(".saved").textContent = "저장 중…";
+      RK.add(n, t).then((top) => { let me = -1; top.forEach((r, i) => { if (me < 0 && r.n === n && Math.abs(+r.t - t) < 0.006) me = i; }); RK.draw(el.querySelector(".tb"), top, me); el.querySelector(".saved").textContent = me >= 0 ? `🏆 ${me + 1}위로 명예의 전당에 올랐어요!` : "기록을 저장했어요"; }); };
+    el.querySelector(".sv").addEventListener("click", go); inp.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") go(); }); }
 
   // ---- leaving: back out to 아테라 타운, in front of the canopy ----
   function leave() { try { sessionStorage.setItem("kumhoPageGo", JSON.stringify({ park: true, from: "bounce", t: Date.now() })); } catch (e) {} if (window.kumhoHop) kumhoHop(); $("fade").classList.add("on"); setTimeout(() => location.replace("park.html"), 250); }
@@ -3975,14 +4005,14 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   addEventListener("resize", resize); resize();
   function frame() { requestAnimationFrame(frame); const dt = Math.min(0.05, ck.getDelta()); if (document.hidden) return; T += dt;
     OBS.forEach((o) => { if (Math.abs(o.z - P.z) < 60) o.upd(T); });
-    if (P.run) { P.t += dt; P.sp = Math.min(11.5, P.sp + dt * 6) ; const v = P.inv > 1.0 ? P.sp * 0.5 : P.sp; P.z -= v * dt; P.inv = Math.max(0, P.inv - dt);
+    if (P.run) { P.t += dt; P.sp = Math.min(13, P.sp + dt * 7); const v = P.inv > 0.8 ? P.sp * 0.45 : P.sp; P.z -= v * dt; P.inv = Math.max(0, P.inv - dt);
       P.x += (LANES[P.lane] - P.x) * Math.min(1, dt * 12);
       P.vy -= 26 * dt; P.y += P.vy * dt; if (P.y <= 0) { P.y = 0; P.jumps = 0; P.vy = 4.2; }   /* the bouncy floor: always a little hop */
-      if (P.inv <= 0) for (const o of OBS) { if (Math.abs(o.z - P.z) > 2) continue; if (o.hit(P)) { P.hearts--; P.inv = 1.6; P.vy = 6; blip(220, 110, 0.3, "square", 0.1); if (navigator.vibrate) try { navigator.vibrate(80); } catch (e) {} if (P.hearts <= 0) end(false); break; } }
-      for (const c of COINS) { if (c.got || Math.abs(c.z - P.z) > 0.8) continue; if (Math.abs(c.x - P.x) < 0.8 && Math.abs(c.y - (P.y + 0.6)) < 1.0) { c.got = true; c.m.visible = false; P.coins++; blip(988, 1319, 0.12, "sine", 0.1); } }
-      if (P.z <= -LEN && P.run) end(true); hud(); setRun(1); }
+      if (P.inv <= 0) for (const o of OBS) { if (Math.abs(o.z - P.z) > 2) continue; if (o.hit(P)) { P.hits++; P.inv = 1.3; P.vy = 6; pop("+" + HIT_PEN.toFixed(1) + "초", false); blip(220, 110, 0.3, "square", 0.1); if (navigator.vibrate) try { navigator.vibrate(80); } catch (e) {} break; } }
+      for (const c of COINS) { if (c.got || Math.abs(c.z - P.z) > 0.8) continue; if (Math.abs(c.x - P.x) < 0.8 && Math.abs(c.y - (P.y + 0.6)) < 1.0) { c.got = true; c.m.visible = false; P.coins++; pop("−" + COIN_BONUS.toFixed(1) + "초", true); blip(988, 1319, 0.12, "sine", 0.1); } }
+      if (P.z <= -LEN && P.run) end(); hud(); setRun(1); }
     else if (!P.done) { P.vy -= 26 * dt; P.y += P.vy * dt; if (P.y <= 0) { P.y = 0; P.vy = 3.2; } }
-    COINS.forEach((c) => { if (!c.got) c.m.rotation.y = T * 3; });
+    COINS.forEach((c) => { if (!c.got) { c.m.rotation.y = T * 3 + c.z; c.m.position.y = c.y + Math.sin(T * 4 + c.z) * 0.08; } });
     if (P.obj) { P.obj.position.set(P.x, P.y, P.z); P.obj.rotation.y = Math.PI; P.obj.visible = P.inv <= 0 || Math.floor(P.inv * 10) % 2 === 0; const s = P.y < 0.12 ? 1 - (0.12 - P.y) * 1.2 : 1; P.obj.scale.set(0.96 / Math.sqrt(s), 0.96 * s, 0.96 / Math.sqrt(s)); }
     if (P.mix) P.mix.update(dt * (P.run ? 1.15 : 1));
     shadow.position.set(P.x, 0.02, P.z); shadow.scale.setScalar(Math.max(0.4, 1 - P.y * 0.25));
