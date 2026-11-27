@@ -4791,7 +4791,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     for (const v of [OUT.bus, OUT.taxi]) { if (!v || !v.visible || !v.parent) continue;
       if (!v.userData.half) { const bb = new THREE.Box3().setFromObject(v), p = v.getWorldPosition(new THREE.Vector3()); v.userData.half = [bb.min.x - p.x, bb.max.x - p.x, bb.min.z - p.z, bb.max.z - p.z]; }
       const h = v.userData.half, p = v.position; if (a > p.x + h[0] - 0.35 && a < p.x + h[1] + 0.35 && b > p.z + h[2] - 0.35 && b < p.z + h[3] + 0.35) return true; }
-    for (const G of [NPC.g, GIRL.g]) if (G && G.parent === world && Math.hypot(a - G.position.x, b - G.position.z) < 0.6) return true;   /* the characters are solid too */
+    for (const G of [NPC.g, GIRL.g, STAFF.g]) if (G && G.parent === world && Math.hypot(a - G.position.x, b - G.position.z) < 0.6) return true;   /* the characters are solid too */
     if (!RIDE.on) for (const v of [COIN.mini, RIDE.taxi]) { if (!v || !v.visible || v.parent !== world || Math.hypot(a - v.position.x, b - v.position.z) > 4) continue;   /* the parked mini bus and mini taxi, measured where and how they stand now */
       const bb = VEHB.setFromObject(v); if (a > bb.min.x - 0.25 && a < bb.max.x + 0.25 && b > bb.min.z - 0.25 && b < bb.max.z + 0.25) return true; }
     return false;
@@ -11555,7 +11555,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (o.userData.idx === "library") { doorFront(o, () => { if (!busy) pageGo({ library: true }); }); return; }
     if (o.userData.idx === "bounce") { const FP = { x: BOUNCE_AT[0], z: BOUNCE_AT[1] + 8.0, yaw: 0, pitch: 0.05 }; if (Math.hypot(cam.x - FP.x, cam.z - FP.z) > 1.2) { moveTo(FP); const t0 = performance.now(), w = setInterval(() => { const near = Math.hypot(cam.x - FP.x, cam.z - FP.z) < 2.2; if (!near && performance.now() - t0 < 15000) return; clearInterval(w); if (near && !busy) { goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🎪 금호 바운스에 들어가겠습니까?"; el.dataset.to = "bounce"; } }, 150); return; } goHomeAsk(); const el = $("homeAsk"); el.querySelector(".q").textContent = "🎪 금호 바운스에 들어가겠습니까?"; el.dataset.to = "bounce"; return; }
     if (o.userData.idx === "npcGrandpa") { npcTalk(); return; }
-    if (o.userData.idx === "npcGirl") { girlTalk(); return; }   // 아라 by the history signs: the Kumho quiz   // 도서관 할아버지 on his walk
+    if (o.userData.idx === "npcStaff") { staffTalk(); return; } if (o.userData.idx === "npcGirl") { girlTalk(); return; }   // 아라 by the history signs: the Kumho quiz   // 도서관 할아버지 on his walk
     if (o.userData.idx === "signLink") { const lk = o.userData.link, P0 = o.userData.post || OUT.signPos || [0, 0], FP = { x: P0[0] + 0.6, z: P0[1] + 3.6, yaw: 0, pitch: 0.12 };   /* first tap from afar: walk up in front of the fingerpost; then a tap on an arrow opens its site */
       if (Math.hypot(cam.x - P0[0], cam.z - P0[1]) > 7 && !RIDE.on) { moveTo(FP); return; } taxiCSS(); taxiToast(`🔗 ${lk.n} 홈페이지를 새 창으로 열어요`, 2200); try { window.open(lk.url, "_blank", "noopener"); } catch (e) {} return; }
     if (o.userData.idx === "turtle") { const B = OUT.turtlePos[o.userData.i], back = cam.z < B[1], FP = { x: B[0], z: B[1] + (back ? -4.6 : 4.6), yaw: back ? Math.PI : 0, pitch: 0.06 };   // a 금호고속 sign: first tap, stand square in front of it on whichever side; then the marks (front) or the company's names (back), year by year
@@ -11983,6 +11983,40 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const go = () => airGot() ? girlMenu() : npcSay(quizTried() ? ["또 왔네, 쿠모? 다시 도전해 볼래?", "10문제 중 8문제 이상 맞히면 하늘을 나는 물약을 줄게. 이번엔 할 수 있어!"]
       : ["야, 쿠모! 너 금호 아카이브에 갔다 왔지?", "쿠모, 하늘에서 아테라 타운 본 적 있어? 나한테 하늘을 나는 물약이 있거든.", "내가 금호 역사 문제 10개를 낼게. 8문제 이상 맞히면 물약 줄게! 준비됐지?"], () => quizStart(), "아라");
     if (d > 3.2) { const ux = (cam.x - G.position.x) / d, uz = (cam.z - G.position.z) / d, sx = G.position.x + ux * 2.2, sz = G.position.z + uz * 2.2; moveTo({ x: sx, z: sz, yaw: Math.atan2(-(G.position.x - sx), -(G.position.z - sz)), pitch: 0.06 }); setTimeout(go, 1300); } else go(); }
+  // ---- 금호건설 직원 at the front of 아테라 타운: tells 금호건설's story and ARTERA's ----
+  const STAFF = { g: null, world: null, loading: false, fail: false, mix: null, aT: null, aR: null, tw: 0, x: 4, z: -24.2, talk: false };
+  const STAFF_KC = ["금호건설은 1967년 '제일토목건축'으로 시작했어. 내년이면 60주년이란다!", "1978년에는 주식시장에 상장하고, 같은 해 첫 해외 공사도 시작했지.", "공항도 많이 지었어. 김포공항 화물청사, 인천국제공항 여객터미널과 관제탑, 아부다비 국제공항 관제탑까지!", "도로와 다리 같은 토목 공사도 했단다. 베트남 년짝대교도 금호건설이 지었어.", "1999년에 금호산업으로 합쳐졌다가, 2021년에 다시 '금호건설'이라는 이름을 되찾았어.", "집도 지어 왔지. 2001년 '리첸시아', 2003년 '어울림', 그리고 2024년 새 브랜드 '아테라'까지!", "또 궁금한 거 있으면 언제든 물어보렴!"];
+  const STAFF_AT = ["아테라(ARTERA)는 예술(ART), 대지(TERRA), 시대(ERA)를 합친 이름이야.", "'금호건설이 지은 대지 위의 예술'이라는 뜻이지. 멋지지?", "2024년 5월, '어울림'과 '리첸시아'를 잇는 20여 년 만의 새 주거 브랜드로 태어났어.", "첫 단지는 청주테크노폴리스 아테라야. 첫 분양 때 1순위 평균 47.4대 1의 경쟁률을 기록했단다!", "쿠모네 집도 아테라 아파트잖아? 쿠모 모자 색도 아테라 색이란다.", "또 궁금한 거 있으면 언제든 물어보렴!"];
+  function staffLoad() { STAFF.loading = true;
+    if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
+    if (!gltfLoader) return;
+    gltfLoader.load(R("assets/staff.glb"), (g) => { STAFF.loading = false; if (mode !== "outside") return;
+      const m = g.scene, G = new THREE.Group(); { let hh = 0; m.traverse((o) => { if (o.isMesh && o.geometry) { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; hh = Math.max(hh, b.max.y - b.min.y); } }); m.scale.setScalar(hh > 0.2 && hh < 5 ? 1.5 / hh : 1.1); }   /* a grown-up: a head taller than 쿠모 */
+      m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } }); G.add(m);
+      const pk = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.6, 0.7), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.8; pk.userData.idx = "npcStaff"; G.add(pk); pickables.push(pk);
+      { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.5, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.015; bl.renderOrder = 2; G.add(bl); }
+      G.position.set(STAFF.x, 0.02, STAFF.z); world.add(G); STAFF.g = G; STAFF.world = world; STAFF.mix = new THREE.AnimationMixer(m);
+      const T = g.animations.find((c) => /talk/i.test(c.name));
+      if (T) { STAFF.aR = STAFF.mix.clipAction(T); STAFF.aR.play(); STAFF.aR.timeScale = 0; STAFF.aR.time = 0; STAFF.aR.setEffectiveWeight(1); STAFF.aT = STAFF.mix.clipAction(T.clone()); STAFF.aT.play(); STAFF.aT.setEffectiveWeight(0); } },   /* at rest: the first frame of his talking clip (arms down); talking: the clip itself */
+      undefined, () => { STAFF.loading = false; STAFF.fail = true; }); }
+  function staffStep(dt) { if (mode !== "outside") return;
+    if (!STAFF.g || STAFF.world !== world) { STAFF.g = null; if (!STAFF.loading && !STAFF.fail && world.children.length > 20) staffLoad(); return; }
+    const G = STAFF.g, far = Math.hypot(cam.x - G.position.x, cam.z - G.position.z) > 60, nd = $("npcDlg"), qd = $("quizDlg");
+    if (STAFF.talk && (!nd || nd.hidden) && (!qd || qd.hidden)) STAFF.talk = false;
+    const a = STAFF.talk ? Math.atan2(cam.x - G.position.x, cam.z - G.position.z) : 0; G.rotation.y += wrapAngle(a - G.rotation.y) * Math.min(1, dt * 4);
+    STAFF.tw += (((STAFF.talk && nd && !nd.hidden) ? 1 : 0) - STAFF.tw) * Math.min(1, dt * 4);
+    if (STAFF.aT) STAFF.aT.setEffectiveWeight(STAFF.tw); if (STAFF.aR) STAFF.aR.setEffectiveWeight(1 - STAFF.tw);
+    if (STAFF.mix && !far) STAFF.mix.update(dt); }
+  function staffTalk() { const G = STAFF.g, qd = $("quizDlg"), nd = $("npcDlg"); if (!G || (qd && !qd.hidden) || (nd && !nd.hidden)) return; STAFF.talk = true; const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z);
+    const go = () => npcSay(["안녕, 쿠모! 나는 금호건설 직원이란다. 저기 보이는 아테라 아파트도 우리가 지었지."], () => staffMenu(), "금호건설 직원");
+    if (d > 3.4) { const ux = (cam.x - G.position.x) / d, uz = (cam.z - G.position.z) / d, sx = G.position.x + ux * 2.4, sz = G.position.z + uz * 2.4; moveTo({ x: sx, z: sz, yaw: Math.atan2(-(G.position.x - sx), -(G.position.z - sz)), pitch: 0.06 }); setTimeout(go, 1300); } else go(); }
+  function staffMenu() { const el = quizBox(); el.dataset.done = ""; STAFF.talk = true;
+    el.innerHTML = `<div class="nm">금호건설 직원</div><div class="q" style="font-weight:600">무엇이 궁금하니?</div><div class="ft"><button type="button" class="x">다음에</button><button type="button" class="kc">🏗 금호건설 이야기</button><button type="button" class="at">🏠 아테라 이야기</button></div>`; el.hidden = false;
+    const close = () => { el.hidden = true; };
+    el.querySelector(".x").onclick = (e) => { e.stopPropagation(); close(); STAFF.talk = false; };
+    el.querySelector(".kc").onclick = (e) => { e.stopPropagation(); close(); STAFF.talk = true; npcSay(STAFF_KC, () => { STAFF.talk = false; }, "금호건설 직원"); };
+    el.querySelector(".at").onclick = (e) => { e.stopPropagation(); close(); STAFF.talk = true; npcSay(STAFF_AT, () => { STAFF.talk = false; }, "금호건설 직원"); }; }
   function quizBox() { let el = $("quizDlg"); if (!el) { quizStart.css(); el = $("quizDlg"); } return el; }
   function girlMenu() { const el = quizBox(); el.dataset.done = "";
     el.innerHTML = `<div class="nm">아라</div><div class="q" style="font-weight:600">하늘을 나는 물약은 벌써 마셨지? ✈ 항공뷰 버튼을 누르면 하늘에서 아테라 타운을 내려다볼 수 있어! 퀴즈를 또 풀어 봐도 좋고.</div><div class="ft"><button type="button" class="x">다음에</button><button type="button" class="qz">퀴즈 한 번 더</button><button type="button" class="nx">✈ 항공뷰 해볼래</button></div>`; el.hidden = false;
@@ -12018,14 +12052,14 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   const NARW = { tex: null, t: 0, list: new Map() };
   function narwTex() { if (!NARW.tex) NARW.tex = canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.shadowColor = "rgba(0,0,0,.35)"; g.shadowBlur = 10; g.fillStyle = "rgba(255,255,255,.85)"; g.beginPath(); g.moveTo(40, 14); g.lineTo(88, 14); g.lineTo(88, 62); g.lineTo(112, 62); g.lineTo(64, 116); g.lineTo(16, 62); g.lineTo(40, 62); g.closePath(); g.fill(); }); return NARW.tex; }
   function npcArrows(dt) { NARW.t += dt; const ok = mode === "outside" && !(AIR && (AIR.on || AIR.out)) && !RIDE.on && !document.querySelector(".tutBox"), dlg = ($("npcDlg") && !$("npcDlg").hidden) || ($("quizDlg") && !$("quizDlg").hidden);
-    [[NPC.g, NPC.talk], [GIRL.g, GIRL.talk]].forEach(([G, talk]) => { if (!G) return; let a = NARW.list.get(G);
+    [[NPC.g, NPC.talk], [GIRL.g, GIRL.talk], [STAFF.g, STAFF.talk]].forEach(([G, talk]) => { if (!G) return; let a = NARW.list.get(G);
       if (!a) { narwTex();
         G.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(G); a = new THREE.Sprite(new THREE.SpriteMaterial({ map: NARW.tex, transparent: true, depthWrite: false, opacity: 0 })); a.scale.set(0.42, 0.42, 1); a.userData.y = Math.min(2.6, Math.max(1.4, bb.max.y - G.position.y)) + 0.45; a.renderOrder = 20; G.add(a); NARW.list.set(G, a); }
       const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z), on = ok && !talk && !dlg && d < 14, m = a.material;
       m.opacity += ((on ? 0.85 : 0) - m.opacity) * Math.min(1, dt * 5); a.visible = m.opacity > 0.02; a.position.y = a.userData.y + Math.sin(NARW.t * 3.2) * 0.08; });
     spotArrows(dt, ok && !dlg && !HOOP && !(TP && TP.sit)); }
   /* the same arrow over everything else out there that answers a tap: the swing, the puzzle, the fountain, the hoop, the kiosks, the screen, the signs, the doors, the buses… one per thing (a row of boards gets one each) */
-  const SPOT_SKIP = new Set(["npcGrandpa", "npcGirl", "coin", "seat", "outApt"]);
+  const SPOT_SKIP = new Set(["npcGrandpa", "npcGirl", "npcStaff", "coin", "seat", "outApt"]);
   function spotArrows(dt, ok) { const L = NARW.spots;
     if (!L || NARW.sw !== world || NARW.sn !== pickables.length) { if (L) L.forEach((a) => { if (a.parent) a.parent.remove(a); }); const out = (NARW.spots = []), cells = new Set(), bb = new THREE.Box3(); NARW.sw = world; NARW.sn = pickables.length; if (mode !== "outside" || !world) return; world.updateMatrixWorld(true);
       const put = (x, y, z, k, sc) => { const a = new THREE.Sprite(new THREE.SpriteMaterial({ map: NARW.tex, transparent: true, depthWrite: false, depthTest: false, opacity: 0 })); a.scale.set(sc, sc, 1); a.position.set(x, y, z); a.userData = { y, r: k }; a.renderOrder = 20; a.visible = false; world.add(a); out.push(a); };
@@ -13131,7 +13165,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function frame(now) {
     if (freeGL.done) return;
     const dt = Math.min(RIDE.on ? 0.1 : 0.05, lastNow ? (now - lastNow) / 1000 : 0.016); lastNow = now;   /* aboard the mini bus or taxi a slow frame still covers its full distance, so both keep the same pace on any device */
-    stepHold(dt); stepTilt(dt); stepVK(dt); doorBump(dt); stepAir(dt); stepHoop(dt); stepSwing(dt); stepThumbs(dt); stepCoins(dt); npcStep(dt); girlStep(dt); npcArrows(dt); cgStep(dt); if (mapGot && $("mapBtn")) $("mapBtn").hidden = mode !== "outside"; if ((NPC.bt = (NPC.bt || 0) + dt) > 0.5) { NPC.bt = 0; bookBtns(); } busCallStep(dt); screenStep(dt); pzStep(dt); tpStep(dt); placeVK();
+    stepHold(dt); stepTilt(dt); stepVK(dt); doorBump(dt); stepAir(dt); stepHoop(dt); stepSwing(dt); stepThumbs(dt); stepCoins(dt); npcStep(dt); girlStep(dt); staffStep(dt); npcArrows(dt); cgStep(dt); if (mapGot && $("mapBtn")) $("mapBtn").hidden = mode !== "outside"; if ((NPC.bt = (NPC.bt || 0) + dt) > 0.5) { NPC.bt = 0; bookBtns(); } busCallStep(dt); screenStep(dt); pzStep(dt); tpStep(dt); placeVK();
     const taxiControls = document.getElementById("taxiControls");
     taxiControls.hidden = true;
     if (mode === "lobby" && CAR.lights && CAR.lights.length) {   // uplights round the dais: a soft, uneven twinkle
@@ -13255,7 +13289,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const packs = PACKS && !IS_PARK ? [...new Set(keys.map((k) => PACKS.map[k]).filter((n) => n !== undefined))] : [];   // the lobby's wall pictures: not in the park (the kiosk fetches its own when used)
     const ext = IS_PARK ? [] : [ATL(6)];
     if (!IS_PARK) DATA.forEach((h) => { const f = h.door || ""; if (f.startsWith("special/")) ext.push(f); });
-    const glbs = IS_PARK ? ["assets/character.glb", "assets/lite-bus.glb", "assets/gold-bus.glb?v=2", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
+    const glbs = IS_PARK ? ["assets/character.glb", "assets/staff.glb", "assets/lite-bus.glb", "assets/gold-bus.glb?v=2", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
     const total = packs.length + ext.length + glbs.length + 1; let done = 0;
     // the bar eases toward the real progress and takes at least ~4.5 s, so everything is warm when it reaches 100%
     const t0 = performance.now(), MIN = IS_PARK ? 1500 : 4500; let shown = Math.max(0, +((document.getElementById("introBar") || {}).style || {}).width?.replace("%", "") / 100 || 0);
