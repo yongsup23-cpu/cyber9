@@ -11985,7 +11985,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       : ["야, 쿠모! 너 금호 아카이브에 갔다 왔지?", "쿠모, 하늘에서 아테라 타운 본 적 있어? 나한테 하늘을 나는 물약이 있거든.", "내가 금호 역사 문제 10개를 낼게. 8문제 이상 맞히면 물약 줄게! 준비됐지?"], () => quizStart(), "아라");
     if (d > 3.2) { const ux = (cam.x - G.position.x) / d, uz = (cam.z - G.position.z) / d, sx = G.position.x + ux * 2.2, sz = G.position.z + uz * 2.2; moveTo({ x: sx, z: sz, yaw: Math.atan2(-(G.position.x - sx), -(G.position.z - sz)), pitch: 0.06 }); setTimeout(go, 1300); } else go(); }
   // ---- 금호건설 직원 at the front of 아테라 타운: tells 금호건설's story and ARTERA's ----
-  const STAFF = { g: null, world: null, loading: false, fail: false, mix: null, aT: null, aR: null, tw: 0, x: 8, z: -101.2, talk: false };   /* by the 금호건설 history signs, where 아라 used to stand */
+  const STAFF = { g: null, world: null, loading: false, fail: false, mix: null, aT: null, aR: null, tw: 0, x: 8, z: -101.2, talk: false, aW: null, ww: 0, tx: 8, tz: -101.2, wait: 3 };   /* by the 금호건설 history signs, where 아라 used to stand */
   const STAFF_KC = ["금호건설은 1967년 '제일토목건축'으로 시작했어. 내년이면 60주년이란다!", "1978년에는 주식시장에 상장하고, 같은 해 첫 해외 공사도 시작했지.", "공항도 많이 지었어. 김포공항 화물청사, 인천국제공항 여객터미널과 관제탑, 아부다비 국제공항 관제탑까지!", "도로와 다리 같은 토목 공사도 했단다. 베트남 년짝대교도 금호건설이 지었어.", "1999년에 금호산업으로 합쳐졌다가, 2021년에 다시 '금호건설'이라는 이름을 되찾았어.", "집도 지어 왔지. 2001년 '리첸시아', 2003년 '어울림', 그리고 2024년 새 브랜드 '아테라'까지!", "또 궁금한 거 있으면 언제든 물어보렴!"];
   const STAFF_AT = ["아테라(ARTERA)는 예술(ART), 대지(TERRA), 시대(ERA)를 합친 이름이야.", "'금호건설이 지은 대지 위의 예술'이라는 뜻이지. 멋지지?", "2024년 5월, '어울림'과 '리첸시아'를 잇는 20여 년 만의 새 주거 브랜드로 태어났어.", "첫 단지는 청주테크노폴리스 아테라야. 첫 분양 때 1순위 평균 47.4대 1의 경쟁률을 기록했단다!", "쿠모네 집도 아테라 아파트잖아? 쿠모 모자 색도 아테라 색이란다.", "또 궁금한 거 있으면 언제든 물어보렴!"];
   function staffLoad() { STAFF.loading = true;
@@ -11999,15 +11999,21 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const bl = new THREE.Mesh(new THREE.CircleGeometry(0.62, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.015; bl.renderOrder = 2; G.add(bl); }
       G.position.set(STAFF.x, 0.02, STAFF.z); world.add(G); STAFF.g = G; STAFF.world = world; STAFF.mix = new THREE.AnimationMixer(m);
       const T = g.animations.find((c) => /talk/i.test(c.name));
-      if (T) { STAFF.aR = STAFF.mix.clipAction(T); STAFF.aR.play(); STAFF.aR.timeScale = 0; STAFF.aR.time = 0; STAFF.aR.setEffectiveWeight(1); STAFF.aT = STAFF.mix.clipAction(T.clone()); STAFF.aT.play(); STAFF.aT.setEffectiveWeight(0); } },   /* at rest: the first frame of his talking clip (arms down); talking: the clip itself */
+      if (T) { STAFF.aR = STAFF.mix.clipAction(T); STAFF.aR.play(); STAFF.aR.timeScale = 0; STAFF.aR.time = 0; STAFF.aR.setEffectiveWeight(1); STAFF.aT = STAFF.mix.clipAction(T.clone()); STAFF.aT.play(); STAFF.aT.setEffectiveWeight(0); } const Wk = g.animations.find((c) => /walk/i.test(c.name)); if (Wk) { STAFF.aW = STAFF.mix.clipAction(Wk); STAFF.aW.play(); STAFF.aW.setEffectiveWeight(0); STAFF.aW.timeScale = 0.8; } },   /* at rest: the first frame of his talking clip (arms down); talking: the clip itself */
       undefined, () => { STAFF.loading = false; STAFF.fail = true; }); }
   function staffStep(dt) { if (mode !== "outside") return;
     if (!STAFF.g || STAFF.world !== world) { STAFF.g = null; if (!STAFF.loading && !STAFF.fail && world.children.length > 20) staffLoad(); return; }
     const G = STAFF.g, far = Math.hypot(cam.x - G.position.x, cam.z - G.position.z) > 60, nd = $("npcDlg"), qd = $("quizDlg");
     if (STAFF.talk && (!nd || nd.hidden) && (!qd || qd.hidden)) STAFF.talk = false;
-    const a = STAFF.talk ? Math.atan2(cam.x - G.position.x, cam.z - G.position.z) : 0; G.rotation.y += wrapAngle(a - G.rotation.y) * Math.min(1, dt * 4);
+    let moving = false;
+    if (STAFF.talk) { const a = Math.atan2(cam.x - G.position.x, cam.z - G.position.z); G.rotation.y += wrapAngle(a - G.rotation.y) * Math.min(1, dt * 4); STAFF.wait = Math.max(STAFF.wait, 2); }
+    else if (STAFF.wait > 0) { STAFF.wait -= dt; G.rotation.y += wrapAngle(0 - G.rotation.y) * Math.min(1, dt * 2); }
+    else { const dx = STAFF.tx - G.position.x, dz = STAFF.tz - G.position.z, d = Math.hypot(dx, dz);
+      if (d < 0.12) { STAFF.wait = 3 + Math.random() * 4; const an = Math.random() * Math.PI * 2, r = 0.8 + Math.random() * 1.6; STAFF.tx = STAFF.x + Math.cos(an) * r; STAFF.tz = STAFF.z + Math.sin(an) * r; }
+      else { const v = Math.min(d, 0.8 * dt); G.position.x += dx / d * v; G.position.z += dz / d * v; G.rotation.y += wrapAngle(Math.atan2(dx, dz) - G.rotation.y) * Math.min(1, dt * 5); moving = true; } }   /* he strolls a few steps around his spot, stops, faces front, and strolls again */
+    STAFF.ww += ((moving ? 1 : 0) - STAFF.ww) * Math.min(1, dt * 5);
     STAFF.tw += (((STAFF.talk && nd && !nd.hidden) ? 1 : 0) - STAFF.tw) * Math.min(1, dt * 4);
-    if (STAFF.aT) STAFF.aT.setEffectiveWeight(STAFF.tw); if (STAFF.aR) STAFF.aR.setEffectiveWeight(1 - STAFF.tw);
+    if (STAFF.aW) STAFF.aW.setEffectiveWeight(STAFF.ww); if (STAFF.aT) STAFF.aT.setEffectiveWeight(STAFF.tw * (1 - STAFF.ww)); if (STAFF.aR) STAFF.aR.setEffectiveWeight((1 - STAFF.tw) * (1 - STAFF.ww));
     if (STAFF.mix && !far) STAFF.mix.update(dt); }
   function staffTalk() { const G = STAFF.g, qd = $("quizDlg"), nd = $("npcDlg"); if (!G || (qd && !qd.hidden) || (nd && !nd.hidden)) return; STAFF.talk = true; const d = Math.hypot(cam.x - G.position.x, cam.z - G.position.z);
     const go = () => npcSay(["안녕, 쿠모! 나는 금호건설 직원이란다. 저기 보이는 아테라 아파트도 우리가 지었지."], () => staffMenu(), "금호건설 직원");

@@ -4014,7 +4014,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       const cx = LANES[(rnd() * 3) | 0]; for (let j = 1; j <= 3; j++) coin(cx, 0.9 + (j === 2 ? 0.5 : 0), z + 3.2 + j * 1.3); z -= 8.5 + rnd() * 3; k++; } }
 
   // ---- the last stretch: a launch ramp under the arch "80년을 넘어!", then a ball pit; jump at the ramp's lip and 쿠모 sails over it to the finish ----
-  const PAD0 = -LEN + 36, PAD1 = -LEN + 29, PIT0 = -LEN + 28.6, PIT1 = -LEN + 8, PADH = 0.7, PERFECT = 3.0, TIP = 1.0;
+  const PAD0 = -LEN + 36, PAD1 = -LEN + 29, PIT0 = -LEN + 28.6, PIT1 = -LEN + 8, PADH = 0.7, PERFECT = 2.2, TIP = 0.6;
   { const len = PAD0 - PAD1, ang = Math.atan2(PADH, len), rT = stripes("#ffcc2e", "#ff4d5a", 10, false); rT.repeat.set(1, 3);
     const ramp = add(rbox(HALF * 2 - 0.3, 0.3, Math.hypot(len, PADH), 0.12), [vinyl(null, 0xff4d5a), vinyl(rT)], 0, PADH / 2 - 0.05, (PAD0 + PAD1) / 2); ramp.rotation.x = ang;
     const strip = (z0, z1, col) => { const zc = (z0 + z1) / 2, m = add(rbox(HALF * 2 - 0.3, 0.18, z0 - z1, 0.06), [vinyl(null, col), vinyl(null, col)], 0, PADH * (PAD0 - zc) / len + 0.2, zc); m.rotation.x = ang; return m; };
@@ -4045,10 +4045,18 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // // ---- a burst of colourful "!" marks when 쿠모 bumps into anything ----
   const CF = { n: 140, list: [], m: null, M: new THREE.Matrix4(), Q: new THREE.Quaternion(), E: new THREE.Euler(), V: new THREE.Vector3(), SC: new THREE.Vector3() };
   { const bangT = tex(64, 128, (gg, w, h) => { gg.clearRect(0, 0, w, h); gg.fillStyle = "#fff"; gg.beginPath(); gg.moveTo(14, 6); gg.lineTo(50, 6); gg.lineTo(42, 84); gg.lineTo(22, 84); gg.closePath(); gg.fill(); gg.beginPath(); gg.arc(32, 108, 13, 0, Math.PI * 2); gg.fill(); });   /* a chunky white "!" that each piece tints its own colour */
-    const g = new THREE.PlaneGeometry(0.24, 0.48), im = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ map: bangT, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, depthWrite: false }), CF.n), cs = [0xff4d6d, 0xffb703, 0x3aa0ff, 0x2ec27e, 0xa46bff, 0xff7ab8, 0xff8a3d, 0x24c6dc], c = new THREE.Color();
+    const g = new THREE.PlaneGeometry(0.12, 0.24), im = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ map: bangT, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, depthWrite: false }), CF.n), cs = [0xff4d6d, 0xffb703, 0x3aa0ff, 0x2ec27e, 0xa46bff, 0xff7ab8, 0xff8a3d, 0x24c6dc], c = new THREE.Color();
     for (let i = 0; i < CF.n; i++) { im.setColorAt(i, c.setHex(cs[i % cs.length])); CF.M.makeScale(0, 0, 0); im.setMatrixAt(i, CF.M); CF.list.push({ life: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, wr: 0 }); }
     im.instanceColor.needsUpdate = true; im.frustumCulled = false; im.castShadow = false; scene.add(im); CF.m = im; }
   const confetti = (x, y, z) => { CF.list.forEach((q) => { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 4.5; q.life = 1.4 + Math.random() * 0.8; q.x = x; q.y = y; q.z = z; q.vx = Math.cos(a) * sp; q.vz = Math.sin(a) * sp * 0.7 - 1; q.vy = 3 + Math.random() * 5; q.rx = (Math.random() - 0.5) * 0.5; q.ry = (Math.random() - 0.5) * 1.0; q.ph = Math.random() * 6; q.wr = 2 + Math.random() * 3; }); blip(900, 300, 0.25, "triangle", 0.12); setTimeout(() => blip(1200, 600, 0.15, "square", 0.05), 60); };
+  const SAFE = { m: null, t: 0, x: 0, y: 0, z: 0 };
+  { const st = tex(1024, 256, (gg, w, h) => { gg.clearRect(0, 0, w, h); const ch = ["안", "전", "제", "일", " ", "!"], cs = ["#ff4d6d", "#ffb703", "#3aa0ff", "#2ec27e", "", "#a46bff"]; gg.font = "900 170px 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif"; gg.textBaseline = "middle"; gg.lineJoin = "round";
+      const ws = ch.map((c) => gg.measureText(c).width), tw = ws.reduce((a, b) => a + b, 0); let x = (w - tw) / 2;
+      ch.forEach((c, i) => { if (c !== " ") { gg.lineWidth = 30; gg.strokeStyle = "#ffffff"; gg.strokeText(c, x, h / 2 + 6); gg.lineWidth = 10; gg.strokeStyle = "rgba(40,30,60,0.55)"; gg.strokeText(c, x, h / 2 + 6); gg.fillStyle = cs[i]; gg.fillText(c, x, h / 2 + 6); } x += ws[i]; }); });
+    st.wrapS = st.wrapT = THREE.ClampToEdgeWrapping; st.repeat.set(1, 1);
+    SAFE.m = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 0.75), new THREE.MeshBasicMaterial({ map: st, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide })); SAFE.m.renderOrder = 20; SAFE.m.visible = false; SAFE.m.castShadow = false; scene.add(SAFE.m); }
+  const safePop = (x, y, z) => { SAFE.t = 1.3; SAFE.x = x; SAFE.y = y; SAFE.z = z; SAFE.m.visible = true; };
+  const safeStep = (dt) => { if (SAFE.t <= 0) return; SAFE.t -= dt; const a = 1.3 - SAFE.t, k = a < 0.18 ? 0.3 + (a / 0.18) * 0.9 : a < 0.3 ? 1.2 - ((a - 0.18) / 0.12) * 0.2 : 1; SAFE.m.scale.setScalar(k); SAFE.m.position.set(P.x * 0.6, SAFE.y + a * 0.4, P.z + 0.2); SAFE.m.material.opacity = Math.min(1, SAFE.t / 0.35); if (SAFE.t <= 0) SAFE.m.visible = false; };   /* "안전제일 !" pops big in the burst's colours, bounces once, drifts up and fades, riding along with 쿠모 so it never rushes at the camera */
   const confettiStep = (dt) => { let any = false; CF.list.forEach((q, i) => { if (q.life <= 0) return; any = true; q.life -= dt; q.vy -= 9 * dt; q.vx *= 1 - dt * 1.5; q.vz *= 1 - dt * 1.5; if (q.vy < -2.2) q.vy = -2.2; q.x += q.vx * dt; q.y = Math.max(0.02, q.y + q.vy * dt); q.z += q.vz * dt; q.ph += q.wr * dt; q.rz = Math.sin(q.ph) * 0.45;   /* they sway as they fall, still facing the camera so the marks read */
       const s = q.life > 0 ? Math.min(1, q.life / 0.4) : 0; CF.Q.setFromEuler(CF.E.set(q.rx, q.ry, q.rz || 0)); CF.M.compose(CF.V.set(q.x, q.y, q.z), CF.Q, CF.SC.set(s, s, s)); CF.m.setMatrixAt(i, CF.M); }); if (any || CF.was) CF.m.instanceMatrix.needsUpdate = true; CF.was = any; };   /* the bits flutter down, slowed by the air, and fade */
 
@@ -4113,7 +4121,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const ck = new THREE.Clock(); let T = 0; const CAM = { x: 0, y: 3 };
   function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w < h ? 72 : 60; camera.updateProjectionMatrix(); }
   addEventListener("resize", resize); resize();
-  function frame() { requestAnimationFrame(frame); const dt = Math.min(0.05, ck.getDelta()); if (document.hidden) return; T += dt; confettiStep(dt);
+  function frame() { requestAnimationFrame(frame); const dt = Math.min(0.05, ck.getDelta()); if (document.hidden) return; T += dt; confettiStep(dt); safeStep(dt);
     OBS.forEach((o) => { if (Math.abs(o.z - P.z) < 60) o.upd(T); });
     if (P.run) { P.t += dt; P.sp = Math.min(8.2, Math.max(4.5, P.sp + dt * 1.2)); const v = P.fly ? (P.fsp || 22) : P.pit ? 3.5 : P.inv > 0.8 ? P.sp * 0.4 : P.sp;   /* a steady run that picks up a little; the long jump flies, the ball pit drags */ P.z -= v * dt; P.inv = Math.max(0, P.inv - dt);
       { const d = holdDir(), SPX = 3.3; let mv = 0; if (d) { P.tx = null; mv = d * SPX * dt; } else if (P.tx != null) { const dx = P.tx - P.x; mv = Math.sign(dx) * Math.min(Math.abs(dx), SPX * dt); if (Math.abs(dx) < 0.001) P.tx = null; }
@@ -4123,7 +4131,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
       if (P.pit && P.z <= PIT1) { P.pit = false; P.y = 0; P.vy = 3; }   /* climbs out of the pit at its far side */
       for (const gt of GATES) if (!gt.done && P.z < gt.z) { gt.done = true; story(gt.y, gt.t); }
       if (!P.hintPad && P.z < PAD0 + 8) { P.hintPad = true; pop("점프대! 보라색 끝에서 점프", true); }
-      if (P.inv <= 0) for (const o of OBS) { if (Math.abs(o.z - P.z) > 2.6) continue; if (o.hit(P)) { P.hits++; P.inv = 1.3; P.vy = 6; confetti(P.x, 1.3, P.z - 0.5); pop("안전 제일 !", false); setTimeout(() => pop("+" + HIT_PEN.toFixed(1) + "초", false), 380); blip(220, 110, 0.3, "square", 0.1); buzz(80); break; } }
+      if (P.inv <= 0) for (const o of OBS) { if (Math.abs(o.z - P.z) > 2.6) continue; if (o.hit(P)) { P.hits++; P.inv = 1.3; P.vy = 6; confetti(P.x, 1.3, P.z - 0.5); safePop(P.x, 1.75, P.z - 0.6); setTimeout(() => pop("+" + HIT_PEN.toFixed(1) + "초", false), 380); blip(220, 110, 0.3, "square", 0.1); buzz(80); break; } }
       for (const c of COINS) { if (c.got || Math.abs(c.z - P.z) > 0.8) continue; if (Math.abs(c.x - P.x) < 0.8 && Math.abs(c.y - (P.y + 0.6)) < 1.0) { c.got = true; c.m.visible = false; P.coins++; buzz(10); pop("−" + COIN_BONUS.toFixed(1) + "초", true); blip(988, 1319, 0.12, "sine", 0.1); } }
       if (P.z <= -LEN && P.run) end(); hud(); setRun(1); }
     else if (!P.done) { P.y = 0; P.vy = 0; }
