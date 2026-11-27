@@ -4075,7 +4075,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   let mixer = null; const LIB = { obj: null, aT: null, aI: null, w: 0, was: 0, talk: 0, t: 0, pend: false, given: false, x: DX - 1.0, z: DZ - DD / 2 - 0.8 };
   try { LIB.given = sessionStorage.getItem("kumhoHeritageGot") === "1"; } catch (e) {}
   if (THREE.GLTFLoader) { const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L.setMeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
-    L.load("assets/librarian.glb", (g) => { const m = g.scene, k = 1.95 / 1.7;   // the rigged model stands 1.7 m tall in its own units
+    L.load("assets/librarian.glb?v=2", (g) => { const m = g.scene, k = 1.95 / 1.7;   // the rigged model stands 1.7 m tall in its own units
       m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = false; } }); m.scale.setScalar(k);
       const g2 = new THREE.Group(); g2.add(m); g2.position.set(LIB.x, 0, LIB.z); scene.add(g2); LIB.obj = g2;
       { const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
