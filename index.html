@@ -11965,9 +11965,6 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (mode !== "outside" || !world || !document.documentElement.classList.contains("arrived")) return;   /* fetched only once the park is open: no longer a wait at the start */
     if (!GIRL.g || GIRL.world !== world) { GIRL.g = null; if (!GIRL.loading && !GIRL.fail && world.children.length > 20) girlLoad(); return; }
     const G = GIRL.g, far = Math.hypot(cam.x - G.position.x, cam.z - G.position.z) > 70; let moving = false;
-    { const airy = typeof AIR !== "undefined" && (AIR.on || AIR.out); if (airy && !GIRL.pin) { const c = document.createElement("canvas"); c.width = 256; c.height = 300; const g = c.getContext("2d"); g.fillStyle = "#ff5c9a"; g.beginPath(); g.arc(128, 110, 96, Math.PI, 0); g.lineTo(128, 290); g.closePath(); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 10; g.stroke(); g.fillStyle = "#fff"; g.font = `900 64px ${FONT}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("아라", 128, 110);
-        const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; GIRL.pin = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); GIRL.pin.scale.set(5.1, 6, 1); GIRL.pin.renderOrder = 999; }
-      if (GIRL.pin) { if (GIRL.pin.parent !== world) world.add(GIRL.pin); GIRL.pin.visible = airy; if (airy) GIRL.pin.position.set(G.position.x, 6.5 + Math.sin(performance.now() / 300) * 0.6, G.position.z); } }   /* from the air: a pink pin bobbing over 아라 */
     if (GIRL.talk) { const a = Math.atan2(cam.x - G.position.x, cam.z - G.position.z); G.rotation.y += wrapAngle(a - G.rotation.y) * Math.min(1, dt * 6); }
     else if (GIRL.wait > 0) GIRL.wait -= dt;
     else { const dx = GIRL.tx - G.position.x, dz = GIRL.tz - G.position.z, d = Math.hypot(dx, dz);
@@ -11990,7 +11987,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function staffLoad() { STAFF.loading = true;
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
     if (!gltfLoader) return;
-    gltfLoader.load(R("assets/staff.glb?v=2"), (g) => { STAFF.loading = false; if (mode !== "outside") return;
+    gltfLoader.load(R("assets/staff.glb?v=4"), (g) => { STAFF.loading = false; if (mode !== "outside") return;
       const m = g.scene, G = new THREE.Group(); { let hh = 0; m.traverse((o) => { if (o.isMesh && o.geometry) { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; hh = Math.max(hh, b.max.y - b.min.y); } }); { const k = hh > 0.2 && hh < 5 ? 2.2 / hh : 1.6; m.scale.set(k * 1.08, k, k * 1.08); } }   /* a grown-up: well taller than 쿠모, and broader */
       m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } }); G.add(m);
       const pk = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.3, 0.9), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 1.15; pk.userData.idx = "npcStaff"; G.add(pk); pickables.push(pk);
@@ -12704,7 +12701,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
   function setAir(on) {
     if (mode !== "outside" || busy || on === AIR.on || AIR.out) return;
     if (on && !airGot()) { taxiCSS(); taxiToast("🔒 항공뷰는 아직 잠겨 있어요 · 소원 분수대 근처의 아라에게 말을 걸어 퀴즈를 8문제 이상 맞히면 열려요!", 4200); return; }
-    if (on && AIR.fresh) { AIR.fresh = false; } if (on) { AIR.tipT = performance.now(); setTimeout(() => { if (AIR.on) { taxiCSS(); taxiToast("📍 아라는 소원 분수대 근처에 있어요 · 분홍 핀을 찾아보세요!", 3600); } }, 2600); }
+    if (on && AIR.fresh) { AIR.fresh = false; } if (on) AIR.tipT = performance.now();
     anim = null; hold = null; if (auto.on) setAuto(false); VK.v = 0;
     AIR.from = { x: cam.x, z: cam.z, y: cam.y, yaw: cam.yaw, pitch: cam.pitch }; AIR.t = 0;
     if (on) { AIR.back = Object.assign({}, AIR.from); AIR.a = 0; AIR.s = 1; AIR.p = 0; AIR.cx = 55; AIR.cz = -82; AIR.on = true; AIR.near = camera.near; camera.near = 1.5; camera.updateProjectionMatrix();   // more depth precision far off, so the ground never shimmers
@@ -13295,7 +13292,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const packs = PACKS && !IS_PARK ? [...new Set(keys.map((k) => PACKS.map[k]).filter((n) => n !== undefined))] : [];   // the lobby's wall pictures: not in the park (the kiosk fetches its own when used)
     const ext = IS_PARK ? [] : [ATL(6)];
     if (!IS_PARK) DATA.forEach((h) => { const f = h.door || ""; if (f.startsWith("special/")) ext.push(f); });
-    const glbs = IS_PARK ? ["assets/character.glb?v=4", "assets/staff.glb?v=2", "assets/lite-bus.glb", "assets/gold-bus.glb?v=4", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
+    const glbs = IS_PARK ? ["assets/character.glb?v=4", "assets/staff.glb?v=4", "assets/lite-bus.glb", "assets/gold-bus.glb?v=4", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
     const total = packs.length + ext.length + glbs.length + 1; let done = 0;
     // the bar eases toward the real progress and takes at least ~4.5 s, so everything is warm when it reaches 100%
     const t0 = performance.now(), MIN = IS_PARK ? 1500 : 4500; let shown = Math.max(0, +((document.getElementById("introBar") || {}).style || {}).width?.replace("%", "") / 100 || 0);
