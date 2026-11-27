@@ -12604,7 +12604,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (TP.obj || TP.loading || TP.fail) return;
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
     if (!gltfLoader) { TP.fail = true; return; } TP.loading = true;
-    gltfLoader.load("assets/character.glb?v=3", (g) => {
+    gltfLoader.load("assets/character.glb?v=4", (g) => {
       TP.loading = false; const o = g.scene; o.scale.setScalar(0.96);   // the model stands 1.4 m; shown at 1.35 m
       // lit like the rest of the street (Lambert, as the park is drawn) rather than PBR without a sky to reflect, so it no longer looks pasted on
       o.traverse((m) => { if (m.isMesh) { const mp = m.material && m.material.map; m.material = new THREE.MeshLambertMaterial({ map: mp, skinning: true }); m.castShadow = true; m.frustumCulled = false; } });
@@ -13289,7 +13289,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const packs = PACKS && !IS_PARK ? [...new Set(keys.map((k) => PACKS.map[k]).filter((n) => n !== undefined))] : [];   // the lobby's wall pictures: not in the park (the kiosk fetches its own when used)
     const ext = IS_PARK ? [] : [ATL(6)];
     if (!IS_PARK) DATA.forEach((h) => { const f = h.door || ""; if (f.startsWith("special/")) ext.push(f); });
-    const glbs = IS_PARK ? ["assets/character.glb?v=3", "assets/staff.glb?v=2", "assets/lite-bus.glb", "assets/gold-bus.glb?v=4", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
+    const glbs = IS_PARK ? ["assets/character.glb?v=4", "assets/staff.glb?v=2", "assets/lite-bus.glb", "assets/gold-bus.glb?v=4", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
     const total = packs.length + ext.length + glbs.length + 1; let done = 0;
     // the bar eases toward the real progress and takes at least ~4.5 s, so everything is warm when it reaches 100%
     const t0 = performance.now(), MIN = IS_PARK ? 1500 : 4500; let shown = Math.max(0, +((document.getElementById("introBar") || {}).style || {}).width?.replace("%", "") / 100 || 0);

@@ -4355,7 +4355,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const fadeOf = (m0) => Array.isArray(m0) ? (m0._fade || (m0._fade = m0.map(fade1))) : fade1(m0);
   const TP = { obj: null, mixer: null, act: {}, face: null, px: null, pz: null, spd: 0, rw: 0, iw: 1, d: 3.4, started: false };
   if (THREE.GLTFLoader) { const L2 = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L2.setMeshoptDecoder) L2.setMeshoptDecoder(window.MeshoptDecoder);
-    L2.load("assets/character.glb?v=3", (g) => { const o = g.scene; o.scale.setScalar(0.96 * 0.85);   /* 쿠모 at 90 %: the flat is drawn true to its plan, 1.3 times life size */
+    L2.load("assets/character.glb?v=4", (g) => { const o = g.scene; o.scale.setScalar(0.96 * 0.85);   /* 쿠모 at 90 %: the flat is drawn true to its plan, 1.3 times life size */
       o.traverse((m) => { if (m.isMesh) { const mp = m.material && m.material.map; m.material = new THREE.MeshLambertMaterial({ map: mp, skinning: true }); m.frustumCulled = false; } });
       const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.4)"); gr.addColorStop(0.6, "rgba(0,0,0,0.16)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
       TP.blob = new THREE.Mesh(new THREE.CircleGeometry(0.34, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); TP.blob.rotation.x = -Math.PI / 2; scene.add(TP.blob);
