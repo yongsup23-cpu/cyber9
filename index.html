@@ -8844,9 +8844,9 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
             const d = new THREE.Mesh(new THREE.PlaneGeometry(w * s, h * s), mt); d.position.set(hit.point.x, hit.point.y, hit.point.z + sd * 0.012); d.rotation.y = sd > 0 ? 0 : Math.PI; DG.add(d); }));
             BA.forEach((a) => { const [x, z] = pp(RAp + 9.4, a), g = DG.clone(); g.position.set(x, 0.07, z); g.rotation.y = a; Y.add(g); }); }
           /* every other coach is the gold premium coach, as inside U-square */
-          L.load("assets/gold-bus.glb?v=2", (g2) => { if (world !== ow) return; const r2 = g2.scene; r2.updateMatrixWorld(true); let s2 = null; r2.traverse((o) => { if (o.isMesh && !s2) s2 = o; }); if (!s2) return;
+          L.load("assets/gold-bus.glb?v=4", (g2) => { if (world !== ow) return; const r2 = g2.scene; r2.updateMatrixWorld(true); let s2 = null; r2.traverse((o) => { if (o.isMesh && !s2) s2 = o; }); if (!s2) return;
             const b2 = new THREE.Box3().setFromObject(r2), z2 = b2.getSize(new THREE.Vector3()), c2 = b2.getCenter(new THREE.Vector3()), k2 = 12 / Math.max(z2.x, z2.z), ax2 = z2.x >= z2.z, m2 = Array.isArray(s2.material) ? s2.material[0] : s2.material;
-            const gm = new THREE.InstancedMesh(s2.geometry, new THREE.MeshLambertMaterial({ map: m2.map || null, side: THREE.DoubleSide }), BG.length); gm.castShadow = true; gm.frustumCulled = false; Y.add(gm);
+            const gm = new THREE.InstancedMesh(s2.geometry, (() => { const mm = m2.clone(); mm.side = THREE.DoubleSide; return mm; })(), BG.length); gm.castShadow = true; gm.frustumCulled = false; Y.add(gm);
             const f2 = new THREE.Matrix4().makeTranslation(-c2.x, -b2.min.y, -c2.z), sc2 = new THREE.Matrix4().makeScale(k2, k2, k2), M2 = new THREE.Matrix4();
             BG.forEach((a, i) => { const [x, z] = pp(RAp + 9.4, a); ro.makeRotationY(a + (ax2 ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.07, z); M2.copy(tr).multiply(ro).multiply(sc2).multiply(f2).multiply(s2.matrixWorld); gm.setMatrixAt(i, M2); }); gm.instanceMatrix.needsUpdate = true; }, undefined, () => {}); }, undefined, () => {})); }
       if (OUT.mergeU) OUT.mergeU();
@@ -13289,7 +13289,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const packs = PACKS && !IS_PARK ? [...new Set(keys.map((k) => PACKS.map[k]).filter((n) => n !== undefined))] : [];   // the lobby's wall pictures: not in the park (the kiosk fetches its own when used)
     const ext = IS_PARK ? [] : [ATL(6)];
     if (!IS_PARK) DATA.forEach((h) => { const f = h.door || ""; if (f.startsWith("special/")) ext.push(f); });
-    const glbs = IS_PARK ? ["assets/character.glb", "assets/staff.glb", "assets/lite-bus.glb", "assets/gold-bus.glb?v=2", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
+    const glbs = IS_PARK ? ["assets/character.glb", "assets/staff.glb", "assets/lite-bus.glb", "assets/gold-bus.glb?v=4", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
     const total = packs.length + ext.length + glbs.length + 1; let done = 0;
     // the bar eases toward the real progress and takes at least ~4.5 s, so everything is warm when it reaches 100%
     const t0 = performance.now(), MIN = IS_PARK ? 1500 : 4500; let shown = Math.max(0, +((document.getElementById("introBar") || {}).style || {}).width?.replace("%", "") / 100 || 0);

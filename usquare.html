@@ -4122,9 +4122,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
             const d = new THREE.Mesh(new THREE.PlaneGeometry(w * s, h * s), mt); d.position.set(hit.point.x, hit.point.y, hit.point.z + sd * 0.012); d.rotation.y = sd > 0 ? 0 : Math.PI; DG.add(d); }));
           YB_N.forEach((b) => { const [x, z] = polar(b.rc, b.a), g = DG.clone(); g.position.set(x, 0.02, z); g.rotation.y = b.a; scene.add(g); }); } }, undefined, () => {}));
       /* every other coach is the gold premium coach (its own model, its lettering kept only where it reads the right way) */
-      L.load("assets/gold-bus.glb", (g) => { if (freeGL.done) return; const root = g.scene; root.updateMatrixWorld(true); let src = null; root.traverse((o) => { if (o.isMesh && !src) src = o; }); if (!src) return;
+      L.load("assets/gold-bus.glb?v=4", (g) => { if (freeGL.done) return; const root = g.scene; root.updateMatrixWorld(true); let src = null; root.traverse((o) => { if (o.isMesh && !src) src = o; }); if (!src) return;
         const bb = new THREE.Box3().setFromObject(root), bs = bb.getSize(new THREE.Vector3()), bc = bb.getCenter(new THREE.Vector3()), k = 12 / Math.max(bs.x, bs.z), alongX = bs.x >= bs.z;
-        const m0 = Array.isArray(src.material) ? src.material[0] : src.material, mat = new THREE.MeshLambertMaterial({ map: m0.map || null, color: 0xffffff, side: THREE.DoubleSide });
+        const m0 = Array.isArray(src.material) ? src.material[0] : src.material, mat = m0.clone(); mat.side = THREE.DoubleSide;   /* its own metallic gold finish, as modelled */
         const im = new THREE.InstancedMesh(src.geometry, mat, YB_G.length); im.frustumCulled = false; scene.add(im);
         const fix = new THREE.Matrix4().makeTranslation(-bc.x, -bb.min.y, -bc.z), sc = new THREE.Matrix4().makeScale(k, k, k), ro = new THREE.Matrix4(), tr = new THREE.Matrix4(), M = new THREE.Matrix4();
         YB_G.forEach((b, i) => { const [x, z] = polar(b.rc, b.a); ro.makeRotationY(b.a + GOLD_ROT + (alongX ? 0 : Math.PI / 2)); tr.makeTranslation(x, 0.02, z); M.copy(tr).multiply(ro).multiply(sc).multiply(fix).multiply(src.matrixWorld); im.setMatrixAt(i, M); });
