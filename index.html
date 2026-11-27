@@ -8856,7 +8856,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
         const run = (x0, z0, x1, z1) => { const L = Math.hypot(x1 - x0, z1 - z0), h = new THREE.Mesh(new THREE.BoxGeometry(x0 === x1 ? Wd : L + Wd, H, x0 === x1 ? L + Wd : Wd), hm); h.position.set((x0 + x1) / 2, H / 2, (z0 + z1) / 2); h.castShadow = true; h.receiveShadow = true; world.add(h); };
         run(152.2, -15.5, 152.2, -161.5);
         run(152.8, -12.8, 161, -12.8); run(175, -12.8 + UZ, 205.5, -12.8 + UZ); run(274.5, -12.8 + UZ, 300.5, -12.8 + UZ);
-        run(59, 9.7, 300.5, 9.7); run(300.5, -12.8, 300.5, 9.7); }
+        run(300.5, -12.8, 300.5, 9.7); }   /* (the long hedge down the middle of the archive-side walk, from behind the big tree to U-square, is gone) */
       { // the street along the park's left side runs on through the tree belt and meets the main road
         const sr = new THREE.Mesh(new THREE.PlaneGeometry(8, 5.2), asphM()); sr.rotation.x = -Math.PI / 2; sr.position.set(-50, 0.03, -10.1); world.add(sr);   /* laid flat on the ground, not a raised slab (its edges stood up like a step); the pavement runs on across it unbroken */
         for (let z = -9.5; z > -12.6; z -= 5) { const d = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 2.5), basic(0xf2f2ee)); d.rotation.x = -Math.PI / 2; d.position.set(-48, 0.035, z); world.add(d); } }
