@@ -4087,10 +4087,10 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // talking: a speech box over the bottom of the screen, typed out; then the Heritage Book comes up as a found item, and opens as an e-book
   const HB = { n: 54, dir: "assets/heritage/p", i: 0 };
   const dlg = { el: $("dlg"), txt: $("dlgTxt"), timer: 0, next: null };
-  function say(lines, done) { const el = dlg.el; let li = 0; el.classList.add("on"); LIB.talk = 1;
+  function say(lines, done, who) { const el = dlg.el; let li = 0; el.classList.add("on"); const ara = who === "아라"; el.querySelector(".nm").textContent = who || "금호 도서관 사서 할아버지"; if (ara) ARA.talk = 1; else LIB.talk = 1;
     const show = () => { const t = lines[li]; let c = 0; clearInterval(dlg.timer); dlg.txt.textContent = "";
       dlg.timer = setInterval(() => { c++; dlg.txt.textContent = t.slice(0, c); if (c >= t.length) { clearInterval(dlg.timer); dlg.timer = 0; } }, 45); };
-    dlg.next = () => { if (dlg.timer) { clearInterval(dlg.timer); dlg.timer = 0; dlg.txt.textContent = lines[li]; return; } li++; if (li < lines.length) show(); else { el.classList.remove("on"); LIB.talk = 0; dlg.next = null; if (done) done(); } };
+    dlg.next = () => { if (dlg.timer) { clearInterval(dlg.timer); dlg.timer = 0; dlg.txt.textContent = lines[li]; return; } li++; if (li < lines.length) show(); else { el.classList.remove("on"); LIB.talk = 0; ARA.talk = 0; dlg.next = null; if (done) done(); } };
     show(); }
   dlg.el.addEventListener("click", (e) => { e.stopPropagation(); if (dlg.next) dlg.next(); });
   const GI = { kind: "hb" };
@@ -4130,9 +4130,24 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     EASY.glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); EASY.glow.scale.set(1.9, 1.9, 1); EASY.glow.position.set(0, 0, 0.3); G.add(EASY.glow);
     for (let i = 0; i < 7; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); sp.userData.ph = i * 0.9; sp.userData.p = [(rnd() - 0.5) * 1.1, (rnd() - 0.5) * 1.1, 0.35 + rnd() * 0.2]; G.add(sp); EASY.sp.push(sp); }
     const pk = box(1.2, 1.4, 0.8, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), 0, 0, 0.3, G); pk.userData.idx = "easyBook"; PICK.push(pk); }
+  // ---- 아라 on the 2nd floor, by the easy book: she tells 쿠모 it is the Heritage Book made easy ----
+  const ARA = { obj: null, mix: null, aT: null, aI: null, w: 0, was: 0, talk: 0, pend: false, x: 12.1, z: Z0 + 1.8 };
+  if (THREE.GLTFLoader) { const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L.setMeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
+    L.load("assets/girl.glb?v=2", (g) => { const m = g.scene; let hh = 0; m.traverse((o) => { if (o.isMesh && o.geometry) { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; hh = Math.max(hh, b.max.y - b.min.y); } }); m.scale.setScalar(hh > 0.2 && hh < 5 ? 1.5 / hh : 1.15);   /* a little taller than her 1.3 m model so she reads the same size as 쿠모 (whose big cap and head make him look bigger) */
+      m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = false; } }); const g2 = new THREE.Group(); g2.add(m); g2.position.set(ARA.x, MY, ARA.z); scene.add(g2); ARA.obj = g2;
+      { const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.42, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.set(ARA.x, MY + 0.02, ARA.z); scene.add(bl); }
+      const T = g.animations.find((c) => /talk/i.test(c.name)), I = g.animations.find((c) => /idle|stand/i.test(c.name));
+      if (T) { ARA.mix = new THREE.AnimationMixer(m); ARA.aT = ARA.mix.clipAction(T); ARA.aT.play(); ARA.aT.setEffectiveWeight(0); if (I) { ARA.aI = ARA.mix.clipAction(I); ARA.aI.play(); } else { ARA.aI = ARA.mix.clipAction(T.clone()); ARA.aI.play(); ARA.aI.timeScale = 0; ARA.aI.time = 0; } ARA.aI.setEffectiveWeight(1); }
+      const pk = box(0.75, 1.55, 0.6, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), ARA.x, MY + 0.78, ARA.z); pk.userData.idx = "ara"; PICK.push(pk); }, undefined, () => {});
+    block(ARA.x - 0.3, ARA.x + 0.3, ARA.z - 0.3, ARA.z + 0.3, MY, MY + 1.4); }
+  const ARA_SAY = ["안녕, 쿠모! 나 아라야. 여기서 또 만나네!", "옆에 있는 '쉽게 보는 금호 80년'은 금호 헤리티지북을 읽기 쉽게 만든 책이야.", "그림이랑 쉬운 말로 되어 있어서 너도 잘 이해할 거야. 한번 봐!"];
+  function meetAra() { ARA.pend = false; S.tx = null; S.yaw = Math.atan2(-(ARA.x - S.x), -(ARA.z - S.z)) + 0.4; S.pitch = -0.02; say(ARA_SAY, () => { EASY.hint = true; if (!LIB.easy) toast("아라 옆에서 반짝이는 책을 눌러 보세요 ✨"); }, "아라"); }
+  function askAra() { if (S.fy < MY - 0.5) { toast("아라는 2층 오른쪽 끝, 쉬운 책 옆에 있어요. 계단으로 올라가 보세요 ✨"); return; }
+    if (Math.hypot(S.x - ARA.x, S.z - ARA.z) < 2.6) return meetAra(); ARA.pend = true; S.tx = ARA.x - 1.2; S.tz = ARA.z + 1.4; S.v = 0; }   // walk up to her first
   function takeEasy() { if (!LIB.given) { toast("먼저 1층 안내데스크의 할아버지에게 말을 걸어 보세요 📚"); return; }   // the Heritage Book comes first
     if (S.fy < MY - 0.5) { toast("2층 오른쪽 끝 책장에 있어요. 계단으로 올라가 보세요 ✨"); return; } LIB.easy = true; setGI("easy"); $("getItem").classList.add("on"); try { sessionStorage.setItem("kumhoEasyGot", "1"); } catch (e) {} $("easyBtn").hidden = false; }
-  window.__libT = { LIB, easy: () => takeEasy(), ask: () => askLibrarian(), open: (i) => openEbook(i) };
+  window.__libT = { LIB, ARA, ara: () => askAra(), easy: () => takeEasy(), ask: () => askLibrarian(), open: (i) => openEbook(i) };
   const uiOpen = () => $("ebook").classList.contains("on") || $("getItem").classList.contains("on") || dlg.el.classList.contains("on");
   function meetLibrarian() { LIB.pend = false; S.tx = null; S.yaw = Math.atan2(-(LIB.x - S.x), -(LIB.z - S.z)); S.pitch = -0.02;
     if (!LIB.given) say(["금호 도서관에 잘 왔어.", "네게 줄 금호 헤리티지북이 있어.", "그리고 2층 오른쪽 끝 책장에는 '쉽게 보는 금호 80년'이라는 책도 숨어 있단다. 계단으로 올라가서 꼭 찾아보렴!"], () => { EASY.hint = true; giveBook(); });   /* the first talk: the book, and the easy one upstairs at once (it used to wait for a second talk) */
@@ -4204,7 +4219,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   const endP = (e) => { PT.delete(e.pointerId); if (pinch) { if (PT.size < 2) { pinch = null; drag = null; } return; }
     clearTimeout(holdT); if (hold) { hold = null; drag = null; return; } const d = drag; drag = null; if (d && d.tp) { TP.dragging = false; canvas.style.cursor = ""; if (d.moved <= 4) toast("안녕! 나는 쿠모야 👋 끌어서 돌려 봐"); return; } if (!d || d.moved > 8) return;
     const r = aim(e.clientX, e.clientY), hp = r.intersectObjects(PICK, false)[0], hf = r.intersectObjects(FLOORS, false)[0];
-    if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { if (hp.object.userData.idx === "exit") return askLeave(); if (hp.object.userData.idx === "desk" || hp.object.userData.idx === "librarian") return askLibrarian(); if (hp.object.userData.idx === "easyBook") return takeEasy(); }
+    if (hp && (!hf || hp.distance <= hf.distance + 0.5)) { if (hp.object.userData.idx === "exit") return askLeave(); if (hp.object.userData.idx === "desk" || hp.object.userData.idx === "librarian") return askLibrarian(); if (hp.object.userData.idx === "easyBook") return takeEasy(); if (hp.object.userData.idx === "ara") return askAra(); }
     if (hf) { const dx = hf.point.x - S.x, dz = hf.point.z - S.z, dd = Math.hypot(dx, dz), L = Math.min(dd, 7); if (dd > 0.3) { S.tx = S.x + dx / dd * L; S.tz = S.z + dz / dd * L; S.v = 0; } } };
   canvas.addEventListener("pointerup", endP); canvas.addEventListener("pointercancel", (e) => { PT.delete(e.pointerId); if (PT.size < 2) pinch = null; clearTimeout(holdT); hold = null; drag = null; TP.dragging = false; });
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); camera.fov = Math.max(35, Math.min(75, camera.fov + e.deltaY * 0.03)); camera.updateProjectionMatrix(); }, { passive: false });
@@ -4277,6 +4292,9 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     if (mixer) mixer.update(dt);
     if (EASY.G) { EASY.t += dt; const k = EASY.hint ? 1.25 : 1; EASY.glow.material.opacity = (0.55 + 0.3 * Math.sin(EASY.t * 2.4)) * Math.min(1, k); EASY.glow.scale.setScalar(1.7 * k + 0.2 * Math.sin(EASY.t * 2.4));
       EASY.sp.forEach((sp) => { const a = (Math.sin(EASY.t * 2.2 + sp.userData.ph) + 1) / 2, p = sp.userData.p; sp.material.opacity = a * a; sp.scale.setScalar(0.12 + 0.22 * a); sp.position.set(p[0], p[1] + 0.06 * Math.sin(EASY.t + sp.userData.ph), p[2]); }); }
+    if (ARA.pend && S.tx == null) { if (Math.hypot(S.x - ARA.x, S.z - ARA.z) < 3.2) meetAra(); else ARA.pend = false; }
+    if (ARA.obj) { const wa = (v, to, k) => v + (to - v) * Math.min(1, dt * k); if (ARA.aT) { if (ARA.talk && !ARA.was) ARA.aT.time = 0; ARA.was = ARA.talk; ARA.w = wa(ARA.w, ARA.talk ? 1 : 0, 4); ARA.aT.setEffectiveWeight(ARA.w); ARA.aI.setEffectiveWeight(1 - ARA.w); } if (ARA.mix) ARA.mix.update(dt);
+      const near = S.fy > MY - 0.5 && Math.hypot(S.x - ARA.x, S.z - ARA.z) < 7, want = near ? Math.atan2(S.x - ARA.x, S.z - ARA.z) : 0; ARA.obj.rotation.y += Math.atan2(Math.sin(want - ARA.obj.rotation.y), Math.cos(want - ARA.obj.rotation.y)) * Math.min(1, dt * 3); }   // she turns to 쿠모 when 쿠모 comes up
     if (LIB.pend && S.tx == null) { if (Math.hypot(S.x - LIB.x, S.z - LIB.z) < 3.6) meetLibrarian(); else LIB.pend = false; }   // walked up to the counter: now he speaks
     if (LIB.obj) { LIB.t += dt; const t = LIB.t, wa = (v, to, k) => v + (to - v) * Math.min(1, dt * k);   // talking: the rig's Talk_with_Hands_Open; at rest: still, breathing
       if (LIB.aT) { if (LIB.talk && !LIB.was) LIB.aT.time = 0; LIB.was = LIB.talk; LIB.w = wa(LIB.w, LIB.talk ? 1 : 0, 4); LIB.aT.setEffectiveWeight(LIB.w); LIB.aI.setEffectiveWeight(1 - LIB.w); }
