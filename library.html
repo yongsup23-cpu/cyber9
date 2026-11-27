@@ -4146,7 +4146,7 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   // ---- 쿠모 (assets/character.glb, as in the park): walks the library in third person, the camera behind him ----
   const TP = { obj: null, mixer: null, act: {}, face: null, px: null, pz: null, spd: 0, rw: 0, iw: 1, d: 3.4, started: false };
   if (THREE.GLTFLoader) { const L2 = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L2.setMeshoptDecoder) L2.setMeshoptDecoder(window.MeshoptDecoder);
-    L2.load("assets/character.glb", (g) => { const o = g.scene; o.scale.setScalar(0.96);
+    L2.load("assets/character.glb?v=3", (g) => { const o = g.scene; o.scale.setScalar(0.96);
       o.traverse((m) => { if (m.isMesh) { const mp = m.material && m.material.map; m.material = new THREE.MeshLambertMaterial({ map: mp, skinning: true }); m.frustumCulled = false; } });
       const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.5)"); gr.addColorStop(0.6, "rgba(0,0,0,0.22)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
       TP.blob = new THREE.Mesh(new THREE.CircleGeometry(0.42, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); TP.blob.rotation.x = -Math.PI / 2; scene.add(TP.blob);

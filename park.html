@@ -11954,8 +11954,8 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     gltfLoader.load(R("assets/girl.glb") + "?v=3", (g) => { GIRL.loading = false; if (mode !== "outside") return;
       const m = g.scene, G = new THREE.Group(); { let hh = 0; m.traverse((o) => { if (o.isMesh && o.geometry) { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; hh = Math.max(hh, b.max.y - b.min.y); } }); m.scale.setScalar(hh > 0.2 && hh < 5 ? 1.36 / hh : 1.05); }   /* as tall as 쿠모 out here (1.35 m), scaled evenly: height and build together */   /* as tall as 쿠모 */ m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } }); G.add(m);
       const pk = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.4, 0.6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.7; pk.userData.idx = "npcGirl"; G.add(pk); pickables.push(pk);
-      { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
-        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.45, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.015; bl.renderOrder = 2; G.add(bl); }
+      { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.62)"); gr.addColorStop(0.6, "rgba(0,0,0,0.28)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.55, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.13; bl.renderOrder = 2; G.add(bl); }
       G.position.set(GIRL.tx, 0.02, GIRL.tz); world.add(G); GIRL.g = G; GIRL.world = world; GIRL.mix = new THREE.AnimationMixer(m);
       const clip = (re) => g.animations.find((c) => re.test(c.name)), W = clip(/walk/i), I = clip(/idle|stand/i), T = clip(/talk/i);   /* walking, standing (her rest pose when there is no clip for it), talking */
       if (W) { GIRL.aW = GIRL.mix.clipAction(W); GIRL.aW.play(); GIRL.aW.setEffectiveWeight(0); }
@@ -12605,7 +12605,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     if (TP.obj || TP.loading || TP.fail) return;
     if (!gltfLoader && THREE.GLTFLoader) { gltfLoader = new THREE.GLTFLoader(); if (window.MeshoptDecoder) gltfLoader.setMeshoptDecoder(window.MeshoptDecoder); }
     if (!gltfLoader) { TP.fail = true; return; } TP.loading = true;
-    gltfLoader.load("assets/character.glb", (g) => {
+    gltfLoader.load("assets/character.glb?v=3", (g) => {
       TP.loading = false; const o = g.scene; o.scale.setScalar(0.96);   // the model stands 1.4 m; shown at 1.35 m
       // lit like the rest of the street (Lambert, as the park is drawn) rather than PBR without a sky to reflect, so it no longer looks pasted on
       o.traverse((m) => { if (m.isMesh) { const mp = m.material && m.material.map; m.material = new THREE.MeshLambertMaterial({ map: mp, skinning: true }); m.castShadow = true; m.frustumCulled = false; } });
@@ -13290,7 +13290,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     const packs = PACKS && !IS_PARK ? [...new Set(keys.map((k) => PACKS.map[k]).filter((n) => n !== undefined))] : [];   // the lobby's wall pictures: not in the park (the kiosk fetches its own when used)
     const ext = IS_PARK ? [] : [ATL(6)];
     if (!IS_PARK) DATA.forEach((h) => { const f = h.door || ""; if (f.startsWith("special/")) ext.push(f); });
-    const glbs = IS_PARK ? ["assets/character.glb", "assets/staff.glb", "assets/lite-bus.glb", "assets/gold-bus.glb?v=4", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
+    const glbs = IS_PARK ? ["assets/character.glb?v=3", "assets/staff.glb", "assets/lite-bus.glb", "assets/gold-bus.glb?v=4", "assets/outside-bus.glb", "assets/outside-taxi.glb"] : [];   // the park's models fetched while the bar runs, so they come from the cache, not the network, once the park is built
     const total = packs.length + ext.length + glbs.length + 1; let done = 0;
     // the bar eases toward the real progress and takes at least ~4.5 s, so everything is warm when it reaches 100%
     const t0 = performance.now(), MIN = IS_PARK ? 1500 : 4500; let shown = Math.max(0, +((document.getElementById("introBar") || {}).style || {}).width?.replace("%", "") / 100 || 0);
