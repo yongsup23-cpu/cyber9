@@ -11935,7 +11935,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
     gltfLoader.load(R("assets/librarian.glb?v=2"), (g) => { NPC.loading = false; if (mode !== "outside") return;
       const m = g.scene, G = new THREE.Group(); m.scale.setScalar(1.8 / 1.7); m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } }); G.add(m);
       const pk = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.95, 0.8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 0.97; pk.userData.idx = "npcGrandpa"; G.add(pk); pickables.push(pk);
-      { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+      { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.62)"); gr.addColorStop(0.6, "rgba(0,0,0,0.28)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
         const bl = new THREE.Mesh(new THREE.CircleGeometry(0.5, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.015; bl.renderOrder = 2; G.add(bl); }   // a soft shadow under him, as under 쿠모
       G.position.set(2, 0.02, -24.5); world.add(G); NPC.g = G; NPC.world = world; NPC.mix = new THREE.AnimationMixer(m);
       const clip = (re) => g.animations.find((c) => re.test(c.name));
@@ -11991,7 +11991,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       const m = g.scene, G = new THREE.Group(); { let hh = 0; m.traverse((o) => { if (o.isMesh && o.geometry) { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; hh = Math.max(hh, b.max.y - b.min.y); } }); { const k = hh > 0.2 && hh < 5 ? 2.2 / hh : 1.6; m.scale.set(k * 1.08, k, k * 1.08); } }   /* a grown-up: well taller than 쿠모, and broader */
       m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = true; } }); G.add(m);
       const pk = new THREE.Mesh(new THREE.BoxGeometry(1.0, 2.3, 0.9), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.y = 1.15; pk.userData.idx = "npcStaff"; G.add(pk); pickables.push(pk);
-      { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+      { const bt = canvasTex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.62)"); gr.addColorStop(0.6, "rgba(0,0,0,0.28)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
         const bl = new THREE.Mesh(new THREE.CircleGeometry(0.62, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.y = 0.015; bl.renderOrder = 2; G.add(bl); }
       G.position.set(STAFF.x, 0.02, STAFF.z); world.add(G); STAFF.g = G; STAFF.world = world; STAFF.mix = new THREE.AnimationMixer(m);
       const T = g.animations.find((c) => /talk/i.test(c.name));
@@ -12611,7 +12611,7 @@ body.kioskOn .look{position:fixed!important;right:16px;bottom:16px;top:auto!impo
       TP.loading = false; const o = g.scene; o.scale.setScalar(0.96);   // the model stands 1.4 m; shown at 1.35 m
       // lit like the rest of the street (Lambert, as the park is drawn) rather than PBR without a sky to reflect, so it no longer looks pasted on
       o.traverse((m) => { if (m.isMesh) { const mp = m.material && m.material.map; m.material = new THREE.MeshLambertMaterial({ map: mp, skinning: true }); m.castShadow = true; m.frustumCulled = false; } });
-      const blob = new THREE.Mesh(new THREE.CircleGeometry(0.42, 24), new THREE.MeshBasicMaterial({ map: canvasTex(64, 64, (c, W, H) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.55)"); gr.addColorStop(0.6, "rgba(0,0,0,0.25)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, W, H); }), transparent: true, depthWrite: false }));
+      const blob = new THREE.Mesh(new THREE.CircleGeometry(0.42, 24), new THREE.MeshBasicMaterial({ map: canvasTex(64, 64, (c, W, H) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.62)"); gr.addColorStop(0.6, "rgba(0,0,0,0.28)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, W, H); }), transparent: true, depthWrite: false }));
       blob.rotation.x = -Math.PI / 2; blob.renderOrder = 2; TP.blob = blob; blob.visible = false; scene.add(blob);   // a soft contact shadow: the street's shadow map is baked once, so a moving figure needs its own
       TP.obj = o; o.visible = false; scene.add(o);
       TP.mixer = new THREE.AnimationMixer(o); g.animations.forEach((c) => { TP.act[c.name] = TP.mixer.clipAction(c); });

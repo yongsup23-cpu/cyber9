@@ -4078,8 +4078,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
     L.load("assets/librarian.glb?v=2", (g) => { const m = g.scene, k = 1.95 / 1.7;   // the rigged model stands 1.7 m tall in its own units
       m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = false; } }); m.scale.setScalar(k);
       const g2 = new THREE.Group(); g2.add(m); g2.position.set(LIB.x, 0, LIB.z); scene.add(g2); LIB.obj = g2;
-      { const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
-        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.5, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.set(LIB.x, 0.02, LIB.z); scene.add(bl); }   // a soft shadow under him, as under 쿠모
+      { const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.62)"); gr.addColorStop(0.6, "rgba(0,0,0,0.28)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.5, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.renderOrder = 3; bl.position.set(LIB.x, 0.02, LIB.z); scene.add(bl); }   // a soft shadow under him, as under 쿠모
       const clip = g.animations.find((c) => /talk/i.test(c.name)) || g.animations[0];
       if (clip) { mixer = new THREE.AnimationMixer(m); LIB.aT = mixer.clipAction(clip); LIB.aI = mixer.clipAction(clip.clone());   // talking with open hands; at rest, its first frame (arms down) held still
         LIB.aI.play(); LIB.aI.timeScale = 0; LIB.aI.time = 0; LIB.aT.play(); LIB.aT.setEffectiveWeight(0); LIB.aI.setEffectiveWeight(1); LIB.w = 0; }
@@ -4135,8 +4135,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   if (THREE.GLTFLoader) { const L = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L.setMeshoptDecoder) L.setMeshoptDecoder(window.MeshoptDecoder);
     L.load("assets/girl.glb?v=2", (g) => { const m = g.scene; let hh = 0; m.traverse((o) => { if (o.isMesh && o.geometry) { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; hh = Math.max(hh, b.max.y - b.min.y); } }); m.scale.setScalar(hh > 0.2 && hh < 5 ? 1.5 / hh : 1.15);   /* a little taller than her 1.3 m model so she reads the same size as 쿠모 (whose big cap and head make him look bigger) */
       m.traverse((o) => { if (o.isMesh) { o.frustumCulled = false; o.castShadow = false; } }); const g2 = new THREE.Group(); g2.add(m); g2.position.set(ARA.x, MY, ARA.z); scene.add(g2); ARA.obj = g2;
-      { const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.42)"); gr.addColorStop(0.6, "rgba(0,0,0,0.17)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
-        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.42, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.position.set(ARA.x, MY + 0.02, ARA.z); scene.add(bl); }
+      { const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.62)"); gr.addColorStop(0.6, "rgba(0,0,0,0.28)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.42, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); bl.rotation.x = -Math.PI / 2; bl.renderOrder = 3; bl.position.set(ARA.x, MY + 0.02, ARA.z); scene.add(bl); }
       const T = g.animations.find((c) => /talk/i.test(c.name)), I = g.animations.find((c) => /idle|stand/i.test(c.name));
       if (T) { ARA.mix = new THREE.AnimationMixer(m); ARA.aT = ARA.mix.clipAction(T); ARA.aT.play(); ARA.aT.setEffectiveWeight(0); if (I) { ARA.aI = ARA.mix.clipAction(I); ARA.aI.play(); } else { ARA.aI = ARA.mix.clipAction(T.clone()); ARA.aI.play(); ARA.aI.timeScale = 0; ARA.aI.time = 0; } ARA.aI.setEffectiveWeight(1); }
       const pk = box(0.75, 1.55, 0.6, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), ARA.x, MY + 0.78, ARA.z); pk.userData.idx = "ara"; PICK.push(pk); }, undefined, () => {});
@@ -4163,8 +4163,8 @@ window.MeshoptDecoder=MeshoptDecoder;</script>
   if (THREE.GLTFLoader) { const L2 = new THREE.GLTFLoader(); if (window.MeshoptDecoder && L2.setMeshoptDecoder) L2.setMeshoptDecoder(window.MeshoptDecoder);
     L2.load("assets/character.glb?v=4", (g) => { const o = g.scene; o.scale.setScalar(0.96);
       o.traverse((m) => { if (m.isMesh) { const mp = m.material && m.material.map; m.material = new THREE.MeshLambertMaterial({ map: mp, skinning: true }); m.frustumCulled = false; } });
-      const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.5)"); gr.addColorStop(0.6, "rgba(0,0,0,0.22)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
-      TP.blob = new THREE.Mesh(new THREE.CircleGeometry(0.42, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); TP.blob.rotation.x = -Math.PI / 2; scene.add(TP.blob);
+      const bt = tex(64, 64, (c) => { const gr = c.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, "rgba(0,0,0,0.62)"); gr.addColorStop(0.6, "rgba(0,0,0,0.28)"); gr.addColorStop(1, "rgba(0,0,0,0)"); c.fillStyle = gr; c.fillRect(0, 0, 64, 64); });
+      TP.blob = new THREE.Mesh(new THREE.CircleGeometry(0.42, 24), new THREE.MeshBasicMaterial({ map: bt, transparent: true, depthWrite: false })); TP.blob.rotation.x = -Math.PI / 2; TP.blob.renderOrder = 3; scene.add(TP.blob);
       TP.obj = o; scene.add(o); TP.mixer = new THREE.AnimationMixer(o); g.animations.forEach((c) => { TP.act[c.name] = TP.mixer.clipAction(c); }); }, undefined, () => {}); }
   const wrapA = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
